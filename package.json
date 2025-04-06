@@ -2,7 +2,7 @@
   "name": "macro-meals",
   "license": "0BSD",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -10,13 +10,20 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-navigation/native": "^7.1.5",
     "expo": "~52.0.43",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
-    "react-native": "0.76.9"
+    "react-native": "0.76.9",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "@babel/preset-typescript": "^7.27.0",
+    "@types/react": "~18.3.12",
+    "@types/react-dom": "^19.1.1",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.8.3"
   },
   "private": true
 }
