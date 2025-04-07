@@ -1,28 +1,34 @@
+// App.tsx with navigation
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Constants from 'expo-constants';
+
+import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { MacroInputScreen } from './src/screens/MacroInputScreen';
+import { MealListScreen } from './src/screens/MealListScreen';
+// Import or create a Login screen component
+
+const Stack = createStackNavigator();
 
 export default function App() {
-  return (
-      <View style={styles.container}>
-        <StatusBar style="dark" />
-        <View style={styles.safeArea}>
-          <MacroInputScreen />
-        </View>
-      </View>
-  );
+    return (
+        <SafeAreaProvider>
+            <StatusBar style="dark" />
+            <NavigationContainer>
+                <Stack.Navigator
+                    initialRouteName="Welcome"
+                    screenOptions={{
+                        headerShown: false, // Hide header for all screens
+                    }}
+                >
+                    <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                    <Stack.Screen name="MacroInput" component={MacroInputScreen} />
+                    <Stack.Screen name="MealList" component={MealListScreen} />
+                    {/* Add your Login screen here */}
+                </Stack.Navigator>
+            </NavigationContainer>
+        </SafeAreaProvider>
+    );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Constants.statusBarHeight,
-  },
-  safeArea: {
-    flex: 1,
-    paddingBottom: 34,
-  },
-});
