@@ -11,14 +11,13 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { socialAuthService } from '../services/socialAuthService';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import useStore from '../store/useStore';
-import {authService} from "../services/authService";
+import { authService } from "../services/authService";
+// Import the mock service instead of the real one
+import { mockSocialAuth } from '../services/authMock';
 
 type RootStackParamList = {
     Welcome: undefined;
@@ -58,7 +57,7 @@ export const LoginScreen: React.FC = () => {
 
         try {
             const data = await authService.login({ email, password });
-
+            console.log("hre")
             // Update authentication state in Zustand store
             setAuthenticated(true, data.token, data.user.id);
 
@@ -80,16 +79,15 @@ export const LoginScreen: React.FC = () => {
     const handleGoogleLogin = async () => {
         try {
             setIsLoading(true);
-            const authData = await socialAuthService.signInWithGoogle();
+            // Use the mock service
+            const authData = await mockSocialAuth.googleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
             if (navigation) {
                 navigation.navigate('MacroInput');
             }
         } catch (error) {
             console.error('Google login error:', error);
-            if (error.message !== 'Google sign in cancelled') {
-                Alert.alert('Login Failed', 'Google login failed. Please try again.');
-            }
+            Alert.alert('Login Failed', 'Google login failed. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -98,7 +96,8 @@ export const LoginScreen: React.FC = () => {
     const handleAppleLogin = async () => {
         try {
             setIsLoading(true);
-            const authData = await socialAuthService.signInWithApple();
+            // Use the mock service
+            const authData = await mockSocialAuth.appleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
             if (navigation) {
                 navigation.navigate('MacroInput');
@@ -114,16 +113,15 @@ export const LoginScreen: React.FC = () => {
     const handleFacebookLogin = async () => {
         try {
             setIsLoading(true);
-            const authData = await socialAuthService.signInWithFacebook();
+            // Use the mock service
+            const authData = await mockSocialAuth.facebookSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
             if (navigation) {
                 navigation.navigate('MacroInput');
             }
         } catch (error) {
             console.error('Facebook login error:', error);
-            if (error.message !== 'Facebook login was cancelled') {
-                Alert.alert('Login Failed', 'Facebook login failed. Please try again.');
-            }
+            Alert.alert('Login Failed', 'Facebook login failed. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -148,7 +146,7 @@ export const LoginScreen: React.FC = () => {
                 </View>
 
                 <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-                <Text style={styles.welcomeSubtitle}>Track your nutrition journey with MacroMate</Text>
+                <Text style={styles.welcomeSubtitle}>Track your nutrition journey with MacroMeals</Text>
 
                 <View style={styles.formContainer}>
                     <Text style={styles.inputLabel}>Email</Text>

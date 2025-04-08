@@ -8,7 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { MacroInputScreen } from './src/screens/MacroInputScreen';
 import { MealListScreen } from './src/screens/MealListScreen';
-// Import or create a Login screen component
+import {LoginScreen} from "./src/screens/LoginScreen";
 
 const Stack = createStackNavigator();
 
@@ -26,7 +26,7 @@ export default function App() {
                     <Stack.Screen name="Welcome" component={WelcomeScreen} />
                     <Stack.Screen name="MacroInput" component={MacroInputScreen} />
                     <Stack.Screen name="MealList" component={MealListScreen} />
-                    {/* Add your Login screen here */}
+                    <Stack.Screen name="LoginScreen" component={LoginScreen} />
                 </Stack.Navigator>
             </NavigationContainer>
         </SafeAreaProvider>

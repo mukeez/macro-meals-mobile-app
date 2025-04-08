@@ -3,7 +3,7 @@ import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal } from
 /**
  * API configuration.
  */
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.yourapp.com';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 const API_ENDPOINTS = {
     SUGGEST_MEALS: `${API_BASE_URL}/suggest-meals`,
 };

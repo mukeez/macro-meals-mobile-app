@@ -32,7 +32,7 @@ export const WelcomeScreen: React.FC = () => {
 
     const handleLogin = () => {
         if (navigation) {
-            navigation.navigate('Login');
+            navigation.navigate('LoginScreen');
         } else {
             console.log('Would navigate to Login screen');
         }

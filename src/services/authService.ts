@@ -1,7 +1,7 @@
 // src/services/authService.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'https://api.macromate.com';
+const API_URL = 'https://api.macromealsapp.com/api/v1';
 
 interface LoginResponse {
     token: string;
@@ -17,8 +17,14 @@ interface LoginData {
     password: string;
 }
 
+interface SignupData {
+    email: string;
+    password: string;
+}
+
 export const authService = {
     login: async (data: LoginData): Promise<LoginResponse> => {
+        console.log(API_URL)
         try {
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -27,6 +33,8 @@ export const authService = {
                 },
                 body: JSON.stringify(data),
             });
+
+            console.log("here", data)
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -41,6 +49,33 @@ export const authService = {
             return responseData;
         } catch (error) {
             console.error('Login error:', error);
+            throw error;
+        }
+    },
+
+    signup: async (data: SignupData): Promise<LoginResponse> => {
+        try {
+            const response = await fetch(`${API_URL}/auth/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Signup failed');
+            }
+
+            const responseData = await response.json();
+
+            // Store token in AsyncStorage
+            await AsyncStorage.setItem('auth_token', responseData.token);
+
+            return responseData;
+        } catch (error) {
+            console.error('Signup error:', error);
             throw error;
         }
     },
