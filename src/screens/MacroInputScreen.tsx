@@ -9,11 +9,14 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
+    Modal,
 } from 'react-native';
 import { MacroDisplay } from '../components/MacroDisplay';
 import { UserPreferences } from '../types';
 import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
+import { macroCalculationService } from "../services/macroCalculationService";
+import { useNavigation } from '@react-navigation/native';
 
 export const MacroInputScreen: React.FC = () => {
     // Get state and actions from Zustand store
@@ -23,16 +26,28 @@ export const MacroInputScreen: React.FC = () => {
     const setSuggestedMeals = useStore((state) => state.setSuggestedMeals);
     const setSuggestionsError = useStore((state) => state.setSuggestionsError);
 
+    // Try to get navigation if available
+    let navigation;
+    try {
+        navigation = useNavigation();
+    } catch (error) {
+        console.log('Navigation not available');
+    }
+
     // Local state for form
     const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
     const [age, setAge] = useState(preferences.age ? preferences.age.toString() : '');
     const [weight, setWeight] = useState(preferences.weight ? preferences.weight.toString() : '');
     const [height, setHeight] = useState(preferences.height ? preferences.height.toString() : '');
-    const [gender, setGender] = useState(preferences.gender || '');
+    const [sex, setSex] = useState(preferences.gender || '');
+    const [showSexDropdown, setShowSexDropdown] = useState(false);
     const [activityLevel, setActivityLevel] = useState(preferences.activityLevel || '');
     const [goal, setGoal] = useState(preferences.goal || '');
     const [manualMacros, setManualMacros] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Sex options for dropdown
+    const sexOptions = ['Male', 'Female'];
 
     // Activity levels and goals
     const activityLevels = [
@@ -50,7 +65,7 @@ export const MacroInputScreen: React.FC = () => {
     // Handler for calculating macros
     const handleCalculateMacros = async () => {
         // Validate inputs
-        if (!age || !weight || !height || !gender || !activityLevel || !goal) {
+        if (!age || !weight || !height || !sex || !activityLevel || !goal) {
             alert('Please fill in all fields');
             return;
         }
@@ -58,34 +73,45 @@ export const MacroInputScreen: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // Calculate macros based on user inputs
-            const calculatedPreferences: UserPreferences = {
+            // Call the backend API to calculate accurate macros
+            const calculatedMacros = await macroCalculationService.calculateMacros({
                 age: parseInt(age),
                 weight: parseFloat(weight),
                 height: parseFloat(height),
-                gender,
+                sex, // "Male" or "Female" from our dropdown
                 activityLevel,
                 goal,
-                calories: 2000, // Placeholder - replace with actual calculation
-                protein: 150,   // Placeholder - replace with actual calculation
-                carbs: 200,     // Placeholder - replace with actual calculation
-                fat: 70,        // Placeholder - replace with actual calculation
+                unitSystem: unit,
+            });
+
+            // Create a complete user preferences object with all needed fields
+            const calculatedPreferences: UserPreferences = {
+                ...calculatedMacros,
                 location: preferences.location || '',
             };
 
             // Update global preferences
             updatePreferences(calculatedPreferences);
 
-            // Fetch meal suggestions
-            const suggestedMeals = await mealService.getMockMealSuggestions(calculatedPreferences);
-            setSuggestedMeals(suggestedMeals);
-            setIsLoadingSuggestions(false);
+            // Set loading state for meal suggestions
+            setIsLoadingSuggestions(true);
 
-            // Navigate to meal list (you'd implement navigation here)
-            // navigation.navigate('MealList');
+            try {
+                // Fetch meal suggestions
+                const suggestedMeals = await mealService.getMockMealSuggestions(calculatedPreferences);
+                setSuggestedMeals(suggestedMeals);
+
+                // Navigate to meal list if navigation is available
+                navigation?.navigate('MealList', { fromCalculator: true });
+            } catch (error) {
+                console.error('Error fetching meal suggestions:', error);
+                setSuggestionsError('Failed to fetch meal suggestions. Please try again.');
+            } finally {
+                setIsLoadingSuggestions(false);
+            }
         } catch (error) {
             console.error('Error calculating macros:', error);
-            setSuggestionsError('Failed to calculate macros. Please try again.');
+            alert('Could not calculate macros. Please check your connection and try again.');
         } finally {
             setIsLoading(false);
         }
@@ -136,14 +162,56 @@ export const MacroInputScreen: React.FC = () => {
         </View>
     );
 
-    // Render gender select
-    const renderGenderSelect = () => (
+    // Render sex select dropdown
+    const renderSexSelect = () => (
         <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Gender</Text>
-            <TouchableOpacity style={styles.selectInput}>
-                <Text style={styles.selectInputText}>Select</Text>
+            <Text style={styles.inputLabel}>Sex</Text>
+            <TouchableOpacity
+                style={styles.selectInput}
+                onPress={() => setShowSexDropdown(true)}
+            >
+                <Text style={styles.selectInputText}>
+                    {sex || 'Select'}
+                </Text>
                 <Text style={styles.dropdownIcon}>▼</Text>
             </TouchableOpacity>
+
+            {/* Sex Selection Modal */}
+            <Modal
+                visible={showSexDropdown}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowSexDropdown(false)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowSexDropdown(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Select Sex</Text>
+                            {sexOptions.map((option) => (
+                                <TouchableOpacity
+                                    key={option}
+                                    style={styles.optionItem}
+                                    onPress={() => {
+                                        setSex(option);
+                                        setShowSexDropdown(false);
+                                    }}
+                                >
+                                    <Text style={[
+                                        styles.optionText,
+                                        sex === option && styles.selectedOptionText
+                                    ]}>
+                                        {option}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 
@@ -228,7 +296,7 @@ export const MacroInputScreen: React.FC = () => {
                 {renderInputRow('Weight', weight, setWeight, unit === 'Metric' ? 'kg' : 'lb')}
                 {renderInputRow('Height', height, setHeight, unit === 'Metric' ? 'cm' : 'ft')}
 
-                {renderGenderSelect()}
+                {renderSexSelect()}
                 {renderActivityLevelSelector()}
                 {renderGoalSelector()}
                 {renderManualMacrosToggle()}
@@ -334,6 +402,47 @@ const styles = StyleSheet.create({
     dropdownIcon: {
         color: '#666',
         fontSize: 12,
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContainer: {
+        width: '80%',
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 20,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    modalContent: {
+        alignItems: 'stretch',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        textAlign: 'center',
+        color: '#333',
+    },
+    optionItem: {
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    optionText: {
+        fontSize: 16,
+        color: '#333',
+        textAlign: 'center',
+    },
+    selectedOptionText: {
+        color: '#19a28f',
+        fontWeight: 'bold',
     },
     selectorContainer: {
         marginBottom: 20,

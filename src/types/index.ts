@@ -20,7 +20,7 @@ export interface UserPreferences extends MacroTargets {
     age?: number;
     weight?: number;
     height?: number;
-    gender?: 'male' | 'female' | 'other';
+    sex?: 'male' | 'female';
     activityLevel?: 'sedentary' | 'moderate' | 'active';
     goal?: 'lose' | 'maintain' | 'gain';
 }

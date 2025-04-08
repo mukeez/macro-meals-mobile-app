@@ -14,7 +14,7 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
     age: 0,
     weight: 0,
     height: 0,
-    gender: undefined,
+    sex: undefined,
     activityLevel: undefined,
     goal: undefined,
 };
