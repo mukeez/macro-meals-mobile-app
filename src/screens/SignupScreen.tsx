@@ -1,4 +1,3 @@
-// src/screens/SignupScreen.tsx
 import React, { useState } from 'react';
 import {
     View,
@@ -11,7 +10,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -103,7 +101,6 @@ export const SignupScreen: React.FC = () => {
         return isValid;
     };
 
-    // Handle signup
     const handleSignup = async () => {
         if (!validateForm()) {
             return;
@@ -112,37 +109,35 @@ export const SignupScreen: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // Use the authService.signup method
-            const data = await authService.signup({
+            // Get user ID from signup
+            const userId = await authService.signup({
                 email,
                 password
             });
 
-            // Update authentication state
-            setAuthenticated(true, data.token, data.user.id);
+            // Store user ID for onboarding
+            setAuthenticated(true, '', userId);
 
-            // Navigate to next screen
+            // Navigate to macro input screen
             if (navigation) {
                 navigation.navigate('MacroInput');
             }
         } catch (error) {
+            console.error('Signup error:', error);
+
             let errorMessage = 'Failed to create account';
 
-            // Check if error is about email already in use
-            if (error instanceof Error && error.message.includes('email')) {
-                errorMessage = 'This email is already registered. Please use a different email or log in.';
+            if (error instanceof Error) {
+                if (error.message.includes('email')) {
+                    errorMessage = 'This email is already registered. Please use a different email or log in.';
+                } else {
+                    errorMessage = error.message;
+                }
             }
 
             Alert.alert('Signup Failed', errorMessage);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    // Handle login navigation
-    const handleLoginNavigation = () => {
-        if (navigation) {
-            navigation.navigate('Login');
         }
     };
 
@@ -155,11 +150,7 @@ export const SignupScreen: React.FC = () => {
                 {/* Logo */}
                 <View style={styles.logoContainer}>
                     <View style={styles.logoBox}>
-                        <Image
-                            source={require('../../assets/fork-knife.png')}
-                            style={styles.logoIcon}
-                            resizeMode="contain"
-                        />
+                        <Text style={styles.checkmark}>✓</Text>
                     </View>
                 </View>
 
@@ -288,7 +279,7 @@ export const SignupScreen: React.FC = () => {
                     {/* Login Link */}
                     <View style={styles.loginContainer}>
                         <Text style={styles.loginText}>Already have an account? </Text>
-                        <TouchableOpacity onPress={handleLoginNavigation}>
+                        <TouchableOpacity onPress={() => navigation?.navigate('Login')}>
                             <Text style={styles.loginLink}>Log in</Text>
                         </TouchableOpacity>
                     </View>
@@ -297,6 +288,7 @@ export const SignupScreen: React.FC = () => {
         </KeyboardAvoidingView>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
@@ -321,10 +313,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    logoIcon: {
-        width: 40,
-        height: 40,
-        tintColor: 'white',
+    checkmark: {
+        color: 'white',
+        fontSize: 36,
+        fontWeight: 'bold',
     },
     title: {
         fontSize: 28,

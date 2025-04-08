@@ -24,7 +24,7 @@ export const WelcomeScreen: React.FC = () => {
 
     const handleGetStarted = () => {
         if (navigation) {
-            navigation.navigate('MacroInput');
+            navigation.navigate('SignupScreen');
         } else {
             console.log('Would navigate to MacroInput screen');
         }

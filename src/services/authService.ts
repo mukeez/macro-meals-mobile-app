@@ -3,18 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://api.macromealsapp.com/api/v1';
 
-interface LoginResponse {
-    token: string;
+interface SignupResponse {
+    message: string;
     user: {
-        id: string;
+        id?: string;
         email: string;
-        name: string;
     };
-}
-
-interface LoginData {
-    email: string;
-    password: string;
+    session?: {
+        access_token?: string;
+        refresh_token?: string;
+    };
 }
 
 interface SignupData {
@@ -22,79 +20,75 @@ interface SignupData {
     password: string;
 }
 
+
 export const authService = {
-    login: async (data: LoginData): Promise<LoginResponse> => {
-        console.log(API_URL)
-        try {
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-
-            console.log("here", data)
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Login failed');
-            }
-
-            const responseData = await response.json();
-
-            // Store token in AsyncStorage
-            await AsyncStorage.setItem('auth_token', responseData.token);
-
-            return responseData;
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
-        }
-    },
-
-    signup: async (data: SignupData): Promise<LoginResponse> => {
+    signup: async (data: SignupData) => {
         try {
             const response = await fetch(`${API_URL}/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify({
+                    email: data.email,
+                    password: data.password
+                }),
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Signup failed');
-            }
 
             const responseData = await response.json();
 
-            // Store token in AsyncStorage
-            await AsyncStorage.setItem('auth_token', responseData.token);
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Signup failed');
+            }
 
-            return responseData;
+            // Return just the user ID for onboarding
+            return responseData.user.id;
         } catch (error) {
-            console.error('Signup error:', error);
+            console.error('Signup service error:', error);
             throw error;
         }
     },
-
-    logout: async (): Promise<void> => {
+    logout: async () => {
         try {
-            await AsyncStorage.removeItem('auth_token');
+            // Remove tokens from AsyncStorage
+            await AsyncStorage.removeItem('access_token');
+            await AsyncStorage.removeItem('refresh_token');
+            await AsyncStorage.removeItem('user_id');
         } catch (error) {
             console.error('Logout error:', error);
             throw error;
         }
     },
 
-    getToken: async (): Promise<string | null> => {
+    getCurrentToken: async () => {
         try {
-            return await AsyncStorage.getItem('auth_token');
+            return await AsyncStorage.getItem('access_token');
         } catch (error) {
             console.error('Get token error:', error);
             return null;
         }
     },
+
+    requestPasswordReset: async (email: string) => {
+        try {
+            const response = await fetch(`${API_URL}/auth/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                throw new Error(responseData.detail || 'Password reset request failed');
+            }
+
+            return responseData;
+        } catch (error) {
+            console.error('Password reset error:', error);
+            throw error;
+        }
+    }
 };

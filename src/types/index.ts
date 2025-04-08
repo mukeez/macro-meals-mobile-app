@@ -13,10 +13,16 @@ export interface MacroTargets {
 }
 
 /**
- * User preferences including macro targets and location.
+ * User preferences including macro targets and additional details.
  */
 export interface UserPreferences extends MacroTargets {
     location: string;
+    age?: number;
+    weight?: number;
+    height?: number;
+    gender?: 'male' | 'female' | 'other';
+    activityLevel?: 'sedentary' | 'moderate' | 'active';
+    goal?: 'lose' | 'maintain' | 'gain';
 }
 
 /**

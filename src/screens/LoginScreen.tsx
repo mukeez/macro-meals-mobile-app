@@ -63,7 +63,7 @@ export const LoginScreen: React.FC = () => {
 
             // Navigate to the main screen
             if (navigation) {
-                navigation.navigate('MacroInput');
+                navigation.navigate('MacroInputScreen');
             }
         } catch (error) {
             Alert.alert(
@@ -129,7 +129,7 @@ export const LoginScreen: React.FC = () => {
 
     const handleSignUp = () => {
         if (navigation) {
-            navigation.navigate('SignUp');
+            navigation.navigate('SignupScreen');
         }
     };
 

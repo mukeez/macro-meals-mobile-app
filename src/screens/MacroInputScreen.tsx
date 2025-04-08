@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -9,44 +9,13 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import { MacroDisplay } from '../components/MacroDisplay';
 import { UserPreferences } from '../types';
 import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
 
-// Try to import navigation, but don't fail if it's not available
-let useNavigation: any;
-let StackNavigationProp: any;
-try {
-    const navModule = require('@react-navigation/native');
-    useNavigation = navModule.useNavigation;
-} catch (error) {
-    // Navigation module not available
-}
-
-type RootStackParamList = {
-    MacroInput: undefined;
-    MealList: { fromSearch: boolean };
-};
-
-type MacroInputScreenNavigationProp = any; // Simplified type to avoid errors
-
-/**
- * Screen for inputting macro targets and location.
- */
 export const MacroInputScreen: React.FC = () => {
-    // Try to get navigation, but don't throw an error if not available
-    let navigation;
-    try {
-        if (useNavigation) {
-            navigation = useNavigation<MacroInputScreenNavigationProp>();
-        }
-    } catch (error) {
-        // Navigation is not available
-    }
-
     // Get state and actions from Zustand store
     const preferences = useStore((state) => state.preferences);
     const updatePreferences = useStore((state) => state.updatePreferences);
@@ -54,197 +23,227 @@ export const MacroInputScreen: React.FC = () => {
     const setSuggestedMeals = useStore((state) => state.setSuggestedMeals);
     const setSuggestionsError = useStore((state) => state.setSuggestionsError);
 
-    // Local form state
-    const [formValues, setFormValues] = useState<UserPreferences>({
-        ...preferences,
-    });
-
+    // Local state for form
+    const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
+    const [age, setAge] = useState(preferences.age ? preferences.age.toString() : '');
+    const [weight, setWeight] = useState(preferences.weight ? preferences.weight.toString() : '');
+    const [height, setHeight] = useState(preferences.height ? preferences.height.toString() : '');
+    const [gender, setGender] = useState(preferences.gender || '');
+    const [activityLevel, setActivityLevel] = useState(preferences.activityLevel || '');
+    const [goal, setGoal] = useState(preferences.goal || '');
+    const [manualMacros, setManualMacros] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Update local form if global preferences change
-    useEffect(() => {
-        setFormValues({
-            ...preferences,
-        });
-    }, [preferences]);
+    // Activity levels and goals
+    const activityLevels = [
+        { label: 'Sedentary', icon: '🛋️' },
+        { label: 'Moderate', icon: '🚶' },
+        { label: 'Active', icon: '🏃' }
+    ];
 
-    /**
-     * Updates a specific field in the form.
-     */
-    const handleChange = (field: keyof UserPreferences, value: string) => {
-        let parsedValue: string | number = value;
+    const goals = [
+        { label: 'Lose', icon: '⬇️' },
+        { label: 'Maintain', icon: '=' },
+        { label: 'Gain', icon: '⬆️' }
+    ];
 
-        // Convert numerical inputs to numbers
-        if (field !== 'location') {
-            parsedValue = value === '' ? 0 : Number(value);
-        }
-
-        setFormValues((prev) => ({
-            ...prev,
-            [field]: parsedValue,
-        }));
-
-        // Clear error for this field if it exists
-        if (errors[field]) {
-            setErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
-        }
-    };
-
-    /**
-     * Validates the form before submission.
-     */
-    const validateForm = (): boolean => {
-        const newErrors: Record<string, string> = {};
-
-        // Check for required fields
-        if (!formValues.location.trim()) {
-            newErrors.location = 'Location is required';
-        }
-
-        // Check for valid macro values
-        if (formValues.calories <= 0) {
-            newErrors.calories = 'Calories must be greater than 0';
-        }
-
-        if (formValues.protein < 0) {
-            newErrors.protein = 'Protein cannot be negative';
-        }
-
-        if (formValues.carbs < 0) {
-            newErrors.carbs = 'Carbs cannot be negative';
-        }
-
-        if (formValues.fat < 0) {
-            newErrors.fat = 'Fat cannot be negative';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    /**
-     * Fetches meal suggestions based on user preferences
-     */
-    const fetchMealSuggestions = async () => {
-        setIsLoading(true);
-        setIsLoadingSuggestions(true);
-        setSuggestionsError(null);
-
-        try {
-            // In a real app, use mealService.suggestMeals
-            // For demo, using the mock service
-            const suggestedMeals = await mealService.getMockMealSuggestions(formValues);
-            setSuggestedMeals(suggestedMeals);
-            return true;
-        } catch (error) {
-            setSuggestionsError('Failed to load meal suggestions. Please try again.');
-            console.error('Error fetching meals:', error);
-            return false;
-        } finally {
-            setIsLoading(false);
-            setIsLoadingSuggestions(false);
-        }
-    };
-
-    /**
-     * Handles form submission and navigation to the meal list.
-     */
-    const handleSubmit = async () => {
-        if (!validateForm()) {
+    // Handler for calculating macros
+    const handleCalculateMacros = async () => {
+        // Validate inputs
+        if (!age || !weight || !height || !gender || !activityLevel || !goal) {
+            alert('Please fill in all fields');
             return;
         }
 
-        // Update global preferences in Zustand store
-        updatePreferences(formValues);
+        setIsLoading(true);
 
-        // Fetch meal suggestions
-        const success = await fetchMealSuggestions();
+        try {
+            // Calculate macros based on user inputs
+            const calculatedPreferences: UserPreferences = {
+                age: parseInt(age),
+                weight: parseFloat(weight),
+                height: parseFloat(height),
+                gender,
+                activityLevel,
+                goal,
+                calories: 2000, // Placeholder - replace with actual calculation
+                protein: 150,   // Placeholder - replace with actual calculation
+                carbs: 200,     // Placeholder - replace with actual calculation
+                fat: 70,        // Placeholder - replace with actual calculation
+                location: preferences.location || '',
+            };
 
-        if (success) {
-            // Navigate if navigation is available, otherwise show alert
-            if (navigation) {
-                navigation.navigate('MealList', { fromSearch: true });
-            } else {
-                Alert.alert(
-                    'Success',
-                    'Preferences saved and meals fetched successfully!',
-                    [{ text: 'OK' }]
-                );
-            }
-        } else {
-            Alert.alert(
-                'Error',
-                'Failed to get meal suggestions. Please try again.',
-                [{ text: 'OK' }]
-            );
+            // Update global preferences
+            updatePreferences(calculatedPreferences);
+
+            // Fetch meal suggestions
+            const suggestedMeals = await mealService.getMockMealSuggestions(calculatedPreferences);
+            setSuggestedMeals(suggestedMeals);
+            setIsLoadingSuggestions(false);
+
+            // Navigate to meal list (you'd implement navigation here)
+            // navigation.navigate('MealList');
+        } catch (error) {
+            console.error('Error calculating macros:', error);
+            setSuggestionsError('Failed to calculate macros. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    /**
-     * Renders an input field with label and error handling.
-     */
-    const renderInputField = (
-        label: string,
-        field: keyof UserPreferences,
-        placeholder: string,
-        keyboardType: 'default' | 'numeric' = 'default'
-    ) => (
+    // Render unit toggle
+    const renderUnitToggle = () => (
+        <View style={styles.unitToggleContainer}>
+            <TouchableOpacity
+                style={[
+                    styles.unitToggleButton,
+                    unit === 'Metric' ? styles.activeUnitToggle : styles.inactiveUnitToggle
+                ]}
+                onPress={() => setUnit('Metric')}
+            >
+                <Text style={unit === 'Metric' ? styles.activeUnitText : styles.inactiveUnitText}>
+                    Metric
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[
+                    styles.unitToggleButton,
+                    unit === 'Imperial' ? styles.activeUnitToggle : styles.inactiveUnitToggle
+                ]}
+                onPress={() => setUnit('Imperial')}
+            >
+                <Text style={unit === 'Imperial' ? styles.activeUnitText : styles.inactiveUnitText}>
+                    Imperial
+                </Text>
+            </TouchableOpacity>
+        </View>
+    );
+
+    // Render input row
+    const renderInputRow = (label, value, onChangeText, unit) => (
         <View style={styles.inputContainer}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-                style={[styles.input, errors[field] && styles.inputError]}
-                value={String(formValues[field])}
-                onChangeText={(text) => handleChange(field, text)}
-                placeholder={placeholder}
-                keyboardType={keyboardType}
-                returnKeyType="next"
-            />
-            {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
+            <Text style={styles.inputLabel}>{label}</Text>
+            <View style={styles.inputRow}>
+                <TextInput
+                    style={styles.input}
+                    value={value}
+                    onChangeText={onChangeText}
+                    keyboardType="numeric"
+                    placeholder={label}
+                />
+                {unit && <Text style={styles.unitText}>{unit}</Text>}
+            </View>
+        </View>
+    );
+
+    // Render gender select
+    const renderGenderSelect = () => (
+        <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Gender</Text>
+            <TouchableOpacity style={styles.selectInput}>
+                <Text style={styles.selectInputText}>Select</Text>
+                <Text style={styles.dropdownIcon}>▼</Text>
+            </TouchableOpacity>
+        </View>
+    );
+
+    // Render activity level selector
+    const renderActivityLevelSelector = () => (
+        <View style={styles.selectorContainer}>
+            <Text style={styles.sectionLabel}>Activity Level</Text>
+            <View style={styles.optionRow}>
+                {activityLevels.map((level) => (
+                    <TouchableOpacity
+                        key={level.label}
+                        style={[
+                            styles.optionButton,
+                            activityLevel === level.label && styles.selectedOption
+                        ]}
+                        onPress={() => setActivityLevel(level.label)}
+                    >
+                        <Text style={styles.optionIcon}>{level.icon}</Text>
+                        <Text style={styles.optionLabel}>{level.label}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
+
+    // Render goal selector
+    const renderGoalSelector = () => (
+        <View style={styles.selectorContainer}>
+            <Text style={styles.sectionLabel}>Your Goal</Text>
+            <View style={styles.optionRow}>
+                {goals.map((goalOption) => (
+                    <TouchableOpacity
+                        key={goalOption.label}
+                        style={[
+                            styles.optionButton,
+                            goal === goalOption.label && styles.selectedOption
+                        ]}
+                        onPress={() => setGoal(goalOption.label)}
+                    >
+                        <Text style={styles.optionIcon}>{goalOption.icon}</Text>
+                        <Text style={styles.optionLabel}>{goalOption.label}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
+
+    // Render manual macros toggle
+    const renderManualMacrosToggle = () => (
+        <View style={styles.manualMacrosContainer}>
+            <Text style={styles.manualMacrosLabel}>Enter Macros Manually</Text>
+            <TouchableOpacity
+                style={[
+                    styles.toggleSwitch,
+                    manualMacros && styles.toggleSwitchActive
+                ]}
+                onPress={() => setManualMacros(!manualMacros)}
+            >
+                <View style={[
+                    styles.toggleSwitchHandle,
+                    manualMacros && styles.toggleSwitchHandleActive
+                ]} />
+            </TouchableOpacity>
         </View>
     );
 
     return (
         <KeyboardAvoidingView
-            style={{ flex: 1 }}
+            style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ScrollView
-                style={styles.container}
                 contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.title}>Set Your Macro Goals</Text>
+                <Text style={styles.title}>Tell us about yourself</Text>
+                <Text style={styles.subtitle}>Let's create your personalized plan</Text>
 
-                {renderInputField('Calories', 'calories', 'Daily calorie target', 'numeric')}
-                {renderInputField('Protein (g)', 'protein', 'Daily protein target', 'numeric')}
-                {renderInputField('Carbs (g)', 'carbs', 'Daily carbohydrate target', 'numeric')}
-                {renderInputField('Fat (g)', 'fat', 'Daily fat target', 'numeric')}
-                {renderInputField('Location', 'location', 'Enter your location or zip code')}
+                {renderUnitToggle()}
 
-                <View style={styles.previewContainer}>
-                    <Text style={styles.previewTitle}>Your Macro Targets:</Text>
-                    <MacroDisplay macros={formValues} showPercentages />
-                </View>
+                {renderInputRow('Age', age, setAge, 'Years')}
+                {renderInputRow('Weight', weight, setWeight, unit === 'Metric' ? 'kg' : 'lb')}
+                {renderInputRow('Height', height, setHeight, unit === 'Metric' ? 'cm' : 'ft')}
+
+                {renderGenderSelect()}
+                {renderActivityLevelSelector()}
+                {renderGoalSelector()}
+                {renderManualMacrosToggle()}
 
                 <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={handleSubmit}
+                    style={styles.calculateButton}
+                    onPress={handleCalculateMacros}
                     disabled={isLoading}
                 >
                     {isLoading ? (
                         <ActivityIndicator color="white" size="small" />
                     ) : (
-                        <Text style={styles.submitButtonText}>Find Meals</Text>
+                        <Text style={styles.calculateButtonText}>Calculate My Macros</Text>
                     )}
                 </TouchableOpacity>
-
-                {/* Add bottom padding for safe area */}
-                <View style={styles.bottomSpacer} />
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -253,59 +252,164 @@ export const MacroInputScreen: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: 'white',
     },
     contentContainer: {
         padding: 20,
     },
     title: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    inputContainer: {
-        marginBottom: 16,
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 8,
-        fontWeight: '500',
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-    },
-    inputError: {
-        borderColor: '#ff6b6b',
-    },
-    errorText: {
-        color: '#ff6b6b',
-        fontSize: 14,
-        marginTop: 4,
-    },
-    previewContainer: {
-        marginTop: 20,
-        marginBottom: 20,
-    },
-    previewTitle: {
-        fontSize: 18,
-        fontWeight: '600',
+        color: '#333',
         marginBottom: 10,
     },
-    submitButton: {
-        backgroundColor: '#4a6da7',
-        borderRadius: 10,
-        padding: 16,
-        alignItems: 'center',
-        marginTop: 10,
+    subtitle: {
+        fontSize: 16,
+        color: '#666',
+        marginBottom: 20,
     },
-    submitButtonText: {
+    unitToggleContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#f1f1f1',
+        borderRadius: 10,
+        marginBottom: 20,
+    },
+    unitToggleButton: {
+        flex: 1,
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    activeUnitToggle: {
+        backgroundColor: '#19a28f',
+    },
+    inactiveUnitToggle: {
+        backgroundColor: 'transparent',
+    },
+    activeUnitText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    inactiveUnitText: {
+        color: '#666',
+    },
+    inputContainer: {
+        marginBottom: 15,
+    },
+    inputLabel: {
+        fontSize: 16,
+        color: '#333',
+        marginBottom: 8,
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+    },
+    input: {
+        flex: 1,
+        height: 50,
+        fontSize: 16,
+    },
+    unitText: {
+        color: '#666',
+        marginLeft: 10,
+    },
+    selectInput: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 10,
+        height: 50,
+        paddingHorizontal: 15,
+    },
+    selectInputText: {
+        color: '#666',
+        fontSize: 16,
+    },
+    dropdownIcon: {
+        color: '#666',
+        fontSize: 12,
+    },
+    selectorContainer: {
+        marginBottom: 20,
+    },
+    sectionLabel: {
+        fontSize: 16,
+        color: '#333',
+        marginBottom: 10,
+    },
+    optionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    optionButton: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 15,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 10,
+        marginHorizontal: 5,
+    },
+    selectedOption: {
+        backgroundColor: '#19a28f',
+        borderColor: '#19a28f',
+    },
+    optionIcon: {
+        fontSize: 24,
+        marginBottom: 5,
+    },
+    optionLabel: {
+        fontSize: 14,
+        color: '#333',
+    },
+    manualMacrosContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    manualMacrosLabel: {
+        fontSize: 16,
+        color: '#333',
+    },
+    toggleSwitch: {
+        width: 50,
+        height: 25,
+        backgroundColor: '#ddd',
+        borderRadius: 15,
+        justifyContent: 'center',
+    },
+    toggleSwitchActive: {
+        backgroundColor: '#19a28f',
+    },
+    toggleSwitchHandle: {
+        width: 21,
+        height: 21,
+        borderRadius: 10.5,
+        backgroundColor: 'white',
+        alignSelf: 'flex-start',
+        marginLeft: 2,
+    },
+    toggleSwitchHandleActive: {
+        alignSelf: 'flex-end',
+        marginRight: 2,
+    },
+    calculateButton: {
+        backgroundColor: '#19a28f',
+        borderRadius: 10,
+        paddingVertical: 15,
+        alignItems: 'center',
+    },
+    calculateButtonText: {
         color: 'white',
         fontSize: 18,
-        fontWeight: '600',
+        fontWeight: 'bold',
     },
 });
