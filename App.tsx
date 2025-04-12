@@ -7,6 +7,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 // Import screens
+import useStore from "./src/store/useStore";
 
 import useAuthStore from "./src/store/authStore";
 import {LoginScreen} from "./src/screens/LoginScreen";
@@ -16,9 +17,10 @@ import {MacroInputScreen} from "./src/screens/MacroInputScreen";
 import {MealListScreen} from "./src/screens/MealListScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {WelcomeScreen} from "./src/screens/WelcomeScreen";
-import {useStore} from "zustand";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 import {NearbyMealsScreen} from "./src/screens/NearbyMealsScreen";
+import MealLogScreen from "./src/screens/MealLogScreen";
+import AddMealScreen from "./src/screens/AddMealScreen";
 
 // Define the stack navigator type
 type RootStackParamList = {
@@ -34,7 +36,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
-    const { setAuthenticated } = useAuthStore();
+    const { setAuthenticated } = useStore();
 
     useEffect(() => {
         // Check for existing authentication on app startup
@@ -64,6 +66,8 @@ export default function App() {
                 screenOptions={{ headerShown: false }}
             >
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                <Stack.Screen name="AddMeal" component={AddMealScreen} />
+                <Stack.Screen name="MealLog" component={MealLogScreen} />
                 <Stack.Screen name="NearbyMeals" component={NearbyMealsScreen} />
                 <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
                 <Stack.Screen name="LoginScreen" component={LoginScreen} />

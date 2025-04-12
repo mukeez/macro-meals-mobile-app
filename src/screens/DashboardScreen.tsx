@@ -82,7 +82,7 @@ export const DashboardScreen = ({ navigation }) => {
     const handleLogMeal = () => {
         // Navigate to log meal screen
         // This would be implemented once you have that screen
-        alert('Log Meal functionality coming soon!');
+        navigation.navigate('MealLog')
     };
 
     const handleFindMeals = () => {
