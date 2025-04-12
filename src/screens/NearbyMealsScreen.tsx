@@ -52,6 +52,7 @@ export const NearbyMealsScreen: React.FC = () => {
 
             // Get current location
             const currentLocation = await locationService.getCurrentLocation();
+            console.log(currentLocation)
 
             if (currentLocation) {
                 setLocation(currentLocation);
@@ -61,6 +62,8 @@ export const NearbyMealsScreen: React.FC = () => {
                     currentLocation.coords.latitude,
                     currentLocation.coords.longitude
                 );
+
+                // console.log(address)
 
                 setCurrentAddress(address);
 
@@ -79,55 +82,62 @@ export const NearbyMealsScreen: React.FC = () => {
         }
     };
 
-    // Fetch nearby meals
-    const fetchNearbyMeals = async (showRefreshing = false) => {
-        if (showRefreshing) {
-            setRefreshing(true);
-        } else {
-            setIsLoading(true);
-        }
-
-        setError(null);
-
+    const getLocationDescription = async (location: Location.LocationObject): Promise<string> => {
         try {
-            // Ensure we have location
-            if (!location) {
-                await fetchCurrentLocation();
-            }
+            // Coordinates from the location object
+            const { latitude, longitude } = location.coords;
 
-            // Prepare meal suggestion request
-            const mealRequest: UserPreferences = {
-                ...preferences,
-                location: currentAddress || preferences.location || 'Unknown Location'
-            };
+            // Try to get a precise location description
+            const response = await locationService.reverseGeocode(latitude, longitude);
 
-            // Fetch meals from service
-            const fetchedMeals = await mealService.suggestMeals(mealRequest);
+            // If the full response is too long, we can parse it
+            const locationParts = response.split(',');
 
-            setMeals(fetchedMeals);
+            // Prioritize a concise, meaningful description
+            const specificLocation = locationParts.length > 2
+                ? `${locationParts[1].trim()}, ${locationParts[2].trim()}`
+                : response;
+
+            return specificLocation || `Longitude` + longitude + `Latitude` + latitude;
+
         } catch (error) {
-            console.error('Error fetching nearby meals:', error);
-
-            // Create a user-friendly error message
-            const errorMessage = error instanceof Error
-                ? error.message
-                : 'Failed to load nearby meals. Please try again.';
-
-            setError(errorMessage);
-
-            // Show an alert to the user
-            Alert.alert(
-                'Meal Suggestions Error',
-                errorMessage,
-                [{ text: 'OK' }]
-            );
-        } finally {
-            setIsLoading(false);
-            if (showRefreshing) {
-                setRefreshing(false);
-            }
+            console.error('Error parsing location:', error);
         }
     };
+
+    // Fetch nearby meals
+    const fetchNearbyMeals = async () => {
+        try {
+            // Get current location
+            const location = await locationService.getCurrentLocation();
+
+            if (!location) {
+                // Handle case where location couldn't be retrieved
+                return;
+            }
+
+            // Get a specific location description
+            const locationDescription = await getLocationDescription(location);
+            console.log(locationDescription)
+            // Prepare meal suggestion request
+            const mealRequest: any = {
+                location: locationDescription,
+                calories: preferences.calories,
+                protein: preferences.protein,
+                carbs: preferences.carbs,
+                fat: preferences.fat,
+            };
+
+            // Fetch meals
+            const meals = await mealService.suggestMeals(mealRequest);
+            console.log(meals)
+
+            setMeals(meals);
+        } catch (error) {
+            console.error('Error fetching nearby meals:', error);
+            // Handle error appropriately
+        }
+    }
 
     // Initial location and meal fetch
     useEffect(() => {
@@ -147,6 +157,8 @@ export const NearbyMealsScreen: React.FC = () => {
             </View>
         );
     }
+
+    console.log("here",preferences.location)
 
     // Render header with location and macro targets
     const renderHeader = () => (

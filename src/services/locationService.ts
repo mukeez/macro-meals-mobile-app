@@ -80,29 +80,59 @@ export const locationService = {
         longitude: number
     ): Promise<string> => {
         try {
-            const [locationInfo] = await Location.reverseGeocodeAsync({
-                latitude,
-                longitude
-            });
+            // Use OpenStreetMap Nominatim API for reverse geocoding
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+                {
+                    headers: {
+                        'User-Agent': 'MacroMeals/1.0'
+                    }
+                }
+            );
 
-            if (!locationInfo) {
-                return 'Unknown Location';
+            if (!response.ok) {
+                throw new Error('Geocoding request failed');
             }
 
-            // Format a readable address
-            const addressParts = [
-                locationInfo.street,
-                locationInfo.city,
-                locationInfo.region
-            ].filter(Boolean);
+            const data = await response.json();
 
-            return addressParts.join(', ');
+            // Extract street-level details
+            const address = data.address;
+
+            // Construct a street-level address
+            let streetLevelLocation = '';
+
+            // Prioritize most specific address components
+            if (address.road) {
+                streetLevelLocation += address.road;
+            }
+
+            if (address.house_number) {
+                streetLevelLocation = `${address.house_number} ${streetLevelLocation}`;
+            }
+
+            if (address.suburb) {
+                streetLevelLocation += `, ${address.suburb}`;
+            }
+
+            if (address.city || address.town) {
+                streetLevelLocation += `, ${address.city || address.town}`;
+            }
+
+            // Fallback to more general location if street-level details are insufficient
+            if (!streetLevelLocation) {
+                streetLevelLocation = data.display_name ||
+                    `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            }
+
+            return streetLevelLocation.trim();
         } catch (error) {
             console.error('Reverse geocoding error:', error);
-            return 'Unknown Location';
+
+            // Fallback to coordinates if geocoding fails
+            return `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
         }
     },
-
     /**
      * Calculate distance between two coordinates
      * @param lat1 First latitude
@@ -127,4 +157,7 @@ export const locationService = {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return R * c;
     }
+
+
+
 };

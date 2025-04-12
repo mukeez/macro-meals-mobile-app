@@ -1,11 +1,13 @@
 import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal } from '../types';
+import useAuthStore from "../store/authStore";
+import useStore from "../store/useStore";
 
 /**
  * API configuration.
  */
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 const API_ENDPOINTS = {
-    SUGGEST_MEALS: `${API_BASE_URL}/suggest-meals`,
+    SUGGEST_MEALS: `${API_BASE_URL}/meals/suggest-meals`,
 };
 
 /**
@@ -13,20 +15,27 @@ const API_ENDPOINTS = {
  */
 export const mealService = {
     /**
-     * Fetches meal suggestions based on user preferences.
+     * Fetches meal suggestions based on user macroAndLocation.
      *
-     * @param preferences - User macro targets and location
+     * @param macroAndLocation - User macro targets and location
      * @returns Promise with suggested meals
      */
-    suggestMeals: async (preferences: UserPreferences): Promise<Meal[]> => {
+
+
+    suggestMeals: async (macroAndLocation: any): Promise<Meal[]> => {
+
+        const token = useStore.getState().token;
         try {
             const response = await fetch(API_ENDPOINTS.SUGGEST_MEALS, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(preferences),
+                body: JSON.stringify(macroAndLocation),
             });
+
+            console.log(response)
 
             if (!response.ok) {
                 const errorText = await response.text();

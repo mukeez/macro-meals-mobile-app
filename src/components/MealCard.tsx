@@ -18,6 +18,26 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onPress }) => {
         }
     };
 
+    // Safe fallback rendering for name and restaurant
+    const nameText =
+        typeof meal.name === 'string'
+            ? meal.name
+            : meal.name?.toString?.() || '[Unnamed Meal]';
+
+    const restaurantText =
+        typeof meal.restaurant === 'string'
+            ? meal.restaurant
+            : meal.restaurant?.name
+                ? `${meal.restaurant.name}, ${meal.restaurant.location ?? ''}`
+                : JSON.stringify(meal.restaurant ?? '');
+
+    const descriptionText =
+        typeof meal.description === 'string'
+            ? meal.description
+            : meal.description
+                ? JSON.stringify(meal.description)
+                : '';
+
     return (
         <TouchableOpacity
             style={styles.container}
@@ -26,8 +46,8 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onPress }) => {
         >
             <View style={styles.header}>
                 <View style={styles.textContainer}>
-                    <Text style={styles.name}>{meal.name}</Text>
-                    <Text style={styles.restaurant}>{meal.restaurant}</Text>
+                    <Text style={styles.name}>{nameText}</Text>
+                    <Text style={styles.restaurant}>{restaurantText}</Text>
 
                     {meal.distance !== undefined && (
                         <Text style={styles.distance}>{meal.distance.toFixed(1)} km away</Text>
@@ -43,8 +63,8 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onPress }) => {
                 )}
             </View>
 
-            {meal.description && (
-                <Text style={styles.description}>{meal.description}</Text>
+            {descriptionText && (
+                <Text style={styles.description}>{descriptionText}</Text>
             )}
 
             <View style={styles.macroContainer}>

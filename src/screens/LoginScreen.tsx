@@ -57,10 +57,9 @@ export const LoginScreen: React.FC = () => {
 
         try {
             const data = await authService.login({ email, password });
-            console.log("hre")
             // Update authentication state in Zustand store
-            setAuthenticated(true, data.token, data.user.id);
-
+            setAuthenticated(true, data.access_token, data.user.id);
+            console.log(data.access_token)
             // Navigate to the main screen
             if (navigation) {
                 navigation.navigate('DashboardScreen');

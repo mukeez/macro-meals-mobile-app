@@ -32,7 +32,7 @@ export interface UserPreferences extends MacroTargets {
 export interface Meal {
     id: string;
     name: string;
-    restaurant: string;
+    restaurant: Restaurant;
     macros: MacroTargets;
     imageUrl?: string;
     description?: string;
@@ -52,4 +52,9 @@ export interface SuggestMealsRequest extends UserPreferences {}
  */
 export interface SuggestMealsResponse {
     meals: Meal[];
+}
+
+export interface Restaurant {
+    name: string;
+    location: string;
 }

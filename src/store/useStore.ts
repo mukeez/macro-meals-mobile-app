@@ -63,7 +63,10 @@ const useStore = create<AppState>()(
             userId: null,
 
             setAuthenticated: (authenticated, token, userId) => {
-                console.log('Setting authenticated:', { authenticated, userId });
+                console.log('Setting authenticated:', {
+                    authenticated,
+                    userId
+                });
                 set({
                     isAuthenticated: authenticated,
                     token,
@@ -103,7 +106,8 @@ const useStore = create<AppState>()(
                         token: null,
                         userId: null,
                         preferences: DEFAULT_USER_PREFERENCES,
-                        suggestedMeals: []
+                        suggestedMeals: [],
+                        suggestionsError: null
                     });
 
                     // Clear stored authentication data
@@ -156,6 +160,8 @@ const useStore = create<AppState>()(
                 token: state.token,
                 userId: state.userId,
                 preferences: state.preferences,
+                suggestedMeals: state.suggestedMeals,
+                suggestionsError: state.suggestionsError
             }),
         }
     )
