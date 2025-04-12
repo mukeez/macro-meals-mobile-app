@@ -18,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {WelcomeScreen} from "./src/screens/WelcomeScreen";
 import {useStore} from "zustand";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
+import {NearbyMealsScreen} from "./src/screens/NearbyMealsScreen";
 
 // Define the stack navigator type
 type RootStackParamList = {
@@ -63,6 +64,7 @@ export default function App() {
                 screenOptions={{ headerShown: false }}
             >
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                <Stack.Screen name="NearbyMeals" component={NearbyMealsScreen} />
                 <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
                 <Stack.Screen name="LoginScreen" component={LoginScreen} />
                 <Stack.Screen name="SignupScreen" component={SignupScreen} />

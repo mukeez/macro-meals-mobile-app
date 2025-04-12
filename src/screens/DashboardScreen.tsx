@@ -86,7 +86,7 @@ export const DashboardScreen = ({ navigation }) => {
     };
 
     const handleFindMeals = () => {
-        navigation.navigate('MealList', { fromSearch: true });
+        navigation.navigate('NearbyMeals', { fromSearch: true });
     };
 
     const handleMealLog = () => {

@@ -15,6 +15,8 @@ export interface MacroTargets {
  */
 export interface UserPreferences extends MacroTargets {
     location: string;
+    latitude?: number;
+    longitude?: number;
     age?: number;
     weight?: number;
     height?: number;
