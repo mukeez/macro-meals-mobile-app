@@ -1,6 +1,9 @@
+// store/useStore.ts
 import { create } from 'zustand';
-import { Meal, UserPreferences } from '../types';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Meal, UserPreferences } from '../types';
+import { authService } from '../services/authService';
 
 /**
  * Default user preferences with all values set to 0.
@@ -14,9 +17,10 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
     age: 0,
     weight: 0,
     height: 0,
-    sex: undefined,
+    gender: undefined,
     activityLevel: undefined,
     goal: undefined,
+    unitSystem: 'Metric',
 };
 
 /**
@@ -30,6 +34,7 @@ interface AppState {
 
     // Authentication methods
     setAuthenticated: (authenticated: boolean, token: string, userId: string) => void;
+    checkAuth: () => Promise<boolean>;
     logout: () => void;
 
     // User preferences state
@@ -49,89 +54,111 @@ interface AppState {
 /**
  * Zustand store hook for global application state.
  */
-const useStore = create<AppState>((set) => ({
-    // Authentication state
-    isAuthenticated: false,
-    token: null,
-    userId: null,
-
-    setAuthenticated: async (authenticated, token, userId) => {
-        console.log('Setting authenticated during onboarding:', { authenticated, userId });
-
-        // Validate user ID
-        if (!userId) {
-            console.error('No user ID provided');
-            return;
-        }
-
-        set({
-            isAuthenticated: authenticated,
-            token: '',
-            userId
-        });
-
-        // Store user ID for onboarding
-        try {
-            await AsyncStorage.setItem('user_id', userId);
-            console.log('Successfully stored user ID for onboarding');
-        } catch (error) {
-            console.error('Error storing user ID:', error);
-        }
-    },
-    logout: async () => {
-        set({
+const useStore = create<AppState>()(
+    persist(
+        (set, get) => ({
+            // Authentication state
             isAuthenticated: false,
             token: null,
             userId: null,
-            preferences: DEFAULT_USER_PREFERENCES,
-            suggestedMeals: []
-        });
 
-        // Clear stored authentication data
-        try {
-            await AsyncStorage.removeItem('access_token');
-            await AsyncStorage.removeItem('user_id');
-            console.log('Removed access token and user ID');
-        } catch (error) {
-            console.error('Error removing authentication data:', error);
-        }
-    },
-
-    // User preferences
-    preferences: DEFAULT_USER_PREFERENCES,
-
-    updatePreferences: (newPreferences) =>
-        set((state) => ({
-            preferences: {
-                ...state.preferences,
-                ...newPreferences,
+            setAuthenticated: (authenticated, token, userId) => {
+                console.log('Setting authenticated:', { authenticated, userId });
+                set({
+                    isAuthenticated: authenticated,
+                    token,
+                    userId
+                });
             },
-        })),
 
-    resetPreferences: () =>
-        set(() => ({
+            checkAuth: async () => {
+                try {
+                    const token = await AsyncStorage.getItem('token');
+                    const userId = await AsyncStorage.getItem('userId');
+
+                    if (token && userId) {
+                        // Optionally validate token here
+                        set({
+                            isAuthenticated: true,
+                            token,
+                            userId
+                        });
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error checking auth:', error);
+                    return false;
+                }
+            },
+
+            logout: async () => {
+                try {
+                    await authService.logout();
+                } catch (error) {
+                    console.error('Error during logout:', error);
+                } finally {
+                    set({
+                        isAuthenticated: false,
+                        token: null,
+                        userId: null,
+                        preferences: DEFAULT_USER_PREFERENCES,
+                        suggestedMeals: []
+                    });
+
+                    // Clear stored authentication data
+                    await AsyncStorage.removeItem('token');
+                    await AsyncStorage.removeItem('userId');
+                }
+            },
+
+            // User preferences
             preferences: DEFAULT_USER_PREFERENCES,
-        })),
 
-    // Meal suggestions
-    suggestedMeals: [],
-    isLoadingSuggestions: false,
-    suggestionsError: null,
+            updatePreferences: (newPreferences) =>
+                set((state) => ({
+                    preferences: {
+                        ...state.preferences,
+                        ...newPreferences,
+                    },
+                })),
 
-    setSuggestedMeals: (meals) =>
-        set(() => ({
-            suggestedMeals: meals,
-        })),
+            resetPreferences: () =>
+                set(() => ({
+                    preferences: DEFAULT_USER_PREFERENCES,
+                })),
 
-    setIsLoadingSuggestions: (isLoading) =>
-        set(() => ({
-            isLoadingSuggestions: isLoading,
-        })),
+            // Meal suggestions
+            suggestedMeals: [],
+            isLoadingSuggestions: false,
+            suggestionsError: null,
 
-    setSuggestionsError: (error) =>
-        set(() => ({
-            suggestionsError: error,
-        })),
-}));
+            setSuggestedMeals: (meals) =>
+                set(() => ({
+                    suggestedMeals: meals,
+                })),
+
+            setIsLoadingSuggestions: (isLoading) =>
+                set(() => ({
+                    isLoadingSuggestions: isLoading,
+                })),
+
+            setSuggestionsError: (error) =>
+                set(() => ({
+                    suggestionsError: error,
+                })),
+        }),
+        {
+            name: 'macromate-storage',
+            storage: createJSONStorage(() => AsyncStorage),
+            partialize: (state) => ({
+                isAuthenticated: state.isAuthenticated,
+                token: state.token,
+                userId: state.userId,
+                preferences: state.preferences,
+            }),
+        }
+    )
+);
 
 export default useStore;

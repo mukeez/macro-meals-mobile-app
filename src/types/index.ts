@@ -1,6 +1,4 @@
-/**
- * Main types used throughout the application.
- */
+// types/index.ts
 
 /**
  * Represents user's macro targets.
@@ -20,9 +18,10 @@ export interface UserPreferences extends MacroTargets {
     age?: number;
     weight?: number;
     height?: number;
-    sex?: 'male' | 'female';
-    activityLevel?: 'sedentary' | 'moderate' | 'active';
-    goal?: 'lose' | 'maintain' | 'gain';
+    gender?: 'Male' | 'Female';
+    activityLevel?: 'Sedentary' | 'Moderate' | 'Active';
+    goal?: 'Lose' | 'Maintain' | 'Gain';
+    unitSystem?: 'Metric' | 'Imperial';
 }
 
 /**
@@ -37,6 +36,8 @@ export interface Meal {
     description?: string;
     price?: number;
     distance?: number; // Distance in kilometers or miles
+    mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+    date?: string; // ISO date string for logged meals
 }
 
 /**

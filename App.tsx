@@ -1,17 +1,23 @@
-import React, { useEffect, useState } from 'react';
+// App.tsx
+import React, {useEffect, useState} from 'react';
+import { StatusBar } from 'react-native';
+import { initGoogleSignIn } from "./services/socialAuthService";
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-// Import your screens
-import { WelcomeScreen } from './src/screens/WelcomeScreen';
-import { LoginScreen } from './src/screens/LoginScreen';
-import { SignupScreen } from './src/screens/SignupScreen';
-import { MacroInputScreen } from './src/screens/MacroInputScreen';
-import { MealListScreen } from './src/screens/MealListScreen';
+// Import screens
 
-// Import Zustand store
-import useStore from './src/store/useStore';
+import useAuthStore from "./src/store/authStore";
+import {LoginScreen} from "./src/screens/LoginScreen";
+import {SignupScreen} from "./src/screens/SignupScreen";
+import {DashboardScreen} from "./src/screens/DashboardScreen";
+import {MacroInputScreen} from "./src/screens/MacroInputScreen";
+import {MealListScreen} from "./src/screens/MealListScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {WelcomeScreen} from "./src/screens/WelcomeScreen";
+import {useStore} from "zustand";
+import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 
 // Define the stack navigator type
 type RootStackParamList = {
@@ -27,7 +33,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
-    const { setAuthenticated } = useStore();
+    const { setAuthenticated } = useAuthStore();
 
     useEffect(() => {
         // Check for existing authentication on app startup
@@ -50,11 +56,6 @@ export default function App() {
         checkAuthStatus();
     }, []);
 
-    // If still loading, you might want to show a splash screen
-    if (isLoading) {
-        return null; // or a loading component
-    }
-
     return (
         <NavigationContainer>
             <Stack.Navigator
@@ -62,9 +63,11 @@ export default function App() {
                 screenOptions={{ headerShown: false }}
             >
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
                 <Stack.Screen name="LoginScreen" component={LoginScreen} />
                 <Stack.Screen name="SignupScreen" component={SignupScreen} />
                 <Stack.Screen name="MacroInput" component={MacroInputScreen} />
+                <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
                 <Stack.Screen name="MealList" component={MealListScreen} />
             </Stack.Navigator>
         </NavigationContainer>

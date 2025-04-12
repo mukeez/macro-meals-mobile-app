@@ -102,7 +102,7 @@ export const MacroInputScreen: React.FC = () => {
                 setSuggestedMeals(suggestedMeals);
 
                 // Navigate to meal list if navigation is available
-                navigation?.navigate('MealList', { fromCalculator: true });
+                navigation?.navigate('MacroGoals', { fromCalculator: true });
             } catch (error) {
                 console.error('Error fetching meal suggestions:', error);
                 setSuggestionsError('Failed to fetch meal suggestions. Please try again.');
