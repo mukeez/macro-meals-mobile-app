@@ -126,7 +126,6 @@ export const AddMealScreen: React.FC = () => {
             date: new Date().toISOString(),
         };
 
-        // In a real app, this would use a proper meal service and store
         console.log('Adding meal to log:', newMeal);
 
         // Navigate back to meal log screen

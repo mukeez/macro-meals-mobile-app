@@ -1,83 +1,170 @@
-import {Meal, UserPreferences} from "../types";
-import useStore from "../store/useStore";
-import {useNavigation} from "@react-navigation/native";
-import {useState} from "react";
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    SafeAreaView,
+    StatusBar,
+    ActivityIndicator,
+    RefreshControl,
+} from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import useStore from '../store/useStore';
+import { mealService } from '../services/mealService';
+import { Meal } from '../types';
 
+// Enum for meal types
 enum MealType {
     BREAKFAST = 'breakfast',
     LUNCH = 'lunch',
     DINNER = 'dinner'
 }
 
-
-interface Macros {
-    protein: number;
-    carbs: number;
-    fat: number;
-    calories: number;
+/**
+ * Interface for daily progress data from API
+ */
+interface DailyProgress {
+    logged_macros: {
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+    };
+    target_macros: {
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+    };
+    progress_percentage: {
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+    };
 }
 
-export const MealLogScreen: React.FC = () => {
-    // Get user preferences and meals from global store
-    const preferences = useStore((state: { preferences: UserPreferences }) => state.preferences);
+/**
+ * Screen to display daily meal log and macro progress
+ */
+const MealLogScreen: React.FC = () => {
+    // Access store values
+    const preferences = useStore(state => state.preferences);
+    const loggedMeals = useStore(state => state.loggedMeals || []);
+    const setLoggedMeals = useStore(state => state.setLoggedMeals);
+    const shouldRefreshMeals = useStore(state => state.shouldRefreshMeals);
+    const setShouldRefreshMeals = useStore(state => state.setShouldRefreshMeals);
+
     const navigation = useNavigation();
+    const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
+    /**
+     * Load both meals and daily progress
+     */
+    const loadData = async () => {
+        setLoading(true);
+        setError(null);
 
+        try {
+            // Call both APIs in parallel
+            const [mealsPromise, progressPromise] = [
+                mealService.getTodaysMeals(),
+                mealService.getDailyProgress()
+            ];
 
-    // State for logged meals
-    const [loggedMeals, setLoggedMeals] = useState<Meal[]>([
-        {
-            id: '1',
-            name: 'Oatmeal Bowl',
-            restaurant: { name: 'Home', location: '' },
-            macros: {
-                calories: 320,
-                protein: 12,
-                carbs: 45,
-                fat: 6
-            },
-            description: 'with banana and honey',
-            date: '2025-03-15T08:30:00Z',
-            mealType: MealType.BREAKFAST
-        },
-        {
-            id: '2',
-            name: 'Salmon Poke Bowl',
-            restaurant: { name: 'Poke Place', location: '' },
-            macros: {
-                calories: 580,
-                protein: 28,
-                carbs: 65,
-                fat: 22
-            },
-            description: 'with brown rice and avocado',
-            date: '2025-03-15T13:15:00Z',
-            mealType: MealType.LUNCH
+            // Wait for both requests to complete
+            const [meals, progress] = await Promise.all([mealsPromise, progressPromise]);
+
+            // Update state with fetched data
+            setLoggedMeals(meals || []);
+            setDailyProgress(progress);
+            setShouldRefreshMeals(false);
+        } catch (err: any) {
+            console.error('Error loading data:', err);
+            setError('Failed to load meals. Please try again.');
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
+
+    // Load data on mount
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    // Also refresh when the screen comes into focus if needed
+    useFocusEffect(
+        React.useCallback(() => {
+            if (shouldRefreshMeals) {
+                loadData();
+            }
+            return () => {};
+        }, [shouldRefreshMeals])
+    );
+
+    // Pull-to-refresh handler
+    const onRefresh = async () => {
+        setRefreshing(true);
+        try {
+            await loadData();
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     // Calculate current macro progress
     const calculateProgress = (consumed: number, target: number): number => {
+        if (!target || target <= 0) return 0;
         return Math.min((consumed / target) * 100, 100);
     };
 
-    // Sum up consumed macros
-    const consumedMacros: Macros = loggedMeals.reduce(
-        (acc: Macros, meal: Meal): Macros => ({
-            protein: acc.protein + meal.macros.protein,
-            carbs: acc.carbs + meal.macros.carbs,
-            fat: acc.fat + meal.macros.fat,
-            calories: acc.calories + meal.macros.calories
-        }),
-        { protein: 0, carbs: 0, fat: 0, calories: 0 }
-    );
+    // Get consumed macros from API response or calculate from meals
+    const getConsumedMacros = () => {
+        if (dailyProgress && dailyProgress.logged_macros) {
+            return dailyProgress.logged_macros;
+        }
+
+        // Fallback: calculate from meals
+        return (loggedMeals || []).reduce(
+            (acc, meal) => ({
+                protein: acc.protein + (meal?.macros?.protein || 0),
+                carbs: acc.carbs + (meal?.macros?.carbs || 0),
+                fat: acc.fat + (meal?.macros?.fat || 0),
+                calories: acc.calories + (meal?.macros?.calories || 0)
+            }),
+            { protein: 0, carbs: 0, fat: 0, calories: 0 }
+        );
+    };
+
+    // Get target macros from API response or use preferences
+    const getTargetMacros = () => {
+        if (dailyProgress && dailyProgress.target_macros) {
+            return dailyProgress.target_macros;
+        }
+
+        // Fallback: use preferences
+        return {
+            protein: preferences?.protein || 0,
+            carbs: preferences?.carbs || 0,
+            fat: preferences?.fat || 0,
+            calories: preferences?.calories || 0
+        };
+    };
+
+    const consumedMacros = getConsumedMacros();
+    const targetMacros = getTargetMacros();
 
     /**
      * Navigate to the add meal screen
      */
     const handleAddMeal = (): void => {
-        // In a real app, this would navigate to the add meal screen
-        // Using type assertion to avoid type issues with navigation
         navigation.navigate('AddMeal' as never);
     };
 
@@ -87,14 +174,21 @@ export const MealLogScreen: React.FC = () => {
      * @returns Formatted time string in 12-hour format with AM/PM
      */
     const formatTime = (dateString: string): string => {
-        const date = new Date(dateString);
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const formattedHours = hours % 12 || 12;
-        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+        if (!dateString) return ''; // Handle null or undefined
 
-        return `${formattedHours}:${formattedMinutes} ${ampm}`;
+        try {
+            const date = new Date(dateString);
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = hours % 12 || 12;
+            const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+            return `${formattedHours}:${formattedMinutes} ${ampm}`;
+        } catch (e) {
+            console.error('Error formatting date:', e);
+            return '';
+        }
     };
 
     /**
@@ -102,9 +196,11 @@ export const MealLogScreen: React.FC = () => {
      * @param meal - The meal data to render
      * @returns JSX element for the meal card
      */
-    const renderMealCard = (meal: Meal): JSX.Element => {
+    const renderMealCard = (meal: Meal) => {
+        if (!meal) return null;
+
         // Determine meal icon based on meal type
-        const getMealIcon = (): string => {
+        const getMealIcon = () => {
             switch (meal.mealType) {
                 case MealType.BREAKFAST:
                     return '☀️';
@@ -119,7 +215,9 @@ export const MealLogScreen: React.FC = () => {
         const formattedTime = formatTime(meal.date);
 
         // Format the meal type for display
-        const mealTypeLabel = meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1);
+        const mealTypeLabel = meal.mealType
+            ? meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)
+            : 'Meal';
 
         return (
             <View key={meal.id} style={styles.mealCard}>
@@ -133,8 +231,8 @@ export const MealLogScreen: React.FC = () => {
 
                 <View style={styles.mealCardBody}>
                     <View style={styles.mealInfoContainer}>
-                        <Text style={styles.mealName}>{meal.name}</Text>
-                        <Text style={styles.mealDescription}>{meal.description}</Text>
+                        <Text style={styles.mealName}>{meal.name || 'Unnamed Meal'}</Text>
+                        <Text style={styles.mealDescription}>{meal.description || ''}</Text>
                     </View>
 
                     <View style={styles.mealActions}>
@@ -150,17 +248,25 @@ export const MealLogScreen: React.FC = () => {
                 <View style={styles.macroRow}>
                     <View style={styles.macroItem}>
                         <Text style={styles.macroLabel}>P: </Text>
-                        <Text style={{...styles.macroValue, ...styles.proteinText}}>{meal.macros.protein}g</Text>
+                        <Text style={{...styles.macroValue, ...styles.proteinText}}>
+                            {meal.macros?.protein || 0}g
+                        </Text>
                     </View>
                     <View style={styles.macroItem}>
                         <Text style={styles.macroLabel}>C: </Text>
-                        <Text style={{...styles.macroValue, ...styles.carbsText}}>{meal.macros.carbs}g</Text>
+                        <Text style={{...styles.macroValue, ...styles.carbsText}}>
+                            {meal.macros?.carbs || 0}g
+                        </Text>
                     </View>
                     <View style={styles.macroItem}>
                         <Text style={styles.macroLabel}>F: </Text>
-                        <Text style={{...styles.macroValue, ...styles.fatsText}}>{meal.macros.fat}g</Text>
+                        <Text style={{...styles.macroValue, ...styles.fatsText}}>
+                            {meal.macros?.fat || 0}g
+                        </Text>
                     </View>
-                    <Text style={styles.calories}>{meal.macros.calories} kcal</Text>
+                    <Text style={styles.calories}>
+                        {meal.macros?.calories || 0} kcal
+                    </Text>
                 </View>
             </View>
         );
@@ -183,63 +289,94 @@ export const MealLogScreen: React.FC = () => {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.scrollContainer}>
-                {/* Daily Progress Section */}
-                <View style={styles.progressSection}>
-                    <View style={styles.progressHeader}>
-                        <Text style={styles.progressTitle}>Daily Progress</Text>
-                        <Text style={styles.dateText}>March 15, 2025</Text>
+            <ScrollView
+                style={styles.scrollContainer}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />
+                }
+            >
+                {error ? (
+                    <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{error}</Text>
+                        <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+                            <Text style={styles.retryButtonText}>Retry</Text>
+                        </TouchableOpacity>
                     </View>
+                ) : (
+                    <>
+                        {/* Daily Progress Section */}
+                        <View style={styles.progressSection}>
+                            <View style={styles.progressHeader}>
+                                <Text style={styles.progressTitle}>Daily Progress</Text>
+                                <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
+                            </View>
 
-                    <View style={styles.macroCards}>
-                        {/* Protein Card */}
-                        <View style={{...styles.macroCard, ...styles.proteinCard}}>
-                            <Text style={styles.macroCardTitle}>Protein</Text>
-                            <Text style={styles.macroCardValue}>{consumedMacros.protein}g</Text>
-                            <View style={styles.progressBarContainer}>
-                                <View style={{
-                                    height: '100%',
-                                    borderRadius: 3,
-                                    backgroundColor: '#009688',
-                                    width: `${calculateProgress(consumedMacros.protein, preferences.protein)}%`
-                                }} />
+                            <View style={styles.macroCards}>
+                                {/* Protein Card */}
+                                <View style={{...styles.macroCard, ...styles.proteinCard}}>
+                                    <Text style={styles.macroCardTitle}>Protein</Text>
+                                    <Text style={styles.macroCardValue}>{consumedMacros.protein}g</Text>
+                                    <View style={styles.progressBarContainer}>
+                                        <View style={{
+                                            height: '100%',
+                                            borderRadius: 3,
+                                            backgroundColor: '#009688',
+                                            width: `${calculateProgress(consumedMacros.protein, targetMacros.protein)}%`
+                                        }} />
+                                    </View>
+                                </View>
+
+                                {/* Carbs Card */}
+                                <View style={{...styles.macroCard, ...styles.carbsCard}}>
+                                    <Text style={styles.macroCardTitle}>Carbs</Text>
+                                    <Text style={styles.macroCardValue}>{consumedMacros.carbs}g</Text>
+                                    <View style={styles.progressBarContainer}>
+                                        <View style={{
+                                            height: '100%',
+                                            borderRadius: 3,
+                                            backgroundColor: '#FF9800',
+                                            width: `${calculateProgress(consumedMacros.carbs, targetMacros.carbs)}%`
+                                        }} />
+                                    </View>
+                                </View>
+
+                                {/* Fats Card */}
+                                <View style={{...styles.macroCard, ...styles.fatsCard}}>
+                                    <Text style={styles.macroCardTitle}>Fats</Text>
+                                    <Text style={styles.macroCardValue}>{consumedMacros.fat}g</Text>
+                                    <View style={styles.progressBarContainer}>
+                                        <View style={{
+                                            height: '100%',
+                                            borderRadius: 3,
+                                            backgroundColor: '#F44336',
+                                            width: `${calculateProgress(consumedMacros.fat, targetMacros.fat)}%`
+                                        }} />
+                                    </View>
+                                </View>
                             </View>
                         </View>
 
-                        {/* Carbs Card */}
-                        <View style={{...styles.macroCard, ...styles.carbsCard}}>
-                            <Text style={styles.macroCardTitle}>Carbs</Text>
-                            <Text style={styles.macroCardValue}>{consumedMacros.carbs}g</Text>
-                            <View style={styles.progressBarContainer}>
-                                <View style={{
-                                    height: '100%',
-                                    borderRadius: 3,
-                                    backgroundColor: '#FF9800',
-                                    width: `${calculateProgress(consumedMacros.carbs, preferences.carbs)}%`
-                                }} />
-                            </View>
+                        {/* Meal List */}
+                        <View style={styles.mealList}>
+                            {loading ? (
+                                <View style={styles.loadingContainer}>
+                                    <ActivityIndicator size="large" color="#009688" />
+                                    <Text style={styles.loadingText}>Loading meals...</Text>
+                                </View>
+                            ) : !loggedMeals || loggedMeals.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <Text style={styles.emptyStateText}>No meals logged today</Text>
+                                    <Text style={styles.emptyStateSubtext}>Tap "Add Meal" to log your first meal</Text>
+                                </View>
+                            ) : (
+                                loggedMeals.map(meal => renderMealCard(meal))
+                            )}
                         </View>
-
-                        {/* Fats Card */}
-                        <View style={{...styles.macroCard, ...styles.fatsCard}}>
-                            <Text style={styles.macroCardTitle}>Fats</Text>
-                            <Text style={styles.macroCardValue}>{consumedMacros.fat}g</Text>
-                            <View style={styles.progressBarContainer}>
-                                <View style={{
-                                    height: '100%',
-                                    borderRadius: 3,
-                                    backgroundColor: '#F44336',
-                                    width: `${calculateProgress(consumedMacros.fat, preferences.fat)}%`
-                                }} />
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Meal List */}
-                <View style={styles.mealList}>
-                    {loggedMeals.map(meal => renderMealCard(meal))}
-                </View>
+                    </>
+                )}
 
                 {/* Spacer to ensure Add Meal button doesn't overlap content */}
                 <View style={styles.spacer} />
@@ -399,6 +536,60 @@ const styles = StyleSheet.create({
     },
     mealList: {
         paddingHorizontal: 16,
+        minHeight: 200,
+    },
+    loadingContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 16,
+        color: '#666',
+    },
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 40,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        marginVertical: 16,
+    },
+    emptyStateText: {
+        fontSize: 18,
+        fontWeight: '500',
+        color: '#333',
+        marginBottom: 8,
+    },
+    emptyStateSubtext: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+    },
+    errorContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 40,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        margin: 16,
+    },
+    errorText: {
+        fontSize: 16,
+        color: '#F44336',
+        marginBottom: 16,
+        textAlign: 'center',
+    },
+    retryButton: {
+        backgroundColor: '#009688',
+        paddingVertical: 8,
+        paddingHorizontal: 24,
+        borderRadius: 4,
+    },
+    retryButtonText: {
+        color: '#fff',
+        fontWeight: '500',
     },
     mealCard: {
         backgroundColor: '#fff',
@@ -533,5 +724,4 @@ const styles = StyleSheet.create({
     },
 });
 
-// Export the component as default
 export default MealLogScreen;

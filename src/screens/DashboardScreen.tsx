@@ -82,7 +82,7 @@ export const DashboardScreen = ({ navigation }) => {
     const handleLogMeal = () => {
         // Navigate to log meal screen
         // This would be implemented once you have that screen
-        navigation.navigate('MealLog')
+        navigation.navigate('AddMeal')
     };
 
     const handleFindMeals = () => {
@@ -92,7 +92,7 @@ export const DashboardScreen = ({ navigation }) => {
     const handleMealLog = () => {
         // Navigate to meal history screen
         // This would be implemented once you have that screen
-        alert('Meal Log functionality coming soon!');
+        navigation.navigate('MealLog')
     };
 
     // Rendering logic for loader, error, and content

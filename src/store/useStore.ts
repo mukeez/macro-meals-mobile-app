@@ -26,6 +26,18 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
 /**
  * Interface for the application state store.
  */
+interface LoggedMeal {
+    id: string;
+    user_id: string;
+    name: string;
+    protein: number;
+    carbs: number;
+    fat: number;
+    calories: number;
+    meal_time: string;
+    created_at: string;
+}
+
 interface AppState {
     // Authentication state
     isAuthenticated: boolean;
@@ -49,7 +61,40 @@ interface AppState {
     setSuggestedMeals: (meals: Meal[]) => void;
     setIsLoadingSuggestions: (isLoading: boolean) => void;
     setSuggestionsError: (error: string | null) => void;
+
+    // Logged meals state and actions
+    loggedMeals: Meal[];
+    addLoggedMeal: (meal: Meal) => void;
+    setLoggedMeals: (meals: Meal[]) => void;
+    refreshMeals: () => Promise<void>;
+    shouldRefreshMeals: boolean;
+    setShouldRefreshMeals: (shouldRefresh: boolean) => void;
 }
+
+/**
+ * Convert API LoggedMeal format to app Meal format with null checking
+ */
+const convertToMeal = (loggedMeal: LoggedMeal): Meal | null => {
+    if (!loggedMeal) return null;
+
+    return {
+        id: loggedMeal.id || String(Math.random()),
+        name: loggedMeal.name || 'Unnamed Meal',
+        restaurant: {
+            name: 'Home',  // Default value if not provided by API
+            location: '',
+        },
+        macros: {
+            calories: loggedMeal.calories || 0,
+            protein: loggedMeal.protein || 0,
+            carbs: loggedMeal.carbs || 0,
+            fat: loggedMeal.fat || 0,
+        },
+        description: '',  // Default value if not provided by API
+        date: loggedMeal.meal_time || new Date().toISOString(),
+        mealType: 'lunch',  // Default value if not provided by API
+    };
+};
 
 /**
  * Zustand store hook for global application state.
@@ -95,6 +140,58 @@ const useStore = create<AppState>()(
                 }
             },
 
+            // Initialize loggedMeals as an empty array
+            loggedMeals: [],
+
+            addLoggedMeal: (meal) => {
+                if (!meal) return;
+                set((state) => ({
+                    loggedMeals: [...(state.loggedMeals || []), meal]
+                }));
+            },
+
+            setLoggedMeals: (meals) => set({ loggedMeals: meals || [] }),
+
+            shouldRefreshMeals: false,
+
+            setShouldRefreshMeals: (shouldRefresh) => set({ shouldRefreshMeals: shouldRefresh }),
+
+            refreshMeals: async () => {
+                try {
+                    // Import here to avoid circular dependencies
+                    const mealServiceModule = await import('../services/mealService');
+                    const { mealService } = mealServiceModule;
+
+                    if (!mealService || !mealService.getTodaysMeals) {
+                        console.error('Meal service not available');
+                        return;
+                    }
+
+                    const todaysMeals = await mealService.getTodaysMeals();
+
+                    if (!todaysMeals) {
+                        console.error('No meals returned from API');
+                        set({ loggedMeals: [], shouldRefreshMeals: false });
+                        return;
+                    }
+
+                    // Convert API format to app format with null checking
+                    const meals = todaysMeals
+                        .filter(meal => meal) // Remove null items
+                        .map(convertToMeal)
+                        .filter(meal => meal); // Remove nulls after conversion
+
+                    set({
+                        loggedMeals: meals || [],
+                        shouldRefreshMeals: false
+                    });
+                } catch (error) {
+                    console.error('Failed to refresh meals:', error);
+                    // Set empty array on error to avoid undefined
+                    set({ loggedMeals: [], shouldRefreshMeals: false });
+                }
+            },
+
             logout: async () => {
                 try {
                     await authService.logout();
@@ -107,7 +204,9 @@ const useStore = create<AppState>()(
                         userId: null,
                         preferences: DEFAULT_USER_PREFERENCES,
                         suggestedMeals: [],
-                        suggestionsError: null
+                        suggestionsError: null,
+                        loggedMeals: [], // Clear logged meals on logout
+                        shouldRefreshMeals: false
                     });
 
                     // Clear stored authentication data
@@ -161,7 +260,9 @@ const useStore = create<AppState>()(
                 userId: state.userId,
                 preferences: state.preferences,
                 suggestedMeals: state.suggestedMeals,
-                suggestionsError: state.suggestionsError
+                suggestionsError: state.suggestionsError,
+                // Include loggedMeals in the persisted state
+                loggedMeals: state.loggedMeals
             }),
         }
     )
