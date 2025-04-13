@@ -21,6 +21,7 @@ import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 import {NearbyMealsScreen} from "./src/screens/NearbyMealsScreen";
 import MealLogScreen from "./src/screens/MealLogScreen";
 import AddMealScreen from "./src/screens/AddMealScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
 
 // Define the stack navigator type
 type RootStackParamList = {
@@ -66,6 +67,7 @@ export default function App() {
                 screenOptions={{ headerShown: false }}
             >
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
                 <Stack.Screen name="AddMeal" component={AddMealScreen} />
                 <Stack.Screen name="MealLog" component={MealLogScreen} />
                 <Stack.Screen name="NearbyMeals" component={NearbyMealsScreen} />

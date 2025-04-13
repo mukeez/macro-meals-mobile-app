@@ -253,7 +253,7 @@ export const DashboardScreen = ({ navigation }) => {
 
                 <TouchableOpacity
                     style={styles.navItem}
-                    onPress={() => alert('Settings coming soon!')}
+                    onPress={() => navigation.navigate('SettingsScreen')}
                 >
                     <Text style={styles.navIcon}>⚙️</Text>
                     <Text style={styles.navText}>Settings</Text>
