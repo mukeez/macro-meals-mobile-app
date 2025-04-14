@@ -7,7 +7,7 @@ import {
     SafeAreaView,
     ScrollView,
     Image,
-    Switch,
+    Switch, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
@@ -25,7 +25,7 @@ const SettingsScreen: React.FC = () => {
 
     // Local state for settings
     const [units, setUnits] = useState<string>('g/kcal');
-    const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+    // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
     const [userData, setUserData] = useState({
         name: 'Sarah Wilson',
         email: 'sarah@example.com',
@@ -54,22 +54,48 @@ const SettingsScreen: React.FC = () => {
      * Handle changing the units system
      * @param value - The new units value
      */
-    const handleUnitsChange = (value: string) => {
+    const handleUnitsChange = async (value: string) => {
         setUnits(value);
+
         // Update global preferences
+        const newUnitSystem = value === 'g/kcal' ? 'Metric' : 'Imperial';
         updatePreferences({
-            unitSystem: value === 'g/kcal' ? 'Metric' : 'Imperial'
+            unitSystem: newUnitSystem
         });
+
+        // Update preference on the backend
+        try {
+            const token = useStore.getState().token;
+            const response = await fetch('https://api.macromealsapp.com/api/v1/user/preferences', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    unitSystem: newUnitSystem
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update preferences');
+            }
+
+            console.log('Preferences updated successfully');
+        } catch (error) {
+            console.error('Error updating preferences:', error);
+            // You could add error handling UI here if needed
+        }
     };
 
     /**
      * Handle dark mode toggle
      * @param value - The new dark mode state
      */
-    const handleDarkModeToggle = (value: boolean) => {
-        setIsDarkMode(value);
-        // In a real app, you would update a theme context or store
-    };
+    // const handleDarkModeToggle = (value: boolean) => {
+    //     setIsDarkMode(value);
+    //     // In a real app, you would update a theme context or store
+    // };
 
     /**
      * Handle going back to the previous screen
@@ -82,9 +108,37 @@ const SettingsScreen: React.FC = () => {
      * Handle logout action
      */
     const handleLogout = async () => {
-        await logout();
-        // Navigate to login screen
-        navigation.navigate('Login' as never);
+        try {
+            // Call the logout function from the store
+            await logout(); // This should clear the auth state in the Zustand store
+
+            // Manually clear authentication tokens for extra security
+            const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('refresh_token');
+            await AsyncStorage.removeItem('user_id');
+
+            // Try to clear from SecureStore if available
+            try {
+                const { deleteItemAsync } = await import('expo-secure-store');
+                await deleteItemAsync('token');
+                await deleteItemAsync('refresh_token');
+                await deleteItemAsync('user_id');
+            } catch (secureStoreError) {
+                // SecureStore might not be available, which is fine
+                console.log('SecureStore not available, continuing with normal logout');
+            }
+
+            // Navigate to login screen
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'LoginScreen' as never }]
+            });
+        } catch (error) {
+            console.error('Error during logout:', error);
+            // Fallback navigation even if there was an error
+            navigation.navigate('LoginScreen' as never);
+        }
     };
 
     /**
@@ -92,7 +146,8 @@ const SettingsScreen: React.FC = () => {
      */
     const handleHelpSupport = () => {
         // Navigate to help screen
-        navigation.navigate('HelpSupport' as never);
+        Alert.alert('Help + Support ', 'Help + Support coming soon!')
+        // navigation.navigate('HelpSupport' as never);
     };
 
     /**
@@ -100,7 +155,9 @@ const SettingsScreen: React.FC = () => {
      */
     const handleSendFeedback = () => {
         // Navigate to feedback screen
-        navigation.navigate('SendFeedback' as never);
+        Alert.alert('Feedback ', 'Feedback coming soon!')
+
+        // navigation.navigate('SendFeedback' as never);
     };
 
     return (
@@ -190,19 +247,19 @@ const SettingsScreen: React.FC = () => {
                     </View>
 
                     {/* Dark Mode Setting */}
-                    <View style={styles.settingItem}>
-                        <View style={styles.settingIconContainer}>
-                            <Text style={styles.settingIcon}>🌙</Text>
-                        </View>
-                        <Text style={styles.settingLabel}>Dark Mode</Text>
-                        <Switch
-                            value={isDarkMode}
-                            onValueChange={handleDarkModeToggle}
-                            trackColor={{ false: '#E0E0E0', true: '#19a28f' }}
-                            thumbColor={isDarkMode ? '#FFF' : '#FFF'}
-                            style={styles.switch}
-                        />
-                    </View>
+                    {/*<View style={styles.settingItem}>*/}
+                    {/*    <View style={styles.settingIconContainer}>*/}
+                    {/*        <Text style={styles.settingIcon}>🌙</Text>*/}
+                    {/*    </View>*/}
+                    {/*    <Text style={styles.settingLabel}>Dark Mode</Text>*/}
+                    {/*    <Switch*/}
+                    {/*        value={isDarkMode}*/}
+                    {/*        onValueChange={handleDarkModeToggle}*/}
+                    {/*        trackColor={{ false: '#E0E0E0', true: '#19a28f' }}*/}
+                    {/*        thumbColor={isDarkMode ? '#FFF' : '#FFF'}*/}
+                    {/*        style={styles.switch}*/}
+                    {/*    />*/}
+                    {/*</View>*/}
                 </View>
 
                 {/* Help and Support Section */}

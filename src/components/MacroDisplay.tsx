@@ -21,7 +21,6 @@ export const MacroDisplay: React.FC<MacroDisplayProps> = ({
                                                           }) => {
     const totalCalories = macros.calories;
 
-    // Calculate percentages if needed
     const calculatePercentage = (value: number, multiplier: number): number => {
         return Math.round((value * multiplier / totalCalories) * 100);
     };

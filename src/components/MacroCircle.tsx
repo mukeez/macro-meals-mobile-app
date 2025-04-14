@@ -1,4 +1,3 @@
-// components/MacroCircle.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -11,7 +10,6 @@ interface MacroCircleProps {
 }
 
 export const MacroCircle: React.FC<MacroCircleProps> = ({ type, value, progress, color }) => {
-    // Circle properties
     const size = 80;
     const strokeWidth = 8;
     const radius = (size - strokeWidth) / 2;
@@ -22,7 +20,6 @@ export const MacroCircle: React.FC<MacroCircleProps> = ({ type, value, progress,
         <View style={styles.container}>
             <View style={styles.circleContainer}>
                 <Svg width={size} height={size}>
-                    {/* Background Circle */}
                     <Circle
                         cx={size / 2}
                         cy={size / 2}
@@ -32,7 +29,6 @@ export const MacroCircle: React.FC<MacroCircleProps> = ({ type, value, progress,
                         fill="white"
                     />
 
-                    {/* Progress Circle */}
                     <Circle
                         cx={size / 2}
                         cy={size / 2}

@@ -13,7 +13,6 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
 
-// Define types
 interface RecentMeal {
     id: string;
     name: string;
@@ -32,14 +31,12 @@ interface RecentMeal {
 export const AddMealScreen: React.FC = () => {
     const navigation = useNavigation();
 
-    // State for the new meal
     const [mealName, setMealName] = useState<string>('');
     const [calories, setCalories] = useState<string>('0');
     const [protein, setProtein] = useState<string>('0');
     const [carbs, setCarbs] = useState<string>('0');
     const [fats, setFats] = useState<string>('0');
 
-    // Recent meals for quick add
     const [recentMeals] = useState<RecentMeal[]>([
         {
             id: '1',
@@ -107,14 +104,11 @@ export const AddMealScreen: React.FC = () => {
      * Adds the current meal to the log
      */
     const handleAddToLog = (): void => {
-        // Validate input
         if (!mealName.trim()) {
-            // Show error (in a real app, we'd use a proper alert/toast)
             console.error('Please enter a meal name');
             return;
         }
 
-        // Create meal object
         const newMeal = {
             name: mealName,
             macros: {
@@ -144,7 +138,6 @@ export const AddMealScreen: React.FC = () => {
      * Handles adding a photo to the meal
      */
     const handleAddPhoto = (): void => {
-        // Implementation for adding a meal photo
         console.log('Add meal photo');
     };
 
@@ -152,7 +145,6 @@ export const AddMealScreen: React.FC = () => {
         <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" />
 
-            {/* Header */}
             <View style={styles.header}>
     <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
     <Text style={styles.backButtonText}>←</Text>
@@ -164,7 +156,6 @@ export const AddMealScreen: React.FC = () => {
     </View>
 
     <ScrollView style={styles.scrollContainer}>
-        {/* Photo Upload Area */}
         <TouchableOpacity
     style={styles.photoUploadContainer}
     onPress={handleAddPhoto}

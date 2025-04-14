@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import useStore from '../store/useStore';
 import { mealService } from '../services/mealService';
@@ -30,8 +31,9 @@ export const DashboardScreen = ({ navigation }) => {
     const [username, setUsername] = useState('User');
     const [progress, setProgress] = useState(0);
 
-    // Get user ID from store
+    // Get user ID and token from store
     const userId = useStore((state) => state.userId);
+    const token = useStore((state) => state.token);
     const preferences = useStore((state) => state.preferences);
 
     // Check if we need to go to MacroInput for initial setup
@@ -49,40 +51,104 @@ export const DashboardScreen = ({ navigation }) => {
             setError(null);
 
             try {
-                // In a real app, we'd get data from the API
-                // For now, use mock data
-                setTimeout(() => {
-                    setMacros({
-                        protein: 120,
-                        carbs: 200,
-                        fat: 65,
-                        calories: 1850
-                    });
-                    setConsumed({
-                        protein: 89,
-                        carbs: 152,
-                        fat: 48,
-                        calories: 1390
-                    });
-                    setUsername('Alex');
-                    setProgress(75);
-                    setIsLoading(false);
-                }, 1000);
+                if (!token) {
+                    throw new Error('Authentication token not available');
+                }
+
+                // 1. Fetch user profile info
+                const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!profileResponse.ok) {
+                    throw new Error('Failed to fetch user profile');
+                }
+
+                const profileData = await profileResponse.json();
+                // Extract display name or use part of email
+                setUsername(profileData.display_name || profileData.email.split('@')[0]);
+
+                // 2. Fetch user macro targets from preferences
+                const prefsResponse = await fetch('https://api.macromealsapp.com/api/v1/user/preferences', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!prefsResponse.ok) {
+                    throw new Error('Failed to fetch user preferences');
+                }
+
+                const prefsData = await prefsResponse.json();
+                // Set macro targets
+                setMacros({
+                    protein: prefsData.protein_target,
+                    carbs: prefsData.carbs_target,
+                    fat: prefsData.fat_target,
+                    calories: prefsData.calorie_target
+                });
+
+                // 3. Fetch today's macro progress
+                const progressResponse = await fetch('https://api.macromealsapp.com/api/v1/meals/progress/today', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!progressResponse.ok) {
+                    throw new Error('Failed to fetch daily progress');
+                }
+
+                const progressData = await progressResponse.json();
+
+                // Set consumed macros
+                setConsumed({
+                    protein: progressData.logged_macros.protein,
+                    carbs: progressData.logged_macros.carbs,
+                    fat: progressData.logged_macros.fat,
+                    calories: progressData.logged_macros.calories
+                });
+
+                // Calculate overall progress percentage
+                // Average of all macro percentages
+                const overallProgress = Object.values(progressData.progress_percentage).reduce(
+                    (sum, value) => sum + value, 0
+                ) / Object.values(progressData.progress_percentage).length;
+
+                setProgress(Math.round(overallProgress));
+                setIsLoading(false);
 
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 setError('Failed to load your data. Please try again.');
                 setIsLoading(false);
+
+                // Fallback to existing preferences from the store
+                // in case the API calls fail
+                if (preferences) {
+                    setMacros({
+                        protein: preferences.protein || 0,
+                        carbs: preferences.carbs || 0,
+                        fat: preferences.fat || 0,
+                        calories: preferences.calories || 0
+                    });
+                }
             }
         };
 
         fetchUserData();
-    }, [userId]);
+    }, [userId, token]);
 
     const handleLogMeal = () => {
-        // Navigate to log meal screen
-        // This would be implemented once you have that screen
-        navigation.navigate('AddMeal')
+        navigation.navigate('ScanScreenType');
     };
 
     const handleFindMeals = () => {
@@ -90,9 +156,12 @@ export const DashboardScreen = ({ navigation }) => {
     };
 
     const handleMealLog = () => {
-        // Navigate to meal history screen
-        // This would be implemented once you have that screen
-        navigation.navigate('MealLog')
+        navigation.navigate('MealLog');
+    };
+
+    const handleRefresh = () => {
+        setIsLoading(true);
+        // This will trigger the useEffect again
     };
 
     // Rendering logic for loader, error, and content
@@ -109,7 +178,7 @@ export const DashboardScreen = ({ navigation }) => {
         return (
             <View style={styles.centerContainer}>
                 <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={() => setIsLoading(true)}>
+                <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
                     <Text style={styles.retryButtonText}>Retry</Text>
                 </TouchableOpacity>
             </View>
@@ -118,16 +187,16 @@ export const DashboardScreen = ({ navigation }) => {
 
     // Calculate the remaining macros
     const remaining = {
-        protein: macros.protein - consumed.protein,
-        carbs: macros.carbs - consumed.carbs,
-        fat: macros.fat - consumed.fat,
-        calories: macros.calories - consumed.calories
+        protein: Math.max(0, macros.protein - consumed.protein),
+        carbs: Math.max(0, macros.carbs - consumed.carbs),
+        fat: Math.max(0, macros.fat - consumed.fat),
+        calories: Math.max(0, macros.calories - consumed.calories)
     };
 
     // Calculate progress percentages for each macro
-    const proteinProgress = Math.round((consumed.protein / macros.protein) * 100) || 0;
-    const carbsProgress = Math.round((consumed.carbs / macros.carbs) * 100) || 0;
-    const fatProgress = Math.round((consumed.fat / macros.fat) * 100) || 0;
+    const proteinProgress = Math.min(100, Math.round((consumed.protein / macros.protein) * 100) || 0);
+    const carbsProgress = Math.min(100, Math.round((consumed.carbs / macros.carbs) * 100) || 0);
+    const fatProgress = Math.min(100, Math.round((consumed.fat / macros.fat) * 100) || 0);
 
     return (
         <View style={styles.container}>
@@ -140,7 +209,7 @@ export const DashboardScreen = ({ navigation }) => {
                 </View>
                 <TouchableOpacity
                     style={styles.profileButton}
-                    onPress={() => navigation.navigate('MacroInput')}
+                    onPress={() => navigation.navigate('Settings')}
                 >
                     <Text style={styles.profileText}>👤</Text>
                 </TouchableOpacity>
@@ -202,7 +271,7 @@ export const DashboardScreen = ({ navigation }) => {
                         <View style={styles.caloriesRow}>
                             <Text style={styles.caloriesLabel}>Remaining</Text>
                             <Text style={[styles.caloriesValue, styles.remainingValue]}>
-                                {remaining.calories > 0 ? remaining.calories : 0}
+                                {remaining.calories}
                             </Text>
                         </View>
                     </View>
@@ -237,7 +306,7 @@ export const DashboardScreen = ({ navigation }) => {
 
                 <TouchableOpacity
                     style={styles.navItem}
-                    onPress={() => alert('Stats coming soon!')}
+                    onPress={() => Alert.alert('Stats', 'Stats coming soon!')}
                 >
                     <Text style={styles.navIcon}>📊</Text>
                     <Text style={styles.navText}>Stats</Text>

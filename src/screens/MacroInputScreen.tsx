@@ -97,11 +97,7 @@ export const MacroInputScreen: React.FC = () => {
             setIsLoadingSuggestions(true);
 
             try {
-                // Fetch meal suggestions
-                const suggestedMeals = await mealService.getMockMealSuggestions(calculatedPreferences);
-                setSuggestedMeals(suggestedMeals);
-
-                // Navigate to meal list if navigation is available
+                // Navigate to macro goals list if navigation is available
                 navigation?.navigate('MacroGoals', { fromCalculator: true });
             } catch (error) {
                 console.error('Error fetching meal suggestions:', error);

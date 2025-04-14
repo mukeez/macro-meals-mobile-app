@@ -18,7 +18,6 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onPress }) => {
         }
     };
 
-    // Safe fallback rendering for name and restaurant
     const nameText =
         typeof meal.name === 'string'
             ? meal.name
