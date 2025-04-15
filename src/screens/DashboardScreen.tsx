@@ -9,8 +9,6 @@ import {
     Alert,
 } from 'react-native';
 import useStore from '../store/useStore';
-import { mealService } from '../services/mealService';
-import { macroCalculationService } from '../services/macroCalculationService';
 
 export const DashboardScreen = ({ navigation }) => {
     // State for user data
@@ -31,20 +29,16 @@ export const DashboardScreen = ({ navigation }) => {
     const [username, setUsername] = useState('User');
     const [progress, setProgress] = useState(0);
 
-    // Get user ID and token from store
     const userId = useStore((state) => state.userId);
     const token = useStore((state) => state.token);
     const preferences = useStore((state) => state.preferences);
 
-    // Check if we need to go to MacroInput for initial setup
     useEffect(() => {
-        // If macros are all 0, likely need to set up user preferences
         if (preferences.calories === 0 && preferences.protein === 0) {
             navigation.navigate('MacroInput');
         }
     }, [preferences, navigation]);
 
-    // Fetch user data on component mount
     useEffect(() => {
         const fetchUserData = async () => {
             setIsLoading(true);
@@ -69,10 +63,8 @@ export const DashboardScreen = ({ navigation }) => {
                 }
 
                 const profileData = await profileResponse.json();
-                // Extract display name or use part of email
                 setUsername(profileData.display_name || profileData.email.split('@')[0]);
 
-                // 2. Fetch user macro targets from preferences
                 const prefsResponse = await fetch('https://api.macromealsapp.com/api/v1/user/preferences', {
                     method: 'GET',
                     headers: {
@@ -86,7 +78,6 @@ export const DashboardScreen = ({ navigation }) => {
                 }
 
                 const prefsData = await prefsResponse.json();
-                // Set macro targets
                 setMacros({
                     protein: prefsData.protein_target,
                     carbs: prefsData.carbs_target,
@@ -94,7 +85,6 @@ export const DashboardScreen = ({ navigation }) => {
                     calories: prefsData.calorie_target
                 });
 
-                // 3. Fetch today's macro progress
                 const progressResponse = await fetch('https://api.macromealsapp.com/api/v1/meals/progress/today', {
                     method: 'GET',
                     headers: {
@@ -109,7 +99,6 @@ export const DashboardScreen = ({ navigation }) => {
 
                 const progressData = await progressResponse.json();
 
-                // Set consumed macros
                 setConsumed({
                     protein: progressData.logged_macros.protein,
                     carbs: progressData.logged_macros.carbs,
@@ -117,8 +106,6 @@ export const DashboardScreen = ({ navigation }) => {
                     calories: progressData.logged_macros.calories
                 });
 
-                // Calculate overall progress percentage
-                // Average of all macro percentages
                 const overallProgress = Object.values(progressData.progress_percentage).reduce(
                     (sum, value) => sum + value, 0
                 ) / Object.values(progressData.progress_percentage).length;
@@ -161,10 +148,8 @@ export const DashboardScreen = ({ navigation }) => {
 
     const handleRefresh = () => {
         setIsLoading(true);
-        // This will trigger the useEffect again
     };
 
-    // Rendering logic for loader, error, and content
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
@@ -185,7 +170,6 @@ export const DashboardScreen = ({ navigation }) => {
         );
     }
 
-    // Calculate the remaining macros
     const remaining = {
         protein: Math.max(0, macros.protein - consumed.protein),
         carbs: Math.max(0, macros.carbs - consumed.carbs),
@@ -193,7 +177,6 @@ export const DashboardScreen = ({ navigation }) => {
         calories: Math.max(0, macros.calories - consumed.calories)
     };
 
-    // Calculate progress percentages for each macro
     const proteinProgress = Math.min(100, Math.round((consumed.protein / macros.protein) * 100) || 0);
     const carbsProgress = Math.min(100, Math.round((consumed.carbs / macros.carbs) * 100) || 0);
     const fatProgress = Math.min(100, Math.round((consumed.fat / macros.fat) * 100) || 0);
@@ -216,20 +199,17 @@ export const DashboardScreen = ({ navigation }) => {
             </View>
 
             <ScrollView style={styles.scrollView}>
-                {/* Greeting */}
                 <View style={styles.greetingContainer}>
                     <Text style={styles.greeting}>Hey {username}! <Text>👋</Text></Text>
                     <Text style={styles.subGreeting}>Let's track your macros for today</Text>
                 </View>
 
-                {/* Today's Progress */}
                 <View style={styles.progressContainer}>
                     <View style={styles.progressHeader}>
                         <Text style={styles.progressTitle}>Today's Progress</Text>
                         <Text style={styles.progressPercentage}>{progress}%</Text>
                     </View>
 
-                    {/* Macro Circles */}
                     <View style={styles.macroCirclesContainer}>
                         <View style={styles.macroItem}>
                             <View style={styles.macroCircle}>
@@ -262,7 +242,6 @@ export const DashboardScreen = ({ navigation }) => {
                         </View>
                     </View>
 
-                    {/* Calories Summary */}
                     <View style={styles.caloriesSummary}>
                         <View style={styles.caloriesRow}>
                             <Text style={styles.caloriesLabel}>Calories Consumed</Text>
@@ -277,7 +256,6 @@ export const DashboardScreen = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Action Buttons */}
                 <TouchableOpacity style={styles.actionButton} onPress={handleLogMeal}>
                     <Text style={styles.actionButtonText}>+ Log a Meal</Text>
                 </TouchableOpacity>
@@ -297,7 +275,6 @@ export const DashboardScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </ScrollView>
 
-            {/* Bottom Navigation */}
             <View style={styles.bottomNav}>
                 <TouchableOpacity style={styles.navItem}>
                     <Text style={styles.navIcon}>🏠</Text>

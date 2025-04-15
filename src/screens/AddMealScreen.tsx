@@ -166,7 +166,6 @@ export const AddMealScreen: React.FC = () => {
     <Text style={styles.photoText}>Add meal photo (optional)</Text>
     </TouchableOpacity>
 
-    {/* Meal Name Input */}
     <View style={styles.inputGroup}>
     <Text style={styles.inputLabel}>Meal Name</Text>
     <TextInput
@@ -177,7 +176,6 @@ export const AddMealScreen: React.FC = () => {
     />
     </View>
 
-    {/* Macros Inputs - Row 1 */}
     <View style={styles.macroRow}>
     <View style={styles.macroInputContainer}>
     <Text style={styles.inputLabel}>Calories</Text>
@@ -235,7 +233,6 @@ export const AddMealScreen: React.FC = () => {
         </View>
         </View>
 
-    {/* Quick Add Section */}
     <View style={styles.quickAddSection}>
     <Text style={styles.sectionTitle}>Quick Add from Recent</Text>
     <View style={styles.recentMealsContainer}>
@@ -252,7 +249,6 @@ export const AddMealScreen: React.FC = () => {
     </View>
     </View>
 
-    {/* Action Buttons */}
     <TouchableOpacity
         style={styles.addToLogButton}
     onPress={handleAddToLog}
@@ -267,14 +263,12 @@ export const AddMealScreen: React.FC = () => {
     <Text style={styles.saveTemplateButtonText}>Save as Template</Text>
     </TouchableOpacity>
 
-    {/* Bottom padding */}
     <View style={styles.bottomSpacer} />
     </ScrollView>
     </SafeAreaView>
 );
 };
 
-// Component styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,

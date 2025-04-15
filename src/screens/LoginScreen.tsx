@@ -35,7 +35,6 @@ export const LoginScreen: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    // Get navigation if available
     let navigation;
     try {
         navigation = useNavigation<LoginScreenNavigationProp>();
@@ -47,7 +46,6 @@ export const LoginScreen: React.FC = () => {
     const setAuthenticated = useStore((state) => state.setAuthenticated);
 
     const handleLogin = async () => {
-        // Validate form
         if (!email || !password) {
             Alert.alert('Error', 'Please enter both email and password');
             return;
@@ -57,10 +55,8 @@ export const LoginScreen: React.FC = () => {
 
         try {
             const data = await authService.login({ email, password });
-            // Update authentication state in Zustand store
             setAuthenticated(true, data.access_token, data.user.id);
             console.log(data.access_token)
-            // Navigate to the main screen
             if (navigation) {
                 navigation.navigate('DashboardScreen');
             }

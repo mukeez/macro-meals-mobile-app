@@ -24,12 +24,11 @@ export const macroCalculationService = {
         unitSystem: 'Metric' | 'Imperial';
     }): Promise<any> => {
         try {
-            // Format the data for the API
             const requestData = {
                 age: userData.age,
                 weight: userData.weight,
                 height: userData.height,
-                sex: userData.sex === "Male" ? "male" : "female", // Convert from "Male"/"Female" to "male"/"female"
+                sex: userData.sex === "Male" ? "male" : "female",
                 activity_level: userData.activityLevel.toLowerCase(),
                 goal: userData.goal.toLowerCase(),
                 unit_system: userData.unitSystem.toLowerCase(),
@@ -52,7 +51,6 @@ export const macroCalculationService = {
                         errorMessage = errorData.detail;
                     }
                 } catch (e) {
-                    // If we can't parse JSON, use the status text
                     errorMessage = response.statusText || errorMessage;
                 }
                 throw new Error(errorMessage);
@@ -60,7 +58,6 @@ export const macroCalculationService = {
 
             const data = await response.json();
 
-            // Convert the API response to our UserPreferences format
             return {
                 calories: data.calories,
                 protein: data.protein,

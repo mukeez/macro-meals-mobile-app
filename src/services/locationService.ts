@@ -11,10 +11,8 @@ export const locationService = {
      */
     requestPermissions: async (): Promise<boolean> => {
         try {
-            // Request foreground permissions
             const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
 
-            // If foreground not granted, try background permissions
             if (foregroundStatus !== 'granted') {
                 const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
                 return backgroundStatus === 'granted';
@@ -45,18 +43,16 @@ export const locationService = {
                 return null;
             }
 
-            // Get current location with high accuracy
             const location = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.High,
-                maximumAge: 10000,  // Use cached location up to 10 seconds old
-                timeout: 5000       // 5 second timeout
+                maximumAge: 10000,
+                timeout: 5000
             });
 
             return location;
         } catch (error) {
             console.error('Error getting current location:', error);
 
-            // Handle specific location errors
             if (error instanceof Error) {
                 Alert.alert(
                     'Location Error',
@@ -80,7 +76,6 @@ export const locationService = {
         longitude: number
     ): Promise<string> => {
         try {
-            // Use OpenStreetMap Nominatim API for reverse geocoding
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
                 {
@@ -119,7 +114,6 @@ export const locationService = {
                 streetLevelLocation += `, ${address.city || address.town}`;
             }
 
-            // Fallback to more general location if street-level details are insufficient
             if (!streetLevelLocation) {
                 streetLevelLocation = data.display_name ||
                     `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
@@ -129,7 +123,6 @@ export const locationService = {
         } catch (error) {
             console.error('Reverse geocoding error:', error);
 
-            // Fallback to coordinates if geocoding fails
             return `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
         }
     },

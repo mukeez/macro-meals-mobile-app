@@ -63,7 +63,6 @@ const ScanScreenType: React.FC = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Scan with Camera Option */}
             <View style={styles.optionCard}>
                 <View style={styles.optionContent}>
                     <View style={[styles.optionIconContainer, styles.cameraIconContainer]}>
@@ -82,7 +81,6 @@ const ScanScreenType: React.FC = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Scan Barcode Option */}
             <View style={styles.optionCard}>
                 <View style={styles.optionContent}>
                     <View style={[styles.optionIconContainer, styles.barcodeIconContainer]}>
@@ -101,7 +99,6 @@ const ScanScreenType: React.FC = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Manual Entry Option */}
             <View style={styles.optionCard}>
                 <View style={styles.optionContent}>
                     <View style={[styles.optionIconContainer, styles.manualIconContainer]}>
@@ -120,7 +117,6 @@ const ScanScreenType: React.FC = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Bottom Tab Bar */}
             <View style={styles.tabBar}>
                 <TouchableOpacity
                     style={styles.tabItem}

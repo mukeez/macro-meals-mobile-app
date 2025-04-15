@@ -37,9 +37,9 @@ export interface Meal {
     imageUrl?: string;
     description?: string;
     price?: number;
-    distance?: number; // Distance in kilometers or miles
+    distance?: number; //
     mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-    date?: string; // ISO date string for logged meals
+    date?: string; //
 }
 
 /**

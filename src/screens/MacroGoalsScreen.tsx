@@ -31,19 +31,15 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Get state from Zustand store
     const preferences = useStore((state) => state.preferences);
     const updatePreferences = useStore((state) => state.updatePreferences);
 
-    // Check if we have calculated macros from previous screen
     const calculatedMacros = route?.params?.calculatedMacros;
 
     useEffect(() => {
-        // If we already have calculated macros from navigation params, update store
         if (calculatedMacros) {
             updatePreferences(calculatedMacros);
         }
-        // If we don't have macros in params or store, load them from backend
         else if (!preferences.calories) {
             loadMacroGoals();
         }
@@ -54,7 +50,6 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
         setError(null);
 
         try {
-            // Try to get user metrics from store
             const metrics = {
                 age: preferences.age || 30,
                 weight: preferences.weight || 70,
@@ -65,10 +60,8 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
                 unitSystem: 'Metric' as const,
             };
 
-            // Call backend API to calculate macros
             const calculatedMacros = await macroCalculationService.calculateMacros(metrics);
 
-            // Update global state
             updatePreferences(calculatedMacros);
         } catch (error) {
             console.error('Error loading macro goals:', error);
@@ -86,7 +79,6 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
         navigation.goBack();
     };
 
-    // Calculate macronutrient percentages of total calories
     const calculateMacroPercentages = (): {
         proteinPercentage: number;
         carbsPercentage: number;
@@ -94,12 +86,10 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
     } => {
         const { calories, protein, carbs, fat } = preferences;
 
-        // Calculate calories from each macro
         const proteinCals = protein * 4;
         const carbsCals = carbs * 4;
         const fatCals = fat * 9;
 
-        // Calculate percentage of total calories
         const proteinPercentage = proteinCals / calories;
         const carbsPercentage = carbsCals / calories;
         const fatPercentage = fatCals / calories;
@@ -107,7 +97,6 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
         return { proteinPercentage, carbsPercentage, fatPercentage };
     };
 
-    // Render loading state
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.container, styles.centerContent]}>
@@ -117,7 +106,6 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
         );
     }
 
-    // Render error state
     if (error) {
         return (
             <SafeAreaView style={[styles.container, styles.centerContent]}>
@@ -129,14 +117,12 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
         );
     }
 
-    // Get macro percentages for the progress ring
     const { proteinPercentage, carbsPercentage, fatPercentage } = calculateMacroPercentages();
 
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
-            {/* Header with back button */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
                     <Text style={styles.backButtonText}>←</Text>
@@ -144,9 +130,7 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
                 <Text style={styles.headerTitle}>Your Macro Goals</Text>
             </View>
 
-            {/* Main content */}
             <View style={styles.content}>
-                {/* Macro progress ring */}
                 <View style={styles.ringContainer}>
                     <MacroRing
                         calories={preferences.calories}
@@ -156,7 +140,6 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
                     />
                 </View>
 
-                {/* Macro details cards */}
                 <View style={styles.macroCards}>
                     <MacroCard
                         label="Protein"
@@ -184,7 +167,6 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
                 </View>
             </View>
 
-            {/* Confirm button */}
             <TouchableOpacity
                 style={styles.confirmButton}
                 onPress={handleConfirm}
@@ -195,7 +177,6 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
     );
 };
 
-// Props for the MacroRing component
 interface MacroRingProps {
     calories: number;
     proteinPercentage: number;

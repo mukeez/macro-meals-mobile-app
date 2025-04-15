@@ -21,13 +21,11 @@ export const initGoogleSignIn = () => {
 
 
 export const socialAuthService = {
-    // Google Sign In
     signInWithGoogle: async () => {
         try {
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
 
-            // Send the ID token to your backend to verify and create a session
             const response = await fetch('https://api.macromate.com/auth/google', {
                 method: 'POST',
                 headers: {
@@ -56,24 +54,20 @@ export const socialAuthService = {
         }
     },
     signInWithApple: async () => {
-        // Check if Apple Sign In is available on this device
         if (!appleAuth.isSupported) {
             throw new Error('Apple Sign In is not supported on this device');
         }
 
         try {
-            // Request credentials
             const appleAuthRequestResponse = await appleAuth.performRequest({
                 requestedOperation: AppleAuthRequestOperation.LOGIN,
                 requestedScopes: [AppleAuthRequestScope.EMAIL, AppleAuthRequestScope.FULL_NAME],
             });
 
-            // Ensure Apple returned a user identityToken
             if (!appleAuthRequestResponse.identityToken) {
                 throw new Error('Apple Sign In failed - no identity token returned');
             }
 
-            // Send token to your backend
             const response = await fetch('https://api.macromate.com/auth/apple', {
                 method: 'POST',
                 headers: {
@@ -100,7 +94,6 @@ export const socialAuthService = {
     },
     signInWithFacebook: async () => {
         try {
-            // Request login with permissions
             const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
 
             if (result.isCancelled) {
@@ -114,7 +107,6 @@ export const socialAuthService = {
                 throw new Error('Failed to get Facebook access token');
             }
 
-            // Send token to your backend
             const response = await fetch('https://api.macromate.com/auth/facebook', {
                 method: 'POST',
                 headers: {

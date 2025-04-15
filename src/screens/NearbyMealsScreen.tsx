@@ -35,10 +35,8 @@ export const NearbyMealsScreen: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Get user's current location
     const fetchCurrentLocation = async () => {
         try {
-            // Check and request permissions
             const hasPermission = await locationService.requestPermissions();
 
             if (!hasPermission) {
@@ -50,14 +48,12 @@ export const NearbyMealsScreen: React.FC = () => {
                 return;
             }
 
-            // Get current location
             const currentLocation = await locationService.getCurrentLocation();
             console.log(currentLocation)
 
             if (currentLocation) {
                 setLocation(currentLocation);
 
-                // Reverse geocode to get human-readable address
                 const address = await locationService.reverseGeocode(
                     currentLocation.coords.latitude,
                     currentLocation.coords.longitude
@@ -67,7 +63,6 @@ export const NearbyMealsScreen: React.FC = () => {
 
                 setCurrentAddress(address);
 
-                // Update preferences with location
                 updatePreferences({
                     location: address,
                     latitude: currentLocation.coords.latitude,

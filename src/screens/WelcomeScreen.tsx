@@ -13,12 +13,10 @@ type RootStackParamList = {
 type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Welcome'>;
 
 export const WelcomeScreen: React.FC = () => {
-    // Try to get navigation, but don't throw an error if not available
     let navigation;
     try {
         navigation = useNavigation<WelcomeScreenNavigationProp>();
     } catch (error) {
-        // Navigation is not available
         console.log('Navigation not available');
     }
 
@@ -48,17 +46,14 @@ export const WelcomeScreen: React.FC = () => {
                     <Text style={styles.tagline}>Eat smart. Anywhere.</Text>
                 </View>
 
-                {/* Circle Graphic Placeholder */}
                 <View style={styles.circlePlaceholder} />
 
-                {/* Icon Buttons */}
                 <View style={styles.iconButtonsContainer}>
                     <View style={styles.iconButton} />
                     <View style={styles.iconButton} />
                     <View style={styles.iconButton} />
                 </View>
 
-                {/* Action Buttons */}
                 <View style={styles.actionButtonsContainer}>
                     <TouchableOpacity
                         style={styles.getStartedButton}

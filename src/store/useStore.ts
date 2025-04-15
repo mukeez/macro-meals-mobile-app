@@ -261,7 +261,6 @@ const useStore = create<AppState>()(
                 preferences: state.preferences,
                 suggestedMeals: state.suggestedMeals,
                 suggestionsError: state.suggestionsError,
-                // Include loggedMeals in the persisted state
                 loggedMeals: state.loggedMeals
             }),
         }

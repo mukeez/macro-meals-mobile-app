@@ -170,7 +170,6 @@ export const mealService = {
                         errorMessage = errorData.detail;
                     }
                 } catch (e) {
-                    // If parsing fails, use the default error message
                 }
                 throw new Error(errorMessage);
             }
@@ -211,7 +210,6 @@ export const mealService = {
                         errorMessage = errorData.detail;
                     }
                 } catch (e) {
-                    // If parsing fails, use the default error message
                 }
                 throw new Error(errorMessage);
             }

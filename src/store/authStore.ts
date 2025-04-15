@@ -8,7 +8,6 @@ import { authService } from '../services/authService';
 const useAuthStore = create(
     persist(
         (set, get) => ({
-            // Auth state
             isAuthenticated: false,
             token: null,
             userId: null,
@@ -16,7 +15,6 @@ const useAuthStore = create(
             isLoading: false,
             error: null,
 
-            // Set authentication state
             setAuthenticated: (authenticated, token, userId) => {
                 set({
                     isAuthenticated: authenticated,
@@ -25,7 +23,6 @@ const useAuthStore = create(
                     error: null
                 });
 
-                // Store token in local storage for persistence
                 if (authenticated && token) {
                     localStorage.setItem('token', token);
                     localStorage.setItem('userId', userId);
@@ -35,7 +32,6 @@ const useAuthStore = create(
                 }
             },
 
-            // Login action
             login: async (credentials) => {
                 set({ isLoading: true, error: null });
                 try {
@@ -57,7 +53,6 @@ const useAuthStore = create(
                 }
             },
 
-            // Social login actions
             loginWithGoogle: async () => {
                 set({ isLoading: true, error: null });
                 try {
@@ -121,7 +116,6 @@ const useAuthStore = create(
                 }
             },
 
-            // Signup action
             signup: async (userData) => {
                 set({ isLoading: true, error: null });
                 try {
@@ -159,14 +153,12 @@ const useAuthStore = create(
                 }
             },
 
-            // Check authentication status on app load
             checkAuth: async () => {
                 const token = localStorage.getItem('token');
                 const userId = localStorage.getItem('userId');
 
                 if (token && userId) {
                     try {
-                        // Validate token here if needed
                         set({
                             isAuthenticated: true,
                             token,
@@ -188,7 +180,7 @@ const useAuthStore = create(
             }
         }),
         {
-            name: 'auth-storage', // unique name for localStorage
+            name: 'auth-storage',
             partialize: (state) => ({
                 isAuthenticated: state.isAuthenticated,
                 token: state.token,

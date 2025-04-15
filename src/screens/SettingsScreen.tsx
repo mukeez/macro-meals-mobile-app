@@ -36,15 +36,13 @@ const SettingsScreen: React.FC = () => {
      * Mock fetching user data on component mount
      */
     useEffect(() => {
-        // In a real app, this would be an API call
-        // For now we're using mock data
+
         setUserData({
             name: 'Sarah Wilson',
             email: 'sarah@example.com',
             avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
         });
 
-        // Initialize units from preferences
         if (preferences.unitSystem) {
             setUnits(preferences.unitSystem === 'Metric' ? 'g/kcal' : 'oz/cal');
         }
@@ -57,13 +55,11 @@ const SettingsScreen: React.FC = () => {
     const handleUnitsChange = async (value: string) => {
         setUnits(value);
 
-        // Update global preferences
         const newUnitSystem = value === 'g/kcal' ? 'Metric' : 'Imperial';
         updatePreferences({
             unitSystem: newUnitSystem
         });
 
-        // Update preference on the backend
         try {
             const token = useStore.getState().token;
             const response = await fetch('https://api.macromealsapp.com/api/v1/user/preferences', {
@@ -109,27 +105,22 @@ const SettingsScreen: React.FC = () => {
      */
     const handleLogout = async () => {
         try {
-            // Call the logout function from the store
-            await logout(); // This should clear the auth state in the Zustand store
+            await logout(); e
 
-            // Manually clear authentication tokens for extra security
             const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
             await AsyncStorage.removeItem('token');
             await AsyncStorage.removeItem('refresh_token');
             await AsyncStorage.removeItem('user_id');
 
-            // Try to clear from SecureStore if available
             try {
                 const { deleteItemAsync } = await import('expo-secure-store');
                 await deleteItemAsync('token');
                 await deleteItemAsync('refresh_token');
                 await deleteItemAsync('user_id');
             } catch (secureStoreError) {
-                // SecureStore might not be available, which is fine
                 console.log('SecureStore not available, continuing with normal logout');
             }
 
-            // Navigate to login screen
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'LoginScreen' as never }]
@@ -171,7 +162,6 @@ const SettingsScreen: React.FC = () => {
             </View>
 
             <ScrollView style={styles.scrollContainer}>
-                {/* User Profile Section */}
                 <View style={styles.profileSection}>
                     <Image
                         source={{ uri: userData.avatar }}
@@ -188,7 +178,6 @@ const SettingsScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Macro Targets Section */}
                 <Text style={styles.sectionTitle}>Macro Targets</Text>
                 <View style={styles.macroSection}>
                     <View style={styles.macroItem}>
@@ -225,9 +214,7 @@ const SettingsScreen: React.FC = () => {
                     </View>
                 </View>
 
-                {/* App Settings Section */}
                 <View style={styles.settingsSection}>
-                    {/* Units Setting */}
                     <View style={styles.settingItem}>
                         <View style={styles.settingIconContainer}>
                             <Text style={styles.settingIcon}>⚖️</Text>
@@ -295,7 +282,6 @@ const SettingsScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Bottom spacer */}
                 <View style={styles.bottomSpacer} />
             </ScrollView>
         </SafeAreaView>

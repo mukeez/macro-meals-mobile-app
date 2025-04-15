@@ -26,7 +26,6 @@ export const MacroInputScreen: React.FC = () => {
     const setSuggestedMeals = useStore((state) => state.setSuggestedMeals);
     const setSuggestionsError = useStore((state) => state.setSuggestionsError);
 
-    // Try to get navigation if available
     let navigation;
     try {
         navigation = useNavigation();
@@ -34,7 +33,6 @@ export const MacroInputScreen: React.FC = () => {
         console.log('Navigation not available');
     }
 
-    // Local state for form
     const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
     const [age, setAge] = useState(preferences.age ? preferences.age.toString() : '');
     const [weight, setWeight] = useState(preferences.weight ? preferences.weight.toString() : '');
@@ -73,31 +71,26 @@ export const MacroInputScreen: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // Call the backend API to calculate accurate macros
             const calculatedMacros = await macroCalculationService.calculateMacros({
                 age: parseInt(age),
                 weight: parseFloat(weight),
                 height: parseFloat(height),
-                sex, // "Male" or "Female" from our dropdown
+                sex,
                 activityLevel,
                 goal,
                 unitSystem: unit,
             });
 
-            // Create a complete user preferences object with all needed fields
             const calculatedPreferences: UserPreferences = {
                 ...calculatedMacros,
                 location: preferences.location || '',
             };
 
-            // Update global preferences
             updatePreferences(calculatedPreferences);
 
-            // Set loading state for meal suggestions
             setIsLoadingSuggestions(true);
 
             try {
-                // Navigate to macro goals list if navigation is available
                 navigation?.navigate('MacroGoals', { fromCalculator: true });
             } catch (error) {
                 console.error('Error fetching meal suggestions:', error);

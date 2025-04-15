@@ -71,16 +71,13 @@ const MealLogScreen: React.FC = () => {
         setError(null);
 
         try {
-            // Call both APIs in parallel
             const [mealsPromise, progressPromise] = [
                 mealService.getTodaysMeals(),
                 mealService.getDailyProgress()
             ];
 
-            // Wait for both requests to complete
             const [meals, progress] = await Promise.all([mealsPromise, progressPromise]);
 
-            // Update state with fetched data
             setLoggedMeals(meals || []);
             setDailyProgress(progress);
             setShouldRefreshMeals(false);
@@ -92,12 +89,10 @@ const MealLogScreen: React.FC = () => {
         }
     };
 
-    // Load data on mount
     useEffect(() => {
         loadData();
     }, []);
 
-    // Also refresh when the screen comes into focus if needed
     useFocusEffect(
         React.useCallback(() => {
             if (shouldRefreshMeals) {
@@ -107,7 +102,6 @@ const MealLogScreen: React.FC = () => {
         }, [shouldRefreshMeals])
     );
 
-    // Pull-to-refresh handler
     const onRefresh = async () => {
         setRefreshing(true);
         try {
@@ -119,19 +113,16 @@ const MealLogScreen: React.FC = () => {
         }
     };
 
-    // Calculate current macro progress
     const calculateProgress = (consumed: number, target: number): number => {
         if (!target || target <= 0) return 0;
         return Math.min((consumed / target) * 100, 100);
     };
 
-    // Get consumed macros from API response or calculate from meals
     const getConsumedMacros = () => {
         if (dailyProgress && dailyProgress.logged_macros) {
             return dailyProgress.logged_macros;
         }
 
-        // Fallback: calculate from meals
         return (loggedMeals || []).reduce(
             (acc, meal) => ({
                 protein: acc.protein + (meal?.macros?.protein || 0),
@@ -174,7 +165,7 @@ const MealLogScreen: React.FC = () => {
      * @returns Formatted time string in 12-hour format with AM/PM
      */
     const formatTime = (dateString: string): string => {
-        if (!dateString) return ''; // Handle null or undefined
+        if (!dateString) return '';
 
         try {
             const date = new Date(dateString);
@@ -307,7 +298,6 @@ const MealLogScreen: React.FC = () => {
                     </View>
                 ) : (
                     <>
-                        {/* Daily Progress Section */}
                         <View style={styles.progressSection}>
                             <View style={styles.progressHeader}>
                                 <Text style={styles.progressTitle}>Daily Progress</Text>
@@ -315,7 +305,6 @@ const MealLogScreen: React.FC = () => {
                             </View>
 
                             <View style={styles.macroCards}>
-                                {/* Protein Card */}
                                 <View style={{...styles.macroCard, ...styles.proteinCard}}>
                                     <Text style={styles.macroCardTitle}>Protein</Text>
                                     <Text style={styles.macroCardValue}>{consumedMacros.protein}g</Text>
@@ -378,16 +367,13 @@ const MealLogScreen: React.FC = () => {
                     </>
                 )}
 
-                {/* Spacer to ensure Add Meal button doesn't overlap content */}
                 <View style={styles.spacer} />
             </ScrollView>
 
-            {/* Add Meal Button */}
             <TouchableOpacity style={styles.floatingAddButton} onPress={handleAddMeal}>
                 <Text style={styles.floatingAddButtonText}>+ Add Meal</Text>
             </TouchableOpacity>
 
-            {/* Bottom Tab Navigation */}
             <View style={styles.tabBar}>
                 <TouchableOpacity style={styles.tabItem}>
                     <Text style={{...styles.tabIcon, ...styles.activeTabIcon}}>🏠</Text>

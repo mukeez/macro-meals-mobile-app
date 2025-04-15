@@ -54,8 +54,6 @@ export const MealListScreen: React.FC = () => {
         setError(null);
 
         try {
-            // In a real app, use mealService.suggestMeals
-            // For demo, using the mock service
             const meals = await mealService.getMockMealSuggestions(preferences);
             setSuggestedMeals(meals);
         } catch (err) {
@@ -82,7 +80,6 @@ export const MealListScreen: React.FC = () => {
     useEffect(() => {
         const fromSearch = route.params?.fromSearch;
 
-        // Only fetch meals if we don't already have them or we're coming from search
         if ((fromSearch && !isLoading) || suggestedMeals.length === 0) {
             fetchMeals();
         }
@@ -92,7 +89,6 @@ export const MealListScreen: React.FC = () => {
      * Handles when a meal card is pressed.
      */
     const handleMealPress = (meal) => {
-        // In a real app, you might navigate to a meal detail screen
         console.log('Meal pressed:', meal.name);
     };
 

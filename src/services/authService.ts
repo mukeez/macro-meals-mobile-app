@@ -1,4 +1,3 @@
-// src/services/authService.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://api.macromealsapp.com/api/v1';
@@ -18,31 +17,32 @@ interface SignupResponse {
 interface SignupData {
     email: string;
     password: string;
+    nickname?: string;
 }
 
 
 export const authService = {
     login: async (credentials) => {
-            try {
-                const response = await fetch(`${API_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(credentials),
-                });
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(credentials),
+            });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Login failed');
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Login error:', error);
-                throw error;
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Login failed');
             }
-        },
+
+            return await response.json();
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
+    },
     signup: async (data: SignupData) => {
         try {
             const response = await fetch(`${API_URL}/auth/signup`, {
@@ -52,7 +52,8 @@ export const authService = {
                 },
                 body: JSON.stringify({
                     email: data.email,
-                    password: data.password
+                    password: data.password,
+                    nickname: data.nickname || ''
                 }),
             });
 
@@ -62,7 +63,6 @@ export const authService = {
                 throw new Error(responseData.message || 'Signup failed');
             }
 
-            // Return just the user ID for onboarding
             return responseData.user.id;
         } catch (error) {
             console.error('Signup service error:', error);

@@ -26,8 +26,8 @@ type RootStackParamList = {
 type SignupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SignUp'>;
 
 export const SignupScreen: React.FC = () => {
-    // Form state
     const [email, setEmail] = useState('');
+    const [nickname, setNickname] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -35,15 +35,14 @@ export const SignupScreen: React.FC = () => {
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Error states
     const [errors, setErrors] = useState({
         email: '',
+        nickname: '',
         password: '',
         confirmPassword: '',
         terms: '',
     });
 
-    // Get navigation if available
     let navigation;
     try {
         navigation = useNavigation<SignupScreenNavigationProp>();
@@ -51,20 +50,18 @@ export const SignupScreen: React.FC = () => {
         console.log('Navigation not available');
     }
 
-    // Set up auth state from Zustand store
     const setAuthenticated = useStore((state) => state.setAuthenticated);
 
-    // Validate form
     const validateForm = () => {
         let isValid = true;
         const newErrors = {
             email: '',
+            nickname: '',
             password: '',
             confirmPassword: '',
             terms: '',
         };
 
-        // Email validation
         if (!email) {
             newErrors.email = 'Email is required';
             isValid = false;
@@ -73,7 +70,11 @@ export const SignupScreen: React.FC = () => {
             isValid = false;
         }
 
-        // Password validation
+        if (nickname && nickname.length > 30) {
+            newErrors.nickname = 'Nickname must be less than 30 characters';
+            isValid = false;
+        }
+
         if (!password) {
             newErrors.password = 'Password is required';
             isValid = false;
@@ -82,7 +83,6 @@ export const SignupScreen: React.FC = () => {
             isValid = false;
         }
 
-        // Confirm password validation
         if (!confirmPassword) {
             newErrors.confirmPassword = 'Please confirm your password';
             isValid = false;
@@ -91,7 +91,6 @@ export const SignupScreen: React.FC = () => {
             isValid = false;
         }
 
-        // Terms agreement validation
         if (!agreedToTerms) {
             newErrors.terms = 'You must agree to the Terms of Service and Privacy Policy';
             isValid = false;
@@ -109,16 +108,14 @@ export const SignupScreen: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // Get user ID from signup
             const userId = await authService.signup({
                 email,
-                password
+                password,
+                nickname
             });
 
-            // Store user ID for onboarding
             setAuthenticated(true, '', userId);
 
-            // Navigate to macro input screen
             if (navigation) {
                 navigation.navigate('MacroInput');
             }
@@ -147,19 +144,16 @@ export const SignupScreen: React.FC = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* Logo */}
                 <View style={styles.logoContainer}>
                     <View style={styles.logoBox}>
                         <Text style={styles.checkmark}>✓</Text>
                     </View>
                 </View>
 
-                {/* Header */}
                 <Text style={styles.title}>Create Account</Text>
                 <Text style={styles.subtitle}>Join MacroMate today</Text>
 
                 <View style={styles.formContainer}>
-                    {/* Email Input */}
                     <Text style={styles.inputLabel}>Email</Text>
                     <View style={[styles.inputContainer, errors.email ? styles.inputError : null]}>
                         <View style={styles.inputIconContainer}>
@@ -182,7 +176,26 @@ export const SignupScreen: React.FC = () => {
                     </View>
                     {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
-                    {/* Password Input */}
+                    <Text style={styles.inputLabel}>Nickname (optional)</Text>
+                    <View style={[styles.inputContainer, errors.nickname ? styles.inputError : null]}>
+                        <View style={styles.inputIconContainer}>
+                            <Text style={styles.inputIcon}>👤</Text>
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="How we should call you"
+                            value={nickname}
+                            onChangeText={(text) => {
+                                setNickname(text);
+                                if (errors.nickname) {
+                                    setErrors(prev => ({ ...prev, nickname: '' }));
+                                }
+                            }}
+                            autoCorrect={false}
+                        />
+                    </View>
+                    {errors.nickname ? <Text style={styles.errorText}>{errors.nickname}</Text> : null}
+
                     <Text style={styles.inputLabel}>Password</Text>
                     <View style={[styles.inputContainer, errors.password ? styles.inputError : null]}>
                         <View style={styles.inputIconContainer}>
@@ -210,7 +223,6 @@ export const SignupScreen: React.FC = () => {
                     <Text style={styles.passwordHint}>Must be at least 6 characters</Text>
                     {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
-                    {/* Confirm Password Input */}
                     <Text style={styles.inputLabel}>Confirm Password</Text>
                     <View style={[styles.inputContainer, errors.confirmPassword ? styles.inputError : null]}>
                         <View style={styles.inputIconContainer}>
@@ -237,7 +249,6 @@ export const SignupScreen: React.FC = () => {
                     </View>
                     {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
 
-                    {/* Terms and Conditions Checkbox */}
                     <View style={styles.checkboxContainer}>
                         <TouchableOpacity
                             style={styles.checkboxWrapper}
@@ -260,7 +271,6 @@ export const SignupScreen: React.FC = () => {
                     </View>
                     {errors.terms ? <Text style={styles.errorText}>{errors.terms}</Text> : null}
 
-                    {/* Signup Button */}
                     <TouchableOpacity
                         style={[
                             styles.signupButton,
@@ -276,7 +286,6 @@ export const SignupScreen: React.FC = () => {
                         )}
                     </TouchableOpacity>
 
-                    {/* Login Link */}
                     <View style={styles.loginContainer}>
                         <Text style={styles.loginText}>Already have an account? </Text>
                         <TouchableOpacity onPress={() => navigation?.navigate('LoginScreen')}>

@@ -17,27 +17,21 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
  * for AI analysis of nutritional content
  */
 const SnapMealScreen = () => {
-    // Navigation
     const navigation = useNavigation();
 
-    // Camera permissions
     const [permission, requestPermission] = useCameraPermissions();
 
-    // Camera configuration state
     const cameraRef = useRef(null);
     const [facing, setFacing] = useState('back');
     const [flashMode, setFlashMode] = useState('off');
 
-    // UI state
     const [showOverlay, setShowOverlay] = useState(true);
 
-    // Auto-hide the overlay message after 5 seconds
     useEffect(() => {
         const overlayTimer = setTimeout(() => {
             setShowOverlay(false);
         }, 5000);
 
-        // Clean up timer when component unmounts
         return () => clearTimeout(overlayTimer);
     }, []);
 
@@ -104,7 +98,6 @@ const SnapMealScreen = () => {
         navigation.goBack();
     };
 
-    // Return the flash mode icon based on current mode
     const getFlashIcon = () => {
         switch (flashMode) {
             case 'on':
@@ -116,12 +109,10 @@ const SnapMealScreen = () => {
         }
     };
 
-    // If permissions are still loading
     if (!permission) {
         return <View />;
     }
 
-    // If permission is denied, show request screen
     if (!permission.granted) {
         return (
             <View style={styles.container}>
