@@ -1,15 +1,9 @@
-// App.tsx
 import React, {useEffect, useState} from 'react';
-import { StatusBar } from 'react-native';
-import { initGoogleSignIn } from "./services/socialAuthService";
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-// Import screens
 import useStore from "./src/store/useStore";
 
-import useAuthStore from "./src/store/authStore";
 import {LoginScreen} from "./src/screens/LoginScreen";
 import {SignupScreen} from "./src/screens/SignupScreen";
 import {DashboardScreen} from "./src/screens/DashboardScreen";
@@ -22,8 +16,10 @@ import {NearbyMealsScreen} from "./src/screens/NearbyMealsScreen";
 import MealLogScreen from "./src/screens/MealLogScreen";
 import AddMealScreen from "./src/screens/AddMealScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
+import ScanScreenType from "./src/screens/ScanScreenType";
+import BarcodeScanScreen from "./src/screens/BarcodeScanScreen";
+import SnapMealScreen from "./src/screens/SnapMealScreen";
 
-// Define the stack navigator type
 type RootStackParamList = {
     Welcome: undefined;
     Login: undefined;
@@ -32,7 +28,6 @@ type RootStackParamList = {
     MealList: undefined;
 };
 
-// Create the stack navigator
 const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
@@ -40,7 +35,6 @@ export default function App() {
     const { setAuthenticated } = useStore();
 
     useEffect(() => {
-        // Check for existing authentication on app startup
         const checkAuthStatus = async () => {
             try {
                 const token = await AsyncStorage.getItem('access_token');
@@ -68,7 +62,10 @@ export default function App() {
             >
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
                 <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+                <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
+                <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
                 <Stack.Screen name="AddMeal" component={AddMealScreen} />
+                <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
                 <Stack.Screen name="MealLog" component={MealLogScreen} />
                 <Stack.Screen name="NearbyMeals" component={NearbyMealsScreen} />
                 <Stack.Screen name="DashboardScreen" component={DashboardScreen} />

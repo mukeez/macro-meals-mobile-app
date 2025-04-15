@@ -97,8 +97,10 @@ const BarcodeScanScreen = () => {
     };
 
     const toggleFlash = () => {
+        // Implement flash toggle logic
     };
 
+    // If permissions are not granted
     if (!permission?.granted) {
         return (
             <View style={styles.container}>
@@ -256,7 +258,7 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: '#0FE38F',
+        backgroundColor: '#0FE38F', // Teal color
     },
     bottomNavigation: {
         position: 'absolute',
