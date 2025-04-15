@@ -1,28 +1,24 @@
 import useStore from "../store/useStore";
 
-
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 
-
 class ScanService {
-    /**
-     * Scan a barcode to retrieve product information
-     * @param barcode The barcode number to scan
-     * @param authToken Authentication token
-     * @returns Promise resolving to product information
-     */
-
-    async scanBarcode(barcode: string, authToken: string) {
+    async scanBarcode(barcode: string) {
         try {
             const authToken = useStore.getState().token;
+
+            // Send barcode in the request body
             const response = await fetch(`${API_BASE_URL}/scan/barcode`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ barcode })
+                body: JSON.stringify({ barcode })  // Send barcode in the body
             });
+            console.log(barcode)
+
+            // console.log(response)
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -36,15 +32,10 @@ class ScanService {
         }
     }
 
-    /**
-     * Scan an image to retrieve food item information
-     * @param imageUri URI of the image to scan
-     * @param authToken Authentication token
-     * @returns Promise resolving to food item information
-     */
-    async scanImage(imageUri: string, authToken: string) {
+    async scanImage(imageUri: string) {
         try {
             const authToken = useStore.getState().token;
+
             // Create FormData for image upload
             const formData = new FormData();
             formData.append('image', {
@@ -69,11 +60,9 @@ class ScanService {
 
             return await response.json();
         } catch (error) {
-            console.error('Image scan error:', error);
             throw error;
         }
     }
 }
 
-// Export a singleton instance
 export const scanService = new ScanService();
