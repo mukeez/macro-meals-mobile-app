@@ -20,6 +20,7 @@ import { Picker } from '@react-native-picker/picker';
 const SettingsScreen: React.FC = () => {
     const navigation = useNavigation();
     const preferences = useStore((state) => state.preferences);
+    const token = useStore((state) => state.token);
     const updatePreferences = useStore((state) => state.updatePreferences);
     const logout = useStore((state) => state.logout);
 
@@ -27,15 +28,33 @@ const SettingsScreen: React.FC = () => {
     const [units, setUnits] = useState<string>('g/kcal');
     // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
     const [userData, setUserData] = useState({
-        name: 'Sarah Wilson',
-        email: 'sarah@example.com',
-        avatar: 'https://randomuser.me/api/portraits/women/44.jpg' // Placeholder
+        name: '',
+        email: '',
+        avatar: '' // Placeholder
     });
 
     /**
      * Mock fetching user data on component mount
      */
     useEffect(() => {
+        console.log(preferences);
+        const fetchUserData = async () => {
+            const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!profileResponse.ok) {
+                throw new Error('Failed to fetch user profile');
+            }
+
+            const profileData = await profileResponse.json();
+            setUserData(profileData);
+        };
+        fetchUserData();
 
         setUserData({
             name: 'Sarah Wilson',
@@ -46,7 +65,7 @@ const SettingsScreen: React.FC = () => {
         if (preferences.unitSystem) {
             setUnits(preferences.unitSystem === 'Metric' ? 'g/kcal' : 'oz/cal');
         }
-    }, []);
+    }, [token]);
 
     /**
      * Handle changing the units system
@@ -105,7 +124,7 @@ const SettingsScreen: React.FC = () => {
      */
     const handleLogout = async () => {
         try {
-            await logout(); e
+            await logout();
 
             const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
             await AsyncStorage.removeItem('token');
