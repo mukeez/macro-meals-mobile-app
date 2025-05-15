@@ -124,3 +124,4 @@ bower_components/
 .expo
 dist/
 web-build/
+.env

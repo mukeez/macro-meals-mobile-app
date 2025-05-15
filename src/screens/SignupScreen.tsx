@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import useStore from '../store/useStore';
 import { authService } from '../services/authService';
+import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 
 type RootStackParamList = {
     Welcome: undefined;
@@ -139,10 +140,11 @@ export const SignupScreen: React.FC = () => {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <CustomSafeAreaView edges={['left', 'right']}>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.logoContainer}>
                     <View style={styles.logoBox}>
@@ -295,6 +297,7 @@ export const SignupScreen: React.FC = () => {
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
+        </CustomSafeAreaView>
     );
 };
 
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 24,
-        paddingTop: 40,
+        paddingTop: 0,
         paddingBottom: 24,
     },
     logoContainer: {

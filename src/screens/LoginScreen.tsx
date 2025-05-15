@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import useStore from '../store/useStore';
 import { authService } from "../services/authService";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import the mock service instead of the real one
 import { mockSocialAuth } from '../services/authMock';
 
@@ -57,9 +58,13 @@ export const LoginScreen: React.FC = () => {
             const data = await authService.login({ email, password });
             setAuthenticated(true, data.access_token, data.user.id);
             console.log(data.access_token)
+            AsyncStorage.setItem('my_token', data.access_token);
+
             if (navigation) {
                 navigation.navigate('DashboardScreen');
             }
+            const token = await AsyncStorage.getItem('my_token');
+            console.log('The my_token is: ', token);
         } catch (error) {
             Alert.alert(
                 'Login Failed',

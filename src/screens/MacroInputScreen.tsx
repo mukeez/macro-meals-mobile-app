@@ -10,6 +10,7 @@ import {
     Platform,
     ActivityIndicator,
     Modal,
+    SafeAreaView,
 } from 'react-native';
 import { MacroDisplay } from '../components/MacroDisplay';
 import { UserPreferences } from '../types';
@@ -17,6 +18,7 @@ import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
 import { macroCalculationService } from "../services/macroCalculationService";
 import { useNavigation } from '@react-navigation/native';
+import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 
 export const MacroInputScreen: React.FC = () => {
     // Get state and actions from Zustand store
@@ -268,9 +270,10 @@ export const MacroInputScreen: React.FC = () => {
     );
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <CustomSafeAreaView>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ScrollView
                 contentContainerStyle={styles.contentContainer}
@@ -302,7 +305,8 @@ export const MacroInputScreen: React.FC = () => {
                     )}
                 </TouchableOpacity>
             </ScrollView>
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+        </CustomSafeAreaView>
     );
 };
 

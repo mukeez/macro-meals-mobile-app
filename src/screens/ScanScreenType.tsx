@@ -4,11 +4,11 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    SafeAreaView,
     StatusBar,
     Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
 
 /**
  * ScanScreen component displays the various meal logging options:
@@ -47,7 +47,7 @@ const ScanScreenType: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <CustomSafeAreaView edges={['left', 'right']}>
             <StatusBar barStyle="dark-content" />
 
             {/* Header */}
@@ -147,7 +147,7 @@ const ScanScreenType: React.FC = () => {
                     <Text style={styles.tabText}>Profile</Text>
                 </TouchableOpacity>
             </View>
-        </SafeAreaView>
+        </CustomSafeAreaView>
     );
 };
 
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#eee',
         position: 'absolute',
-        bottom: 0,
+        bottom: 20,
         left: 0,
         right: 0,
     },
