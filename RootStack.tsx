@@ -14,6 +14,7 @@ import {MacroInputScreen} from "./src/screens/MacroInputScreen";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 import {MealListScreen} from "./src/screens/MealListScreen";
 import {createStackNavigator} from '@react-navigation/stack';
+import './src/globals.css';
 
 type RootStackParamList = {
     Welcome: undefined;

@@ -120,3 +120,7 @@ bower_components/
 
 # VSCode settings
 .vscode/
+# Expo
+.expo
+dist/
+web-build/
