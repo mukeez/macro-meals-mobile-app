@@ -13,6 +13,7 @@ import {SignupScreen} from "./src/screens/SignupScreen";
 import {MacroInputScreen} from "./src/screens/MacroInputScreen";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 import {MealListScreen} from "./src/screens/MealListScreen";
+import PaymentScreen from "./src/screens/PaymentScreen";
 import {createStackNavigator} from '@react-navigation/stack';
 import './src/globals.css';
 
@@ -22,6 +23,18 @@ type RootStackParamList = {
     SignUp: undefined;
     MacroInput: undefined;
     MealList: undefined;
+    SettingsScreen: undefined;
+    ScanScreenType: undefined;
+    BarcodeScanScreen: undefined;
+    AddMeal: undefined;
+    SnapMeal: undefined;
+    MealLog: undefined;
+    NearbyMeals: undefined;
+    DashboardScreen: undefined;
+    LoginScreen: undefined;
+    PaymentScreen: undefined;
+    SignupScreen: undefined;
+    MacroGoals: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -45,5 +58,6 @@ export function RootStack() {
         <Stack.Screen name="MacroInput" component={MacroInputScreen}/>
         <Stack.Screen name="MacroGoals" component={MacroGoalsScreen}/>
         <Stack.Screen name="MealList" component={MealListScreen}/>
+        <Stack.Screen name="PaymentScreen" component={PaymentScreen}/>
     </Stack.Navigator>;
 }
