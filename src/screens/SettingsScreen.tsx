@@ -160,6 +160,11 @@ const SettingsScreen: React.FC = () => {
         // navigation.navigate('HelpSupport' as never);
     };
 
+    const handleModalSheet = () => {
+        console.log('Modal sheet');
+        navigation.navigate('PaymentScreen' as never);
+    };
+
     /**
      * Handle navigation to feedback screen
      */
@@ -288,6 +293,13 @@ const SettingsScreen: React.FC = () => {
                             <Text style={styles.supportIcon}>💬</Text>
                         </View>
                         <Text style={styles.supportText}>Send Feedback</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity className='flex-row items-center pl-7' onPress={handleModalSheet}>
+                        <View style={styles.supportIconContainer}>
+                            <Text className="text-base">💰</Text>
+                        </View>
+                        <Text>Payment</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity

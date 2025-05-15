@@ -19,6 +19,7 @@
     "metro.config.js"
 ],
     "include": [
-        "nativewind-env.d.ts"
+        "nativewind-env.d.ts",
+        "src/types/*.d.ts"
     ]
 }
