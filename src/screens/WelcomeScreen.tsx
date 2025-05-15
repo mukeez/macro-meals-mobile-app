@@ -43,7 +43,7 @@ export const WelcomeScreen: React.FC = () => {
                 <View style={styles.logoContainer}>
                     <View style={styles.logoBox} />
                     <Text style={styles.appName}>MacroMeals</Text>
-                    <Text style={styles.tagline}>Eat smart. Anywhere.</Text>
+                    <Text className='text-green-500' style={styles.tagline}>Eat smart. Anywhere.</Text>
                 </View>
 
                 <View style={styles.circlePlaceholder} />

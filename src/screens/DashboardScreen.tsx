@@ -9,11 +9,12 @@ import {
     Alert,
 } from 'react-native';
 import useStore from '../store/useStore';
+import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 
 export const DashboardScreen = ({ navigation }) => {
     // State for user data
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [macros, setMacros] = useState({
         protein: 0,
         carbs: 0,
@@ -106,9 +107,9 @@ export const DashboardScreen = ({ navigation }) => {
                     calories: progressData.logged_macros.calories
                 });
 
-                const overallProgress = Object.values(progressData.progress_percentage).reduce(
-                    (sum, value) => sum + value, 0
-                ) / Object.values(progressData.progress_percentage).length;
+                const overallProgress = Object.values(progressData.progress_percentage as Record<string, number>).reduce(
+                    (sum: number, value: number) => sum + value, 0
+                ) / Object.values(progressData.progress_percentage as Record<string, number>).length;
 
                 setProgress(Math.round(overallProgress));
                 setIsLoading(false);
@@ -182,6 +183,7 @@ export const DashboardScreen = ({ navigation }) => {
     const fatProgress = Math.min(100, Math.round((consumed.fat / macros.fat) * 100) || 0);
 
     return (
+        <CustomSafeAreaView edges={['left', 'right']} paddingOverride={{bottom: -25}}>
         <View style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.logoContainer}>
@@ -306,6 +308,7 @@ export const DashboardScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
         </View>
+        </CustomSafeAreaView>
     );
 };
 
