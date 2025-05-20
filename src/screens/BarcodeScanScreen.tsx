@@ -11,104 +11,145 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions, CameraCapturedPicture } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {scanService} from "../services/scanService";
+import { scanService } from "../services/scanService";
+
+type RootStackParamList = {
+    Dashboard: undefined;
+    Stats: undefined;
+    AddMeal: { barcodeData: string; analyzedData: any };
+    AddMealScreen: { barcodeData?: string; analyzedData?: any };
+    MealList: undefined;
+    Profile: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 // If scanService isn't implemented yet, we'll use a mock implementation
 
 const BarcodeScanScreen = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
     const [permission, requestPermission] = useCameraPermissions();
-    const cameraRef = useRef(null);
+    const cameraRef = useRef<CameraView>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [flashMode, setFlashMode] = useState('off');
-    const [lastScannedBarcode, setLastScannedBarcode] = useState(null);
-    const [scanResult, setScanResult] = useState(null);
+    const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>(null);
+    const [lastScanTime, setLastScanTime] = useState<number | null>(null);
+    const scanInterval = 2500; // 2.5 seconds between scans
+    const [isAlertVisible, setIsAlertVisible] = useState(false);
+    
+    // Refs for managing scan state
+    const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const processingRef = useRef(false);
+    const lastBarcodeRef = useRef<string | null>(null);
+    const lastScanTimeRef = useRef<number>(0);
 
     // Reset scanning state when screen is focused
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             console.log('SCREEN FOCUSED - RESETTING SCAN STATE');
-            setIsProcessing(false);
-            setLastScannedBarcode(null);
-            setScanResult(null);
+            resetScanState();
         });
 
-        return unsubscribe;
+        return () => {
+            cleanupScanState();
+        };
     }, [navigation]);
 
-    const handleBarCodeScanned = async (scanningResult) => {
-        if (isProcessing) {
+    const resetScanState = () => {
+        setIsProcessing(false);
+        setLastScannedBarcode(null);
+        setIsAlertVisible(false);
+        processingRef.current = false;
+        lastBarcodeRef.current = null;
+        lastScanTimeRef.current = 0;
+        cleanupScanState();
+    };
+
+    const cleanupScanState = () => {
+        if (scanTimeoutRef.current) {
+            clearTimeout(scanTimeoutRef.current);
+            scanTimeoutRef.current = null;
+        }
+    };
+
+    const handleBarCodeScanned = async (scanningResult: { data: string }) => {
+        const currentTime = Date.now();
+        
+        // Check if we're already processing or if this is a duplicate scan
+        if (processingRef.current || 
+            isAlertVisible || 
+            (lastBarcodeRef.current === scanningResult.data && 
+             currentTime - lastScanTimeRef.current < scanInterval)) {
             return;
         }
 
-        if (lastScannedBarcode === scanningResult.data) {
-            return;
-        }
-
-        setLastScannedBarcode(scanningResult.data);
+        // Update refs to prevent duplicate scans
+        processingRef.current = true;
+        lastBarcodeRef.current = scanningResult.data;
+        lastScanTimeRef.current = currentTime;
         setIsProcessing(true);
 
         try {
-            console.log("here",scanningResult.data)
             const response = await scanService.scanBarcode(scanningResult.data);
-            setScanResult(response);
-            // console.log(response)
+            
+            if (!response.success) {
+                handleScanError(scanningResult.data);
+                return;
+            }
 
-            if (response.items && response.items.length > 0) {
-                const product = response.items[0];
-
-                setTimeout(() => {
-                    navigation.navigate('AddMeal', {
-                        barcodeData: scanningResult.data,
-                        analyzedData: {
-                            name: product.name,
-                            calories: product.calories,
-                            protein: product.protein,
-                            carbs: product.carbs,
-                            fat: product.fat,
-                            quantity: product.quantity
-                        }
-                    });
-                }, 800);
-            } else {
-                Alert.alert(
-                    "Product Not Found",
-                    "We couldn't find this product in our database. Would you like to add it manually?",
-                    [
-                        {
-                            text: "Cancel",
-                            style: "cancel",
-                            onPress: () => {
-                                setIsProcessing(false);
-                            }
-                        },
-                        {
-                            text: "Add Manually",
-                            onPress: () => {
-                                navigation.navigate('AddMealScreen', {
-                                    barcodeData: scanningResult.data
-                                });
-                            }
-                        }
-                    ]
-                );
+            const product = response.data.items[0];
+            if (product) {
+                handleSuccessfulScan(scanningResult.data, product);
             }
         } catch (error) {
-            Alert.alert(
-                "Scanning Error",
-                "There was an error processing the barcode. Please try again.",
-                [
-                    {
-                        text: "OK",
-                        onPress: () => {
-                            setIsProcessing(false);
-                        }
-                    }
-                ]
-            );
+            console.error('Scanning error:', error);
+            handleScanError(scanningResult.data);
         }
+    };
+
+    const handleScanError = (barcodeData: string) => {
+        if (isAlertVisible) return;
+        
+        setIsAlertVisible(true);
+        Alert.alert(
+            "Product Not Found",
+            "We couldn't find this product in our database. Would you like to add it manually?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                    onPress: () => {
+                        resetScanState();
+                    }
+                },
+                {
+                    text: "Add Manually",
+                    onPress: () => {
+                        setIsAlertVisible(false);
+                        navigation.navigate('AddMeal', {
+                            barcodeData: barcodeData
+                        });
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleSuccessfulScan = (barcodeData: string, product: any) => {
+        navigation.navigate('AddMeal', {
+            barcodeData: barcodeData,
+            analyzedData: {
+                name: product.name,
+                calories: product.calories,
+                protein: product.protein,
+                carbs: product.carbs,
+                fat: product.fat,
+                quantity: product.quantity
+            }
+        });
     };
 
     const handleManualCapture = async () => {
@@ -126,7 +167,7 @@ const BarcodeScanScreen = () => {
 
                 if (response.items && response.items.length > 0) {
                     const product = response.items[0];
-                    navigation.navigate('AddMealScreen', {
+                    navigation.navigate('AddMeal', {
                         analyzedData: {
                             name: product.name,
                             calories: product.calories,
@@ -147,7 +188,7 @@ const BarcodeScanScreen = () => {
                             },
                             {
                                 text: "Add Manually",
-                                onPress: () => navigation.navigate('AddMealScreen')
+                                onPress: () => navigation.navigate('AddMeal')
                             }
                         ]
                     );
@@ -195,7 +236,7 @@ const BarcodeScanScreen = () => {
 
                     if (response.items && response.items.length > 0) {
                         const product = response.items[0];
-                        navigation.navigate('AddMealScreen', {
+                        navigation.navigate('AddMeal', {
                             analyzedData: {
                                 name: product.name,
                                 calories: product.calories,
@@ -260,18 +301,22 @@ const BarcodeScanScreen = () => {
             </View>
 
             <CameraView
+                className="absolute"
                 ref={cameraRef}
                 style={styles.camera}
                 facing="back"
                 flashMode={flashMode}
                 barCodeScannerSettings={{
+                    scanInterval: scanInterval,
                     barCodeTypes: [
                         'ean13', 'ean8', 'upc_e',
                         'code39', 'code128', 'itf14'
                     ]
                 }}
-                onBarcodeScanned={!isProcessing ? handleBarCodeScanned : undefined}
-            >
+                onBarcodeScanned={isProcessing ? undefined : handleBarCodeScanned}
+            />
+
+            <View style={styles.overlayContainer}>
                 <View style={styles.scanFrame} />
 
                 {isProcessing ? (
@@ -289,7 +334,7 @@ const BarcodeScanScreen = () => {
                         </Text>
                     </View>
                 )}
-            </CameraView>
+            </View>
 
             <View style={styles.bottomControls}>
                 <TouchableOpacity
@@ -516,6 +561,15 @@ const styles = StyleSheet.create({
         color: 'black',
         fontSize: 16,
         fontWeight: '600',
+    },
+    overlayContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 
