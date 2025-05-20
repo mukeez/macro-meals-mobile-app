@@ -18,7 +18,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to find nearby meals that match your macro goals",
         "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals"
-      }
+      },
+      "appleTeamId": "SA3LF6JRDF"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +29,8 @@
       "package": "com.anonymous.macromeals",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA"
       ]
     },
     "web": {
