@@ -14,21 +14,36 @@ export const MixpanelProvider: React.FC<{
     const [mixpanel, setMixpanel] = useState<MixpanelInstance | null>(null);
 
     useEffect(()=> {
-        const instance = new Mixpanel(config.token, true);
-        instance.init(true); 
-        setMixpanel(instance);
+        console.log('[DEBUG] MixpanelProvider useEffect - Token:', config.token);
+        
+        if (!config.token || config.token === 'undefined' || config.token === 'your_actual_mixpanel_token_here') {
+            console.warn('[MIXPANEL] ⚠️  Invalid or missing token:', config.token);
+            return;
+        }
+
+        console.log('[DEBUG] Initializing Mixpanel with token:', config.token.substring(0, 8) + '...');
+        
+        try {
+            const instance = new Mixpanel(config.token, true);
+            instance.init(true).then(() => {
+                console.log('[MIXPANEL] ✅ Successfully initialized');
+                setMixpanel(instance);
+            }).catch((error) => {
+                console.error('[MIXPANEL] ❌ Initialization failed:', error);
+            });
+        } catch (error) {
+            console.error('[MIXPANEL] ❌ Failed to create instance:', error);
+        }
+
         return ()=> {
             // Cleanup when necessary
-            instance.reset();
+            if (mixpanel) {
+                mixpanel.reset();
+            }
         }
     }, [config.token]);
 
-    console.log('[DEBUG] MixpanelProvider rendered, mixpanel:', mixpanel);
-
-    if (!mixpanel) {
-        // Optionally render a loading indicator here
-        return null;
-    }
+    console.log('[DEBUG] MixpanelProvider rendered, mixpanel:', !!mixpanel);
 
     return (
         <MixpanelContext.Provider value={mixpanel}>
