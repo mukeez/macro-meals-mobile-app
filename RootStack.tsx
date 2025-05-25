@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import {WelcomeScreen} from "./src/screens/WelcomeScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import ScanScreenType from "./src/screens/ScanScreenType";
@@ -15,6 +17,7 @@ import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 import {MealListScreen} from "./src/screens/MealListScreen";
 import PaymentScreen from "./src/screens/PaymentScreen";
 import {createStackNavigator} from '@react-navigation/stack';
+import { useMixpanel } from "@macro-meals/mixpanel";
 import './src/globals.css';
 
 type RootStackParamList = {
@@ -40,6 +43,20 @@ type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>();
 
 export function RootStack() {
+    const mixpanel = useMixpanel();
+
+    useEffect(() => {
+        if (mixpanel) {
+            mixpanel.track({
+                name: 'app_opened',
+                properties: {
+                    platform: Platform.OS,
+                    version: Constants.expoConfig?.version || '1.0.0',
+                }
+            });
+        }
+    }, [mixpanel]);
+
     return <Stack.Navigator
         initialRouteName="Welcome"
         screenOptions={{headerShown: false}}

@@ -1,13 +1,18 @@
+/** @jsxImportSource react */
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 
 import useStore from "./src/store/useStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {RootStack} from "./RootStack";
+import { MIXPANEL_TOKEN } from '@env';
+import { MixpanelProvider } from "@macro-meals/mixpanel";
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const { setAuthenticated } = useStore();
+
+    console.log(`MIXPANEL_TOKEN: ${MIXPANEL_TOKEN}`);
 
     useEffect(() => {
         const checkAuthStatus = async () => {
@@ -30,8 +35,12 @@ export default function App() {
     }, []);
 
     return (
-        <NavigationContainer>
-            <RootStack />
-        </NavigationContainer>
+        <MixpanelProvider config={{
+            token: MIXPANEL_TOKEN,
+        }}>
+            <NavigationContainer>
+                <RootStack />
+            </NavigationContainer>
+        </MixpanelProvider>
     );
 }

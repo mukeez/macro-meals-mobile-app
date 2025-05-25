@@ -1,25 +1,31 @@
 {
     "extends": "expo/tsconfig.base",
     "compilerOptions": {
-    "strict": true,
+        "baseUrl": ".",
+        "paths": {
+            "@macro-meals/*": ["packages/*"]
+        },
+        "strict": true,
         "allowJs": true,
         "esModuleInterop": true,
         "jsx": "react-native",
         "lib": ["DOM", "ESNext"],
-        "moduleResolution": "node",
+        "module": "Node16",
+        "moduleResolution": "node16",
         "noEmit": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
         "target": "ESNext",
         "allowSyntheticDefaultImports": true
-},
+    },
     "exclude": [
-    "node_modules",
-    "babel.config.js",
-    "metro.config.js"
-],
+        "node_modules",
+        "babel.config.js",
+        "metro.config.js"
+    ],
     "include": [
         "nativewind-env.d.ts",
-        "src/types/*.d.ts"
+        "src/types/*.d.ts",
+        "src/types/env.d.ts"
     ]
 }
