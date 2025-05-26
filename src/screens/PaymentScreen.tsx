@@ -1,28 +1,20 @@
 // src/screens/WelcomeScreen.tsx
-import React, {useState, useEffect} from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  Image, 
-  Button, 
-  Alert,
-  ActivityIndicator
-} from 'react-native';
-import strawberryBg from '../../assets/strawberry_bg.png';
-import crown from '../../assets/crown.png';
-import successStoriesBg from '../../assets/success-stories-bg.png';
-import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import PagerView from 'react-native-pager-view';
+import { IMAGE_CONSTANTS } from '../../constants/imageConstants';
 import useStore from '../store/useStore';
-import check from '../../assets/check.png';
-import star from '../../assets/star.png';
-import checkPrimary from '../../assets/check_primary.png';
-import checkMark from '../../assets/check_mark.png';
 
 
 
@@ -48,7 +40,7 @@ const Pager = ()=>{
       <View className="flex-row gap-2 justify-center mb-16">
         <Text className='text-2xl font-bold text-white'>MacroMate</Text>
         <View className='flex-row justify-center items-center gap-1 px-2 py-1 bg-primary rounded-md'>
-          <Image source={crown} className='w-[18px] h-[14px]' />
+          <Image source={IMAGE_CONSTANTS.crown} className='w-[18px] h-[14px]' />
           <Text className='text-white mt-0.5 font-medium text-base'>PREMIUM</Text> 
         </View>
       </View>
@@ -67,12 +59,12 @@ const Pager = ()=>{
 const SuccessStoryPager = ()=>{
   return(
     <View className='relative'>
-      <Image source={successStoriesBg} className='w-full object-cover h-full' />
+      <Image source={IMAGE_CONSTANTS.successStoriesBg} className='w-full object-cover h-full' />
       <View className='absolute w-full items-center justify-center mt-[11rem]'>
      
       <View className="w-full flex-row gap-1 items-center justify-center">
         {Array.from({length: 5}).map((_, index)=> (
-          <Image key={index} source={star} className='w-[20px] h-[20px] object-fit' />
+          <Image key={index} source={IMAGE_CONSTANTS.star} className='w-[20px] h-[20px] object-fit' />
         ))}
       </View>
       <Text className='mt-2 px-[30px] text-center leading-6 text-base font-normal text-white'>I've gained 10 pounds in the last month. Very good for helping you get to or maintain a healthy lifestyle</Text>
@@ -86,18 +78,18 @@ const SuccessStoryPager = ()=>{
 const BenefitsPager = ()=>{
   return(
     <View className='relative'>
-      <Image source={strawberryBg} className='w-full object-cover h-full' />
+      <Image source={IMAGE_CONSTANTS.strawberryBg} className='w-full object-cover h-full' />
       <View className='absolute mt-[11rem] px-5 w-full'>
         <View className='flex-row items-center justify-left w-full'>
-          <Image source={checkMark} className='w-[28px] h-[24px] mr-5 flex-shrink-0' />
+          <Image source={IMAGE_CONSTANTS.checkMark} className='w-[28px] h-[24px] mr-5 flex-shrink-0' />
           <Text className='text-sm font-semibold text-white flex-1'>Barcode Scan: Skip the search and log faster</Text>
         </View>
         <View className='mt-12 flex-row items-center justify-left w-full'>
-          <Image source={checkMark} className='w-[28px] h-[24px] mr-5 flex-shrink-0' />
+          <Image source={IMAGE_CONSTANTS.checkMark} className='w-[28px] h-[24px] mr-5 flex-shrink-0' />
           <Text className='text-sm font-semibold text-white flex-1'>Custom Macro Tracking: Find your balance of carbs, protein and fat.</Text>
         </View>
         <View className='mt-12 flex-row items-center justify-left w-full'>
-          <Image source={checkMark} className='w-[28px] h-[24px] mr-5 flex-shrink-0' />
+          <Image source={IMAGE_CONSTANTS.checkMark} className='w-[28px] h-[24px] mr-5 flex-shrink-0' />
           <Text className='text-sm font-semibold text-white flex-1'>Zero Ads: Track and reach your goals, free from distractions.</Text>
         </View>
       </View>
@@ -228,7 +220,7 @@ if (isLoading){
               <View className='w-full pl-3 pt-8 pb-3'>
               <View className='flex-row items-center justify-between gap-2'>
                 <Text className="text-base font-medium rounded-md">YEARLY</Text>
-                {selectedPlan === 'yearly' && <Image source={checkPrimary} className='w-[16px] h-[16px] mr-5' />}
+                {selectedPlan === 'yearly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
               </View>
               <View className='mt-4'>
                 <Text className='font-medium text-[15px]'>$70.00/yr</Text>
@@ -248,7 +240,7 @@ if (isLoading){
               <View className='w-full pl-3 pt-8 pb-3'>
               <View className='flex-row items-center justify-between gap-2'>
                 <Text className="text-base font-medium rounded-md">MONTHLY</Text>
-                {selectedPlan === 'monthly' && <Image source={checkPrimary} className='w-[16px] h-[16px] mr-5' />}
+                {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
               </View>
               <View className='mt-4'>
                 <Text className='font-medium text-[15px]'>$14.98/mo</Text>
