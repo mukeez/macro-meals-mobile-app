@@ -1,21 +1,24 @@
-
 import React, { useEffect } from 'react';
 // import { StatusBar } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { initGoogleSignIn } from "./services/socialAuthService";
 import { MacroInputScreen } from "./screens/MacroInputScreen";
-import { StatusBar } from 'expo-status-bar'
+import { initGoogleSignIn } from "./services/socialAuthService";
+import { MixpanelProvider } from "@macro-meals/mixpanel";
+import { MIXPANEL_TOKEN } from '@env';
 
 export default function App() {
     useEffect(() => {
-        // Initialize Google Sign In
+        console.log('[DEBUG] App.tsx - MIXPANEL_TOKEN:', MIXPANEL_TOKEN);
         initGoogleSignIn();
-    }, [])
+    }, []);
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }} edges={['top', 'left', 'right', 'bottom']}>
-            <StatusBar style="dark" hidden={true}/>
-            <MacroInputScreen />
-        </SafeAreaView>
+        <MixpanelProvider config={{ token: MIXPANEL_TOKEN }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }} edges={['top', 'left', 'right', 'bottom']}>
+                <StatusBar style="dark" hidden={true}/>
+                <MacroInputScreen />
+            </SafeAreaView>
+        </MixpanelProvider>
     );
 }

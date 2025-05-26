@@ -23,6 +23,7 @@ type RootStackParamList = {
     Welcome: undefined;
     MacroInput: undefined;
     Login: undefined;
+    LoginScreen: undefined;
     SignUp: undefined;
 };
 
@@ -47,13 +48,7 @@ export const SignupScreen: React.FC = () => {
         terms: '',
     });
 
-    let navigation;
-    try {
-        navigation = useNavigation<SignupScreenNavigationProp>();
-    } catch (error) {
-        console.log('Navigation not available');
-    }
-
+    const navigation = useNavigation<SignupScreenNavigationProp>();
     const setAuthenticated = useStore((state) => state.setAuthenticated);
 
     const validateForm = () => {
@@ -118,17 +113,18 @@ export const SignupScreen: React.FC = () => {
                 password,
                 nickname
             });
-            mixpanel.identify(userId);
-            mixpanel.track({
-                name: 'user_signed_up',
-                properties:{
-                    signup_method: "email",
-                    platform: Platform.OS,
-                    signup_time: signUpTime,
-                }
-
-            })
-            mixpanel.register({signup_time: signUpTime});
+            if (mixpanel) {
+                mixpanel.identify(userId);
+                mixpanel.track({
+                    name: 'user_signed_up',
+                    properties:{
+                        signup_method: "email",
+                        platform: Platform.OS,
+                        signup_time: signUpTime,
+                    }
+                });
+                mixpanel.register({signup_time: signUpTime});
+            }
             setAuthenticated(true, '', userId);
 
             if (navigation) {

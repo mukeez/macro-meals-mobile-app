@@ -1,5 +1,6 @@
 export const EVENTS = {
-    USER_SIGNUP: 'user_signuo',
+    USER_SIGNUP: 'user_signed_up',
+    APP_OPENED: 'app_opened',
     USER_LOGIN: 'user_login',
     USER_LOGOUT: 'user_logout',
     SCREEN_VIEW: 'screen_view',

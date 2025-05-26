@@ -14,7 +14,12 @@ export const MixpanelProvider: React.FC<{
     const [mixpanel, setMixpanel] = useState<MixpanelInstance | null>(null);
 
     useEffect(()=> {
-        console.log('[DEBUG] MixpanelProvider useEffect - Token:', config.token);
+        console.log('[DEBUG] MixpanelProvider useEffect - Config:', {
+            token: config.token ? `${config.token.substring(0, 8)}...` : 'undefined',
+            debug: config.debug,
+            trackAutomaticEvents: config.trackAutomaticEvents,
+            optOut: config.optOut
+        });
         
         if (!config.token || config.token === 'undefined' || config.token === 'your_actual_mixpanel_token_here') {
             console.warn('[MIXPANEL] ⚠️  Invalid or missing token:', config.token);
@@ -24,9 +29,11 @@ export const MixpanelProvider: React.FC<{
         console.log('[DEBUG] Initializing Mixpanel with token:', config.token.substring(0, 8) + '...');
         
         try {
-            const instance = new Mixpanel(config.token, true);
-            instance.init(true).then(() => {
+            const instance = new Mixpanel(config.token, config.debug || false);
+            instance.init(config.trackAutomaticEvents || false).then(() => {
                 console.log('[MIXPANEL] ✅ Successfully initialized');
+                // Test event to verify tracking
+                instance.track('test_event', { test: true });
                 setMixpanel(instance);
             }).catch((error) => {
                 console.error('[MIXPANEL] ❌ Initialization failed:', error);
@@ -41,7 +48,7 @@ export const MixpanelProvider: React.FC<{
                 mixpanel.reset();
             }
         }
-    }, [config.token]);
+    }, [config.token, config.debug, config.trackAutomaticEvents]);
 
     console.log('[DEBUG] MixpanelProvider rendered, mixpanel:', !!mixpanel);
 
