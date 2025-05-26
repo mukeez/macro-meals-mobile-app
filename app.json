@@ -14,10 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.macromeals",
+      "bundleIdentifier": "com.macromeals.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to find nearby meals that match your macro goals",
-        "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals"
+        "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals",
+        "UIBackgroundModes": ["remote-notification"]
       },
       "appleTeamId": "SA3LF6JRDF"
     },
@@ -30,8 +31,12 @@
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.CAMERA"
-      ]
+        "android.permission.CAMERA",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,12 +50,21 @@
           "locationWhenInUse": true
         }
       ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
       [
-        "expo-barcode-scanner",
+        "expo-build-properties",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes."
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e1da11ff-774c-48d8-b216-51bc122a821c"
+      }
+    }
   }
 }

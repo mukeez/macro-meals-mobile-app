@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "733994435613",
+    "project_id": "macro-meals-mobile",
+    "storage_bucket": "macro-meals-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:733994435613:android:370718471c48417e6372f4",
+        "android_client_info": {
+          "package_name": "com.macromeals.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4ai-iWprvfuWB52UeFb62TirjBytkI8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
