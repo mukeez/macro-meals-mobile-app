@@ -7,11 +7,17 @@ import {
     SafeAreaView,
     ScrollView,
     Image,
+    Linking,
+    Platform,
     Switch, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
 import { Picker } from '@react-native-picker/picker';
+import { appConstants } from '../../constants/appConstants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { deleteItemAsync } from 'expo-secure-store';
+import { authService } from '../services/authService';
 
 /**
  * Settings screen for the application.
@@ -126,13 +132,11 @@ const SettingsScreen: React.FC = () => {
         try {
             await logout();
 
-            const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
             await AsyncStorage.removeItem('token');
             await AsyncStorage.removeItem('refresh_token');
             await AsyncStorage.removeItem('user_id');
 
             try {
-                const { deleteItemAsync } = await import('expo-secure-store');
                 await deleteItemAsync('token');
                 await deleteItemAsync('refresh_token');
                 await deleteItemAsync('user_id');
@@ -164,6 +168,15 @@ const SettingsScreen: React.FC = () => {
         console.log('Modal sheet');
         navigation.navigate('PaymentScreen' as never);
     };
+
+    const openEmail = () => {
+        let url = `mailto:${appConstants.email.to}`;
+
+        const subject = `?subject=${encodeURIComponent(appConstants.email.subject)}`;
+        const body = `&body=${encodeURIComponent(appConstants.email.body)}`;
+        url += subject + body;
+        Linking.openURL(url).catch((err)=> console.error('Error opening email', err));
+    }
 
     /**
      * Handle navigation to feedback screen
@@ -287,7 +300,7 @@ const SettingsScreen: React.FC = () => {
 
                     <TouchableOpacity
                         style={styles.supportItem}
-                        onPress={handleSendFeedback}
+                        onPress={openEmail}
                     >
                         <View style={styles.supportIconContainer}>
                             <Text style={styles.supportIcon}>💬</Text>
