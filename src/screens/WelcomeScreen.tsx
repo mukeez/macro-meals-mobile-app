@@ -8,12 +8,14 @@ type RootStackParamList = {
     Welcome: undefined;
     MacroInput: undefined;
     Login: undefined;
+    SignupScreen: undefined;
+    LoginScreen: undefined;
 };
 
 type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Welcome'>;
 
 export const WelcomeScreen: React.FC = () => {
-    let navigation;
+    let navigation: WelcomeScreenNavigationProp | undefined;
     try {
         navigation = useNavigation<WelcomeScreenNavigationProp>();
     } catch (error) {
