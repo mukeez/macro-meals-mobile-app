@@ -132,11 +132,13 @@ const SettingsScreen: React.FC = () => {
         try {
             await logout();
 
+            const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
             await AsyncStorage.removeItem('token');
             await AsyncStorage.removeItem('refresh_token');
             await AsyncStorage.removeItem('user_id');
 
             try {
+                const { deleteItemAsync } = await import('expo-secure-store');
                 await deleteItemAsync('token');
                 await deleteItemAsync('refresh_token');
                 await deleteItemAsync('user_id');
