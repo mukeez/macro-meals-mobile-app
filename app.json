@@ -21,7 +21,8 @@
         "UIBackgroundModes": ["remote-notification"],
         "NSUserNotificationsUsageDescription": "We need to send you notifications about your meals and updates"
       },
-      "appleTeamId": "SA3LF6JRDF"
+      "appleTeamId": "SA3LF6JRDF",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -52,7 +53,12 @@
           "locationWhenInUse": true
         }
       ],
-      "@react-native-firebase/app",
+      [
+        "@react-native-firebase/app",
+        {
+          "android_package_name": "com.anonymous.macromeals"
+        }
+      ],
       "@react-native-firebase/messaging",
       [
         "expo-build-properties",
