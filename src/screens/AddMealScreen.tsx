@@ -13,18 +13,15 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MixpanelProvider } from '@macro-meals/mixpanel/src';
+import { useMixpanel }  from '@macro-meals/mixpanel';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
 
-interface RouteParams {
-    barcodeData: any;
-    analyzedData?: {
-        name: string;
-        calories: number;
-        protein: number;
-        carbs: number;
-        fat: number;
-        quantity: number;
-    };
-}
+type RouteParams = {
+    barcodeData?: string;
+    analyzedData?: any;
+};
 
 interface RecentMeal {
     id: string;
@@ -44,7 +41,7 @@ interface RecentMeal {
 export const AddMealScreen: React.FC = () => {
     const navigation = useNavigation();
     const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
-    const params = route.params;
+    const params = route.params || {};
     const { barcodeData, analyzedData } = params;
 
     console.log('Params:', params);
@@ -54,6 +51,8 @@ export const AddMealScreen: React.FC = () => {
     const [protein, setProtein] = useState<string>(analyzedData?.protein?.toString() || '0');
     const [carbs, setCarbs] = useState<string>(analyzedData?.carbs?.toString() || '0');
     const [fats, setFats] = useState<string>(analyzedData?.fat?.toString() || '0');
+    
+    
     
 
     const [recentMeals] = useState<RecentMeal[]>([
@@ -122,7 +121,8 @@ export const AddMealScreen: React.FC = () => {
     /**
      * Adds the current meal to the log
      */
-    const handleAddToLog = (): void => {
+    const handleAddToLog = async(): Promise<void> => {
+        const mixpanel = useMixpanel();
         if (!mealName.trim()) {
             console.error('Please enter a meal name');
             return;
@@ -138,6 +138,35 @@ export const AddMealScreen: React.FC = () => {
             },
             date: new Date().toISOString(),
         };
+
+        const firstMealLogged = await mixpanel?.getSuperProperty('first_meal_logged');
+            const signupTime = await mixpanel?.getSuperProperty('signup_time') as string;
+            console.log('firstMealLogged', firstMealLogged);
+            let properties: {
+                method: string;
+                meal_type: string;
+                calories: number;
+                protein: number;
+                carbs: number;
+                fats: number;
+                time_to_first_meal?: number;
+            } = {
+                method: "manual",
+                meal_type: newMeal.name.toLowerCase(),
+                calories: newMeal.macros.calories,
+                protein: newMeal.macros.protein,
+                carbs: newMeal.macros.carbs,
+                fats: newMeal.macros.fat,
+            };
+            if (!firstMealLogged){
+                const now = new Date();
+                const timeForFirstMealLogged = (now.getTime() - new Date(signupTime).getTime()) / 1000;
+                properties.time_to_first_meal = timeForFirstMealLogged;
+                mixpanel?.register({firt_meal_logged: true})
+            }
+            mixpanel?.track({name: 'meal_logged', properties: properties as any});
+            
+            
 
         console.log('Adding meal to log:', newMeal);
 
@@ -161,7 +190,7 @@ export const AddMealScreen: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <CustomSafeAreaView edges={['left', 'right']}>
         <StatusBar barStyle="dark-content" />
 
             <View style={styles.header}>
@@ -284,7 +313,7 @@ export const AddMealScreen: React.FC = () => {
 
     <View style={styles.bottomSpacer} />
     </ScrollView>
-    </SafeAreaView>
+    </CustomSafeAreaView>
 );
 };
 

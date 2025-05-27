@@ -45,6 +45,24 @@ export const useMixpanel = ()=> {
                 console.error('[MIXPANEL] ❌ Error setting user properties:', error);
             }
         },
+        getSuperProperty: (property: string)=> {
+            try {
+                console.log('[MIXPANEL] 🔍 Getting user properties');
+                return mixpanel.getSuperProperties()[property];
+            } catch (error) {
+                console.error('[MIXPANEL] ❌ Error getting user properties:', error);
+                return null;
+            }
+        },
+        getSuperProperties: ()=> {
+            try {
+                console.log('[MIXPANEL] 🔍 Getting super properties');
+                return mixpanel.getSuperProperties();
+            } catch (error) {
+                console.error('[MIXPANEL] ❌ Error getting super properties:', error);
+                return null;
+            }
+        },
         reset: ()=> {
             try {
                 console.log('[MIXPANEL] 🔄 Resetting');
