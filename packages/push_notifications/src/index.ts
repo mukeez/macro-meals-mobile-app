@@ -1,3 +1,3 @@
 export * from './constants';
-export * from './PushNotificationsProvider';
 export * from './types';
+export * from './push_notifications';

@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {RootStack} from "./RootStack";
 import { MIXPANEL_TOKEN } from '@env';
 import { MixpanelProvider } from "@macro-meals/mixpanel";
+import { checkNotificationPermission, getFCMToken } from '@macro-meals/push-notifications';
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
@@ -15,6 +16,11 @@ export default function App() {
     console.log(`MIXPANEL_TOKEN: ${MIXPANEL_TOKEN}`);
 
     useEffect(() => {
+        const permission = checkNotificationPermission();
+        console.log('[DEBUG] App.tsx - permission:', permission);
+        const token = getFCMToken();
+        console.log('[DEBUG] App.tsx - permission:', permission);
+        console.log('[DEBUG] App.tsx - token:', token);
         const checkAuthStatus = async () => {
             try {
                 const token = await AsyncStorage.getItem('access_token');
