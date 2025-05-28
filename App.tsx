@@ -8,7 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {RootStack} from "./RootStack";
 import { MIXPANEL_TOKEN } from '@env';
 import { MixpanelProvider } from "@macro-meals/mixpanel";
-import { checkNotificationPermission, getFCMToken } from '@macro-meals/push-notifications';
+import { pushNotifications } from '@macro-meals/push-notifications';
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
@@ -17,16 +17,26 @@ export default function App() {
     console.log(`MIXPANEL_TOKEN: ${MIXPANEL_TOKEN}`);
 
     useEffect(() => {
-        // Initialize Firebase if it hasn't been initialized
+        async function initializeApp(){
+            // Initialize Firebase if it hasn't been initialized
+        const firebaseConfig = {
+            appId: '1:733994435613:android:370718471c48417e6372f4',
+            projectId: 'macro-meals-mobile',
+            storageBucket: 'macro-meals-mobile.firebasestorage.app',
+            apiKey: 'AIzaSyC4ai-iWprvfuWB52UeFb62TirjBytkI8k',
+            messagingSenderId: '733994435613'
+        }
         if (!firebase.apps.length) {
-            firebase.initializeApp();
+            firebase.initializeApp(firebaseConfig);
         }
 
-        const permission = checkNotificationPermission();
+        const permission = await pushNotifications.requestPermissions();
         console.log('[DEBUG] App.tsx - permission:', permission);
-        const token = getFCMToken();
-        console.log('[DEBUG] App.tsx - permission:', permission);
-        console.log('[DEBUG] App.tsx - token:', token);
+        if (permission){
+            const token = await pushNotifications.getFCMToken();
+            console.log('[DEBUG] App.tsx - permission:', permission);
+            console.log('[DEBUG] App.tsx - token:', token);
+        }
         const checkAuthStatus = async () => {
             try {
                 const token = await AsyncStorage.getItem('access_token');
@@ -44,6 +54,9 @@ export default function App() {
         };
 
         checkAuthStatus();
+        }
+        initializeApp();
+        
     }, []);
 
     return (
