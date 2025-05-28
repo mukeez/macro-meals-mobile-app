@@ -6,7 +6,7 @@ import { MacroInputScreen } from "./screens/MacroInputScreen";
 import { initGoogleSignIn } from "./services/socialAuthService";
 import { MixpanelProvider } from "@macro-meals/mixpanel";
 import { MIXPANEL_TOKEN } from '@env';
-import { checkNotificationPermission, getFCMToken } from '@macro-meals/push-notifications';
+// import { checkNotificationPermission, getFCMToken } from '@macro-meals/push-notifications';
 
 export default function App() {
     const [notificationPermission, setNotificationPermission] = useState(false);
