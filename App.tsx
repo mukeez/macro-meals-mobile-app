@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
+import firebase from '@react-native-firebase/app';
 
 import useStore from "./src/store/useStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -16,6 +17,11 @@ export default function App() {
     console.log(`MIXPANEL_TOKEN: ${MIXPANEL_TOKEN}`);
 
     useEffect(() => {
+        // Initialize Firebase if it hasn't been initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp();
+        }
+
         const permission = checkNotificationPermission();
         console.log('[DEBUG] App.tsx - permission:', permission);
         const token = getFCMToken();
