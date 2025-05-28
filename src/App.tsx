@@ -13,11 +13,11 @@ export default function App() {
 
     useEffect(() => {
         
-        const permission = checkNotificationPermission();
-        console.log('[DEBUG] App.tsx - permission:', permission);
-        const token = getFCMToken();
-        console.log('[DEBUG] App.tsx - permission:', permission);
-        console.log('[DEBUG] App.tsx - token:', token);
+        // const permission = checkNotificationPermission();
+        //console.log('[DEBUG] App.tsx - permission:', permission);
+        // const token = getFCMToken();
+        //console.log('[DEBUG] App.tsx - permission:', permission);
+        //console.log('[DEBUG] App.tsx - token:', token);
         console.log('[DEBUG] App.tsx - MIXPANEL_TOKEN:', MIXPANEL_TOKEN);
         initGoogleSignIn();
     }, []);
