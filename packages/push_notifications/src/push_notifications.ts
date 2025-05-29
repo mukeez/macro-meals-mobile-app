@@ -10,7 +10,6 @@ class PushNotifications {
   async intializeMessaging(){
     // Set up foreground message handler
     messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-      console.log('[FIREBASE] 📬 Foreground message received:', remoteMessage);
       notifee.displayNotification({
         title: remoteMessage.notification?.title,
         body: remoteMessage.notification?.body,
@@ -24,7 +23,6 @@ class PushNotifications {
 
     // Set up background message handler
     messaging().setBackgroundMessageHandler(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-      console.log('[FIREBASE] 📬 Background message received:', remoteMessage);
       notifee.displayNotification({
         title: remoteMessage.notification?.title,
         body: remoteMessage.notification?.body,
@@ -37,7 +35,6 @@ class PushNotifications {
     });
     
     messaging().onNotificationOpenedApp(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
-      console.log('[FIREBASE] 📬 Notification opened app:', remoteMessage);
       notifee.displayNotification({
         title: remoteMessage.notification?.title,
         body: remoteMessage.notification?.body,

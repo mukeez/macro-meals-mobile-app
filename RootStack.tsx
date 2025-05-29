@@ -46,10 +46,8 @@ export function RootStack() {
     const mixpanel = useMixpanel();
 
     useEffect(() => {
-        console.log('[DEBUG] RootStack useEffect - mixpanel available:', !!mixpanel);
         
         if (mixpanel) {
-            console.log('[MIXPANEL] 🚀 Tracking app_opened event');
             mixpanel.track({
                 name: 'app_opened',
                 properties: {

@@ -14,8 +14,6 @@ import messaging from '@react-native-firebase/messaging';
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const { setAuthenticated } = useStore();
-
-    console.log(`MIXPANEL_TOKEN: ${MIXPANEL_TOKEN}`);
     
 
     useEffect(() => {
@@ -35,21 +33,17 @@ export default function App() {
                 // If firebase has not been initialized
                 if (!firebase.apps.length) {
                     await firebase.initializeApp(firebaseConfig);
-                    console.log('[FIREBASE] ✅ Firebase initialized successfully');
                 }
 
                 // Request notification permissions
                 const permission = await pushNotifications.requestPermissions();
-                console.log('[FIREBASE] 🔔 Notification permission:', permission);
 
                 if (permission) {
                     // Get FCM token only after permissions are granted
                     const token = await messaging().getToken();
-                    console.log('[FIREBASE] 🔑 FCM Token:', token);
                     await pushNotifications.intializeMessaging();
                     return token;
                 } else {
-                    console.log('[FIREBASE] ⚠️ Notification permission denied');
                     return null;
                 }
             } catch (error) {

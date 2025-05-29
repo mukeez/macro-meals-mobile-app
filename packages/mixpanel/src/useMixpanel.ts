@@ -18,11 +18,9 @@ export const useMixpanel = ()=> {
         // Track events
         track: (event: TrackEvent) => {
             try {
-                console.log('[MIXPANEL] 📊 Tracking event:', event.name, event.properties);
                 const validatedEvent = validateEvent(event);
                 const formattedEvent = formatEvent(validatedEvent);
                 mixpanel.track(formattedEvent.name, formattedEvent.properties);
-                console.log('[MIXPANEL] ✅ Event sent successfully');
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error tracking event:', error);
             }
@@ -30,7 +28,6 @@ export const useMixpanel = ()=> {
         // Identify user
         identify: (userId: string) => {
             try {
-                console.log('[MIXPANEL] 👤 Identifying user:', userId);
                 mixpanel.identify(userId);
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error identifying user:', error);
@@ -39,7 +36,6 @@ export const useMixpanel = ()=> {
         // Set user properties
         setUserProperties: (properties: UserProperties) => {
             try {
-                console.log('[MIXPANEL] 📝 Setting user properties:', properties);
                 mixpanel.getPeople().set(properties);
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error setting user properties:', error);
@@ -47,7 +43,6 @@ export const useMixpanel = ()=> {
         },
         reset: ()=> {
             try {
-                console.log('[MIXPANEL] 🔄 Resetting');
                 mixpanel.reset();
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error resetting:', error);
@@ -56,7 +51,6 @@ export const useMixpanel = ()=> {
         // Register super properties (sent with every event)
         register: (properties: Record<string, any>) => {
             try {
-                console.log('[MIXPANEL] 🔧 Registering super properties:', properties);
                 mixpanel.registerSuperProperties(properties);
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error registering properties:', error);
@@ -65,7 +59,6 @@ export const useMixpanel = ()=> {
         // Register super properties only once
         registerOnce: (properties: Record<string, any>) => {
             try {
-                console.log('[MIXPANEL] 🔧 Registering super properties once:', properties);
                 mixpanel.registerSuperPropertiesOnce(properties);
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error registering properties once:', error);
@@ -74,7 +67,6 @@ export const useMixpanel = ()=> {
         // Unregister a super property
         unregisterSuperProperty: (propertyName: string) => {
             try {
-                console.log('[MIXPANEL] 🗑️ Unregistering super property:', propertyName);
                 mixpanel.unregisterSuperProperty(propertyName);
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error unregistering property:', error);
@@ -83,7 +75,6 @@ export const useMixpanel = ()=> {
         // Clear all super properties
         clearSuperProperties: () => {
             try {
-                console.log('[MIXPANEL] 🧹 Clearing all super properties');
                 mixpanel.clearSuperProperties();
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error clearing super properties:', error);
@@ -91,7 +82,6 @@ export const useMixpanel = ()=> {
         },
         trackScreen: (screenName: string, properties?: Record<string, any>)  => {
             try {
-                console.log('[MIXPANEL] 📱 Tracking screen view:', screenName, properties);
                 mixpanel.track(EVENTS.SCREEN_VIEW, {
                     screen_name: screenName,
                     ...properties,
