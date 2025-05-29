@@ -8,10 +8,22 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import useStore from '../store/useStore';
 import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 
-export const DashboardScreen = ({ navigation }) => {
+type RootStackParamList = {
+    MacroInput: undefined;
+    ScanScreenType: undefined;
+    NearbyMeals: { fromSearch: boolean };
+    MealLog: undefined;
+    Settings: undefined;
+    SettingsScreen: undefined;
+};
+
+type DashboardScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+
+export const DashboardScreen = ({ navigation }: { navigation: DashboardScreenNavigationProp }) => {
     // State for user data
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -33,6 +45,7 @@ export const DashboardScreen = ({ navigation }) => {
     const userId = useStore((state) => state.userId);
     const token = useStore((state) => state.token);
     const preferences = useStore((state) => state.preferences);
+    
 
     useEffect(() => {
         if (preferences.calories === 0 && preferences.protein === 0) {

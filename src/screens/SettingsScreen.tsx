@@ -7,11 +7,17 @@ import {
     SafeAreaView,
     ScrollView,
     Image,
+    Linking,
+    Platform,
     Switch, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
 import { Picker } from '@react-native-picker/picker';
+import { appConstants } from '../../constants/appConstants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { deleteItemAsync } from 'expo-secure-store';
+import { authService } from '../services/authService';
 
 /**
  * Settings screen for the application.
@@ -165,6 +171,15 @@ const SettingsScreen: React.FC = () => {
         navigation.navigate('PaymentScreen' as never);
     };
 
+    const openEmail = () => {
+        let url = `mailto:${appConstants.email.to}`;
+
+        const subject = `?subject=${encodeURIComponent(appConstants.email.subject)}`;
+        const body = `&body=${encodeURIComponent(appConstants.email.body)}`;
+        url += subject + body;
+        Linking.openURL(url).catch((err)=> console.error('Error opening email', err));
+    }
+
     /**
      * Handle navigation to feedback screen
      */
@@ -287,7 +302,7 @@ const SettingsScreen: React.FC = () => {
 
                     <TouchableOpacity
                         style={styles.supportItem}
-                        onPress={handleSendFeedback}
+                        onPress={openEmail}
                     >
                         <View style={styles.supportIconContainer}>
                             <Text style={styles.supportIcon}>💬</Text>

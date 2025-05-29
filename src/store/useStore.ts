@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Meal, UserPreferences } from '../types';
 import { authService } from '../services/authService';
+import { mealService } from '../services/mealService';
 
 /**
  * Default user preferences with all values set to 0.
@@ -158,10 +159,6 @@ const useStore = create<AppState>()(
 
             refreshMeals: async () => {
                 try {
-                    // Import here to avoid circular dependencies
-                    const mealServiceModule = await import('../services/mealService');
-                    const { mealService } = mealServiceModule;
-
                     if (!mealService || !mealService.getTodaysMeals) {
                         console.error('Meal service not available');
                         return;
@@ -179,7 +176,7 @@ const useStore = create<AppState>()(
                     const meals = todaysMeals
                         .filter(meal => meal) // Remove null items
                         .map(convertToMeal)
-                        .filter(meal => meal); // Remove nulls after conversion
+                        .filter((meal): meal is Meal => meal !== null); // Remove nulls after conversion with type guard
 
                     set({
                         loggedMeals: meals || [],
