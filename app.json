@@ -45,6 +45,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/notifee-mod.js",
       "expo-secure-store",
       [
         "expo-location",
