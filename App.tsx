@@ -8,15 +8,17 @@ import {RootStack} from "./RootStack";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+setTimeout (()=> {
+    SplashScreen.hideAsync();
+}, 3000);
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const { setAuthenticated } = useStore();
+    const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
 
     useEffect(() => {
-        setTimeout (()=> {
-            SplashScreen.hideAsync();
-        }, 3000);
+      
         const checkAuthStatus = async () => {
             try {
                 const token = await AsyncStorage.getItem('access_token');
