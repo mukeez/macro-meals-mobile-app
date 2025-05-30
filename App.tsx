@@ -1,15 +1,22 @@
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
+import * as SplashScreen from 'expo-splash-screen';
 
 import useStore from "./src/store/useStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {RootStack} from "./RootStack";
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
     const { setAuthenticated } = useStore();
 
     useEffect(() => {
+        setTimeout (()=> {
+            SplashScreen.hideAsync();
+        }, 3000);
         const checkAuthStatus = async () => {
             try {
                 const token = await AsyncStorage.getItem('access_token');
@@ -23,6 +30,8 @@ export default function App() {
                 console.error('Error checking auth status:', error);
             } finally {
                 setIsLoading(false);
+                // Hide splash screen after auth check
+                
             }
         };
 

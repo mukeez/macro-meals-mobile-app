@@ -21,7 +21,6 @@
     "@stripe/stripe-react-native": "0.45.0",
     "@supabase/supabase-js": "^2.49.4",
     "expo": "^53.0.9",
-    "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~16.1.6",
     "expo-image-picker": "~16.1.4",
     "expo-location": "~18.1.5",
