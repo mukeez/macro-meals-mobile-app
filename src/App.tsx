@@ -5,9 +5,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { initGoogleSignIn } from "./services/socialAuthService";
 import { MacroInputScreen } from "./screens/MacroInputScreen";
 import { StatusBar } from 'expo-status-bar'
+import * as SplashScreen from 'expo-splash-screen';
 
 export default function App() {
+
     useEffect(() => {
+        SplashScreen.preventAutoHideAsync();
+        setTimeout(async ()=> {
+            SplashScreen.hideAsync();
+        }, 3000);
         // Initialize Google Sign In
         initGoogleSignIn();
     }, [])
