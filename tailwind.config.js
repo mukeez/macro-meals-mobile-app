@@ -19,7 +19,10 @@ module.exports = {
         primary: '#009688',
         secondary: '#58B74F',
         accent: '#AB8BFF',
-        gold: '#FEBF00'
+        gold: '#FEBF00',
+        indicatorActive: "#01675B",
+        indicatorInactive: "#b3d1ce",
+        lightGrey: "#B0B0B0"
       }
     },
   },
