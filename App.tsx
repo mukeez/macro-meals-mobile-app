@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import useStore from "./src/store/useStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {RootStack} from "./RootStack";
+import { OnboardingContext } from './src/contexts/OnboardingContext';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -12,37 +13,62 @@ setTimeout (()=> {
     SplashScreen.hideAsync();
 }, 3000);
 
+
+
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
-    const { setAuthenticated } = useStore();
+    const { setAuthenticated, isAuthenticated } = useStore();
     const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
+    const [initialAuthScreen, setInitialAuthScreen] = useState('LoginScreen');
 
     useEffect(() => {
-      
-        const checkAuthStatus = async () => {
+        const initializeApp = async () => {
             try {
-                const token = await AsyncStorage.getItem('access_token');
-                const userId = await AsyncStorage.getItem('user_id');
+                // Check both onboarding and auth status in parallel
+                const [onboardingCompleted, token, userId] = await Promise.all([
+                    AsyncStorage.getItem('isOnboardingCompleted'),
+                    AsyncStorage.getItem('my_token'),
+                    AsyncStorage.getItem('user_id')
+                ]);
 
+                // Set onboarding status
+                setIsOnboardingCompleted(onboardingCompleted === 'true');
+
+                // Only set authenticated if we have both token and userId
                 if (token && userId) {
-                    // Restore authentication state
+                    console.log('Found stored credentials, setting authenticated');
                     setAuthenticated(true, token, userId);
+                } else {
+                    console.log('No stored credentials, setting unauthenticated');
+                    setAuthenticated(false, null, null);
                 }
             } catch (error) {
-                console.error('Error checking auth status:', error);
+                console.error('Error initializing app:', error);
+                // Ensure we're unauthenticated on error
+                setAuthenticated(false, null, null);
             } finally {
                 setIsLoading(false);
-                // Hide splash screen after auth check
-                
             }
         };
 
-        checkAuthStatus();
+        initializeApp();
     }, []);
 
+    console.log('Current auth state:', isAuthenticated);
+
+    if (isLoading) {
+        return null;
+    }
+
     return (
-        <NavigationContainer>
-            <RootStack />
-        </NavigationContainer>
+        <OnboardingContext.Provider value={{ setIsOnboardingCompleted, setInitialAuthScreen }} >
+            <NavigationContainer>
+                <RootStack 
+                    isOnboardingCompleted={isOnboardingCompleted} 
+                    initialAuthScreen={initialAuthScreen}
+                    isAuthenticated={isAuthenticated}
+                />
+            </NavigationContainer>
+        </OnboardingContext.Provider>
     );
 }

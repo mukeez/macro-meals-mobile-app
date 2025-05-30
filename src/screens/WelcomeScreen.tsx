@@ -3,6 +3,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OnboardingContext } from '../contexts/OnboardingContext';
 
 type RootStackParamList = {
     Welcome: undefined;
@@ -20,11 +22,20 @@ export const WelcomeScreen: React.FC = () => {
         console.log('Navigation not available');
     }
 
-    const handleGetStarted = () => {
-        if (navigation) {
-            navigation.navigate('SignupScreen');
-        } else {
-            console.log('Would navigate to MacroInput screen');
+    const {setIsOnboardingCompleted} = React.useContext(OnboardingContext);
+
+    const handleGetStartedClick = async () => {
+        try {
+            console.warn('Welcome Screen - Get Started clicked');
+            await AsyncStorage.setItem('isOnboardingCompleted', 'false');
+            setIsOnboardingCompleted(false);
+            if (navigation) {
+                navigation.navigate('SignupScreen');
+            } else {
+                console.log('Would navigate to MacroInput screen');
+            }
+        } catch (error) {
+            console.error('Error saving onboarding status:', error);
         }
     };
 
@@ -57,7 +68,7 @@ export const WelcomeScreen: React.FC = () => {
                 <View style={styles.actionButtonsContainer}>
                     <TouchableOpacity
                         style={styles.getStartedButton}
-                        onPress={handleGetStarted}
+                        onPress={handleGetStartedClick}
                     >
                         <Text style={styles.getStartedText}>Get Started</Text>
                     </TouchableOpacity>

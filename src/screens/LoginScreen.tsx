@@ -19,6 +19,7 @@ import { authService } from "../services/authService";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import the mock service instead of the real one
 import { mockSocialAuth } from '../services/authMock';
+import { OnboardingContext } from '../contexts/OnboardingContext';
 
 type RootStackParamList = {
     Welcome: undefined;
@@ -35,6 +36,7 @@ export const LoginScreen: React.FC = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
 
     let navigation;
     try {
@@ -56,15 +58,15 @@ export const LoginScreen: React.FC = () => {
 
         try {
             const data = await authService.login({ email, password });
+            console.log('Login successful, setting authenticated state');
             setAuthenticated(true, data.access_token, data.user.id);
-            console.log(data.access_token)
-            AsyncStorage.setItem('my_token', data.access_token);
-
-            if (navigation) {
-                navigation.navigate('DashboardScreen');
-            }
-            const token = await AsyncStorage.getItem('my_token');
-            console.log('The my_token is: ', token);
+            console.log('Auth state updated, token:', data.access_token);
+            await AsyncStorage.setItem('my_token', data.access_token);
+            console.log('Token saved to AsyncStorage');
+            
+            // Add this to check if the state was actually updated
+            const isAuth = useStore.getState().authenticated;
+            console.log('Current auth state after update:', isAuth);
         } catch (error) {
             Alert.alert(
                 'Login Failed',
@@ -94,6 +96,7 @@ export const LoginScreen: React.FC = () => {
     };
 
     const handleAppleLogin = async () => {
+        setIsOnboardingCompleted(false);
         try {
             setIsLoading(true);
             // Use the mock service

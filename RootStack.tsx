@@ -17,8 +17,12 @@ import {MealListScreen} from "./src/screens/MealListScreen";
 import PaymentScreen from "./src/screens/PaymentScreen";
 import {createStackNavigator} from '@react-navigation/stack';
 import './src/globals.css';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RootStackParamList = {
+    Onboarding: undefined;
+    Auth: { initialAuthScreen: string };
+    Dashboard: undefined;
     Welcome: undefined;
     Login: undefined;
     SignUp: undefined;
@@ -40,14 +44,15 @@ type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-export function RootStack({isOnboardingCompleted, isAuthenticated}: {isOnboardingCompleted: boolean, isAuthenticated: boolean}){
+export function RootStack({isOnboardingCompleted, isAuthenticated, initialAuthScreen}: {isOnboardingCompleted: boolean, isAuthenticated: boolean, initialAuthScreen: string}){
+    console.log('initialAuthScreen', initialAuthScreen);
     return (
         <Stack.Navigator screenOptions={{headerShown: false}}>
             {
                 !isOnboardingCompleted ? (
-                    <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
+                    <Stack.Screen name="OnboardingNav" component={OnboardingNavigator} />
                 ): !isAuthenticated ? (
-                    <Stack.Screen name="Auth" component={AuthNavigator} />
+                    <Stack.Screen name="Auth" component={AuthNavigator} initialParams={{ initialAuthScreen: initialAuthScreen}} />
                 ): (
                     <Stack.Screen name="Dashboard" component={DashboardNavigator} />
                 )
@@ -57,9 +62,14 @@ export function RootStack({isOnboardingCompleted, isAuthenticated}: {isOnboardin
 }
 
 
-const AuthNavigator = () => {
+const AuthNavigator = ({ route }: { route: { params?: { initialAuthScreen: string } } }) => {
+    const initialScreen = route.params?.initialAuthScreen || 'LoginScreen';
+    console.log('THIS IS THE INITIAL SCREEN', initialScreen);
     return (
-        <Stack.Navigator screenOptions={{ headerShown: false}}>
+        <Stack.Navigator 
+            screenOptions={{ headerShown: false}}
+            initialRouteName={initialScreen}
+        >
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="LoginScreen" component={LoginScreen} />
             <Stack.Screen name="SignupScreen" component={SignupScreen} />
@@ -69,9 +79,17 @@ const AuthNavigator = () => {
 
 
 const OnboardingNavigator = () =>{
+    const handleGetStartedClick = async () => {
+        try {
+            await AsyncStorage.setItem('isOnboardingCompleted', 'true');
+        } catch (error) {
+            console.error('Error saving onboarding status:', error);
+        }
+    };
+
     return (
         <Stack.Navigator screenOptions={{ headerShown: false}}>
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />
         </Stack.Navigator>
     );
 }
@@ -79,6 +97,8 @@ const OnboardingNavigator = () =>{
 const DashboardNavigator = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false}}>
+            <Stack.Screen name="MacroInput" component={MacroInputScreen} />
+            <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
             <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
             <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
             <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
@@ -86,6 +106,7 @@ const DashboardNavigator = () => {
             <Stack.Screen name="AddMeal" component={AddMealScreen} />
             <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
             <Stack.Screen name="MealLog" component={MealLogScreen} />
+
         </Stack.Navigator>
     );
 }

@@ -1,29 +1,73 @@
 import React, { useState } from 'react';
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import CustomSafeAreaView from '../../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../../components/CustomTouchableOpacityButton';
 import CustomScaffold from '../../components/CustomScaffold';
 import CustomPagerView from '../../components/CustomPagerView';
 import { onboardingItems, OnboardingItem } from '../../constants/onboarding';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OnboardingContext } from '../../contexts/OnboardingContext';
+
+
+type RootStackParamList = {
+    Auth: { screen: string };
+}
 
 export const OnboardingScreen: React.FC = () => {
+    const {setIsOnboardingCompleted, setInitialAuthScreen} = React.useContext(OnboardingContext);
+    
+    const handleGetStartedClick = async () => {
+        try {
+            await AsyncStorage.setItem('isOnboardingCompleted', 'true');
+            setInitialAuthScreen('SignupScreen');
+            setIsOnboardingCompleted(true);
+        } catch (error) {
+            console.error('Error saving onboarding status:', error);
+        }
+    }
+
+    const handleSignInClick = async () => {
+        try {
+            await AsyncStorage.setItem('isOnboardingCompleted', 'true');
+            setInitialAuthScreen('LoginScreen');
+            setIsOnboardingCompleted(true);
+        } catch (error) {
+            console.error('Error saving onboarding status:', error);
+        }
+    }
+
     return (
         <CustomSafeAreaView edges={['left', 'right']}>
-            <CustomScaffold>
-                <CustomPagerView indicatorActiveColor='bg-indicatorActive' indicatorInactiveColor='bg-indicatorInactive'>
-                    {onboardingItems.map((item: OnboardingItem, index: number) => (
-                        <View key={index} className="flex-1 justify-center items-center p-4">
-                            <Image 
-                                source={item.imagePath} 
-                                className="w-full h-1/2 mb-8"
-                                resizeMode="contain"
-                            />
-                            <Text className="text-2xl font-bold mb-4">{item.title}</Text>
-                            <Text className="text-center text-gray-600">{item.description}</Text>
+            <CustomScaffold className='flex-1'>
+                <View className='flex-1'>
+                    <CustomPagerView 
+                        indicatorActiveColor='bg-indicatorActive' 
+                        indicatorInactiveColor='bg-indicatorInactive'
+                        indicatorClass='absolute bottom-44 w-full flex-row gap-2 justify-center items-center'
+                    >
+                        {onboardingItems.map((item: OnboardingItem, index: number) => (
+                            <View key={index} className="flex-1 mt-[60px] items-center">
+                                <Image 
+                                    source={typeof item.imagePath === 'string' ? { uri: item.imagePath } : item.imagePath} 
+                                    className="w-full h-1/2 mb-8"
+                                    resizeMode="contain"
+                                />
+                                <Text className="text-2xl font-bold mt-10 mb-4">{item.title}</Text>
+                                <Text className="mx-3 text-center text-sm text-[#404040] leading-6">{item.description}</Text>
+                            </View>
+                        ))}
+                    </CustomPagerView>
+                    <View className='absolute bottom-10 w-full px-4 '>
+                        <CustomTouchableOpacityButton title="Get Started" onPress={handleGetStartedClick}/>
+                        <View className='flex-row items-baseline justify-center'>
+                            <Text className='mt-2 text-center text-base font-medium text-[#404040] leading-6'>Already have an account? </Text>
+                            <TouchableOpacity onPress={handleSignInClick}>
+                                <Text className='text-primary ml-1 text-base font-medium'>Sign in</Text>
+                            </TouchableOpacity>
                         </View>
-                    ))}
-                </CustomPagerView>
-                <CustomTouchableOpacityButton title="Next" onPress={()=>{}}/>
+                    </View>
+                </View>
             </CustomScaffold>
         </CustomSafeAreaView>
     )
