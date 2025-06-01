@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 
 export const WelcomeScreen: React.FC = () => {
     const handleGetStarted = () => {
@@ -18,11 +19,8 @@ export const WelcomeScreen: React.FC = () => {
         <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
             <View style={styles.container}>
                 <View style={styles.content}>
-                    <Image
-                        source={require('../assets/images/welcome.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                    />
+                    <Image source={require(IMAGE_CONSTANTS.strawberryBg)}/>
+                    
                     <Text style={styles.title}>Welcome to MacroMate</Text>
                     <Text style={styles.subtitle}>
                         Track your macros, achieve your goals, and transform your nutrition journey.
@@ -58,11 +56,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    image: {
-        width: '100%',
-        height: 300,
-        marginBottom: 40,
     },
     title: {
         fontSize: 28,
