@@ -11,6 +11,7 @@ import {
     ActivityIndicator,
     Modal,
     SafeAreaView,
+    Alert,
 } from 'react-native';
 import { MacroDisplay } from '../components/MacroDisplay';
 import { UserPreferences } from '../types';
@@ -18,7 +19,10 @@ import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
 import { macroCalculationService } from "../services/macroCalculationService";
 import { useNavigation } from '@react-navigation/native';
-import CustomSafeAreaView  from '../components/CustomSafeAreaView';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import BackButton from '../components/BackButton';
+import { router } from 'expo-router';
+import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 
 export const MacroInputScreen: React.FC = () => {
     // Get state and actions from Zustand store
@@ -93,7 +97,7 @@ export const MacroInputScreen: React.FC = () => {
             setIsLoadingSuggestions(true);
 
             try {
-                navigation?.navigate('MacroGoals', { fromCalculator: true });
+                router.push('/(app)');
             } catch (error) {
                 console.error('Error fetching meal suggestions:', error);
                 setSuggestionsError('Failed to fetch meal suggestions. Please try again.');
@@ -270,41 +274,42 @@ export const MacroInputScreen: React.FC = () => {
     );
 
     return (
-        <CustomSafeAreaView>
+        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-            <ScrollView
-                contentContainerStyle={styles.contentContainer}
-                showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.title}>Tell us about yourself</Text>
-                <Text style={styles.subtitle}>Let's create your personalized plan</Text>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View className="flex-row items-center justify-start mb-3">
+                        <BackButton onPress={() => router.back()}/>
+                    </View>
 
-                {renderUnitToggle()}
+                    <Text style={styles.title}>Tell us about yourself</Text>
+                    <Text style={styles.subtitle}>Let's create your personalized plan</Text>
 
-                {renderInputRow('Age', age, setAge, 'Years')}
-                {renderInputRow('Weight', weight, setWeight, unit === 'Metric' ? 'kg' : 'lb')}
-                {renderInputRow('Height', height, setHeight, unit === 'Metric' ? 'cm' : 'ft')}
+                    {renderUnitToggle()}
 
-                {renderSexSelect()}
-                {renderActivityLevelSelector()}
-                {renderGoalSelector()}
-                {renderManualMacrosToggle()}
+                    {renderInputRow('Age', age, setAge, 'Years')}
+                    {renderInputRow('Weight', weight, setWeight, unit === 'Metric' ? 'kg' : 'lb')}
+                    {renderInputRow('Height', height, setHeight, unit === 'Metric' ? 'cm' : 'ft')}
 
-                <TouchableOpacity
-                    style={styles.calculateButton}
-                    onPress={handleCalculateMacros}
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <ActivityIndicator color="white" size="small" />
-                    ) : (
-                        <Text style={styles.calculateButtonText}>Calculate My Macros</Text>
-                    )}
-                </TouchableOpacity>
-            </ScrollView>
+                    {renderSexSelect()}
+                    {renderActivityLevelSelector()}
+                    {renderGoalSelector()}
+                    {renderManualMacrosToggle()}
+
+                    <TouchableOpacity
+                        style={styles.calculateButton}
+                        onPress={handleCalculateMacros}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="white" size="small" />
+                        ) : (
+                            <Text style={styles.calculateButtonText}>Calculate My Macros</Text>
+                        )}
+                    </TouchableOpacity>
+                </ScrollView>
             </KeyboardAvoidingView>
         </CustomSafeAreaView>
     );
@@ -315,7 +320,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'white',
     },
-    contentContainer: {
+    scrollContent: {
         padding: 20,
     },
     title: {

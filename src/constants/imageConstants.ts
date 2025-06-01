@@ -11,4 +11,5 @@ export const IMAGE_CONSTANTS = {
     nearbyMealFinder: require('../../assets/nearby-meal-finder.png'),
     grilledSalmon: require('../../assets/grilled-salmon.png'),
     aiSuggestedMeals: require('../../assets/ai-suggested-meals.png'),
+    backButton: require('../../assets/back-button.png'),
 }

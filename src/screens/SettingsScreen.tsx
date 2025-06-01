@@ -12,6 +12,10 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
 import { Picker } from '@react-native-picker/picker';
+import { router } from 'expo-router';
+import { authService } from '../services/authService';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import { FontAwesome } from '@expo/vector-icons';
 
 /**
  * Settings screen for the application.
@@ -23,6 +27,7 @@ const SettingsScreen: React.FC = () => {
     const token = useStore((state) => state.token);
     const updatePreferences = useStore((state) => state.updatePreferences);
     const logout = useStore((state) => state.logout);
+    const setAuthenticated = useStore((state) => state.setAuthenticated);
 
     // Local state for settings
     const [units, setUnits] = useState<string>('g/kcal');
@@ -124,30 +129,12 @@ const SettingsScreen: React.FC = () => {
      */
     const handleLogout = async () => {
         try {
-            await logout();
-
-            const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('refresh_token');
-            await AsyncStorage.removeItem('user_id');
-
-            try {
-                const { deleteItemAsync } = await import('expo-secure-store');
-                await deleteItemAsync('token');
-                await deleteItemAsync('refresh_token');
-                await deleteItemAsync('user_id');
-            } catch (secureStoreError) {
-                console.log('SecureStore not available, continuing with normal logout');
-            }
-
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'LoginScreen' as never }]
-            });
+            await authService.logout();
+            setAuthenticated(false, '', '');
+            router.replace('/(auth)/login');
         } catch (error) {
-            console.error('Error during logout:', error);
-            // Fallback navigation even if there was an error
-            navigation.navigate('LoginScreen' as never);
+            console.error('Logout error:', error);
+            Alert.alert('Error', 'Failed to logout. Please try again.');
         }
     };
 
@@ -175,17 +162,47 @@ const SettingsScreen: React.FC = () => {
         // navigation.navigate('SendFeedback' as never);
     };
 
-    return (
-        <SafeAreaView style={styles.container}>
-            {/* Header with back button */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-                    <Text style={styles.backButtonText}>←</Text>
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Settings</Text>
-            </View>
+    const handleDeleteAccount = async () => {
+        Alert.alert(
+            'Delete Account',
+            'Are you sure you want to delete your account? This action cannot be undone.',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            // For now, just log out since deleteAccount is not implemented
+                            await authService.logout();
+                            setAuthenticated(false, '', '');
+                            router.replace('/(auth)/welcome');
+                        } catch (error) {
+                            console.error('Delete account error:', error);
+                            Alert.alert('Error', 'Failed to delete account. Please try again.');
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
-            <ScrollView style={styles.scrollContainer}>
+    return (
+        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
+            <ScrollView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => router.back()}
+                    >
+                        <FontAwesome name="arrow-left" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>Settings</Text>
+                </View>
+
                 <View style={styles.profileSection}>
                     <Image
                         source={{ uri: userData.avatar }}
@@ -313,39 +330,63 @@ const SettingsScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.bottomSpacer} />
+                <View style={styles.section}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => router.push('/terms-of-service')}
+                    >
+                        <Text style={styles.menuItemText}>Terms of Service</Text>
+                        <FontAwesome name="chevron-right" size={16} color="#999" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => router.push('/privacy-policy')}
+                    >
+                        <Text style={styles.menuItemText}>Privacy Policy</Text>
+                        <FontAwesome name="chevron-right" size={16} color="#999" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => router.push('/about')}
+                    >
+                        <Text style={styles.menuItemText}>About</Text>
+                        <FontAwesome name="chevron-right" size={16} color="#999" />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.section}>
+                    <TouchableOpacity
+                        style={[styles.menuItem, styles.deleteButton]}
+                        onPress={handleDeleteAccount}
+                    >
+                        <Text style={styles.deleteText}>Delete Account</Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
-        </SafeAreaView>
+        </CustomSafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: 'white',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
+        padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        borderBottomColor: '#eee',
     },
     backButton: {
-        padding: 5,
+        marginRight: 16,
     },
-    backButtonText: {
-        fontSize: 24,
-        color: '#333',
-    },
-    headerTitle: {
+    title: {
         fontSize: 20,
-        fontWeight: '500',
-        color: '#333',
-        marginLeft: 10,
-    },
-    scrollContainer: {
-        flex: 1,
+        fontWeight: 'bold',
     },
     profileSection: {
         flexDirection: 'row',
@@ -506,8 +547,32 @@ const styles = StyleSheet.create({
     logoutText: {
         color: '#FF4343',
     },
-    bottomSpacer: {
-        height: 40,
+    section: {
+        marginTop: 24,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    menuItemText: {
+        fontSize: 16,
+        color: '#333',
+    },
+    logoutButton: {
+        borderBottomWidth: 0,
+    },
+    deleteButton: {
+        borderBottomWidth: 0,
+    },
+    deleteText: {
+        fontSize: 16,
+        color: '#FF3B30',
     },
 });
 

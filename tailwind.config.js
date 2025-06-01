@@ -22,7 +22,8 @@ module.exports = {
         gold: '#FEBF00',
         indicatorActive: "#01675B",
         indicatorInactive: "#b3d1ce",
-        lightGrey: "#B0B0B0"
+        lightGrey: "#B0B0B0",
+        textMediumGrey: "#4F4F4F"
       }
     },
   },

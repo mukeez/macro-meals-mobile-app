@@ -43,6 +43,20 @@ export interface Meal {
 }
 
 /**
+ * Represents a meal that has been logged by the user.
+ */
+export interface LoggedMeal {
+    id: string;
+    name: string;
+    timestamp: string;
+    protein: number;
+    carbs: number;
+    fat: number;
+    calories: number;
+    mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+}
+
+/**
  * Request payload for meal suggestions.
  */
 export interface SuggestMealsRequest extends UserPreferences {}

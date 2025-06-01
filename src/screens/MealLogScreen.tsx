@@ -13,7 +13,10 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import useStore from '../store/useStore';
 import { mealService } from '../services/mealService';
-import { Meal } from '../types';
+import { Meal, LoggedMeal } from '../types';
+import { router } from 'expo-router';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import { FontAwesome } from '@expo/vector-icons';
 
 // Enum for meal types
 enum MealType {
@@ -155,8 +158,15 @@ const MealLogScreen: React.FC = () => {
     /**
      * Navigate to the add meal screen
      */
-    const handleAddMeal = (): void => {
-        navigation.navigate('AddMeal' as never);
+    const handleAddMeal = () => {
+        router.push('/scan');
+    };
+
+    const handleMealPress = (mealId: string) => {
+        router.push({
+            pathname: '/meal-details',
+            params: { mealId }
+        });
     };
 
     /**
@@ -187,208 +197,148 @@ const MealLogScreen: React.FC = () => {
      * @param meal - The meal data to render
      * @returns JSX element for the meal card
      */
-    const renderMealCard = (meal: Meal) => {
-        if (!meal) return null;
-
-        // Determine meal icon based on meal type
-        const getMealIcon = () => {
-            switch (meal.mealType) {
-                case MealType.BREAKFAST:
-                    return '☀️';
-                case MealType.LUNCH:
-                    return '🍊';
-                default:
-                    return '🍽️';
-            }
-        };
-
-        // Format the meal time for display
-        const formattedTime = formatTime(meal.date);
-
-        // Format the meal type for display
-        const mealTypeLabel = meal.mealType
-            ? meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)
-            : 'Meal';
-
-        return (
-            <View key={meal.id} style={styles.mealCard}>
-                <View style={styles.mealCardHeader}>
-                    <View style={styles.mealTypeContainer}>
-                        <Text style={styles.mealIcon}>{getMealIcon()}</Text>
-                        <Text style={styles.mealTypeText}>{mealTypeLabel}</Text>
-                    </View>
-                    <Text style={styles.mealTime}>{formattedTime}</Text>
-                </View>
-
-                <View style={styles.mealCardBody}>
-                    <View style={styles.mealInfoContainer}>
-                        <Text style={styles.mealName}>{meal.name || 'Unnamed Meal'}</Text>
-                        <Text style={styles.mealDescription}>{meal.description || ''}</Text>
-                    </View>
-
-                    <View style={styles.mealActions}>
-                        <TouchableOpacity style={styles.editButton}>
-                            <Text>✏️</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.deleteButton}>
-                            <Text>🗑️</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
+    const renderMealCard = (meal: LoggedMeal) => (
+        <TouchableOpacity
+            key={meal.id}
+            style={styles.mealCard}
+            onPress={() => handleMealPress(meal.id)}
+        >
+            <View style={styles.mealCardContent}>
+                <Text style={styles.mealName}>{meal.name}</Text>
+                <Text style={styles.mealTime}>{new Date(meal.timestamp).toLocaleTimeString()}</Text>
                 <View style={styles.macroRow}>
-                    <View style={styles.macroItem}>
-                        <Text style={styles.macroLabel}>P: </Text>
-                        <Text style={{...styles.macroValue, ...styles.proteinText}}>
-                            {meal.macros?.protein || 0}g
-                        </Text>
-                    </View>
-                    <View style={styles.macroItem}>
-                        <Text style={styles.macroLabel}>C: </Text>
-                        <Text style={{...styles.macroValue, ...styles.carbsText}}>
-                            {meal.macros?.carbs || 0}g
-                        </Text>
-                    </View>
-                    <View style={styles.macroItem}>
-                        <Text style={styles.macroLabel}>F: </Text>
-                        <Text style={{...styles.macroValue, ...styles.fatsText}}>
-                            {meal.macros?.fat || 0}g
-                        </Text>
-                    </View>
-                    <Text style={styles.calories}>
-                        {meal.macros?.calories || 0} kcal
-                    </Text>
+                    <Text style={styles.macroText}>P: {meal.protein}g</Text>
+                    <Text style={styles.macroText}>C: {meal.carbs}g</Text>
+                    <Text style={styles.macroText}>F: {meal.fat}g</Text>
+                    <Text style={styles.calories}>{meal.calories} kcal</Text>
                 </View>
             </View>
-        );
-    };
+        </TouchableOpacity>
+    );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" />
-
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.titleContainer}>
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>🍴</Text>
-                    </View>
-                    <Text style={styles.headerTitle}>Today's Meals</Text>
+        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => router.back()}
+                    >
+                        <FontAwesome name="arrow-left" size={24} color="#000" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>Meal Log</Text>
                 </View>
-                <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>+</Text>
-                </TouchableOpacity>
-            </View>
 
-            <ScrollView
-                style={styles.scrollContainer}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                    />
-                }
-            >
-                {error ? (
-                    <View style={styles.errorContainer}>
-                        <Text style={styles.errorText}>{error}</Text>
-                        <TouchableOpacity style={styles.retryButton} onPress={loadData}>
-                            <Text style={styles.retryButtonText}>Retry</Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    <>
-                        <View style={styles.progressSection}>
-                            <View style={styles.progressHeader}>
-                                <Text style={styles.progressTitle}>Daily Progress</Text>
-                                <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
-                            </View>
-
-                            <View style={styles.macroCards}>
-                                <View style={{...styles.macroCard, ...styles.proteinCard}}>
-                                    <Text style={styles.macroCardTitle}>Protein</Text>
-                                    <Text style={styles.macroCardValue}>{consumedMacros.protein}g</Text>
-                                    <View style={styles.progressBarContainer}>
-                                        <View style={{
-                                            height: '100%',
-                                            borderRadius: 3,
-                                            backgroundColor: '#009688',
-                                            width: `${calculateProgress(consumedMacros.protein, targetMacros.protein)}%`
-                                        }} />
-                                    </View>
+                <ScrollView
+                    style={styles.scrollContainer}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                        />
+                    }
+                >
+                    {error ? (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorText}>{error}</Text>
+                            <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+                                <Text style={styles.retryButtonText}>Retry</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <>
+                            <View style={styles.progressSection}>
+                                <View style={styles.progressHeader}>
+                                    <Text style={styles.progressTitle}>Daily Progress</Text>
+                                    <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
                                 </View>
 
-                                {/* Carbs Card */}
-                                <View style={{...styles.macroCard, ...styles.carbsCard}}>
-                                    <Text style={styles.macroCardTitle}>Carbs</Text>
-                                    <Text style={styles.macroCardValue}>{consumedMacros.carbs}g</Text>
-                                    <View style={styles.progressBarContainer}>
-                                        <View style={{
-                                            height: '100%',
-                                            borderRadius: 3,
-                                            backgroundColor: '#FF9800',
-                                            width: `${calculateProgress(consumedMacros.carbs, targetMacros.carbs)}%`
-                                        }} />
+                                <View style={styles.macroCards}>
+                                    <View style={{...styles.macroCard, ...styles.proteinCard}}>
+                                        <Text style={styles.macroCardTitle}>Protein</Text>
+                                        <Text style={styles.macroCardValue}>{consumedMacros.protein}g</Text>
+                                        <View style={styles.progressBarContainer}>
+                                            <View style={{
+                                                height: '100%',
+                                                borderRadius: 3,
+                                                backgroundColor: '#009688',
+                                                width: `${calculateProgress(consumedMacros.protein, targetMacros.protein)}%`
+                                            }} />
+                                        </View>
                                     </View>
-                                </View>
 
-                                {/* Fats Card */}
-                                <View style={{...styles.macroCard, ...styles.fatsCard}}>
-                                    <Text style={styles.macroCardTitle}>Fats</Text>
-                                    <Text style={styles.macroCardValue}>{consumedMacros.fat}g</Text>
-                                    <View style={styles.progressBarContainer}>
-                                        <View style={{
-                                            height: '100%',
-                                            borderRadius: 3,
-                                            backgroundColor: '#F44336',
-                                            width: `${calculateProgress(consumedMacros.fat, targetMacros.fat)}%`
-                                        }} />
+                                    {/* Carbs Card */}
+                                    <View style={{...styles.macroCard, ...styles.carbsCard}}>
+                                        <Text style={styles.macroCardTitle}>Carbs</Text>
+                                        <Text style={styles.macroCardValue}>{consumedMacros.carbs}g</Text>
+                                        <View style={styles.progressBarContainer}>
+                                            <View style={{
+                                                height: '100%',
+                                                borderRadius: 3,
+                                                backgroundColor: '#FF9800',
+                                                width: `${calculateProgress(consumedMacros.carbs, targetMacros.carbs)}%`
+                                            }} />
+                                        </View>
+                                    </View>
+
+                                    {/* Fats Card */}
+                                    <View style={{...styles.macroCard, ...styles.fatsCard}}>
+                                        <Text style={styles.macroCardTitle}>Fats</Text>
+                                        <Text style={styles.macroCardValue}>{consumedMacros.fat}g</Text>
+                                        <View style={styles.progressBarContainer}>
+                                            <View style={{
+                                                height: '100%',
+                                                borderRadius: 3,
+                                                backgroundColor: '#F44336',
+                                                width: `${calculateProgress(consumedMacros.fat, targetMacros.fat)}%`
+                                            }} />
+                                        </View>
                                     </View>
                                 </View>
                             </View>
-                        </View>
 
-                        {/* Meal List */}
-                        <View style={styles.mealList}>
-                            {loading ? (
-                                <View style={styles.loadingContainer}>
-                                    <ActivityIndicator size="large" color="#009688" />
-                                    <Text style={styles.loadingText}>Loading meals...</Text>
-                                </View>
-                            ) : !loggedMeals || loggedMeals.length === 0 ? (
-                                <View style={styles.emptyState}>
-                                    <Text style={styles.emptyStateText}>No meals logged today</Text>
-                                    <Text style={styles.emptyStateSubtext}>Tap "Add Meal" to log your first meal</Text>
-                                </View>
-                            ) : (
-                                loggedMeals.map(meal => renderMealCard(meal))
-                            )}
-                        </View>
-                    </>
-                )}
+                            {/* Meal List */}
+                            <View style={styles.mealList}>
+                                {loading ? (
+                                    <View style={styles.loadingContainer}>
+                                        <ActivityIndicator size="large" color="#009688" />
+                                        <Text style={styles.loadingText}>Loading meals...</Text>
+                                    </View>
+                                ) : !loggedMeals || loggedMeals.length === 0 ? (
+                                    <View style={styles.emptyState}>
+                                        <Text style={styles.emptyStateText}>No meals logged today</Text>
+                                        <Text style={styles.emptyStateSubtext}>Tap "Add Meal" to log your first meal</Text>
+                                    </View>
+                                ) : (
+                                    loggedMeals.map(meal => renderMealCard(meal))
+                                )}
+                            </View>
+                        </>
+                    )}
 
-                <View style={styles.spacer} />
-            </ScrollView>
+                    <View style={styles.spacer} />
+                </ScrollView>
 
-            <TouchableOpacity style={styles.floatingAddButton} onPress={handleAddMeal}>
-                <Text style={styles.floatingAddButtonText}>+ Add Meal</Text>
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.floatingAddButton} onPress={handleAddMeal}>
+                    <Text style={styles.floatingAddButtonText}>+ Add Meal</Text>
+                </TouchableOpacity>
 
-            <View style={styles.tabBar}>
-                <TouchableOpacity style={styles.tabItem}>
-                    <Text style={{...styles.tabIcon, ...styles.activeTabIcon}}>🏠</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.tabItem}>
-                    <Text style={styles.tabIcon}>📊</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.tabItem}>
-                    <Text style={styles.tabIcon}>🍽️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.tabItem}>
-                    <Text style={styles.tabIcon}>👤</Text>
-                </TouchableOpacity>
+                <View style={styles.tabBar}>
+                    <TouchableOpacity style={styles.tabItem}>
+                        <Text style={{...styles.tabIcon, ...styles.activeTabIcon}}>🏠</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.tabItem}>
+                        <Text style={styles.tabIcon}>📊</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.tabItem}>
+                        <Text style={styles.tabIcon}>🍽️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.tabItem}>
+                        <Text style={styles.tabIcon}>👤</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-        </SafeAreaView>
+        </CustomSafeAreaView>
     );
 };
 
@@ -588,34 +538,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 2,
     },
-    mealCardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    mealTypeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    mealIcon: {
-        fontSize: 16,
-        marginRight: 6,
-    },
-    mealTypeText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#1a1a1a',
-    },
-    mealTime: {
-        fontSize: 14,
-        color: '#666',
-    },
-    mealCardBody: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    mealInfoContainer: {
+    mealCardContent: {
         flex: 1,
     },
     mealName: {
@@ -624,46 +547,22 @@ const styles = StyleSheet.create({
         color: '#1a1a1a',
         marginBottom: 4,
     },
-    mealDescription: {
+    mealTime: {
         fontSize: 14,
         color: '#666',
     },
-    mealActions: {
-        flexDirection: 'row',
-    },
-    editButton: {
-        marginRight: 12,
-    },
-    deleteButton: {},
     macroRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        justifyContent: 'space-between',
     },
-    macroItem: {
-        flexDirection: 'row',
-        marginRight: 12,
-    },
-    macroLabel: {
+    macroText: {
         fontSize: 14,
         color: '#666',
     },
-    macroValue: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    proteinText: {
-        color: '#009688',
-    },
-    carbsText: {
-        color: '#FF9800',
-    },
-    fatsText: {
-        color: '#F44336',
-    },
     calories: {
-        marginLeft: 'auto',
         fontSize: 14,
-        color: '#1a1a1a',
+        color: '#333',
+        fontWeight: '500',
     },
     floatingAddButton: {
         position: 'absolute',
@@ -707,6 +606,17 @@ const styles = StyleSheet.create({
     },
     activeTabIcon: {
         color: '#009688',
+    },
+    backButton: {
+        width: 36,
+        height: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#1a1a1a',
     },
 });
 

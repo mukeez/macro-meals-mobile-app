@@ -47,7 +47,8 @@
           "locationAlways": false,
           "locationWhenInUse": true
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

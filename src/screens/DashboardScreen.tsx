@@ -8,10 +8,11 @@ import {
     ActivityIndicator,
     Alert,
 } from 'react-native';
+import { router } from 'expo-router';
 import useStore from '../store/useStore';
 import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 
-export const DashboardScreen = ({ navigation }) => {
+export const DashboardScreen = () => {
     // State for user data
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -36,9 +37,9 @@ export const DashboardScreen = ({ navigation }) => {
 
     useEffect(() => {
         if (preferences.calories === 0 && preferences.protein === 0) {
-            navigation.navigate('MacroInput');
+            router.push('/macro-input');
         }
-    }, [preferences, navigation]);
+    }, [preferences]);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -136,11 +137,14 @@ export const DashboardScreen = ({ navigation }) => {
     }, [userId, token]);
 
     const handleLogMeal = () => {
-        navigation.navigate('ScanScreenType');
+        router.push('/scan');
     };
 
     const handleFindMeals = () => {
-        navigation.navigate('NearbyMeals', { fromSearch: true });
+        router.push({
+            pathname: '/nearby-meals',
+            params: { fromSearch: true }
+        });
     };
 
     const handleMealLog = () => {

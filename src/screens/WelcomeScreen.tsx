@@ -1,87 +1,50 @@
 // src/screens/WelcomeScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { OnboardingContext } from '../contexts/OnboardingContext';
-
-type RootStackParamList = {
-    Welcome: undefined;
-    MacroInput: undefined;
-    Login: undefined;
-};
-
-type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Welcome'>;
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { router } from 'expo-router';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 
 export const WelcomeScreen: React.FC = () => {
-    let navigation;
-    try {
-        navigation = useNavigation<WelcomeScreenNavigationProp>();
-    } catch (error) {
-        console.log('Navigation not available');
-    }
-
-    const {setIsOnboardingCompleted} = React.useContext(OnboardingContext);
-
-    const handleGetStartedClick = async () => {
-        try {
-            console.warn('Welcome Screen - Get Started clicked');
-            await AsyncStorage.setItem('isOnboardingCompleted', 'false');
-            setIsOnboardingCompleted(false);
-            if (navigation) {
-                navigation.navigate('SignupScreen');
-            } else {
-                console.log('Would navigate to MacroInput screen');
-            }
-        } catch (error) {
-            console.error('Error saving onboarding status:', error);
-        }
+    const handleGetStarted = () => {
+        router.push('/signup');
     };
 
     const handleLogin = () => {
-        if (navigation) {
-            navigation.navigate('LoginScreen');
-        } else {
-            console.log('Would navigate to Login screen');
-        }
+        router.push('/login');
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.content}>
-                {/* Logo */}
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoBox} />
-                    <Text style={styles.appName}>MacroMeals</Text>
-                    <Text className='text-green-500' style={styles.tagline}>Eat smart. Anywhere.</Text>
+        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
+            <View style={styles.container}>
+                <View style={styles.content}>
+                    <Image
+                        source={require('../assets/images/welcome.png')}
+                        style={styles.image}
+                        resizeMode="contain"
+                    />
+                    <Text style={styles.title}>Welcome to MacroMate</Text>
+                    <Text style={styles.subtitle}>
+                        Track your macros, achieve your goals, and transform your nutrition journey.
+                    </Text>
                 </View>
 
-                <View style={styles.circlePlaceholder} />
-
-                <View style={styles.iconButtonsContainer}>
-                    <View style={styles.iconButton} />
-                    <View style={styles.iconButton} />
-                    <View style={styles.iconButton} />
-                </View>
-
-                <View style={styles.actionButtonsContainer}>
-                    <TouchableOpacity
-                        style={styles.getStartedButton}
-                        onPress={handleGetStartedClick}
-                    >
-                        <Text style={styles.getStartedText}>Get Started</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.loginButton}
+                <View style={styles.buttonContainer}>
+                    <CustomTouchableOpacityButton
+                        className='h-[56px] w-full items-center justify-center bg-primary rounded-[100px] mb-4'
+                        title="Get Started"
+                        textClassName='text-white text-[17px] font-semibold'
+                        onPress={handleGetStarted}
+                    />
+                    <CustomTouchableOpacityButton
+                        className='h-[56px] w-full items-center justify-center bg-white border border-primary rounded-[100px]'
+                        title="I already have an account"
+                        textClassName='text-primary text-[17px] font-semibold'
                         onPress={handleLogin}
-                    >
-                        <Text style={styles.loginText}>Login</Text>
-                    </TouchableOpacity>
+                    />
                 </View>
             </View>
-        </SafeAreaView>
+        </CustomSafeAreaView>
     );
 };
 
@@ -89,80 +52,32 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: 'white',
+        padding: 24,
     },
     content: {
         flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        justifyContent: 'space-around',
-        paddingVertical: 40,
-        paddingHorizontal: 30,
     },
-    logoContainer: {
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    logoBox: {
-        width: 70,
-        height: 70,
-        backgroundColor: '#19a28f',
-        borderRadius: 16,
-    },
-    appName: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        color: '#19a28f',
-        marginTop: 15,
-    },
-    tagline: {
-        fontSize: 18,
-        color: '#666',
-        marginTop: 10,
-    },
-    circlePlaceholder: {
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-        backgroundColor: '#f5f5f5',
-        marginVertical: 30,
-    },
-    iconButtonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
+    image: {
         width: '100%',
+        height: 300,
         marginBottom: 40,
     },
-    iconButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#f5f5f5',
-    },
-    actionButtonsContainer: {
-        width: '100%',
-        marginTop: 20,
-    },
-    getStartedButton: {
-        backgroundColor: '#19a28f',
-        borderRadius: 10,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    getStartedText: {
-        color: 'white',
-        fontSize: 18,
+    title: {
+        fontSize: 28,
         fontWeight: 'bold',
+        color: '#202030',
+        textAlign: 'center',
+        marginBottom: 16,
     },
-    loginButton: {
-        borderColor: '#19a28f',
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingVertical: 16,
-        alignItems: 'center',
-    },
-    loginText: {
-        color: '#19a28f',
+    subtitle: {
         fontSize: 18,
-        fontWeight: 'bold',
-    }
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 24,
+    },
+    buttonContainer: {
+        marginBottom: 24,
+    },
 });
