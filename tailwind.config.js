@@ -16,14 +16,15 @@ module.exports = {
     },
     extend: {
       colors:{
-        primary: '#009688',
+        primary: '#01675B',
         secondary: '#58B74F',
         accent: '#AB8BFF',
         gold: '#FEBF00',
         indicatorActive: "#01675B",
         indicatorInactive: "#b3d1ce",
         lightGrey: "#B0B0B0",
-        textMediumGrey: "#4F4F4F"
+        textMediumGrey: "#4F4F4F",
+        paleCyan: "#DFF4F4",
       }
     },
   },

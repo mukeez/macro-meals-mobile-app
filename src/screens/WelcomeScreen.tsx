@@ -1,25 +1,37 @@
 // src/screens/WelcomeScreen.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 
+type RootStackParamList = {
+    Welcome: undefined;
+    Login: undefined;
+    Signup: undefined;
+    Home: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
+
 export const WelcomeScreen: React.FC = () => {
+    const navigation = useNavigation<NavigationProp>();
+
     const handleGetStarted = () => {
-        router.push('/signup');
+        navigation.navigate('Signup');
     };
 
     const handleLogin = () => {
-        router.push('/login');
+        navigation.navigate('Login');
     };
 
     return (
         <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
             <View style={styles.container}>
                 <View style={styles.content}>
-                    <Image source={require(IMAGE_CONSTANTS.strawberryBg)}/>
+                    <Image source={IMAGE_CONSTANTS.strawberryBg}/>
                     
                     <Text style={styles.title}>Welcome to MacroMate</Text>
                     <Text style={styles.subtitle}>

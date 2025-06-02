@@ -20,10 +20,11 @@ export default function CustomTouchableOpacityButton({
         <TouchableOpacity 
             onPress={onPress} 
             disabled={disabled} 
-            style={[
-                { opacity: disabled ? 0.3 : 1 },
-                { height: 56, width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: '#08a489', borderRadius: 100 }
-            ]}
+            className={className ?? `bg-primary justify-center items-center rounded-[100px] h-[56px] w-full ${disabled ? 'opacity-30' : 'opacity-100'}`}
+            // style={[
+            //     { opacity: disabled ? 0.3 : 1 },
+            //     { height: 56, width: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: '#08a489', borderRadius: 100 }
+            // ]}
         >
             {isLoading ? (
                 <ActivityIndicator color="white" size="small" />

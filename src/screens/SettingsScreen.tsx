@@ -10,19 +10,29 @@ import {
     Switch, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import useStore from '../store/useStore';
 import { Picker } from '@react-native-picker/picker';
-import { router } from 'expo-router';
 import { authService } from '../services/authService';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import { FontAwesome } from '@expo/vector-icons';
+
+type RootStackParamList = {
+    Login: undefined;
+    Welcome: undefined;
+    TermsOfService: undefined;
+    PrivacyPolicy: undefined;
+    About: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 /**
  * Settings screen for the application.
  * Displays user profile, macro targets, and app settings.
  */
-const SettingsScreen: React.FC = () => {
-    const navigation = useNavigation();
+export const SettingsScreen: React.FC = () => {
+    const navigation = useNavigation<NavigationProp>();
     const preferences = useStore((state) => state.preferences);
     const token = useStore((state) => state.token);
     const updatePreferences = useStore((state) => state.updatePreferences);
@@ -131,10 +141,12 @@ const SettingsScreen: React.FC = () => {
         try {
             await authService.logout();
             setAuthenticated(false, '', '');
-            router.replace('/(auth)/login');
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+            });
         } catch (error) {
             console.error('Logout error:', error);
-            Alert.alert('Error', 'Failed to logout. Please try again.');
         }
     };
 
@@ -176,13 +188,14 @@ const SettingsScreen: React.FC = () => {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            // For now, just log out since deleteAccount is not implemented
                             await authService.logout();
                             setAuthenticated(false, '', '');
-                            router.replace('/(auth)/welcome');
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'Welcome' }],
+                            });
                         } catch (error) {
                             console.error('Delete account error:', error);
-                            Alert.alert('Error', 'Failed to delete account. Please try again.');
                         }
                     },
                 },
@@ -191,12 +204,12 @@ const SettingsScreen: React.FC = () => {
     };
 
     return (
-        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
+        <CustomSafeAreaView style={styles.container} edges={['left', 'right']}>
             <ScrollView style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={styles.backButton}
-                        onPress={() => router.back()}
+                        onPress={() => navigation.goBack()}
                     >
                         <FontAwesome name="arrow-left" size={24} color="#000" />
                     </TouchableOpacity>
@@ -312,11 +325,11 @@ const SettingsScreen: React.FC = () => {
                         <Text style={styles.supportText}>Send Feedback</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity className='flex-row items-center pl-7' onPress={handleModalSheet}>
-                        <View style={styles.supportIconContainer}>
-                            <Text className="text-base">💰</Text>
-                        </View>
-                        <Text>Payment</Text>
+                    <TouchableOpacity
+                        style={styles.premiumButton}
+                        onPress={handleModalSheet}
+                    >
+                        <Text style={styles.premiumText}>💰</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -333,26 +346,23 @@ const SettingsScreen: React.FC = () => {
                 <View style={styles.section}>
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push('/terms-of-service')}
+                        onPress={() => navigation.navigate('TermsOfService')}
                     >
                         <Text style={styles.menuItemText}>Terms of Service</Text>
-                        <FontAwesome name="chevron-right" size={16} color="#999" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push('/privacy-policy')}
+                        onPress={() => navigation.navigate('PrivacyPolicy')}
                     >
                         <Text style={styles.menuItemText}>Privacy Policy</Text>
-                        <FontAwesome name="chevron-right" size={16} color="#999" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => router.push('/about')}
+                        onPress={() => navigation.navigate('About')}
                     >
                         <Text style={styles.menuItemText}>About</Text>
-                        <FontAwesome name="chevron-right" size={16} color="#999" />
                     </TouchableOpacity>
                 </View>
 
@@ -573,6 +583,14 @@ const styles = StyleSheet.create({
     deleteText: {
         fontSize: 16,
         color: '#FF3B30',
+    },
+    premiumButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingLeft: 28,
+    },
+    premiumText: {
+        fontSize: 16,
     },
 });
 

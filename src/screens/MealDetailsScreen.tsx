@@ -8,27 +8,39 @@ import {
     Alert,
     ScrollView,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { mealService } from '../services/mealService';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import { FontAwesome } from '@expo/vector-icons';
 import { LoggedMeal } from '../types';
 
-export default function MealDetailsScreen() {
-    const { mealId } = useLocalSearchParams<{ mealId: string }>();
+type RootStackParamList = {
+    MealDetails: {
+        id: string;
+    };
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MealDetails'>;
+type MealDetailsRouteProp = RouteProp<RootStackParamList, 'MealDetails'>;
+
+export const MealDetailsScreen: React.FC = () => {
+    const navigation = useNavigation<NavigationProp>();
+    const route = useRoute<MealDetailsRouteProp>();
+    const { id } = route.params;
     const [meal, setMeal] = useState<LoggedMeal | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         loadMealDetails();
-    }, [mealId]);
+    }, [id]);
 
     const loadMealDetails = async () => {
         try {
             setLoading(true);
             const meals = await mealService.getLoggedMeals();
-            const foundMeal = meals.find(m => m.id === mealId);
+            const foundMeal = meals.find(m => m.id === id);
             if (foundMeal) {
                 setMeal(foundMeal);
                 setError(null);
@@ -57,8 +69,8 @@ export default function MealDetailsScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await mealService.deleteMeal(mealId);
-                            router.back();
+                            await mealService.deleteMeal(id);
+                            navigation.goBack();
                         } catch (err) {
                             Alert.alert('Error', 'Failed to delete meal. Please try again.');
                             console.error('Error deleting meal:', err);
@@ -67,6 +79,10 @@ export default function MealDetailsScreen() {
                 },
             ],
         );
+    };
+
+    const handleGoBack = () => {
+        navigation.goBack();
     };
 
     if (loading) {
@@ -99,7 +115,7 @@ export default function MealDetailsScreen() {
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={styles.backButton}
-                        onPress={() => router.back()}
+                        onPress={handleGoBack}
                     >
                         <FontAwesome name="arrow-left" size={24} color="#000" />
                     </TouchableOpacity>

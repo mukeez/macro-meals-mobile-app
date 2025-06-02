@@ -25,7 +25,7 @@ type RootStackParamList = {
     Welcome: undefined;
     MacroInput: undefined;
     Login: undefined;
-    SignUp: undefined;
+    Signup: undefined;
 };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -37,13 +37,7 @@ export const LoginScreen: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
-
-    let navigation;
-    try {
-        navigation = useNavigation<LoginScreenNavigationProp>();
-    } catch (error) {
-        console.log('Navigation not available');
-    }
+    const navigation = useNavigation<LoginScreenNavigationProp>();
 
     // Set up auth state in your Zustand store
     const setAuthenticated = useStore((state) => state.setAuthenticated);
@@ -65,7 +59,7 @@ export const LoginScreen: React.FC = () => {
             console.log('Token saved to AsyncStorage');
             
             // Add this to check if the state was actually updated
-            const isAuth = useStore.getState().authenticated;
+            const isAuth = useStore.getState().isAuthenticated;
             console.log('Current auth state after update:', isAuth);
         } catch (error) {
             Alert.alert(
@@ -84,9 +78,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.googleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            if (navigation) {
-                navigation.navigate('MacroInput');
-            }
+            navigation.navigate('MacroInput');
         } catch (error) {
             console.error('Google login error:', error);
             Alert.alert('Login Failed', 'Google login failed. Please try again.');
@@ -102,9 +94,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.appleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            if (navigation) {
-                navigation.navigate('MacroInput');
-            }
+            navigation.navigate('MacroInput');
         } catch (error) {
             console.error('Apple login error:', error);
             Alert.alert('Login Failed', 'Apple login failed. Please try again.');
@@ -119,9 +109,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.facebookSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            if (navigation) {
-                navigation.navigate('MacroInput');
-            }
+            navigation.navigate('MacroInput');
         } catch (error) {
             console.error('Facebook login error:', error);
             Alert.alert('Login Failed', 'Facebook login failed. Please try again.');
@@ -131,9 +119,7 @@ export const LoginScreen: React.FC = () => {
     };
 
     const handleSignUp = () => {
-        if (navigation) {
-            navigation.navigate('SignupScreen');
-        }
+        navigation.navigate('Signup');
     };
 
     return (

@@ -9,14 +9,28 @@ import {
     StatusBar,
     ActivityIndicator,
     RefreshControl,
+    Alert,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import useStore from '../store/useStore';
 import { mealService } from '../services/mealService';
 import { Meal, LoggedMeal } from '../types';
-import { router } from 'expo-router';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import { FontAwesome } from '@expo/vector-icons';
+
+type RootStackParamList = {
+    MealLog: {
+        date: string;
+    };
+    Scan: undefined;
+    MealDetails: {
+        id: string;
+    };
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MealLog'>;
+type MealLogRouteProp = RouteProp<RootStackParamList, 'MealLog'>;
 
 // Enum for meal types
 enum MealType {
@@ -52,7 +66,11 @@ interface DailyProgress {
 /**
  * Screen to display daily meal log and macro progress
  */
-const MealLogScreen: React.FC = () => {
+export const MealLogScreen: React.FC = () => {
+    const navigation = useNavigation<NavigationProp>();
+    const route = useRoute<MealLogRouteProp>();
+    const { date } = route.params;
+
     // Access store values
     const preferences = useStore(state => state.preferences);
     const loggedMeals = useStore(state => state.loggedMeals || []);
@@ -60,7 +78,6 @@ const MealLogScreen: React.FC = () => {
     const shouldRefreshMeals = useStore(state => state.shouldRefreshMeals);
     const setShouldRefreshMeals = useStore(state => state.setShouldRefreshMeals);
 
-    const navigation = useNavigation();
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
@@ -158,15 +175,16 @@ const MealLogScreen: React.FC = () => {
     /**
      * Navigate to the add meal screen
      */
-    const handleAddMeal = () => {
-        router.push('/scan');
+    const handleScan = () => {
+        navigation.navigate('Scan');
     };
 
-    const handleMealPress = (mealId: string) => {
-        router.push({
-            pathname: '/meal-details',
-            params: { mealId }
-        });
+    const handleMealDetails = (mealId: string) => {
+        navigation.navigate('MealDetails', { id: mealId });
+    };
+
+    const handleGoBack = () => {
+        navigation.goBack();
     };
 
     /**
@@ -201,7 +219,7 @@ const MealLogScreen: React.FC = () => {
         <TouchableOpacity
             key={meal.id}
             style={styles.mealCard}
-            onPress={() => handleMealPress(meal.id)}
+            onPress={() => handleMealDetails(meal.id)}
         >
             <View style={styles.mealCardContent}>
                 <Text style={styles.mealName}>{meal.name}</Text>
@@ -222,7 +240,7 @@ const MealLogScreen: React.FC = () => {
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={styles.backButton}
-                        onPress={() => router.back()}
+                        onPress={handleGoBack}
                     >
                         <FontAwesome name="arrow-left" size={24} color="#000" />
                     </TouchableOpacity>
@@ -319,7 +337,7 @@ const MealLogScreen: React.FC = () => {
                     <View style={styles.spacer} />
                 </ScrollView>
 
-                <TouchableOpacity style={styles.floatingAddButton} onPress={handleAddMeal}>
+                <TouchableOpacity style={styles.floatingAddButton} onPress={handleScan}>
                     <Text style={styles.floatingAddButtonText}>+ Add Meal</Text>
                 </TouchableOpacity>
 

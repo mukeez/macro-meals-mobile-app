@@ -11,12 +11,24 @@ import {
     Platform,
     ScrollView,
 } from 'react-native';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import useStore from '../store/useStore';
 import { authService } from '../services/authService';
 import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 import BackButton from '../components/BackButton';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+
+type RootStackParamList = {
+    Welcome: undefined;
+    Login: undefined;
+    Signup: undefined;
+    Home: undefined;
+    MacroInput: undefined;
+    TermsAndConditions: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 
 export const SignupScreen: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -37,6 +49,7 @@ export const SignupScreen: React.FC = () => {
     });
 
     const setAuthenticated = useStore((state) => state.setAuthenticated);
+    const navigation = useNavigation<NavigationProp>();
 
     const validateForm = () => {
         let isValid = true;
@@ -103,7 +116,7 @@ export const SignupScreen: React.FC = () => {
             });
 
             setAuthenticated(true, '', userId);
-            router.push('/macro-input');
+            navigation.navigate('MacroInput');
         } catch (error) {
             console.error('Signup error:', error);
 
@@ -131,7 +144,7 @@ export const SignupScreen: React.FC = () => {
             >
             <ScrollView contentContainerStyle={styles.scrollContent}>
                     <View className="flex-row items-center justify-start mb-3">
-                        <BackButton onPress={() => router.back()}/>
+                        <BackButton onPress={() => navigation.goBack()}/>
                     </View>
 
                 <Text className="text-3xl font-medium text-black mb-2 text-left">Begin Macro Tracking</Text>
@@ -222,7 +235,7 @@ export const SignupScreen: React.FC = () => {
                             By signing up, you agree to our{' '}
                             <Text 
                                 className="text-base text-primary font-medium"
-                                onPress={() => router.push('/terms-and-conditions')}
+                                onPress={() => navigation.navigate('TermsAndConditions')}
                             >
                                 Terms of Service and Privacy Policy
                             </Text>
