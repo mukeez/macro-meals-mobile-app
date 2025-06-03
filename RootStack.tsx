@@ -97,8 +97,7 @@ const OnboardingNavigator = () =>{
 const DashboardNavigator = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false}}>
-            <Stack.Screen name="MacroInput" component={MacroInputScreen} />
-            <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
+            
             <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
             <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
             <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
@@ -106,7 +105,8 @@ const DashboardNavigator = () => {
             <Stack.Screen name="AddMeal" component={AddMealScreen} />
             <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
             <Stack.Screen name="MealLog" component={MealLogScreen} />
-
+            <Stack.Screen name="MacroInput" component={MacroInputScreen} />
+            <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
         </Stack.Navigator>
     );
 }
