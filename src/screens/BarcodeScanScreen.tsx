@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions, CameraCapturedPicture } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { scanService } from "../services/scanService";
@@ -19,13 +19,13 @@ import { scanService } from "../services/scanService";
 type RootStackParamList = {
     Dashboard: undefined;
     Stats: undefined;
-    AddMeal: { barcodeData: string; analyzedData: any };
+    AddMeal: { barcodeData: string; analyzedData?: any };
     AddMealScreen: { barcodeData?: string; analyzedData?: any };
     MealList: undefined;
     Profile: undefined;
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 // If scanService isn't implemented yet, we'll use a mock implementation
 
@@ -140,7 +140,7 @@ const BarcodeScanScreen = () => {
 
     const handleSuccessfulScan = (barcodeData: string, product: any) => {
         navigation.navigate('AddMeal', {
-            barcodeData: barcodeData,
+            barcodeData: '',
             analyzedData: {
                 name: product.name,
                 calories: product.calories,
@@ -168,6 +168,7 @@ const BarcodeScanScreen = () => {
                 if (response.items && response.items.length > 0) {
                     const product = response.items[0];
                     navigation.navigate('AddMeal', {
+                        barcodeData: '',
                         analyzedData: {
                             name: product.name,
                             calories: product.calories,
@@ -188,7 +189,7 @@ const BarcodeScanScreen = () => {
                             },
                             {
                                 text: "Add Manually",
-                                onPress: () => navigation.navigate('AddMeal')
+                                onPress: () => navigation.navigate('AddMeal' as never)
                             }
                         ]
                     );
@@ -237,6 +238,7 @@ const BarcodeScanScreen = () => {
                     if (response.items && response.items.length > 0) {
                         const product = response.items[0];
                         navigation.navigate('AddMeal', {
+                            barcodeData: '',
                             analyzedData: {
                                 name: product.name,
                                 calories: product.calories,
@@ -301,14 +303,12 @@ const BarcodeScanScreen = () => {
             </View>
 
             <CameraView
-                className="absolute"
                 ref={cameraRef}
                 style={styles.camera}
                 facing="back"
-                flashMode={flashMode}
-                barCodeScannerSettings={{
-                    scanInterval: scanInterval,
-                    barCodeTypes: [
+                enableTorch={flashMode === 'torch'}
+                barcodeScannerSettings={{
+                    barcodeTypes: [
                         'ean13', 'ean8', 'upc_e',
                         'code39', 'code128', 'itf14'
                     ]
