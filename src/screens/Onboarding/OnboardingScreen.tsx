@@ -48,11 +48,31 @@ export const OnboardingScreen: React.FC = () => {
                     >
                         {onboardingItems.map((item: OnboardingItem, index: number) => (
                             <View key={index} className="flex-1 mt-[60px] items-center">
-                                <Image 
+                                {item.mignifiedImagePath === undefined ? (
+                                    <Image 
                                     source={typeof item.imagePath === 'string' ? { uri: item.imagePath } : item.imagePath} 
                                     className="w-full h-1/2 mb-8"
                                     resizeMode="contain"
                                 />
+                                ): (
+                                    <View className='w-full h-full items-center'>
+                                         <Image 
+                                    source={typeof item.imagePath === 'string' ? { uri: item.imagePath } : item.imagePath} 
+                                    className="w-full h-1/2 mb-8 object-fill"
+                                    resizeMode="contain"
+                                />
+                                 <Image 
+                                    source={typeof item.mignifiedImagePath === 'string' ? { uri: item.mignifiedImagePath } : item.mignifiedImagePath} 
+                                    className="absolute w-full h-[92px] top-56"
+                                    resizeMode="contain"
+                                />
+
+<Text className="text-2xl font-bold mt-10 mb-4">{item.title}</Text>
+<Text className="mx-3 text-center text-sm text-[#404040] leading-6">{item.description}</Text>
+                                    </View>
+                                    
+                                )}
+                                
                                 <Text className="text-2xl font-bold mt-10 mb-4">{item.title}</Text>
                                 <Text className="mx-3 text-center text-sm text-[#404040] leading-6">{item.description}</Text>
                             </View>
