@@ -12,4 +12,7 @@ export const IMAGE_CONSTANTS = {
     grilledSalmon: require('../../assets/grilled-salmon.png'),
     aiSuggestedMeals: require('../../assets/ai-suggested-meals.png'),
     backButton: require('../../assets/back-button.png'),
+    notificationIcon: require('../../assets/notification-icon.png'),
+    trophy: require('../../assets/trophy.png'),
+    trophySvg: require('../../assets/trophy-svg.svg')
 }
