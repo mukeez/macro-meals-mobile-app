@@ -11,10 +11,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Animated, { useAnimatedStyle, withTiming, interpolateColor } from 'react-native-reanimated';
 import useStore from '../store/useStore';
 import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+import { CircularProgress } from '../components/CircularProgress';
+import { LinearProgress } from '../components/LinearProgress';
 
 type RootStackParamList = {
     MacroInput: undefined;
@@ -27,6 +30,18 @@ type RootStackParamList = {
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+interface TodayMeal {
+    id: string;
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    meal_time: string;
+    created_at: string;
+    user_id: string;
+}
 
 export const DashboardScreen: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
@@ -46,7 +61,7 @@ export const DashboardScreen: React.FC = () => {
         fat: 0,
         calories: 0
     });
-    const [todayMeals, setTodayMeals] = useState([]);
+    const [todayMeals, setTodayMeals] = useState<TodayMeal[]>([]);
     const [username, setUsername] = useState('User');
     const [progress, setProgress] = useState(0);
 
@@ -54,11 +69,11 @@ export const DashboardScreen: React.FC = () => {
     const token = useStore((state) => state.token);
     const preferences = useStore((state) => state.preferences);
 
-    useEffect(() => {
-        if (preferences.calories === 0 && preferences.protein === 0) {
-            navigation.navigate('MacroInput');
-        }
-    }, [preferences]);
+    // useEffect(() => {
+    //     if (preferences.calories === 0 && preferences.protein === 0) {
+    //         navigation.navigate('MacroInput');
+    //     }
+    // }, [preferences]);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -99,7 +114,6 @@ export const DashboardScreen: React.FC = () => {
                 }
 
                 const prefsData = await prefsResponse.json();
-                console.log('THIS IS THE PREFS DATA', prefsData);
                 setMacros({
                     protein: prefsData.protein_target,
                     carbs: prefsData.carbs_target,
@@ -120,7 +134,6 @@ export const DashboardScreen: React.FC = () => {
                 }
 
                 const progressData = await progressResponse.json();
-                console.log('THIS IS THE PROGRESS DATA', progressData);
 
                 setConsumed({
                     protein: progressData.logged_macros.protein,
@@ -129,11 +142,9 @@ export const DashboardScreen: React.FC = () => {
                     calories: progressData.logged_macros.calories
                 });
 
-                const overallProgress = Object.values(progressData.progress_percentage as Record<string, number>).reduce(
-                    (sum: number, value: number) => sum + value, 0
-                ) / Object.values(progressData.progress_percentage as Record<string, number>).length;
-
-                setProgress(Math.round(overallProgress));
+                const totalCalories = macros.calories;
+                const progressPercentage = totalCalories > 0 ? (consumed.calories / totalCalories) * 100 : 0;
+                setProgress(Math.min(100, progressPercentage));
                 const todayMealsResponse = await fetch('https://api.macromealsapp.com/api/v1/meals/today', {
                     method: 'GET',
                     headers: {
@@ -179,8 +190,8 @@ export const DashboardScreen: React.FC = () => {
         navigation.navigate('Scan');
     };
 
-    const handleMealLog = (date: string) => {
-        navigation.navigate('MealLog', { date });
+    const handleMealLog = () => {
+        navigation.navigate('ScanScreenType');
     };
 
     const handleRefresh = () => {
@@ -193,6 +204,36 @@ export const DashboardScreen: React.FC = () => {
 
     const handleSettingsScreen = () => {
         navigation.navigate('SettingsScreen');
+    };
+
+    const animatedStyle = useAnimatedStyle(() => {
+        const animatedProgress = withTiming(progress, { duration: 1000 });
+        return {
+            borderColor: '#44A047',
+            borderWidth: 4,
+            borderRadius: 100,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            transform: [{ rotate: `${(animatedProgress / 100) * 360}deg` }],
+            borderTopColor: 'transparent',
+            borderRightColor: 'transparent',
+            borderLeftColor: '#44A047',
+            borderBottomColor: '#44A047',
+        };
+    });
+
+    const baseCircleStyle = {
+        borderColor: '#d0e8d1',
+        borderWidth: 4,
+        borderRadius: 100,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
     };
 
     if (isLoading) {
@@ -226,6 +267,16 @@ export const DashboardScreen: React.FC = () => {
     const carbsProgress = Math.min(100, Math.round((consumed.carbs / macros.carbs) * 100) || 0);
     const fatProgress = Math.min(100, Math.round((consumed.fat / macros.fat) * 100) || 0);
 
+    // Calculate today's total macros from todayMeals
+    const todayMealsSum = todayMeals.reduce(
+        (acc, meal) => ({
+            carbs: acc.carbs + (meal.carbs || 0),
+            fat: acc.fat + (meal.fat || 0),
+            protein: acc.protein + (meal.protein || 0),
+        }),
+        { carbs: 0, fat: 0, protein: 0 }
+    );
+
 function formatDate(date: Date){
     const options: Intl.DateTimeFormatOptions = {
         weekday: 'short',
@@ -240,26 +291,105 @@ function formatDate(date: Date){
     return `${dayOfWeek}, ${day} ${month}`;
 }
 
+function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+}
+
+
+function getTimeOfDayEmoji(){
+    const hour = new Date().getHours();
+    if (hour < 12) return '🌞';
+    if (hour < 18) return '⛅️';
+    return '🌙';
+}
+
+function formatTime(timeString: string) {
+    const date = new Date(timeString);
+    return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
     return (
         <CustomSafeAreaView edges={['left', 'right']} paddingOverride={{bottom: -25}}>
+            <View className="flex-1">
+            <ScrollView>
             <View className='flex-1 bg-[#F5F5F5] mt-4'>
                 <View className='flex-row items-center justify-between px-5 pb-4 bg-white'>
                     <View className='flex-col items-start gap-2'>
-                        <Text className='text-[13px] font-normal'>{formatDate(new Date())} 🌞</Text>
-                        <Text className='text-[18px] font-medium text-black'>Good morning, {username}!</Text>
+                        <Text className='text-[13px] font-normal'>{formatDate(new Date())} {getTimeOfDayEmoji()}</Text>
+                        <Text className='text-[18px] font-medium text-black'>{getGreeting()}, {username}!</Text>
                     </View>
                     <Image source={IMAGE_CONSTANTS.notificationIcon} className='w-[24px] h-[24px] object-fill' />
                 </View>
-                <View className='flex-col bg-paleCyan px-5 py-5 mb-8'>
+                <View className='flex-col bg-paleCyan px-5 py-5'>
                 <Image tintColor={'#8BAAA3'} source={IMAGE_CONSTANTS.trophy}  className='absolute bottom-4 tint right-4 w-[74px] h-[74px] object-fill' />
                     <View className='relative'>
                         <Text className='text-base font-semibold mb-2'>Set up your Macro goals</Text>
                         <Text className='tracking-wide text-[13px] font-normal mb-3 mr-10'>Set your macro goals to get personalized tracking and tailored recommendations.</Text>
-                        <TouchableOpacity className='bg-primary w-[105px] h-[32px] rounded-[100px] justify-center items-center' onPress={handleSettingsScreen}>
+                        <TouchableOpacity className='bg-primary w-[105px] h-[32px] rounded-[100px] justify-center items-center' onPress={handleMacroInput}>
                             <Text className='text-white text-sm font-semibold'>Set up now</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
+                <View className='mb-8 bg-white px-5 py-6'>
+                    <View className='flex-row items-center justify-between mb-6'>
+                        <View className='flex-col'>
+                            <Text className='text-3xl text-center font-semibold'>{remaining.calories}</Text>
+                            <Text className='text-sm text-textMediumGrey text-center font-medium'>Remaining</Text>
+                        </View>
+
+                        <View className='h-[150px] w-[150px] relative'>
+                            <CircularProgress
+                                size={150}
+                                strokeWidth={8}
+                                consumed={consumed.calories}
+                                total={consumed.calories + remaining.calories}
+                                color="#44A047"
+                                backgroundColor="#d0e8d1"
+                                label="Consumed"
+                            />
+                        </View>
+
+                        <View className='flex-col'>
+                            <Text className='text-3xl text-center font-semibold'>0</Text>
+                            <Text className='text-sm text-textMediumGrey text-center font-medium'>Goal</Text>
+                        </View>
+                    </View>
+
+                    <View className='flex-row items-center justify-between w-full'>
+                        <View className='flex-col items-center justify-center'>
+                            <Text className='text-sm text-textMediumGrey text-center font-medium mb-1'>Carbs</Text>
+                            <LinearProgress 
+                                progress={(todayMealsSum.carbs / macros.carbs) * 100}
+                                color="#FFC107"
+                            />
+                            <Text className='text-sm text-textMediumGrey text-center font-medium mt-1'>{todayMealsSum.carbs}/{macros.carbs}g</Text>
+                        </View>
+                        <View className='flex-col items-center justify-center'>
+                            <Text className='text-sm text-textMediumGrey text-center font-medium mb-1'>Fats</Text>
+                            <LinearProgress 
+                                progress={(todayMealsSum.fat / macros.fat) * 100}
+                                color="#FF69B4"
+                            />
+                            <Text className='text-sm text-textMediumGrey text-center font-medium mt-1'>{todayMealsSum.fat}/{macros.fat}g</Text>
+                        </View>
+                        <View className='flex-col items-center justify-center'>
+                            <Text className='text-sm text-textMediumGrey text-center font-medium mb-1'>Protein</Text>
+                            <LinearProgress 
+                                progress={(todayMealsSum.protein / macros.protein) * 100}
+                                color="#6A5ACD"
+                            />
+                            <Text className='text-sm text-textMediumGrey text-center font-medium mt-1'>{todayMealsSum.protein}/{macros.protein}g</Text>
+                        </View>
+                    </View>
+                </View>
+                {/* Recently uploaded */}
                 <View className='flex-col bg-white px-5 py-6 mb-4'>
                     <Text className='text-[18px] font-semibold'>Recently uploaded</Text>
                     {todayMeals.length === 0 ? (
@@ -267,145 +397,101 @@ function formatDate(date: Date){
                             <Text className='tracking-normal leading-5 text-[14px] font-medium text-center'>Your recently logged meals for the day will show up here</Text>
                         </View>
                     ): (
-                        <View className='flex-col'></View>
+                        todayMeals.map((meal, index) => (
+                            <View key={index} className='flex-row items-center mt-3'>
+                                <Image source={IMAGE_CONSTANTS.sampleFood} className='w-[90px] h-[90px] object-fill mr-2' />
+                                <View className='flex-col justify-between items-start'>
+                                
+                                    <View className='flex-row items-center mb-2'>
+                                    <Text className='text-sm text-textMediumGrey text-center font-medium'>{meal.name}</Text>
+                                    </View>
+                                    <View className='flex-row items-center mb-2'>
+                                        <Text className='text-sm text-textMediumGrey text-center font-medium mr-2'>{formatTime(meal.meal_time)}</Text>
+                                        <View className='w-[4px] h-[4px] rounded-full bg-[#253238] mr-2'></View>
+                                        <Image source={IMAGE_CONSTANTS.mealScan} className='w-[16px] h-[16px] object-fill mr-1' />
+                                        <Text className='text-sm text-textMediumGrey text-center font-medium'>Meal Scan</Text>
+                                    </View>
+
+                                   <View className='flex-row items-center gap-3'>
+                                            <View className='flex-row items-center justify-center gap-1'>
+                                                <View className='flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full'>
+                                                    <Image source={IMAGE_CONSTANTS.caloriesIcon} className='w-[10px] h-[10px] object-fill' />
+                                                </View>
+                                                <Text className='text-xsm text-black text-center font-medium'>{meal.calories} cal</Text> 
+                                            </View>
+                                            <View className='flex-row items-center gap-1'>
+                                                <View className='flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full'>
+                                                    <Text className='text-white text-[10px] text-center font-medium'>C</Text>
+                                                </View>
+                                                <Text className='text-xsm text-textMediumGrey text-center font-medium'>{meal.carbs}g</Text> 
+                                            </View>
+                                            
+                                            <View className='flex-row items-center gap-1'>
+                                                <View className='flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full'>
+                                                    <Text className='text-white text-[10px] text-center font-medium'>F</Text>
+                                                </View>
+                                                <Text className='text-xsm text-textMediumGrey text-center font-medium'>{meal.fat}g</Text> 
+                                            </View>
+                                            
+                                            <View className='flex-row items-center gap-1'>
+                                                <View className='flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full'>
+                                                    <Text className='text-white text-[10px] text-center font-medium'>P</Text>
+                                                </View>
+                                                <Text className='text-xsm text-textMediumGrey text-center font-medium'>{meal.protein}g</Text> 
+                                            </View>
+
+                                   </View>
+                                    
+                                   
+                                </View>
+                            </View>
+                        ))
                     )}
 
                 </View>
                 
             </View>
+            
+            </ScrollView>
+            <View style={styles.bottomNav}>
+                {/* Home Tab */}
+                <TouchableOpacity style={styles.navItem}>
+                    <Text style={styles.navIcon}>🏠</Text>
+                    <Text style={styles.navActiveText}>Home</Text>
+                </TouchableOpacity>
+
+                {/* Stats Tab */}
+                <TouchableOpacity 
+                    style={styles.navItem}
+                    onPress={() => Alert.alert('Stats', 'Stats coming soon!')}
+                >
+                    <Text style={styles.navIcon}>📊</Text>
+                    <Text style={styles.navText}>Stats</Text>
+                </TouchableOpacity>
+
+                {/* Log Meal Tab */}
+                <TouchableOpacity
+                    style={styles.navItem}
+                    onPress={handleMealLog}
+                >
+                    <Text style={styles.navIcon}>➕</Text>
+                    <Text style={styles.navText}>Log</Text>
+                </TouchableOpacity>
+
+                {/* Settings Tab */}
+                <TouchableOpacity
+                    style={styles.navItem}
+                    onPress={() => navigation.navigate('SettingsScreen')}
+                >
+                    <Text style={styles.navIcon}>⚙️</Text>
+                    <Text style={styles.navText}>Settings</Text>
+                </TouchableOpacity>
+            </View>
+            </View>
+           
+            
         </CustomSafeAreaView>
     )
-
-
-
-    // return (
-    //     <CustomSafeAreaView edges={['left', 'right']} paddingOverride={{bottom: -25}}>
-    //     <View style={styles.container}>
-    //         <View style={styles.header}>
-    //             <View style={styles.logoContainer}>
-    //                 <View style={styles.logoBox}>
-    //                     <Text style={styles.logoIcon}>🍽️</Text>
-    //                 </View>
-    //                 <Text style={styles.logoText}>MacroMate</Text>
-    //             </View>
-    //             <TouchableOpacity
-    //                 style={styles.profileButton}
-    //                 onPress={() => navigation.navigate('Settings')}
-    //             >
-    //                 <Text style={styles.profileText}>👤</Text>
-    //             </TouchableOpacity>
-    //         </View>
-
-    //         <ScrollView style={styles.scrollView}>
-    //             <View style={styles.greetingContainer}>
-    //                 <Text style={styles.greeting}>Hey {username}! <Text>👋</Text></Text>
-    //                 <Text style={styles.subGreeting}>Let's track your macros for today</Text>
-    //             </View>
-
-    //             <View style={styles.progressContainer}>
-    //                 <View style={styles.progressHeader}>
-    //                     <Text style={styles.progressTitle}>Today's Progress</Text>
-    //                     <Text style={styles.progressPercentage}>{progress}%</Text>
-    //                 </View>
-
-    //                 <View style={styles.macroCirclesContainer}>
-    //                     <View style={styles.macroItem}>
-    //                         <View style={styles.macroCircle}>
-    //                             <View style={[styles.macroProgress, { backgroundColor: '#19a28f', height: `${proteinProgress}%` }]} />
-    //                             <View style={styles.macroInnerCircle}>
-    //                                 <Text style={styles.macroValue}>{consumed.protein}g</Text>
-    //                             </View>
-    //                         </View>
-    //                         <Text style={styles.macroLabel}>Protein</Text>
-    //                     </View>
-
-    //                     <View style={styles.macroItem}>
-    //                         <View style={styles.macroCircle}>
-    //                             <View style={[styles.macroProgress, { backgroundColor: '#f5a623', height: `${carbsProgress}%` }]} />
-    //                             <View style={styles.macroInnerCircle}>
-    //                                 <Text style={styles.macroValue}>{consumed.carbs}g</Text>
-    //                             </View>
-    //                         </View>
-    //                         <Text style={styles.macroLabel}>Carbs</Text>
-    //                     </View>
-
-    //                     <View style={styles.macroItem}>
-    //                         <View style={styles.macroCircle}>
-    //                             <View style={[styles.macroProgress, { backgroundColor: '#ff6b6b', height: `${fatProgress}%` }]} />
-    //                             <View style={styles.macroInnerCircle}>
-    //                                 <Text style={styles.macroValue}>{consumed.fat}g</Text>
-    //                             </View>
-    //                         </View>
-    //                         <Text style={styles.macroLabel}>Fats</Text>
-    //                     </View>
-    //                 </View>
-
-    //                 <View style={styles.caloriesSummary}>
-    //                     <View style={styles.caloriesRow}>
-    //                         <Text style={styles.caloriesLabel}>Calories Consumed</Text>
-    //                         <Text style={styles.caloriesValue}>{consumed.calories}</Text>
-    //                     </View>
-    //                     <View style={styles.caloriesRow}>
-    //                         <Text style={styles.caloriesLabel}>Remaining</Text>
-    //                         <Text style={[styles.caloriesValue, styles.remainingValue]}>
-    //                             {remaining.calories}
-    //                         </Text>
-    //                     </View>
-    //                 </View>
-    //             </View>
-
-    //             <TouchableOpacity style={styles.actionButton} onPress={handleMacroInput}>
-    //                 <Text style={styles.actionButtonText}>+ Log a Meal</Text>
-    //             </TouchableOpacity>
-
-    //             <TouchableOpacity
-    //                 style={[styles.actionButton, styles.findMealsButton]}
-    //                 onPress={handleScan}
-    //             >
-    //                 <Text style={styles.actionButtonText}>📍 Find Meals Near Me</Text>
-    //             </TouchableOpacity>
-
-    //             <TouchableOpacity
-    //                 style={[styles.actionButton, styles.mealLogButton]}
-    //                 onPress={() => handleMealLog(new Date().toISOString().split('T')[0])}
-    //             >
-    //                 <Text style={styles.mealLogButtonText}>🕒 Meal Log</Text>
-    //             </TouchableOpacity>
-    //         </ScrollView>
-
-    //         <View style={styles.bottomNav}>
-    //             <TouchableOpacity style={styles.navItem}>
-    //                 <Text style={styles.navIcon}>🏠</Text>
-    //                 <Text style={styles.navActiveText}>Home</Text>
-    //             </TouchableOpacity>
-
-    //             <TouchableOpacity
-    //                 style={styles.navItem}
-    //                 onPress={() => Alert.alert('Stats', 'Stats coming soon!')}
-    //             >
-    //                 <Text style={styles.navIcon}>📊</Text>
-    //                 <Text style={styles.navText}>Stats</Text>
-    //             </TouchableOpacity>
-
-    //             <TouchableOpacity
-    //                 style={styles.navItem}
-    //                 onPress={handleMacroInput}
-    //             >
-    //                 <Text style={styles.navIcon}>➕</Text>
-    //                 <Text style={styles.navText}>Log</Text>
-    //             </TouchableOpacity>
-
-    //             <TouchableOpacity
-    //                 style={styles.navItem}
-    //                 onPress={() => navigation.navigate('SettingsScreen')}
-    //             >
-    //                 <Text style={styles.navIcon}>⚙️</Text>
-    //                 <Text style={styles.navText}>Settings</Text>
-    //             </TouchableOpacity>
-    //         </View>
-    //     </View>
-    //     </CustomSafeAreaView>
-    // );
 };
 
 const styles = StyleSheet.create({
@@ -617,6 +703,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#eeeeee',
         paddingVertical: 8,
+        backgroundColor: '#fff',
     },
     navItem: {
         flex: 1,
@@ -635,5 +722,23 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#19a28f',
         fontWeight: 'bold',
+    },
+    baseCircle: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderWidth: 4,
+        borderRadius: 100,
+    },
+    progressCircle: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderWidth: 4,
+        borderRadius: 100,
     },
 });
