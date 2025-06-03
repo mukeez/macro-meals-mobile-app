@@ -8,6 +8,7 @@ import {
     SafeAreaView,
     StatusBar,
     ScrollView,
+    ActivityIndicator,
     Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -36,6 +37,9 @@ export const AddMealScreen: React.FC = () => {
     const [protein, setProtein] = useState<string>('0');
     const [carbs, setCarbs] = useState<string>('0');
     const [fats, setFats] = useState<string>('0');
+    const userId = useStore((state) => state.userId);
+    const token = useStore((state) => state.token);
+    const [loading, setLoading] = useState<boolean>(false);
 
     const [recentMeals] = useState<RecentMeal[]>([
         {
@@ -103,27 +107,43 @@ export const AddMealScreen: React.FC = () => {
     /**
      * Adds the current meal to the log
      */
-    const handleAddToLog = (): void => {
-        if (!mealName.trim()) {
-            console.error('Please enter a meal name');
-            return;
-        }
+    const handleAddToLog = async (): Promise<void> => {
+        setLoading(true);
+        try {
+            if (!mealName.trim()) {
+                console.error('Please enter a meal name');
+                return;
+            }
 
-        const newMeal = {
-            name: mealName,
-            macros: {
+            const newMeal = {
+                name: mealName,
                 calories: parseInt(calories, 10) || 0,
                 protein: parseInt(protein, 10) || 0,
                 carbs: parseInt(carbs, 10) || 0,
-                fat: parseInt(fats, 10) || 0
-            },
-            date: new Date().toISOString(),
-        };
+                fat: parseInt(fats, 10) || 0,
+                meal_time: new Date().toISOString()
+            };
 
-        console.log('Adding meal to log:', newMeal);
+            const response = await fetch('https://api.macromealsapp.com/api/v1/meals/add', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newMeal)
+            });
+            const data = await response.json();
+            console.log('THIS IS THE RESPONSE', data);
 
-        // Navigate back to meal log screen
-        navigation.goBack();
+            console.log('Adding meal to log:', newMeal);
+
+            // Navigate back to meal log screen
+            navigation.navigate('DashboardScreen');
+        } catch (error) {
+            console.error('Error adding meal to log:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     /**
@@ -253,7 +273,11 @@ export const AddMealScreen: React.FC = () => {
         style={styles.addToLogButton}
     onPress={handleAddToLog}
     >
-    <Text style={styles.addToLogButtonText}>Add to Log</Text>
+    {loading ? (
+        <ActivityIndicator size="small" color="#fff" />
+    ) : (
+        <Text style={styles.addToLogButtonText}>Add to Log</Text>
+    )}
     </TouchableOpacity>
 
     <TouchableOpacity
