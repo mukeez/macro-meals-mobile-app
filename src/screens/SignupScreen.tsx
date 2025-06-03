@@ -18,6 +18,7 @@ import { authService } from '../services/authService';
 import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 import BackButton from '../components/BackButton';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RootStackParamList = {
     Welcome: undefined;
@@ -26,6 +27,7 @@ type RootStackParamList = {
     Home: undefined;
     MacroInput: undefined;
     TermsAndConditions: undefined;
+    Dashboard: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
@@ -115,8 +117,19 @@ export const SignupScreen: React.FC = () => {
                 nickname
             });
 
-            setAuthenticated(true, '', userId);
-            navigation.navigate('MacroInput');
+            // setAuthenticated(true, '', userId);
+            const data = await authService.login({ email, password });
+            console.log('Login successful, setting authenticated state');
+            setAuthenticated(true, data.access_token, data.user.id);
+            console.log('Auth state updated, token:', data.access_token);
+            await AsyncStorage.setItem('my_token', data.access_token);
+            console.log('Token saved to AsyncStorage');
+            
+            // Add this to check if the state was actually updated
+            const isAuth = useStore.getState().isAuthenticated;
+            console.log('Current auth state after update:', isAuth);
+            navigation.navigate('Dashboard');
+
         } catch (error) {
             console.error('Signup error:', error);
 
