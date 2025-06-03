@@ -14,5 +14,10 @@ export const IMAGE_CONSTANTS = {
     backButton: require('../../assets/back-button.png'),
     notificationIcon: require('../../assets/notification-icon.png'),
     trophy: require('../../assets/trophy.png'),
-    trophySvg: require('../../assets/trophy-svg.svg')
+    trophySvg: require('../../assets/trophy-svg.svg'),
+    splashIcon: require('../../assets/splash-icon.png'),
+    steakAndMashedPotatoes: require('../../assets/steak-and-mashed-potatoes.png'),
+    sampleFood: require('../../assets/sample-food.png'),
+    mealScan: require('../../assets/meal-scan.png'),
+    caloriesIcon: require('../../assets/calories-icon.png'),
 }
