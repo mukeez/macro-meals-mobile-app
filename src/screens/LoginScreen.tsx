@@ -20,12 +20,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import the mock service instead of the real one
 import { mockSocialAuth } from '../services/authMock';
 import { OnboardingContext } from '../contexts/OnboardingContext';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+import BackButton from '../components/BackButton';
 
 type RootStackParamList = {
     Welcome: undefined;
     MacroInput: undefined;
     Login: undefined;
-    Signup: undefined;
+    SignupScreen: undefined;
+    Dashboard: undefined;
 };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -38,6 +42,11 @@ export const LoginScreen: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
     const navigation = useNavigation<LoginScreenNavigationProp>();
+
+    const [errors, setErrors] = useState({
+        email: '',
+        password: '',
+    });
 
     // Set up auth state in your Zustand store
     const setAuthenticated = useStore((state) => state.setAuthenticated);
@@ -56,11 +65,14 @@ export const LoginScreen: React.FC = () => {
             setAuthenticated(true, data.access_token, data.user.id);
             console.log('Auth state updated, token:', data.access_token);
             await AsyncStorage.setItem('my_token', data.access_token);
+            await AsyncStorage.setItem('isOnboardingCompleted', 'true');
+            setIsOnboardingCompleted(true);
             console.log('Token saved to AsyncStorage');
             
             // Add this to check if the state was actually updated
             const isAuth = useStore.getState().isAuthenticated;
             console.log('Current auth state after update:', isAuth);
+            navigation.navigate('Dashboard');
         } catch (error) {
             Alert.alert(
                 'Login Failed',
@@ -78,7 +90,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.googleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            navigation.navigate('MacroInput');
+            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Google login error:', error);
             Alert.alert('Login Failed', 'Google login failed. Please try again.');
@@ -94,7 +106,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.appleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            navigation.navigate('MacroInput');
+            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Apple login error:', error);
             Alert.alert('Login Failed', 'Apple login failed. Please try again.');
@@ -109,7 +121,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.facebookSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            navigation.navigate('MacroInput');
+            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Facebook login error:', error);
             Alert.alert('Login Failed', 'Facebook login failed. Please try again.');
@@ -119,8 +131,94 @@ export const LoginScreen: React.FC = () => {
     };
 
     const handleSignUp = () => {
-        navigation.navigate('Signup');
+        navigation.navigate('SignupScreen');
     };
+    // return (
+    //     <CustomSafeAreaView className='flex-1 items-start justify-start' edges={['left', 'right']}>
+    //         <KeyboardAvoidingView
+    //             className="flex-1"
+    //             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    //         >
+    //         <ScrollView className='flex-1 relative align-left p-6'>
+    //             <Text className="text-3xl font-medium text-black mb-2 text-">Access your account</Text>
+    //             <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Sign in to track your macros and view personalized meal suggestions.</Text>
+
+    //             <View style={styles.formContainer}>
+    //                 <View className="mb-6" style={[errors.email ? styles.inputError : null]}>  
+    //                     <TextInput
+    //                         className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+    //                         placeholder="Enter your email"
+    //                         value={email}
+    //                         onChangeText={(text) => {
+    //                             setEmail(text);
+    //                             // Validate email on change
+    //                             if (!text) {
+    //                                 setErrors(prev => ({ ...prev, email: 'Email is required' }));
+    //                             } else if (!/\S+@\S+\.\S+/.test(text)) {
+    //                                 setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+    //                             } else {
+    //                                 setErrors(prev => ({ ...prev, email: '' }));
+    //                             }
+    //                         }}
+    //                         keyboardType="email-address"
+    //                         autoCapitalize="none"
+    //                         autoCorrect={false}
+    //                         textContentType="emailAddress"
+    //                         spellCheck={false}
+    //                         autoComplete="email"
+    //                     />
+    //                     {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
+    //                 </View>
+                    
+    //                 <View className="mb-4" style={[errors.password ? styles.inputError : null]}>
+                        
+    //                     <TextInput
+    //                         className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+    //                         placeholder="Create password"
+    //                         value={password}
+    //                         onChangeText={(text) => {
+    //                             setPassword(text);
+    //                             if (errors.password) {
+    //                                 setErrors(prev => ({ ...prev, password: '' }));
+    //                             }
+    //                         }}
+    //                         secureTextEntry={!showPassword}
+    //                     />
+    //                     {errors.password ? <Text className='text-red-500 text-sm mt-2'>{errors.password}</Text> : null}
+    //                 </View>
+    //                 <TouchableOpacity style={styles.forgotContainer}>
+    //                     <Text style={styles.forgotText}>Forgot Password?</Text>
+    //                 </TouchableOpacity>
+                    
+    //             </View>
+              
+    //         </ScrollView>
+    //         <View className='absolute bottom-5 px-6 w-full'>
+    //                 <View className='w-full items-center'>
+    //                     <CustomTouchableOpacityButton 
+    //                         className='h-[56px] w-full items-center justify-center bg-primary rounded-[100px]' 
+    //                         title="Sign in"
+    //                         textClassName='text-white text-[17px] font-semibold'
+    //                         disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
+    //                         onPress={handleLogin}
+    //                         isLoading={isLoading}
+    //                     />
+    //                 </View>
+    //                 <View className='items-center justify-center px-6 mt-2'>
+    //                     <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+    //                         Don't have an account?{' '}
+    //                         <Text 
+    //                             className="text-base text-primary font-medium"
+    //                             onPress={() => navigation.navigate('SignupScreen')}
+    //                         >
+    //                             Sign up
+    //                         </Text>
+    //                     </Text>
+    //                 </View>
+    //             </View>
+    //     </KeyboardAvoidingView>
+    //     </CustomSafeAreaView>
+    // );
 
     return (
         <KeyboardAvoidingView
