@@ -13,34 +13,18 @@ import {SignupScreen} from "./src/screens/SignupScreen";
 import {OnboardingScreen} from "./src/screens/Onboarding/OnboardingScreen";
 import {MacroInputScreen} from "./src/screens/MacroInputScreen";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
+import {ForgotPasswordScreen} from "./src/screens/ForgotPasswordScreen";
+import {VerificationScreen} from "./src/screens/VerificationScreen";
 import {MealListScreen} from "./src/screens/MealListScreen";
 import PaymentScreen from "./src/screens/PaymentScreen";
 import {createStackNavigator} from '@react-navigation/stack';
 import './src/globals.css';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RootStackParamList } from "./src/types/navigation";
+import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 
-type RootStackParamList = {
-    Onboarding: undefined;
-    Auth: { initialAuthScreen: string };
-    Dashboard: undefined;
-    Welcome: undefined;
-    Login: undefined;
-    SignUp: undefined;
-    MacroInput: undefined;
-    MealList: undefined;
-    SettingsScreen: undefined;
-    ScanScreenType: undefined;
-    BarcodeScanScreen: undefined;
-    AddMeal: undefined;
-    SnapMeal: undefined;
-    MealLog: undefined;
-    NearbyMeals: undefined;
-    DashboardScreen: undefined;
-    LoginScreen: undefined;
-    PaymentScreen: undefined;
-    SignupScreen: undefined;
-    MacroGoals: undefined;
-};
+
+
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -72,6 +56,9 @@ const AuthNavigator = ({ route }: { route: { params?: { initialAuthScreen: strin
         >
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="LoginScreen" component={LoginScreen} />
+            <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+            <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
             <Stack.Screen name="SignupScreen" component={SignupScreen} />
         </Stack.Navigator>
     )

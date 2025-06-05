@@ -81,6 +81,49 @@ export const authService = {
         }
     },
 
+    forgotPassword: async(email: string) => {
+        try{
+            const response = await fetch(`${API_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+            const responseData = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Forgot password failed');
+            }
+
+            return responseData;
+        }catch (error){
+            console.error('Forgot password error:', error);
+        }
+    },
+    verifyCode: async (params: { email: string, otp: string }) => {
+        try {
+            console.log('params', params);
+            const response = await fetch(`${API_URL}/auth/verify-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                console.log('responseData', responseData);
+                throw new Error(responseData.message || 'Verification failed');
+            }
+            console.log('responseData', responseData);
+            return responseData;
+        } catch (error) {
+            console.error('Verification error:', error);
+            throw error;
+        }
+    },
+
     getCurrentToken: async () => {
         try {
             return await AsyncStorage.getItem('access_token');

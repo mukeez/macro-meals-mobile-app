@@ -21,6 +21,7 @@ module.exports = {
         accent: '#AB8BFF',
         indicatorActive: "#01675B",
         indicatorInactive: "#b3d1ce",
+        lightGreen: "#DFF4F4",
         lightGrey: "#B0B0B0",
         textMediumGrey: "#4F4F4F",
         paleCyan: "#DFF4F4",

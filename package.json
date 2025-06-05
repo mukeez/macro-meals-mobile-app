@@ -36,6 +36,7 @@
     "nativewind": "^4.1.23",
     "react": "19.0.0",
     "react-native": "0.79.2",
+    "react-native-confirmation-code-field": "^7.6.1",
     "react-native-fbsdk-next": "^13.4.1",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-pager-view": "6.7.1",
@@ -50,6 +51,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@babel/preset-typescript": "^7.27.0",
+    "@react-native-community/cli": "^18.0.0",
     "@types/react": "~19.0.10",
     "@types/react-native": "^0.73.0",
     "typescript": "^5.8.3"
