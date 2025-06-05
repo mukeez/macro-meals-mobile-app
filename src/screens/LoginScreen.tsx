@@ -23,14 +23,15 @@ import { OnboardingContext } from '../contexts/OnboardingContext';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import BackButton from '../components/BackButton';
+import { RootStackParamList } from '../types/navigation';
 
-type RootStackParamList = {
-    Welcome: undefined;
-    MacroInput: undefined;
-    Login: undefined;
-    SignupScreen: undefined;
-    Dashboard: undefined;
-};
+// type RootStackParamList = {
+//     Welcome: undefined;
+//     MacroInput: undefined;
+//     Login: undefined;
+//     SignupScreen: undefined;
+//     Dashboard: undefined;
+// };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -133,201 +134,91 @@ export const LoginScreen: React.FC = () => {
     const handleSignUp = () => {
         navigation.navigate('SignupScreen');
     };
-    // return (
-    //     <CustomSafeAreaView className='flex-1 items-start justify-start' edges={['left', 'right']}>
-    //         <KeyboardAvoidingView
-    //             className="flex-1"
-    //             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    //         >
-    //         <ScrollView className='flex-1 relative align-left p-6'>
-    //             <Text className="text-3xl font-medium text-black mb-2 text-">Access your account</Text>
-    //             <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Sign in to track your macros and view personalized meal suggestions.</Text>
-
-    //             <View style={styles.formContainer}>
-    //                 <View className="mb-6" style={[errors.email ? styles.inputError : null]}>  
-    //                     <TextInput
-    //                         className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-    //                         placeholder="Enter your email"
-    //                         value={email}
-    //                         onChangeText={(text) => {
-    //                             setEmail(text);
-    //                             // Validate email on change
-    //                             if (!text) {
-    //                                 setErrors(prev => ({ ...prev, email: 'Email is required' }));
-    //                             } else if (!/\S+@\S+\.\S+/.test(text)) {
-    //                                 setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
-    //                             } else {
-    //                                 setErrors(prev => ({ ...prev, email: '' }));
-    //                             }
-    //                         }}
-    //                         keyboardType="email-address"
-    //                         autoCapitalize="none"
-    //                         autoCorrect={false}
-    //                         textContentType="emailAddress"
-    //                         spellCheck={false}
-    //                         autoComplete="email"
-    //                     />
-    //                     {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
-    //                 </View>
-                    
-    //                 <View className="mb-4" style={[errors.password ? styles.inputError : null]}>
-                        
-    //                     <TextInput
-    //                         className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-    //                         placeholder="Create password"
-    //                         value={password}
-    //                         onChangeText={(text) => {
-    //                             setPassword(text);
-    //                             if (errors.password) {
-    //                                 setErrors(prev => ({ ...prev, password: '' }));
-    //                             }
-    //                         }}
-    //                         secureTextEntry={!showPassword}
-    //                     />
-    //                     {errors.password ? <Text className='text-red-500 text-sm mt-2'>{errors.password}</Text> : null}
-    //                 </View>
-    //                 <TouchableOpacity style={styles.forgotContainer}>
-    //                     <Text style={styles.forgotText}>Forgot Password?</Text>
-    //                 </TouchableOpacity>
-                    
-    //             </View>
-              
-    //         </ScrollView>
-    //         <View className='absolute bottom-5 px-6 w-full'>
-    //                 <View className='w-full items-center'>
-    //                     <CustomTouchableOpacityButton 
-    //                         className='h-[56px] w-full items-center justify-center bg-primary rounded-[100px]' 
-    //                         title="Sign in"
-    //                         textClassName='text-white text-[17px] font-semibold'
-    //                         disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
-    //                         onPress={handleLogin}
-    //                         isLoading={isLoading}
-    //                     />
-    //                 </View>
-    //                 <View className='items-center justify-center px-6 mt-2'>
-    //                     <Text className="text-[17px] text-center text-gray-600 flex-wrap">
-    //                         Don't have an account?{' '}
-    //                         <Text 
-    //                             className="text-base text-primary font-medium"
-    //                             onPress={() => navigation.navigate('SignupScreen')}
-    //                         >
-    //                             Sign up
-    //                         </Text>
-    //                     </Text>
-    //                 </View>
-    //             </View>
-    //     </KeyboardAvoidingView>
-    //     </CustomSafeAreaView>
-    // );
-
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoBox}>
-                        <Text style={styles.checkmark}>✓</Text>
-                    </View>
-                </View>
-
-                <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-                <Text style={styles.welcomeSubtitle}>Track your nutrition journey with MacroMeals</Text>
+        <CustomSafeAreaView className='flex-1 items-start justify-start' edges={['left', 'right']}>
+            <KeyboardAvoidingView
+                className="flex-1"
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+            <ScrollView className='flex-1 relative align-left p-6'>
+                <Text className="text-3xl font-medium text-black mb-2 text-">Access your account</Text>
+                <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Sign in to track your macros and view personalized meal suggestions.</Text>
 
                 <View style={styles.formContainer}>
-                    <Text style={styles.inputLabel}>Email</Text>
-                    <View style={styles.inputContainer}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>✉️</Text>
-                        </View>
+                    <View className="mb-6" style={[errors.email ? styles.inputError : null]}>  
                         <TextInput
-                            style={styles.input}
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
                             placeholder="Enter your email"
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(text) => {
+                                setEmail(text);
+                                // Validate email on change
+                                if (!text) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is required' }));
+                                } else if (!/\S+@\S+\.\S+/.test(text)) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+                                } else {
+                                    setErrors(prev => ({ ...prev, email: '' }));
+                                }
+                            }}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoCorrect={false}
+                            textContentType="emailAddress"
+                            spellCheck={false}
+                            autoComplete="email"
                         />
+                        {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
                     </View>
-
-                    <Text style={styles.inputLabel}>Password</Text>
-                    <View style={styles.inputContainer}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>❓</Text>
-                        </View>
+                    
+                    <View className="mb-4" style={[errors.password ? styles.inputError : null]}>
+                        
                         <TextInput
-                            style={styles.input}
-                            placeholder="Enter your password"
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                            placeholder="Enter password"
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(text) => {
+                                setPassword(text);
+                                if (errors.password) {
+                                    setErrors(prev => ({ ...prev, password: '' }));
+                                }
+                            }}
                             secureTextEntry={!showPassword}
                         />
-                        <TouchableOpacity
-                            style={styles.eyeIconContainer}
-                            onPress={() => setShowPassword(!showPassword)}
-                        >
-                            <Text style={styles.eyeIcon}>👁️</Text>
-                        </TouchableOpacity>
+                        {errors.password ? <Text className='text-red-500 text-sm mt-2'>{errors.password}</Text> : null}
                     </View>
-
-                    <View style={styles.rememberForgotContainer}>
-                        <TouchableOpacity
-                            style={styles.rememberContainer}
-                            onPress={() => setRememberMe(!rememberMe)}
-                        >
-                            <View style={[
-                                styles.checkbox,
-                                rememberMe && styles.checkboxChecked
-                            ]}>
-                                {rememberMe && <Text style={styles.checkboxCheck}>✓</Text>}
-                            </View>
-                            <Text style={styles.rememberText}>Remember me</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.forgotContainer}>
-                            <Text style={styles.forgotText}>Forgot Password?</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity
-                        style={styles.loginButton}
-                        onPress={handleLogin}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="white" size="small" />
-                        ) : (
-                            <Text style={styles.loginButtonText}>Login</Text>
-                        )}
+                    <TouchableOpacity style={styles.forgotContainer} onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+                        <Text style={styles.forgotText}>Forgot Password?</Text>
                     </TouchableOpacity>
-
-                    <Text style={styles.orText}>Or continue with</Text>
-
-                    <View style={styles.socialContainer}>
-                        <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
-                            <Text style={styles.socialIcon}>G</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.socialButton} onPress={handleAppleLogin}>
-                            <Text style={styles.socialIcon}>🍎</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.socialButton} onPress={handleFacebookLogin}>
-                            <Text style={styles.socialIcon}>f</Text>
-                        </TouchableOpacity>
+                    
+                </View>
+              
+            </ScrollView>
+            <View className='absolute bottom-5 px-6 w-full'>
+                    <View className='w-full items-center'>
+                        <CustomTouchableOpacityButton 
+                            className='h-[56px] w-full items-center justify-center bg-primary rounded-[100px]' 
+                            title="Sign in"
+                            textClassName='text-white text-[17px] font-semibold'
+                            disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
+                            onPress={handleLogin}
+                            isLoading={isLoading}
+                        />
                     </View>
-
-                    <View style={styles.signupContainer}>
-                        <Text style={styles.noAccountText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={handleSignUp}>
-                            <Text style={styles.signupText}>Sign up</Text>
-                        </TouchableOpacity>
+                    <View className='items-center justify-center px-6 mt-2'>
+                        <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+                            Don't have an account?{' '}
+                            <Text 
+                                className="text-base text-primary font-medium"
+                                onPress={() => navigation.navigate('SignupScreen')}
+                            >
+                                Sign up
+                            </Text>
+                        </Text>
                     </View>
                 </View>
-            </ScrollView>
         </KeyboardAvoidingView>
+        </CustomSafeAreaView>
     );
 };
 
