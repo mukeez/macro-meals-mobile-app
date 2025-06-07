@@ -43,8 +43,6 @@ export const ForgotPasswordScreen: React.FC = () => {
         return isLoading || !email || !/\S+@\S+\.\S+/.test(email);
     }
 
-    // Set up auth state in your Zustand store
-    const setAuthenticated = useStore((state) => state.setAuthenticated);
 
         const handleForgotPassword = async () => {
         if (!email) {
