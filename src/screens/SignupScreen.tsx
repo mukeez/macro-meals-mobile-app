@@ -19,6 +19,7 @@ import CustomSafeAreaView  from '../components/CustomSafeAreaView';
 import BackButton from '../components/BackButton';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type RootStackParamList = {
     Welcome: undefined;
@@ -38,6 +39,12 @@ export const SignupScreen: React.FC = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
     // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     // const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -192,7 +199,7 @@ export const SignupScreen: React.FC = () => {
                     {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
 
-                    <View className="mb-4" style={[errors.password ? styles.inputError : null]}>
+                    <View className="relative mb-4" style={[errors.password ? styles.inputError : null]}>
                         
                         <TextInput
                             className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
@@ -206,9 +213,16 @@ export const SignupScreen: React.FC = () => {
                             }}
                             secureTextEntry={!showPassword}
                         />
+                        <MaterialIcons className='absolute right-4 top-1/2 -translate-y-1/2' name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
                     </View>
-                    <Text style={styles.passwordHint}>Password must be at least 8 characters</Text>
                     {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
+                    <View className='flex-row items-center justify-start mt-2 w-full'>
+                        <View className={`w-[20px] h-[20px] rounded-full justify-center items-center mr-2 ${password.length >= 8 ? 'bg-primary' : 'bg-lightGrey'}`}>
+                            <MaterialIcons name="check" size={16} color='white' />
+                        </View> 
+                        <Text className='text-sm font-normal text-textMediumGrey'>Password must be at least 8 characters</Text>
+                    </View>
+                    
 
 
                 

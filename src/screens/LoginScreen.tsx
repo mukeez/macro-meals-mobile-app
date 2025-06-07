@@ -24,6 +24,7 @@ import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import BackButton from '../components/BackButton';
 import { RootStackParamList } from '../types/navigation';
+import { MaterialIcons } from '@expo/vector-icons';
 
 // type RootStackParamList = {
 //     Welcome: undefined;
@@ -43,6 +44,12 @@ export const LoginScreen: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
     const navigation = useNavigation<LoginScreenNavigationProp>();
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
 
     const [errors, setErrors] = useState({
         email: '',
@@ -171,7 +178,7 @@ export const LoginScreen: React.FC = () => {
                         {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
                     </View>
                     
-                    <View className="mb-4" style={[errors.password ? styles.inputError : null]}>
+                    <View className="relative mb-4" style={[errors.password ? styles.inputError : null]}>
                         
                         <TextInput
                             className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
@@ -185,6 +192,7 @@ export const LoginScreen: React.FC = () => {
                             }}
                             secureTextEntry={!showPassword}
                         />
+                        <MaterialIcons className='absolute right-4 top-1/2 -translate-y-1/2' name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
                         {errors.password ? <Text className='text-red-500 text-sm mt-2'>{errors.password}</Text> : null}
                     </View>
                     <TouchableOpacity style={styles.forgotContainer} onPress={() => navigation.navigate('ForgotPasswordScreen')}>
