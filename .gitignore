@@ -125,3 +125,4 @@ bower_components/
 dist/
 web-build/
 .env
+.cursor/

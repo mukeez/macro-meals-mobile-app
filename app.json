@@ -42,12 +42,6 @@
           "locationAlways": false,
           "locationWhenInUse": true
         }
-      ],
-      [
-        "expo-barcode-scanner",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes."
-        }
       ]
     ]
   }
