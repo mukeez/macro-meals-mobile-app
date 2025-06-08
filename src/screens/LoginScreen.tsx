@@ -64,7 +64,6 @@ export const LoginScreen: React.FC = () => {
                 navigation.navigate('DashboardScreen');
             }
             const token = await AsyncStorage.getItem('my_token');
-            console.log('The my_token is: ', token);
         } catch (error) {
             Alert.alert(
                 'Login Failed',

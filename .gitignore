@@ -126,3 +126,4 @@ dist/
 web-build/
 .env
 .cursor/
+credentials.json
