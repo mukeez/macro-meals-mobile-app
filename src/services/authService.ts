@@ -124,6 +124,27 @@ export const authService = {
         }
     },
 
+    resetPassword: async (resetPasswordData: { email: string, session_token: string, password: string }) => {
+        try {
+            console.log('resetPasswordData', resetPasswordData);
+            const response = await fetch(`${API_URL}/auth/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(resetPasswordData),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Password reset failed');
+            }   
+
+            return responseData;
+        } catch (error) {
+            console.error('Password reset error:', error);
+            throw error;
+        }
+    },
     getCurrentToken: async () => {
         try {
             return await AsyncStorage.getItem('access_token');
