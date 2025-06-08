@@ -20,18 +20,10 @@ import BackButton from '../components/BackButton';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
+import { RootStackParamList } from '../types/navigation';
 
-type RootStackParamList = {
-    Welcome: undefined;
-    Login: undefined;
-    Signup: undefined;
-    Home: undefined;
-    MacroInput: undefined;
-    TermsAndConditions: undefined;
-    Dashboard: undefined;
-};
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignupScreen'>;
 
 export const SignupScreen: React.FC = () => {
     const [email, setEmail] = useState('');

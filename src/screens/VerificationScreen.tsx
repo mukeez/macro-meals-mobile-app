@@ -13,13 +13,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import useStore from '../store/useStore';
 import { authService } from "../services/authService";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-// Import the mock service instead of the real one
-import { mockSocialAuth } from '../services/authMock';
-import { OnboardingContext } from '../contexts/OnboardingContext';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import BackButton from '../components/BackButton';
@@ -42,9 +36,6 @@ export const VerificationScreen: React.FC = () => {
     const isDisabled = () => {
         return isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail);
     }
-
-    // Set up auth state in your Zustand store
-    const setAuthenticated = useStore((state) => state.setAuthenticated);
 
     const CELL_COUNT = 6;
     const [value, setValue] = useState('');
