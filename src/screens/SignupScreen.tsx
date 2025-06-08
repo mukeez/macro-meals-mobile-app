@@ -40,6 +40,7 @@ export const SignupScreen: React.FC = () => {
     // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     // const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const mixpanel = useMixpanel();
 
     const [errors, setErrors] = useState({
         email: '',
@@ -110,12 +111,24 @@ export const SignupScreen: React.FC = () => {
         setIsLoading(true);
 
         try {
+            const signUpTime = new Date().toISOString();
             const userId = await authService.signup({
                 email,
                 password,
                 nickname
             });
-
+            if (mixpanel) {
+                mixpanel.identify(userId);
+                mixpanel.track({
+                    name: 'user_signed_up',
+                    properties:{
+                        signup_method: "email",
+                        platform: Platform.OS,
+                        signup_time: signUpTime,
+                    }
+                });
+                mixpanel.register({signup_time: signUpTime});
+            }
             // setAuthenticated(true, '', userId);
             const data = await authService.login({ email, password });
             console.log('Login successful, setting authenticated state');

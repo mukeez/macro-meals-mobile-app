@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import {
     View,
     Text,
@@ -13,6 +14,18 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
+
+interface RouteParams {
+    barcodeData: any;
+    analyzedData?: {
+        name: string;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        quantity: number;
+    };
+}
 
 interface RecentMeal {
     id: string;
@@ -31,6 +44,11 @@ interface RecentMeal {
  */
 export const AddMealScreen: React.FC = () => {
     const navigation = useNavigation();
+    const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
+    const params = route.params;
+    const { barcodeData, analyzedData } = params;
+
+    console.log('Params:', params);
 
     const [mealName, setMealName] = useState<string>('');
     const [calories, setCalories] = useState<string>('0');
