@@ -7,6 +7,8 @@
  */
 export type RootStackParamList = {
     Onboarding: undefined;
+    OnboardingNav: undefined;
+    OnboardingScreen: undefined;
     Auth: { initialAuthScreen: string };
     Dashboard: undefined;
     Welcome: undefined;
@@ -29,4 +31,5 @@ export type RootStackParamList = {
     PaymentScreen: undefined;
     SignupScreen: undefined;
     MacroGoals: undefined;
+    CustomBottomTabs: undefined;
 };

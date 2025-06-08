@@ -22,6 +22,7 @@ import './src/globals.css';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
+import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
 
 
 
@@ -84,10 +85,7 @@ const OnboardingNavigator = () =>{
 const DashboardNavigator = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false}}>
-            
-            <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
-            <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
-            <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
+            <Stack.Screen name="CustomBottomTabs" component={CustomBottomTabs} />
             <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
             <Stack.Screen name="AddMeal" component={AddMealScreen} />
             <Stack.Screen name="SnapMeal" component={SnapMealScreen} />

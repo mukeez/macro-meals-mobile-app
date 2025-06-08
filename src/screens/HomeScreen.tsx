@@ -3,15 +3,11 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import { RootStackParamList } from '../types/navigation';
 
-type RootStackParamList = {
-    Welcome: undefined;
-    Login: undefined;
-    Signup: undefined;
-    Home: undefined;
-};
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'HomeScreen'>;
 
 export const HomeScreen: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();

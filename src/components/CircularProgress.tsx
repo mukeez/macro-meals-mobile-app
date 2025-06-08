@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 interface CircularProgressProps {
@@ -53,30 +53,12 @@ export function CircularProgress({
           origin={`${size / 2}, ${size / 2}`}
         />
       </Svg>
-      <View style={StyleSheet.absoluteFillObject}>
-        <View style={styles.centerContent}>
-          <Text style={styles.valueText}>{consumed}</Text>
-          <Text style={styles.labelText}>{label}</Text>
+      <View className='absolute flex-1 items-center justify-center'>
+        <View className='flex-1 items-center justify-center'>
+          <Text className='text-3xl text-center font-semibold'>{consumed}</Text>
+          <Text className='text-sm text-black text-center font-medium'>{label}</Text>
         </View>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  centerContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  valueText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#222',
-  },
-  labelText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 2,
-  },
-}); 

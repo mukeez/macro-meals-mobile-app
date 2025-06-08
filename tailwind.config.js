@@ -3,6 +3,12 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
   theme: {
+    fontFamily: {
+      sans: ['UncutSans'],
+      'sans-medium': ['UncutSans-Medium'],
+      'sans-semibold': ['UncutSans-Semibold'],
+      'sans-bold': ['UncutSans-Bold'],
+    },
     fontSize: {
       'xs': '12px',      // Smallest text (captions, labels)
       'sm': '14px',      // Small text (secondary text)

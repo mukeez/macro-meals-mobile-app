@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Font from 'expo-font';
 
 import useStore from "./src/store/useStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -24,6 +25,14 @@ export default function App() {
     useEffect(() => {
         const initializeApp = async () => {
             try {
+                // Load fonts
+                await Font.loadAsync({
+                    'UncutSans': require('./assets/fonts/Uncut-Sans-Regular.otf'),
+                    'UncutSans-Bold': require('./assets/fonts/Uncut-Sans-Bold.otf'),
+                    'UncutSans-Medium': require('./assets/fonts/Uncut-Sans-Medium.otf'),
+                    'UncutSans-Semibold': require('./assets/fonts/Uncut-Sans-Semibold.otf'),
+                });
+
                 // Check both onboarding and auth status in parallel
                 const [onboardingCompleted, token, userId] = await Promise.all([
                     AsyncStorage.getItem('isOnboardingCompleted'),

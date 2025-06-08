@@ -18,16 +18,29 @@ import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import { CircularProgress } from '../components/CircularProgress';
 import { LinearProgress } from '../components/LinearProgress';
+import { RootStackParamList } from '../types/navigation';
 
-type RootStackParamList = {
-    MacroInput: undefined;
-    Scan: undefined;
-    MealLog: {
-        date: string;
-    };
-    Settings: undefined;
-    SettingsScreen: undefined;
-};
+// type RootStackParamList = {
+//     MacroInput: undefined;
+//     Scan: undefined;
+//     MealLog: {
+//         date: string;
+//     };
+//     Settings: undefined;
+//     SettingsScreen: undefined;
+// };
+
+type Profile = {
+    display_name?: string;
+    email?: string;
+    avatar_url?: string;
+    first_name?: string;
+    last_name?: string;
+    gender?: string;
+    is_pro?: boolean;
+    has_macros?: boolean;
+    is_active?: boolean;
+}
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -61,6 +74,19 @@ export const DashboardScreen: React.FC = () => {
         fat: 0,
         calories: 0
     });
+
+    const [profile, setProfile] = useState<Profile>({
+        display_name: undefined,
+        email: undefined,
+        avatar_url: undefined,
+        first_name: undefined,
+        last_name: undefined,
+        gender: undefined,
+        is_active: undefined,
+        is_pro: undefined,
+        has_macros: undefined,
+    })
+
     const [todayMeals, setTodayMeals] = useState<TodayMeal[]>([]);
     const [username, setUsername] = useState('User');
     const [progress, setProgress] = useState(0);
@@ -99,7 +125,11 @@ export const DashboardScreen: React.FC = () => {
                 }
 
                 const profileData = await profileResponse.json();
-                setUsername(profileData.display_name || profileData.email.split('@')[0]);
+                console.log('THIS IS THE PROFILE DATA', profileData);
+                console.log('THIS IS THE PROFILE DATA HAS_MACROS', profileData.has_macros);
+                setProfile(profileData);
+                console.log('THIS IS THE PROFILE DATA', profile);
+                setUsername(profileData.display_name || undefined);
 
                 const prefsResponse = await fetch('https://api.macromealsapp.com/api/v1/user/preferences', {
                     method: 'GET',
@@ -291,11 +321,14 @@ function formatDate(date: Date){
     return `${dayOfWeek}, ${day} ${month}`;
 }
 
-function getGreeting() {
+function getGreeting(username: string) {
+    if (username === undefined){
+        return 'Hello there 👋';
+    }
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return `Good morning, ${username} 👋`;
+    if (hour < 18) return `Good afternoon, ${username} 👋`;
+    return `Good evening, ${username} 👋`;
 }
 
 
@@ -323,24 +356,26 @@ function formatTime(timeString: string) {
                 <View className='flex-row items-center justify-between px-5 pb-4 bg-white'>
                     <View className='flex-col items-start gap-2'>
                         <Text className='text-[13px] font-normal'>{formatDate(new Date())} {getTimeOfDayEmoji()}</Text>
-                        <Text className='text-[18px] font-medium text-black'>{getGreeting()}, {username}!</Text>
+                        <Text className='text-[18px] font-medium text-black'>{getGreeting(username)}</Text>
                     </View>
                     <Image source={IMAGE_CONSTANTS.notificationIcon} className='w-[24px] h-[24px] object-fill' />
                 </View>
-                <View className='flex-col bg-paleCyan px-5 py-5'>
-                <Image tintColor={'#8BAAA3'} source={IMAGE_CONSTANTS.trophy}  className='absolute bottom-4 tint right-4 w-[74px] h-[74px] object-fill' />
-                    <View className='relative'>
-                        <Text className='text-base font-semibold mb-2'>Set up your Macro goals</Text>
-                        <Text className='tracking-wide text-[13px] font-normal mb-3 mr-10'>Set your macro goals to get personalized tracking and tailored recommendations.</Text>
-                        <TouchableOpacity className='bg-primary w-[105px] h-[32px] rounded-[100px] justify-center items-center' onPress={handleMacroInput}>
-                            <Text className='text-white text-sm font-semibold'>Set up now</Text>
-                        </TouchableOpacity>
+                { profile.has_macros === false || profile.has_macros === undefined && (
+                    <View className='flex-col bg-paleCyan px-5 py-5'>
+                    <Image tintColor={'#8BAAA3'} source={IMAGE_CONSTANTS.trophy}  className='absolute bottom-4 tint right-4 w-[74px] h-[74px] object-fill' />
+                        <View className='relative'>
+                            <Text className='text-base font-semibold mb-2'>Set up your Macro goals</Text>
+                            <Text className='tracking-wide text-[13px] font-normal mb-3 mr-10'>Set your macro goals to get personalized tracking and tailored recommendations.</Text>
+                            <TouchableOpacity className='bg-primary w-[105px] h-[32px] rounded-[100px] justify-center items-center' onPress={handleMacroInput}>
+                                <Text className='text-white text-sm font-semibold'>Set up now</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
-                <View className='mb-8 bg-white px-5 py-6'>
+                ) }
+                <View className='mb-6 bg-white px-5 py-6'>
                     <View className='flex-row items-center justify-between mb-6'>
                         <View className='flex-col'>
-                            <Text className='text-3xl text-center font-semibold'>{remaining.calories}</Text>
+                            <Text className='text-3xl text-center font-semibold -tracking-wider'>{remaining.calories}</Text>
                             <Text className='text-sm text-textMediumGrey text-center font-medium'>Remaining</Text>
                         </View>
 
@@ -357,7 +392,7 @@ function formatTime(timeString: string) {
                         </View>
 
                         <View className='flex-col'>
-                            <Text className='text-3xl text-center font-semibold'>0</Text>
+                            <Text className='text-3xl text-center font-semibold -tracking-wider'>{macros.calories}</Text>
                             <Text className='text-sm text-textMediumGrey text-center font-medium'>Goal</Text>
                         </View>
                     </View>
@@ -389,6 +424,30 @@ function formatTime(timeString: string) {
                         </View>
                     </View>
                 </View>
+                {/* See nearby meals */}
+                { profile.has_macros === true && (
+                <View className='flex-row bg-lightGreen justify-between items-center rounded-md mx-5 mb-4'>
+                    <View className='flex-1 flex-col pl-5 pr-2 py-6'>
+                        <Text className='text-base font-semibold'>Don't know what to eat?</Text>
+                        <Text
+                            className='text-sm text-textMediumGrey font-medium'
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                        >
+                            Discover local meals meeting your daily macro targets
+                        </Text>
+                        <TouchableOpacity className='bg-primary w-[144px] h-[32px] rounded-[200px] justify-center items-center mt-4' onPress={handleMealLog}>
+                            <Text className='text-white text-sm font-semibold'>See nearby meals</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <Image
+                        source={IMAGE_CONSTANTS.sampleFood}
+                        className='w-[133px] rounded-r-md h-full'
+                        style={{ flexShrink: 0 }}
+                    />
+                </View>
+                ) }
+
                 {/* Recently uploaded */}
                 <View className='flex-col bg-white px-5 py-6 mb-4'>
                     <Text className='text-[18px] font-semibold'>Recently uploaded</Text>
@@ -398,12 +457,20 @@ function formatTime(timeString: string) {
                         </View>
                     ): (
                         todayMeals.map((meal, index) => (
-                            <View key={index} className='flex-row items-center mt-3'>
+                            <View key={index} className='flex-row items-start mt-3'>
                                 <Image source={IMAGE_CONSTANTS.sampleFood} className='w-[90px] h-[90px] object-fill mr-2' />
-                                <View className='flex-col justify-between items-start'>
-                                
-                                    <View className='flex-row items-center mb-2'>
-                                    <Text className='text-sm text-textMediumGrey text-center font-medium'>{meal.name}</Text>
+                                <View className='flex-1 flex-col'>
+                                    <View className='flex-row items-center justify-between mb-2'>
+                                        <Text className='text-sm text-textMediumGrey font-medium flex-1 mr-2' numberOfLines={1} ellipsizeMode="tail">{meal.name}</Text>
+                                        <TouchableOpacity>
+                                            <View className='w-[24px] h-[24px] rounded-full justify-center items-center bg-gray-100'>
+                                                <Image 
+                                                    source={IMAGE_CONSTANTS.editIcon} 
+                                                    className='w-[13px] h-[13px]'
+                                                    tintColor="#253238"
+                                                />
+                                            </View>
+                                        </TouchableOpacity>
                                     </View>
                                     <View className='flex-row items-center mb-2'>
                                         <Text className='text-sm text-textMediumGrey text-center font-medium mr-2'>{formatTime(meal.meal_time)}</Text>
@@ -453,40 +520,6 @@ function formatTime(timeString: string) {
             </View>
             
             </ScrollView>
-            <View style={styles.bottomNav}>
-                {/* Home Tab */}
-                <TouchableOpacity style={styles.navItem}>
-                    <Text style={styles.navIcon}>🏠</Text>
-                    <Text style={styles.navActiveText}>Home</Text>
-                </TouchableOpacity>
-
-                {/* Stats Tab */}
-                <TouchableOpacity 
-                    style={styles.navItem}
-                    onPress={() => Alert.alert('Stats', 'Stats coming soon!')}
-                >
-                    <Text style={styles.navIcon}>📊</Text>
-                    <Text style={styles.navText}>Stats</Text>
-                </TouchableOpacity>
-
-                {/* Log Meal Tab */}
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={handleMealLog}
-                >
-                    <Text style={styles.navIcon}>➕</Text>
-                    <Text style={styles.navText}>Log</Text>
-                </TouchableOpacity>
-
-                {/* Settings Tab */}
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={() => navigation.navigate('SettingsScreen')}
-                >
-                    <Text style={styles.navIcon}>⚙️</Text>
-                    <Text style={styles.navText}>Settings</Text>
-                </TouchableOpacity>
-            </View>
             </View>
            
             
