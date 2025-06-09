@@ -105,8 +105,8 @@ export default function App() {
             }
         };
 
-        initializeApp();
         }
+        initializeApp();
         
     }, [pushNotifications]);
 

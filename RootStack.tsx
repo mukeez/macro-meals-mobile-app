@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import {WelcomeScreen} from "./src/screens/WelcomeScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import ScanScreenType from "./src/screens/ScanScreenType";
@@ -18,6 +20,7 @@ import {VerificationScreen} from "./src/screens/VerificationScreen";
 import {MealListScreen} from "./src/screens/MealListScreen";
 import PaymentScreen from "./src/screens/PaymentScreen";
 import {createStackNavigator} from '@react-navigation/stack';
+import { useMixpanel } from "@macro-meals/mixpanel";
 import './src/globals.css';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "./src/types/navigation";

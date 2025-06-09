@@ -14,11 +14,15 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.macromeals",
+      "bundleIdentifier": "com.macromeals.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to find nearby meals that match your macro goals",
-        "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals"
-      }
+        "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals",
+        "UIBackgroundModes": ["remote-notification"],
+        "NSUserNotificationsUsageDescription": "We need to send you notifications about your meals and updates"
+      },
+      "appleTeamId": "SA3LF6JRDF",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "splash": {
@@ -30,16 +34,23 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.macromeals",
+      "package": "com.macromeals.app",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
-      ]
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/notifee-mod.js",
       "expo-secure-store",
       [
         "expo-location",
@@ -48,7 +59,38 @@
           "locationWhenInUse": true
         }
       ],
-      "expo-font"
-    ]
+      "expo-font",
+      [
+        "@react-native-firebase/app",
+        {
+          "android_package_name": "com.macromeals.app"
+        }
+      ],
+      "@react-native-firebase/messaging",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
+        "react-native-permissions",
+        {
+          "ios": {
+            "notifications": "We need to send you notifications about your meals and updates"
+          },
+          "android": {
+            "notifications": "We need to send you notifications about your meals and updates"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e1da11ff-774c-48d8-b216-51bc122a821c"
+      }
+    }
   }
 }

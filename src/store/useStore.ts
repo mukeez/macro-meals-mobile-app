@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Meal, UserPreferences, LoggedMeal } from '../types';
 import { authService } from '../services/authService';
+import { mealService } from '../services/mealService';
 import { authTokenService } from '../services/authTokenService';
 
 /**
@@ -164,7 +165,7 @@ const useStore = create<AppState>()(
                     const meals = todaysMeals
                         .filter((meal: LoggedMeal) => meal) // Remove null items
                         .map(convertToMeal)
-                        .filter(meal => meal); // Remove nulls after conversion
+                        .filter((meal): meal is Meal => meal !== null); // Remove nulls after conversion with type guard
 
                     set({
                         loggedMeals: meals || [],
