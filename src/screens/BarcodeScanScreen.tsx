@@ -327,45 +327,6 @@ const BarcodeScanScreen = () => {
                     />
                 </TouchableOpacity>
             </View>
-
-            <View style={styles.bottomNavigation}>
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={() => navigation.navigate('Dashboard')}
-                >
-                    <Ionicons name="home-outline" size={24} color="gray" />
-                    <Text style={styles.navText}>Home</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={() => navigation.navigate('Stats')}
-                >
-                    <Ionicons name="stats-chart-outline" size={24} color="gray" />
-                    <Text style={styles.navText}>Stats</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.navItem}>
-                    <Ionicons name="camera-outline" size={24} color="white" />
-                    <Text style={styles.navTextActive}>Scan</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={() => navigation.navigate('MealList')}
-                >
-                    <Ionicons name="restaurant-outline" size={24} color="gray" />
-                    <Text style={styles.navText}>Meals</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={() => navigation.navigate('Profile')}
-                >
-                    <Ionicons name="person-outline" size={24} color="gray" />
-                    <Text style={styles.navText}>Profile</Text>
-                </TouchableOpacity>
-            </View>
         </SafeAreaView>
     );
 };

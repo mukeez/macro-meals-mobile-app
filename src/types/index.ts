@@ -32,14 +32,22 @@ export interface UserPreferences extends MacroTargets {
 export interface Meal {
     id: string;
     name: string;
-    restaurant: Restaurant;
-    macros: MacroTargets;
+    restaurant: {
+        name: string;
+        location: string;
+    };
+    macros: {
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+    };
     imageUrl?: string;
-    description?: string;
+    description: string;
     price?: number;
     distance?: number; //
-    mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-    date?: string; //
+    date: string;
+    mealType: string;
 }
 
 /**
@@ -53,7 +61,7 @@ export interface LoggedMeal {
     carbs: number;
     fat: number;
     calories: number;
-    mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+    mealType?: string;
 }
 
 /**

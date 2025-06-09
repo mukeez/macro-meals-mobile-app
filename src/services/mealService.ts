@@ -1,5 +1,5 @@
 import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal, LoggedMeal } from '../types';
-import useStore from "../store/useStore";
+import { authTokenService } from './authTokenService';
 
 /**
  * API configuration.
@@ -60,7 +60,7 @@ export const mealService = {
      * @returns Promise with suggested meals
      */
     suggestMeals: async (macroAndLocation: any): Promise<Meal[]> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
         try {
             const response = await fetch(API_ENDPOINTS.SUGGEST_MEALS, {
                 method: 'POST',
@@ -91,7 +91,7 @@ export const mealService = {
      * @throws Error if the request fails
      */
     logMeal: async (mealData: LogMealRequest): Promise<LoggedMeal> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
 
         if (!token) {
             throw new Error('Authentication required');
@@ -143,7 +143,7 @@ export const mealService = {
      * @throws Error if the request fails
      */
     getLoggedMeals: async (): Promise<LoggedMeal[]> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
 
         if (!token) {
             throw new Error('Authentication required');
@@ -193,7 +193,7 @@ export const mealService = {
      * @throws Error if the request fails
      */
     getDailyProgress: async (): Promise<DailyProgressResponse> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
 
         if (!token) {
             throw new Error('Authentication required');
@@ -233,7 +233,7 @@ export const mealService = {
      * @throws Error if the request fails
      */
     deleteMeal: async (mealId: string): Promise<void> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
 
         if (!token) {
             throw new Error('Authentication required');

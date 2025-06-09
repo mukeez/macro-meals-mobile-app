@@ -40,6 +40,7 @@ export const VerificationScreen: React.FC = () => {
     const CELL_COUNT = 6;
     const [value, setValue] = useState('');
     const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
+    const [error, setError] = useState('');
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
         value,
         setValue,
@@ -68,11 +69,7 @@ export const VerificationScreen: React.FC = () => {
                 Alert.alert('Error', 'Invalid verification code');
             }
         } catch (error) {
-            Alert.alert(
-                'Forgot Password Failed',
-                error instanceof Error ? error.message : 'Invalid email. Please try again.',
-                [{ text: 'OK' }]
-            );
+            setError(error instanceof Error ?  `${error.message}: Code does not exist. Please try again` : 'Code does not exist. Please try again');
         } finally {
             setIsLoading(false);
         }
@@ -92,7 +89,7 @@ export const VerificationScreen: React.FC = () => {
                 <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">We've sent a 6-digit code to {routeEmail}</Text>
 
                 <View style={styles.formContainer}>
-                    <View className="mb-6">  
+                    <View className="flex-col">  
                         <CodeField
                             ref={ref}
                             {...props}
@@ -110,15 +107,15 @@ export const VerificationScreen: React.FC = () => {
                                 </Text>
                             )}
                         />
-                        {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
+                        {error ? <Text className='text-red-500 text-sm'>{error}</Text> : null}
                     </View>
                 </View>
             </ScrollView>
-            <View className='absolute bottom-5 px-6 w-full'>
+            <View className='absolute flex-col bottom-5 px-6 w-full'>
                     <View className='w-full items-center'>
                         <CustomTouchableOpacityButton           
                             className={`h-[56px] w-full items-center justify-center bg-primary rounded-[100px] ${isDisabled() ? 'opacity-30' : 'opacity-100'}`} 
-                            title="Send code"
+                            title="Verify code"
                             textClassName='text-white text-[17px] font-semibold'
                             disabled={isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail)} 
                             onPress={handleVerifyCode}
@@ -126,6 +123,17 @@ export const VerificationScreen: React.FC = () => {
                         />
                     </View>
                 </View>
+                <View className='items-center justify-center px-6 mt-4'>
+                        <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+                            By signing up, you agree to our{' '}
+                            <Text 
+                                className="text-base text-primary font-medium"
+                                onPress={() => handleResendCode()}
+                            >
+                                Terms of Service and Privacy Policy
+                            </Text>
+                        </Text>
+                    </View>
             </KeyboardAvoidingView>
         </CustomSafeAreaView>
     );

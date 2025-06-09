@@ -73,7 +73,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                 className="flex-1"
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-            <ScrollView className='flex-1 relative align-left p-6'>
+            <ScrollView className='flex-1 relative align-left p-6' contentContainerStyle={{ flexGrow: 1 }}>
                 <View className="flex-row items-center justify-start mb-3">
                     <BackButton onPress={() => navigation.goBack()}/>
                 </View>
@@ -110,9 +110,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                     
                     
                 </View>
-              
-            </ScrollView>
-            <View className='absolute bottom-5 px-6 w-full'>
+                <View className='absolute bottom-1 px-6 w-full'>
                     <View className='w-full items-center'>
                         <CustomTouchableOpacityButton           
                             className={`h-[56px] w-full items-center justify-center bg-primary rounded-[100px] ${isDisabled() ? 'opacity-30' : 'opacity-100'}`} 
@@ -125,6 +123,8 @@ export const ForgotPasswordScreen: React.FC = () => {
                     </View>
                     
                 </View>
+            </ScrollView>
+            
         </KeyboardAvoidingView>
         </CustomSafeAreaView>
     );

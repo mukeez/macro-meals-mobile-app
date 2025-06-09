@@ -10,9 +10,12 @@ import {
     ScrollView,
     ActivityIndicator,
     Image,
+    Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
+import { MaterialIcons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface RecentMeal {
     id: string;
@@ -40,6 +43,8 @@ export const AddMealScreen: React.FC = () => {
     const userId = useStore((state) => state.userId);
     const token = useStore((state) => state.token);
     const [loading, setLoading] = useState<boolean>(false);
+    const [time, setTime] = useState<Date>(new Date());
+    const [showTimePicker, setShowTimePicker] = useState(false);
 
     const [recentMeals] = useState<RecentMeal[]>([
         {
@@ -138,7 +143,7 @@ export const AddMealScreen: React.FC = () => {
             console.log('Adding meal to log:', newMeal);
 
             // Navigate back to meal log screen
-            navigation.navigate('DashboardScreen');
+            navigation.navigate('CustomBottomTabs', {screen: 'DashboardScreen'});
         } catch (error) {
             console.error('Error adding meal to log:', error);
         } finally {
@@ -161,136 +166,167 @@ export const AddMealScreen: React.FC = () => {
         console.log('Add meal photo');
     };
 
+    const handleTimeChange = (event: any, selectedDate?: Date) => {
+        setShowTimePicker(false);
+        if (selectedDate) {
+            setTime(selectedDate);
+        }
+    };
+
+    const formattedTime = time
+        ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+        : '';
+
     return (
-        <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-
-            <View style={styles.header}>
-    <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-    <Text style={styles.backButtonText}>←</Text>
-    </TouchableOpacity>
-    <Text style={styles.headerTitle}>Add Meal</Text>
-    <TouchableOpacity onPress={handleBookmark} style={styles.bookmarkButton}>
-    <Text style={styles.bookmarkIcon}>🔖</Text>
-    </TouchableOpacity>
-    </View>
-
-    <ScrollView style={styles.scrollContainer}>
-        <TouchableOpacity
-    style={styles.photoUploadContainer}
-    onPress={handleAddPhoto}
-    >
-    <View style={styles.photoPlaceholder}>
-    <Text style={styles.photoIcon}>🖼️</Text>
-    </View>
-    <Text style={styles.photoText}>Add meal photo (optional)</Text>
-    </TouchableOpacity>
-
-    <View style={styles.inputGroup}>
-    <Text style={styles.inputLabel}>Meal Name</Text>
-    <TextInput
-    style={styles.textInput}
-    placeholder="Enter meal name"
-    value={mealName}
-    onChangeText={setMealName}
-    />
-    </View>
-
-    <View style={styles.macroRow}>
-    <View style={styles.macroInputContainer}>
-    <Text style={styles.inputLabel}>Calories</Text>
-        <View style={styles.macroInputWrapper}>
-    <TextInput
-        style={styles.macroInput}
-    keyboardType="numeric"
-    value={calories}
-    onChangeText={setCalories}
-    />
-    <Text style={styles.macroUnit}>kcal</Text>
-        </View>
-        </View>
-
-        <View style={styles.macroInputContainer}>
-    <Text style={styles.inputLabel}>Protein</Text>
-        <View style={styles.macroInputWrapper}>
-    <TextInput
-        style={styles.macroInput}
-    keyboardType="numeric"
-    value={protein}
-    onChangeText={setProtein}
-    />
-    <Text style={styles.macroUnit}>g</Text>
-        </View>
-        </View>
-        </View>
-
-    {/* Macros Inputs - Row 2 */}
-    <View style={styles.macroRow}>
-    <View style={styles.macroInputContainer}>
-    <Text style={styles.inputLabel}>Carbs</Text>
-        <View style={styles.macroInputWrapper}>
-    <TextInput
-        style={styles.macroInput}
-    keyboardType="numeric"
-    value={carbs}
-    onChangeText={setCarbs}
-    />
-    <Text style={styles.macroUnit}>g</Text>
-        </View>
-        </View>
-
-        <View style={styles.macroInputContainer}>
-    <Text style={styles.inputLabel}>Fats</Text>
-        <View style={styles.macroInputWrapper}>
-    <TextInput
-        style={styles.macroInput}
-    keyboardType="numeric"
-    value={fats}
-    onChangeText={setFats}
-    />
-    <Text style={styles.macroUnit}>g</Text>
-        </View>
-        </View>
-        </View>
-
-    <View style={styles.quickAddSection}>
-    <Text style={styles.sectionTitle}>Quick Add from Recent</Text>
-    <View style={styles.recentMealsContainer}>
-        {recentMeals.map((meal) => (
+        <SafeAreaView className="flex-1 bg-white">
+            <StatusBar barStyle="dark-content" />
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-4 pt-3 pb-3 border-b border-b-[#f0f0f0] bg-white">
+                <TouchableOpacity onPress={handleGoBack} className="p-1">
+                    <MaterialIcons name="arrow-back-ios" size={24} color="#222" />
+                </TouchableOpacity>
+                <Text className="text-[18px] font-semibold text-[#1a1a1a]">Add a meal</Text>
+                <TouchableOpacity onPress={handleBookmark} className="p-1">
+                    <MaterialIcons name="star-border" size={24} color="#19a28f" />
+                </TouchableOpacity>
+            </View>
+            <ScrollView className="flex-1 bg-white" contentContainerStyle={{ paddingBottom: 32 }}>
+                {/* Photo Upload */}
+                <TouchableOpacity className="h-[181px] border border-dashed border-[#e0e0e0] rounded-xl m-4 justify-center items-center bg-[#f9f9f9]" onPress={handleAddPhoto}>
+                    <View className="w-12 h-12 rounded-lg bg-[#e0e0e0] justify-center items-center mb-2">
+                        <MaterialIcons name="image" size={40} color="#b0b0b0" />
+                    </View>
+                    <Text className="text-[14px] text-[#888]">Add meal photo (optional)</Text>
+                </TouchableOpacity>
+                {/* Meal Name */}
+                <View className="mx-4 mb-3">
+                    <Text className="text-[14px] text-[#333] mb-1.5">Meal name</Text>
+                    <TextInput
+                        className="border border-[#e0e0e0] h-[68px] rounded-lg px-3 py-3 text-[16px] bg-white"
+                        placeholder="Enter meal name"
+                        value={mealName}
+                        onChangeText={setMealName}
+                        placeholderTextColor="#b0b0b0"
+                    />
+                </View>
+                {/* Time of the day */}
+                <View className="mx-4 mb-3">
+                    <Text className="text-[14px] text-[#333] mb-1.5">Time of the day</Text>
+                    <TouchableOpacity
+                        className="border border-[#e0e0e0] rounded-lg items-start justify-center h-[68px] px-3 py-3 bg-white"
+                        onPress={() => {
+                            console.log('Time picker pressed');
+                            setShowTimePicker(true);
+                        }}
+                        activeOpacity={0.7}
+                    >
+                        <Text className="text-[16px] text-[#222]">{formattedTime || '8:00 am'}</Text>
+                    </TouchableOpacity>
+                    {showTimePicker && (
+                        <>
+            
+                            <DateTimePicker
+                                value={time}
+                                mode="time"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                onChange={handleTimeChange}
+                            />
+                        </>
+                    )}
+                </View>
+                {/* Macros Inputs - Row 1 */}
+                <View className="flex-row justify-between mx-4 mb-3">
+                    <View className="w-[48%]">
+                        <Text className="text-[14px] text-[#333] mb-1.5">Calories</Text>
+                        <TextInput
+                            className="border border-[#e0e0e0] h-[68px] rounded-lg px-3 py-3 text-[16px] bg-white"
+                            keyboardType="numeric"
+                            value={calories}
+                            onChangeText={setCalories}
+                            placeholder="0kcal"
+                            placeholderTextColor="#b0b0b0"
+                        />
+                    </View>
+                    <View className="w-[48%]">
+                        <Text className="text-[14px] text-[#333] mb-1.5">Protein</Text>
+                        <TextInput
+                            className="border border-[#e0e0e0] h-[68px] rounded-lg px-3 py-3 text-[16px] bg-white"
+                            keyboardType="numeric"
+                            value={protein}
+                            onChangeText={setProtein}
+                            placeholder="0g"
+                            placeholderTextColor="#b0b0b0"
+                        />
+                    </View>
+                </View>
+                {/* Macros Inputs - Row 2 */}
+                <View className="flex-row justify-between mx-4 mb-3">
+                    <View className="w-[48%]">
+                        <Text className="text-[14px] text-[#333] mb-1.5">Carbs</Text>
+                        <TextInput
+                            className="border border-[#e0e0e0] h-[68px] rounded-lg px-3 py-3 text-[16px] bg-white"
+                            keyboardType="numeric"
+                            value={carbs}
+                            onChangeText={setCarbs}
+                            placeholder="0g"
+                            placeholderTextColor="#b0b0b0"
+                        />
+                    </View>
+                    <View className="w-[48%]">
+                        <Text className="text-[14px] text-[#333] mb-1.5">Fats</Text>
+                        <TextInput
+                            className="border border-[#e0e0e0] h-[68px] rounded-lg px-3 py-3 text-[16px] bg-white"
+                            keyboardType="numeric"
+                            value={fats}
+                            onChangeText={setFats}
+                            placeholder="0g"
+                            placeholderTextColor="#b0b0b0"
+                        />
+                    </View>
+                </View>
+                {/* Quick Add from Recent */}
+                <View className="mt-4 mb-6 mx-4">
+                    <Text className="text-[15px] font-medium text-[#333] mb-4">Quick add from recent</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-grow-0">
+                        {recentMeals.map((meal) => (
+                            <TouchableOpacity
+                                key={meal.id}
+                                className="flex-row items-center bg-[##607D8B] rounded-xl py-3 px-4 mr-3 w-[260px] h-[80px]"
+                                onPress={() => handleQuickAdd(meal)}
+                                activeOpacity={0.8}
+                            >
+                                <View className="w-9 h-9 rounded-full bg-white justify-center items-center mr-2.5">
+                                    <MaterialIcons name="restaurant" size={24} color="#19a28f" />
+                                </View>
+                                <View className="flex-1">
+                                    <Text className="text-[15px] font-medium text-white">{meal.name}</Text>
+                                    <Text className="text-[13px] text-[#888]">{meal.macros.calories} calories</Text>
+                                </View>
+                                <View className="w-7 h-7 rounded-full bg-white justify-center items-center ml-2">
+                                    <MaterialIcons name="add" size={20} color="#19a28f" />
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+            </ScrollView>
+            {/* Add to log button */}
+            <View className="px-4 pb-1 pt-4 bg-white border-t border-t-[#f0f0f0]">
                 <TouchableOpacity
-                    key={meal.id}
-            style={styles.recentMealCard}
-            onPress={() => handleQuickAdd(meal)}
->
-    <Text style={styles.recentMealIcon}>{meal.icon}</Text>
-        <Text style={styles.recentMealName}>{meal.name}</Text>
-        </TouchableOpacity>
-))}
-    </View>
-    </View>
-
-    <TouchableOpacity
-        style={styles.addToLogButton}
-    onPress={handleAddToLog}
-    >
-    {loading ? (
-        <ActivityIndicator size="small" color="#fff" />
-    ) : (
-        <Text style={styles.addToLogButtonText}>Add to Log</Text>
-    )}
-    </TouchableOpacity>
-
-    <TouchableOpacity
-    style={styles.saveTemplateButton}
-    onPress={handleSaveTemplate}
-    >
-    <Text style={styles.saveTemplateButtonText}>Save as Template</Text>
-    </TouchableOpacity>
-
-    <View style={styles.bottomSpacer} />
-    </ScrollView>
-    </SafeAreaView>
-);
+                    className="bg-[#88cec8] rounded-full py-4 items-center justify-center"
+                    onPress={handleAddToLog}
+                    activeOpacity={0.8}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <Text className="text-white text-[18px] font-semibold">Add to log</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
+    );
 };
 
 const styles = StyleSheet.create({
@@ -298,45 +334,36 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
-    scrollContainer: {
-        flex: 1,
-        padding: 16,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingTop: 12,
+        paddingBottom: 12,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
+        backgroundColor: '#fff',
+    },
+    iconButton: {
+        padding: 4,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '600',
         color: '#1a1a1a',
     },
-    backButton: {
-        padding: 4,
-    },
-    backButtonText: {
-        fontSize: 24,
-        color: '#1a1a1a',
-    },
-    bookmarkButton: {
-        padding: 4,
-    },
-    bookmarkIcon: {
-        fontSize: 20,
-        color: '#009688',
+    scrollContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
     },
     photoUploadContainer: {
-        height: 160,
+        height: 140,
         borderWidth: 1,
         borderStyle: 'dashed',
-        borderColor: '#ccc',
+        borderColor: '#e0e0e0',
         borderRadius: 12,
-        marginVertical: 16,
+        margin: 16,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f9f9f9',
@@ -350,16 +377,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 8,
     },
-    photoIcon: {
-        fontSize: 24,
-        color: '#999',
-    },
     photoText: {
         fontSize: 14,
-        color: '#666',
+        color: '#888',
     },
     inputGroup: {
-        marginBottom: 16,
+        marginHorizontal: 16,
+        marginBottom: 12,
     },
     inputLabel: {
         fontSize: 14,
@@ -371,90 +395,90 @@ const styles = StyleSheet.create({
         borderColor: '#e0e0e0',
         borderRadius: 8,
         paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingVertical: 12,
         fontSize: 16,
+        backgroundColor: '#fff',
     },
     macroRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 16,
+        marginHorizontal: 16,
+        marginBottom: 12,
     },
     macroInputContainer: {
         width: '48%',
     },
-    macroInputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-    },
-    macroInput: {
-        flex: 1,
-        paddingVertical: 10,
-        fontSize: 16,
-    },
-    macroUnit: {
-        fontSize: 14,
-        color: '#999',
-        marginLeft: 4,
-    },
     quickAddSection: {
-        marginTop: 16,
+        marginTop: 18,
         marginBottom: 24,
+        marginHorizontal: 16,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '500',
         color: '#333',
-        marginBottom: 12,
+        marginBottom: 10,
     },
-    recentMealsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    recentMealsScroll: {
+        flexGrow: 0,
     },
     recentMealCard: {
-        width: '31%',
-        backgroundColor: '#E8F7F3',
-        borderRadius: 8,
-        padding: 12,
+        flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#e8f7f3',
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        marginRight: 12,
+        minWidth: 180,
     },
-    recentMealIcon: {
-        fontSize: 24,
-        marginBottom: 8,
+    recentMealIconWrap: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+    },
+    recentMealTextWrap: {
+        flex: 1,
     },
     recentMealName: {
-        fontSize: 12,
-        color: '#1a1a1a',
-        textAlign: 'center',
+        fontSize: 15,
+        fontWeight: '500',
+        color: '#222',
+    },
+    recentMealCalories: {
+        fontSize: 13,
+        color: '#888',
+    },
+    recentMealPlusWrap: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 8,
+    },
+    addToLogButtonWrap: {
+        padding: 16,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
     },
     addToLogButton: {
-        backgroundColor: '#009688',
-        borderRadius: 8,
-        paddingVertical: 14,
+        backgroundColor: '#88cec8',
+        borderRadius: 24,
+        paddingVertical: 16,
         alignItems: 'center',
-        marginBottom: 12,
+        justifyContent: 'center',
     },
     addToLogButtonText: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '600',
-    },
-    saveTemplateButton: {
-        backgroundColor: '#f5f5f5',
-        borderRadius: 8,
-        paddingVertical: 14,
-        alignItems: 'center',
-    },
-    saveTemplateButtonText: {
-        color: '#333',
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    bottomSpacer: {
-        height: 40,
     },
 });
 
