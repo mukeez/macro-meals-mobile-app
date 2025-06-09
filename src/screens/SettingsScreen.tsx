@@ -31,7 +31,6 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 import { appConstants } from '../../constants/appConstants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { deleteItemAsync } from 'expo-secure-store';
-import { authService } from '../services/authService';
 
 /**
  * Settings screen for the application.

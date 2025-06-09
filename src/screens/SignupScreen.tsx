@@ -21,6 +21,7 @@ import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityBu
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types/navigation';
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignupScreen'>;

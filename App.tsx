@@ -105,7 +105,6 @@ export default function App() {
             }
         };
 
-        initializeApp();
         }
         initializeApp();
         
@@ -129,7 +128,7 @@ export default function App() {
                     isAuthenticated={isAuthenticated}
                 />
                 </NavigationContainer>
+            </OnboardingContext.Provider>
         </MixpanelProvider>
-        </OnboardingContext.Provider>
     );
 }
