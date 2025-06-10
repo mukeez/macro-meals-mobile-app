@@ -32,4 +32,8 @@ export type RootStackParamList = {
     SignupScreen: undefined;
     MacroGoals: undefined;
     CustomBottomTabs: undefined;
+    Notifications: undefined; 
+    TermsOfService: undefined;
+    About: undefined;
+    PrivacyPolicy: undefined;
 };

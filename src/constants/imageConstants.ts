@@ -32,4 +32,5 @@ export const IMAGE_CONSTANTS = {
     profileIcon: require('../../assets/profile-icon.png'),
     mealsIcon: require('../../assets/meals-icon.png'),
     progressIcon: require('../../assets/progress-icon.png'),
+    mealBg: require('../../assets/mealbg.png'),
 }

@@ -1,21 +1,19 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-// import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 type HeaderProps = {
   title: string;
 };
 
 const Header = ({ title }: HeaderProps) => {
-  // const navigation = useNavigation();
+  const navigation = useNavigation();
   return (
     <View className="w-full py-5 px-4 border-b border-gray-300 bg-white flex-row items-center justify-between">
       <TouchableOpacity
         className="w-10 items-start"
-        onPress={() => {
-          /* Not done yet, (ask kwame) */
-        }}
+        onPress={() => navigation.goBack()}
       >
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
