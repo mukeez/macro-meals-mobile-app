@@ -170,7 +170,7 @@ export const SignupScreen: React.FC = () => {
             >
             <ScrollView contentContainerStyle={styles.scrollContent}>
                     <View className="flex-row items-center justify-start mb-3">
-                        <BackButton onPress={() => navigation.goBack()}/>
+                        <BackButton onPress={() => navigation.navigate('LoginScreen')}/>
                     </View>
 
                 <Text className="text-3xl font-medium text-black mb-2 text-left">Begin Macro Tracking</Text>

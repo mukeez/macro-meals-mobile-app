@@ -1,5 +1,5 @@
 // src/screens/LoginScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -25,6 +25,8 @@ type VerificationScreenNavigationProp = NativeStackNavigationProp<RootStackParam
 
 export const VerificationScreen: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [countdown, setCountdown] = useState(60);
+    const [canResend, setCanResend] = useState(false);
     const navigation = useNavigation<VerificationScreenNavigationProp>();
     const route = useRoute<RouteProp<RootStackParamList, 'VerificationScreen'>>();
     const { email: routeEmail } = route.params;
@@ -45,6 +47,22 @@ export const VerificationScreen: React.FC = () => {
         value,
         setValue,
     });
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (countdown > 0) {
+            timer = setInterval(() => {
+                setCountdown((prev) => prev - 1);
+            }, 1000);
+        } else {
+            setCanResend(true);
+        }
+        return () => {
+            if (timer) {
+                clearInterval(timer);
+            }
+        };
+    }, [countdown]);
 
     const handleVerifyCode = async () => {
         if (!routeEmail) {
@@ -70,6 +88,22 @@ export const VerificationScreen: React.FC = () => {
             }
         } catch (error) {
             setError(error instanceof Error ?  `${error.message}: Code does not exist. Please try again` : 'Code does not exist. Please try again');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResendCode = async () => {
+        if (!canResend) return;
+        
+        setIsLoading(true);
+        try {
+            await authService.forgotPassword(routeEmail);
+            setCountdown(60);
+            setCanResend(false);
+            Alert.alert('Success', 'Verification code has been resent');
+        } catch (error) {
+            Alert.alert('Error', error instanceof Error ? error.message : 'Failed to resend code');
         } finally {
             setIsLoading(false);
         }
@@ -108,10 +142,12 @@ export const VerificationScreen: React.FC = () => {
                             )}
                         />
                         {error ? <Text className='text-red-500 text-sm'>{error}</Text> : null}
+                        
+                        
                     </View>
                 </View>
             </ScrollView>
-            <View className='absolute flex-col bottom-5 px-6 w-full'>
+            <View className='absolute flex-col bottom-10 px-6 w-full'>
                     <View className='w-full items-center'>
                         <CustomTouchableOpacityButton           
                             className={`h-[56px] w-full items-center justify-center bg-primary rounded-[100px] ${isDisabled() ? 'opacity-30' : 'opacity-100'}`} 
@@ -122,18 +158,23 @@ export const VerificationScreen: React.FC = () => {
                             isLoading={isLoading}
                         />
                     </View>
-                </View>
-                <View className='items-center justify-center px-6 mt-4'>
-                        <Text className="text-[17px] text-center text-gray-600 flex-wrap">
-                            By signing up, you agree to our{' '}
-                            <Text 
-                                className="text-base text-primary font-medium"
-                                onPress={() => handleResendCode()}
-                            >
-                                Terms of Service and Privacy Policy
-                            </Text>
+            </View>
+            <View className="mt-2 items-center">
+                {!canResend ? (
+                    <Text className="text-textMediumGrey">
+                        Resend code in {countdown}s
+                    </Text>
+                ) : (
+                    <TouchableOpacity 
+                        onPress={handleResendCode}
+                        disabled={isLoading}
+                    >
+                        <Text className="text-primary font-semibold">
+                            Resend code
                         </Text>
-                    </View>
+                    </TouchableOpacity>
+                )}
+            </View>
             </KeyboardAvoidingView>
         </CustomSafeAreaView>
     );

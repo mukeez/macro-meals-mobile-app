@@ -76,7 +76,7 @@ export const ResetPasswordScreen: React.FC = () => {
         const resetPasswordData = {
             email: routeEmail,
             session_token: routeSessionToken,
-            password: password
+            new_password: password
         }
         try {
             const response = await authService.resetPassword(resetPasswordData);
