@@ -1,11 +1,5 @@
 export const privacyPolicy = [
     {
-      title: "Last updated",
-      paragraph: [
-        "Last updated: May 19, 2025",
-      ],
-    },
-    {
       title: "Introduction",
       paragraph: [
         "This Privacy Policy describes how Macro Meals (“we,” “our,” or “us”) collects, uses, and shares your personal information when you use our mobile application (“App”).",

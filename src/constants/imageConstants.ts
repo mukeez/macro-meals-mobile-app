@@ -45,4 +45,5 @@ export const IMAGE_CONSTANTS = {
     supportAgentIcon: require('../../assets/support-agent-icon.png'),
     chevronRightIcon: require('../../assets/chevron-right-icon.png'),
     fireIcon: require('../../assets/fire-icon.png'),
+    mealBg: require('../../assets/mealbg.png'),
 }
