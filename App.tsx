@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import React, {useEffect, useState} from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import firebase from '@react-native-firebase/app';
 import * as SplashScreen from 'expo-splash-screen';
@@ -16,11 +17,6 @@ import { OnboardingContext } from './src/contexts/OnboardingContext';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
-setTimeout (()=> {
-    SplashScreen.hideAsync();
-}, 3000);
-
-
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
@@ -30,45 +26,43 @@ export default function App() {
     const [initialAuthScreen, setInitialAuthScreen] = useState('LoginScreen');
 
     useEffect(() => {
-        async function initializeApp(){
-        const firebaseConfig = {
-            appId: '1:733994435613:android:370718471c48417e6372f4',
-            projectId: 'macro-meals-mobile',
-            storageBucket: 'macro-meals-mobile.firebasestorage.app',
-            apiKey: 'AIzaSyC4ai-iWprvfuWB52UeFb62TirjBytkI8k',
-            messagingSenderId: '733994435613',
-            databaseURL: 'https://macro-meals-mobile.firebaseio.com',
-            authDomain: 'macro-meals-mobile.firebaseapp.com'
-        }
+        async function initializeApp() {
+            const firebaseConfig = {
+                appId: '1:733994435613:android:370718471c48417e6372f4',
+                projectId: 'macro-meals-mobile',
+                storageBucket: 'macro-meals-mobile.firebasestorage.app',
+                apiKey: 'AIzaSyC4ai-iWprvfuWB52UeFb62TirjBytkI8k',
+                messagingSenderId: '733994435613',
+                databaseURL: 'https://macro-meals-mobile.firebaseio.com',
+                authDomain: 'macro-meals-mobile.firebaseapp.com'
+            }
 
-        async function initializeFirebase() {
-            try {
-                // If firebase has not been initialized
-                if (!firebase.apps.length) {
-                    await firebase.initializeApp(firebaseConfig);
-                }
+            async function initializeFirebase() {
+                try {
+                    // If firebase has not been initialized
+                    if (!firebase.apps.length) {
+                        await firebase.initializeApp(firebaseConfig);
+                    }
 
-                // Request notification permissions
-                const permission = await pushNotifications.requestPermissions();
+                    // Request notification permissions
+                    const permission = await pushNotifications.requestPermissions();
 
-                if (permission) {
-                    // Get FCM token only after permissions are granted
-                    const token = await messaging().getToken();
-                    await pushNotifications.intializeMessaging();
-                    return token;
-                } else {
+                    if (permission) {
+                        // Get FCM token only after permissions are granted
+                        const token = await messaging().getToken();
+                        await pushNotifications.intializeMessaging();
+                        return token;
+                    } else {
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('[FIREBASE] ❌ Error:', error);
                     return null;
                 }
-            } catch (error) {
-                console.error('[FIREBASE] ❌ Error:', error);
-                return null;
             }
-        }
 
-        initializeFirebase();
-
-        
-        const initializeApp = async () => {
+            initializeFirebase();
+            
             try {
                 // Load fonts
                 await Font.loadAsync({
@@ -94,26 +88,30 @@ export default function App() {
                     setAuthenticated(true, token, userId);
                 } else {
                     console.log('No stored credentials, setting unauthenticated');
-                    setAuthenticated(false, null, null);
+                    setAuthenticated(false, '', '');
                 }
             } catch (error) {
                 console.error('Error initializing app:', error);
                 // Ensure we're unauthenticated on error
-                setAuthenticated(false, null, null);
+                setAuthenticated(false, '', '');
             } finally {
                 setIsLoading(false);
+                // Hide splash screen after initialization
+                await SplashScreen.hideAsync();
             }
-        };
-
         }
+
         initializeApp();
-        
-    }, [pushNotifications]);
+    }, []);
 
     console.log('Current auth state:', isAuthenticated);
 
     if (isLoading) {
-        return null;
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" />
+            </View>
+        );
     }
 
     return (
@@ -121,14 +119,15 @@ export default function App() {
             token: MIXPANEL_TOKEN,
         }}>
             <OnboardingContext.Provider value={{ setIsOnboardingCompleted, setInitialAuthScreen }} >
-            <NavigationContainer>
+                <NavigationContainer>
                     <RootStack 
-                    isOnboardingCompleted={isOnboardingCompleted} 
-                    initialAuthScreen={initialAuthScreen}
-                    isAuthenticated={isAuthenticated}
-                />
+                        isOnboardingCompleted={isOnboardingCompleted} 
+                        initialAuthScreen={initialAuthScreen}
+                        isAuthenticated={isAuthenticated}
+                    />
                 </NavigationContainer>
             </OnboardingContext.Provider>
         </MixpanelProvider>
     );
 }
+
