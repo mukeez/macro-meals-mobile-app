@@ -2,11 +2,11 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { StatsScreen } from '../screens/StatsScreen';
-import ScanScreenType from '../screens/ScanScreenType';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import { Image, View, Text, TouchableOpacity } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { CommonActions } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
 
@@ -48,7 +48,13 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                onPress={() => navigation.navigate('Scan')}
+                                onPress={() => {
+                                    navigation.dispatch(
+                                        CommonActions.navigate({
+                                            name: 'ScanScreenType'
+                                        })
+                                    );
+                                }}
                                 className="w-[36px] h-[36px] items-center justify-center"
                             >
                                 <Image 
@@ -110,7 +116,7 @@ const CustomBottomTabs = () => {
         >
             <Tab.Screen name='Dashboard' component={DashboardScreen} />
             <Tab.Screen name='Meals' component={StatsScreen} />
-            <Tab.Screen name='Stats' component={ScanScreenType} />
+            <Tab.Screen name='Progress' component={StatsScreen} />
             <Tab.Screen name='Settings' component={SettingsScreen} />
         </Tab.Navigator>
     );
