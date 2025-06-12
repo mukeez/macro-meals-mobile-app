@@ -2,9 +2,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Meal, UserPreferences } from '../types';
+import { Meal, UserPreferences, LoggedMeal } from '../types';
 import { authService } from '../services/authService';
 import { mealService } from '../services/mealService';
+import { authTokenService } from '../services/authTokenService';
 
 /**
  * Default user preferences with all values set to 0.
@@ -27,18 +28,6 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
 /**
  * Interface for the application state store.
  */
-interface LoggedMeal {
-    id: string;
-    user_id: string;
-    name: string;
-    protein: number;
-    carbs: number;
-    fat: number;
-    calories: number;
-    meal_time: string;
-    created_at: string;
-}
-
 interface AppState {
     // Authentication state
     isAuthenticated: boolean;
@@ -92,8 +81,8 @@ const convertToMeal = (loggedMeal: LoggedMeal): Meal | null => {
             fat: loggedMeal.fat || 0,
         },
         description: '',  // Default value if not provided by API
-        date: loggedMeal.meal_time || new Date().toISOString(),
-        mealType: 'lunch',  // Default value if not provided by API
+        date: loggedMeal.timestamp || new Date().toISOString(),
+        mealType: loggedMeal.mealType || 'lunch',  // Default value if not provided by API
     };
 };
 
@@ -113,6 +102,7 @@ const useStore = create<AppState>()(
                     authenticated,
                     userId
                 });
+                authTokenService.setToken(token);
                 set({
                     isAuthenticated: authenticated,
                     token,
@@ -122,11 +112,10 @@ const useStore = create<AppState>()(
 
             checkAuth: async () => {
                 try {
-                    const token = await AsyncStorage.getItem('token');
+                    const token = await authTokenService.initialize();
                     const userId = await AsyncStorage.getItem('userId');
 
                     if (token && userId) {
-                        // Optionally validate token here
                         set({
                             isAuthenticated: true,
                             token,
@@ -164,7 +153,7 @@ const useStore = create<AppState>()(
                         return;
                     }
 
-                    const todaysMeals = await mealService.getTodaysMeals();
+                    const todaysMeals = await mealService.getLoggedMeals();
 
                     if (!todaysMeals) {
                         console.error('No meals returned from API');
@@ -174,7 +163,7 @@ const useStore = create<AppState>()(
 
                     // Convert API format to app format with null checking
                     const meals = todaysMeals
-                        .filter(meal => meal) // Remove null items
+                        .filter((meal: LoggedMeal) => meal) // Remove null items
                         .map(convertToMeal)
                         .filter((meal): meal is Meal => meal !== null); // Remove nulls after conversion with type guard
 

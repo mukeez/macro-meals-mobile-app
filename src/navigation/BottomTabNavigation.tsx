@@ -1,69 +1,119 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
+import { DashboardScreen } from '../screens/DashboardScreen';
+import { StatsScreen } from '../screens/StatsScreen';
+import ScanScreenType from '../screens/ScanScreenType';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import { Image, View, Text, TouchableOpacity } from 'react-native';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-import DashboardScreen from '../screens/DashboardScreen';
-import BarcodeScanScreen from '../screens/BarcodeScanScreen';
-import NearbyMealsScreen from '../screens/NearbyMealsScreen';
-import MacroGoalsScreen from '../screens/MacroGoalsScreen';
+const Tab = createBottomTabNavigator();
 
-export type BottomTabParamList = {
-    Home: undefined;
-    Scan: undefined;
-    Meals: undefined;
-    Settings: undefined;
-};
-
-const Tab = createBottomTabNavigator<BottomTabParamList>();
-
-export const BottomTabNavigator: React.FC = () => {
+const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
     return (
-        <NavigationContainer>
-            <Tab.Navigator
-                screenOptions={({ route }) => ({
-                    tabBarIcon: ({ color, size }) => {
-                        switch (route.name) {
-                            case 'Home':
-                                return <Feather name="home" size={size} color={color} />;
-                            case 'Scan':
-                                return <Feather name="camera" size={size} color={color} />;
-                            case 'Meals':
-                                return <Feather name="list" size={size} color={color} />;
-                            case 'Settings':
-                                return <Feather name="settings" size={size} color={color} />;
-                            default:
-                                return null;
-                        }
-                    },
-                    tabBarActiveTintColor: '#19a28f',
-                    tabBarInactiveTintColor: 'gray',
-                    headerShown: false,
-                })}
-            >
-                <Tab.Screen
-                    name="Home"
-                    component={DashboardScreen}
-                    options={{ title: 'Home' }}
-                />
-                <Tab.Screen
-                    name="Scan"
-                    component={BarcodeScanScreen}
-                    options={{ title: 'Scan' }}
-                />
-                <Tab.Screen
-                    name="Meals"
-                    component={NearbyMealsScreen}
-                    options={{ title: 'Meals' }}
-                />
-                <Tab.Screen
-                    name="Settings"
-                    component={MacroGoalsScreen}
-                    options={{ title: 'Settings' }}
-                />
-            </Tab.Navigator>
-        </NavigationContainer>
+        <View className="flex-row items-center justify-between bg-white border-t border-gray-200 h-[90px] px-4 pb-6">
+            {state.routes.map((route, index) => {
+                const { options } = descriptors[route.key];
+                const isFocused = state.index === index;
+
+                const icon = [
+                    IMAGE_CONSTANTS.dashboardIcon,
+                    IMAGE_CONSTANTS.mealsIcon,
+                    IMAGE_CONSTANTS.progressIcon,
+                    IMAGE_CONSTANTS.profileIcon
+                ][index];
+
+                const label = [
+                    'Dashboard',
+                    'Meals',
+                    'Progress',
+                    'Profile'
+                ][index];
+
+                if (index === 1) {
+                    return (
+                        <React.Fragment key={route.key}>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate(route.name)}
+                                className="flex-1 items-center justify-center pr-8"
+                            >
+                                <Image 
+                                    source={icon} 
+                                    className="w-6 h-6 mb-1"
+                                    tintColor={isFocused ? '#009688' : '#000'}
+                                />
+                                <Text className={`text-xs font-normal ${isFocused ? 'text-primaryLight' : 'text-black'}`}>
+                                    {label}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('Scan')}
+                                className="w-[36px] h-[36px] items-center justify-center"
+                            >
+                                <Image 
+                                    source={IMAGE_CONSTANTS.fabIcon} 
+                                    className="w-[37px] h-[37px]"
+                                />
+                            </TouchableOpacity>
+                        </React.Fragment>
+                    );
+                }
+
+                if (index === 2) {
+                    return (
+                        <TouchableOpacity
+                            key={route.key}
+                            onPress={() => navigation.navigate(route.name)}
+                            className="flex-1 items-center justify-center pl-8"
+                        >
+                            <Image 
+                                source={icon} 
+                                className="w-6 h-6 mb-1"
+                                tintColor={isFocused ? '#009688' : '#000'}
+                            />
+                            <Text className={`text-xs font-normal ${isFocused ? 'text-primaryLight' : 'text-black'}`}>
+                                {label}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                }
+
+                return (
+                    <TouchableOpacity
+                        key={route.key}
+                        onPress={() => navigation.navigate(route.name)}
+                        className="flex-1 items-center justify-center"
+                    >
+                        <Image 
+                            source={icon} 
+                            className="w-6 h-6 mb-1"
+                            tintColor={isFocused ? '#009688' : '#000'}
+                        />
+                        <Text className={`text-xs font-normal ${isFocused ? 'text-primaryLight' : 'text-black'}`}>
+                            {label}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
     );
 };
 
-export default BottomTabNavigator;
+const CustomBottomTabs = () => {
+    return (
+        <Tab.Navigator
+            tabBar={props => <CustomTabBar {...props} />}
+            screenOptions={{
+                headerShown: false,
+            }}
+        >
+            <Tab.Screen name='Dashboard' component={DashboardScreen} />
+            <Tab.Screen name='Meals' component={StatsScreen} />
+            <Tab.Screen name='Stats' component={ScanScreenType} />
+            <Tab.Screen name='Settings' component={SettingsScreen} />
+        </Tab.Navigator>
+    );
+};
+
+export default CustomBottomTabs;

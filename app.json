@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#009688"
     },
     "ios": {
       "supportsTablet": true,
@@ -25,6 +25,11 @@
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#009688"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -54,6 +59,7 @@
           "locationWhenInUse": true
         }
       ],
+      "expo-font",
       [
         "@react-native-firebase/app",
         {

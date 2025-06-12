@@ -19,13 +19,20 @@ import { authService } from "../services/authService";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // Import the mock service instead of the real one
 import { mockSocialAuth } from '../services/authMock';
+import { OnboardingContext } from '../contexts/OnboardingContext';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+import BackButton from '../components/BackButton';
+import { RootStackParamList } from '../types/navigation';
+import { MaterialIcons } from '@expo/vector-icons';
 
-type RootStackParamList = {
-    Welcome: undefined;
-    MacroInput: undefined;
-    Login: undefined;
-    SignUp: undefined;
-};
+// type RootStackParamList = {
+//     Welcome: undefined;
+//     MacroInput: undefined;
+//     Login: undefined;
+//     SignupScreen: undefined;
+//     Dashboard: undefined;
+// };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -35,13 +42,19 @@ export const LoginScreen: React.FC = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
+    const navigation = useNavigation<LoginScreenNavigationProp>();
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-    let navigation;
-    try {
-        navigation = useNavigation<LoginScreenNavigationProp>();
-    } catch (error) {
-        console.log('Navigation not available');
-    }
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
+    const [errors, setErrors] = useState({
+        email: '',
+        password: '',
+    });
 
     // Set up auth state in your Zustand store
     const setAuthenticated = useStore((state) => state.setAuthenticated);
@@ -56,14 +69,18 @@ export const LoginScreen: React.FC = () => {
 
         try {
             const data = await authService.login({ email, password });
+            console.log('Login successful, setting authenticated state');
             setAuthenticated(true, data.access_token, data.user.id);
-            console.log(data.access_token)
-            AsyncStorage.setItem('my_token', data.access_token);
-
-            if (navigation) {
-                navigation.navigate('DashboardScreen');
-            }
-            const token = await AsyncStorage.getItem('my_token');
+            console.log('Auth state updated, token:', data.access_token);
+            await AsyncStorage.setItem('my_token', data.access_token);
+            await AsyncStorage.setItem('isOnboardingCompleted', 'true');
+            setIsOnboardingCompleted(true);
+            console.log('Token saved to AsyncStorage');
+            
+            // Add this to check if the state was actually updated
+            const isAuth = useStore.getState().isAuthenticated;
+            console.log('Current auth state after update:', isAuth);
+            navigation.navigate('Dashboard');
         } catch (error) {
             Alert.alert(
                 'Login Failed',
@@ -81,9 +98,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.googleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            if (navigation) {
-                navigation.navigate('MacroInput');
-            }
+            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Google login error:', error);
             Alert.alert('Login Failed', 'Google login failed. Please try again.');
@@ -93,14 +108,13 @@ export const LoginScreen: React.FC = () => {
     };
 
     const handleAppleLogin = async () => {
+        setIsOnboardingCompleted(false);
         try {
             setIsLoading(true);
             // Use the mock service
             const authData = await mockSocialAuth.appleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            if (navigation) {
-                navigation.navigate('MacroInput');
-            }
+            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Apple login error:', error);
             Alert.alert('Login Failed', 'Apple login failed. Please try again.');
@@ -115,9 +129,7 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.facebookSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            if (navigation) {
-                navigation.navigate('MacroInput');
-            }
+            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Facebook login error:', error);
             Alert.alert('Login Failed', 'Facebook login failed. Please try again.');
@@ -127,119 +139,96 @@ export const LoginScreen: React.FC = () => {
     };
 
     const handleSignUp = () => {
-        if (navigation) {
-            navigation.navigate('SignupScreen');
-        }
+        navigation.navigate('SignupScreen');
     };
-
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoBox}>
-                        <Text style={styles.checkmark}>✓</Text>
-                    </View>
-                </View>
-
-                <Text style={styles.welcomeTitle}>Welcome Back!</Text>
-                <Text style={styles.welcomeSubtitle}>Track your nutrition journey with MacroMeals</Text>
+        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+            <ScrollView className='flex-1 relative align-left p-6' contentContainerStyle={{ flexGrow: 1 }}>
+                <Text className="text-3xl font-medium text-black mb-2 text-">Access your account</Text>
+                <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Sign in to track your macros and view personalized meal suggestions.</Text>
 
                 <View style={styles.formContainer}>
-                    <Text style={styles.inputLabel}>Email</Text>
-                    <View style={styles.inputContainer}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>✉️</Text>
-                        </View>
+                    <View className="mb-6" style={[errors.email ? styles.inputError : null]}>  
                         <TextInput
-                            style={styles.input}
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
                             placeholder="Enter your email"
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(text) => {
+                                setEmail(text);
+                                // Validate email on change
+                                if (!text) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is required' }));
+                                } else if (!/\S+@\S+\.\S+/.test(text)) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+                                } else {
+                                    setErrors(prev => ({ ...prev, email: '' }));
+                                }
+                            }}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoCorrect={false}
+                            textContentType="emailAddress"
+                            spellCheck={false}
+                            autoComplete="email"
                         />
+                        {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
                     </View>
-
-                    <Text style={styles.inputLabel}>Password</Text>
-                    <View style={styles.inputContainer}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>❓</Text>
-                        </View>
+                    
+                    <View className="relative mb-4" style={[errors.password ? styles.inputError : null]}>
+                        
                         <TextInput
-                            style={styles.input}
-                            placeholder="Enter your password"
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                            placeholder="Enter password"
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(text) => {
+                                setPassword(text);
+                                if (errors.password) {
+                                    setErrors(prev => ({ ...prev, password: '' }));
+                                }
+                            }}
                             secureTextEntry={!showPassword}
                         />
-                        <TouchableOpacity
-                            style={styles.eyeIconContainer}
-                            onPress={() => setShowPassword(!showPassword)}
-                        >
-                            <Text style={styles.eyeIcon}>👁️</Text>
-                        </TouchableOpacity>
+                        <MaterialIcons className='absolute right-4 top-1/2 -translate-y-1/2' name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
+                        {errors.password ? <Text className='text-red-500 text-sm mt-2'>{errors.password}</Text> : null}
                     </View>
-
-                    <View style={styles.rememberForgotContainer}>
-                        <TouchableOpacity
-                            style={styles.rememberContainer}
-                            onPress={() => setRememberMe(!rememberMe)}
-                        >
-                            <View style={[
-                                styles.checkbox,
-                                rememberMe && styles.checkboxChecked
-                            ]}>
-                                {rememberMe && <Text style={styles.checkboxCheck}>✓</Text>}
-                            </View>
-                            <Text style={styles.rememberText}>Remember me</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.forgotContainer}>
-                            <Text style={styles.forgotText}>Forgot Password?</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity
-                        style={styles.loginButton}
-                        onPress={handleLogin}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="white" size="small" />
-                        ) : (
-                            <Text style={styles.loginButtonText}>Login</Text>
-                        )}
+                    <TouchableOpacity style={styles.forgotContainer} onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+                        <Text style={styles.forgotText}>Forgot Password?</Text>
                     </TouchableOpacity>
+                    
+                </View>
 
-                    <Text style={styles.orText}>Or continue with</Text>
-
-                    <View style={styles.socialContainer}>
-                        <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
-                            <Text style={styles.socialIcon}>G</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.socialButton} onPress={handleAppleLogin}>
-                            <Text style={styles.socialIcon}>🍎</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.socialButton} onPress={handleFacebookLogin}>
-                            <Text style={styles.socialIcon}>f</Text>
-                        </TouchableOpacity>
+                <View className='absolute bottom-1 px-6 w-full'>
+                    <View className='w-full items-center'>
+                        <CustomTouchableOpacityButton 
+                            className='h-[56px] w-full items-center justify-center bg-primary rounded-[100px]' 
+                            title="Sign in"
+                            textClassName='text-white text-[17px] font-semibold'
+                            disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
+                            onPress={handleLogin}
+                            isLoading={isLoading}
+                        />
                     </View>
-
-                    <View style={styles.signupContainer}>
-                        <Text style={styles.noAccountText}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={handleSignUp}>
-                            <Text style={styles.signupText}>Sign up</Text>
-                        </TouchableOpacity>
+                    <View className='items-center justify-center px-6 mt-2'>
+                        <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+                            Don't have an account?{' '}
+                            <Text 
+                                className="text-base text-primary font-medium"
+                                onPress={() => navigation.navigate('SignupScreen')}
+                            >
+                                Sign up
+                            </Text>
+                        </Text>
                     </View>
                 </View>
+              
             </ScrollView>
+            
         </KeyboardAvoidingView>
+        </CustomSafeAreaView>
     );
 };
 

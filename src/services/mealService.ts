@@ -1,5 +1,5 @@
-import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal } from '../types';
-import useStore from "../store/useStore";
+import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal, LoggedMeal } from '../types';
+import { authTokenService } from './authTokenService';
 
 /**
  * API configuration.
@@ -10,6 +10,7 @@ const API_ENDPOINTS = {
     LOG_MEAL: `${API_BASE_URL}/meals/add`,
     TODAY_MEALS: `${API_BASE_URL}/meals/today`,
     DAILY_PROGRESS: `${API_BASE_URL}/meals/progress/today`,
+    DELETE_MEAL: `${API_BASE_URL}/meals/delete`,
 };
 
 /**
@@ -22,21 +23,6 @@ interface LogMealRequest {
     fat: number;
     calories: number;
     meal_type?: string;
-}
-
-/**
- * Interface for logged meal response
- */
-interface LoggedMeal {
-    id: string;
-    user_id: string;
-    name: string;
-    protein: number;
-    carbs: number;
-    fat: number;
-    calories: number;
-    meal_time: string;
-    created_at: string;
 }
 
 /**
@@ -74,7 +60,7 @@ export const mealService = {
      * @returns Promise with suggested meals
      */
     suggestMeals: async (macroAndLocation: any): Promise<Meal[]> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
         try {
             const response = await fetch(API_ENDPOINTS.SUGGEST_MEALS, {
                 method: 'POST',
@@ -105,7 +91,7 @@ export const mealService = {
      * @throws Error if the request fails
      */
     logMeal: async (mealData: LogMealRequest): Promise<LoggedMeal> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
 
         if (!token) {
             throw new Error('Authentication required');
@@ -134,7 +120,17 @@ export const mealService = {
                 throw new Error(errorMessage);
             }
 
-            return await response.json();
+            const loggedMeal = await response.json();
+            return {
+                id: loggedMeal.id,
+                name: loggedMeal.name,
+                timestamp: loggedMeal.meal_time,
+                protein: loggedMeal.protein,
+                carbs: loggedMeal.carbs,
+                fat: loggedMeal.fat,
+                calories: loggedMeal.calories,
+                mealType: loggedMeal.meal_type,
+            };
         } catch (error) {
             console.error('Error logging meal:', error);
             throw error;
@@ -146,8 +142,8 @@ export const mealService = {
      * @returns Array of logged meals for today
      * @throws Error if the request fails
      */
-    getTodaysMeals: async (): Promise<LoggedMeal[]> => {
-        const token = useStore.getState().token;
+    getLoggedMeals: async (): Promise<LoggedMeal[]> => {
+        const token = authTokenService.getToken();
 
         if (!token) {
             throw new Error('Authentication required');
@@ -174,7 +170,17 @@ export const mealService = {
                 throw new Error(errorMessage);
             }
 
-            return await response.json();
+            const meals = await response.json();
+            return meals.map((meal: any) => ({
+                id: meal.id,
+                name: meal.name,
+                timestamp: meal.meal_time,
+                protein: meal.protein,
+                carbs: meal.carbs,
+                fat: meal.fat,
+                calories: meal.calories,
+                mealType: meal.meal_type,
+            }));
         } catch (error) {
             console.error('Error fetching today\'s meals:', error);
             throw error;
@@ -187,7 +193,7 @@ export const mealService = {
      * @throws Error if the request fails
      */
     getDailyProgress: async (): Promise<DailyProgressResponse> => {
-        const token = useStore.getState().token;
+        const token = authTokenService.getToken();
 
         if (!token) {
             throw new Error('Authentication required');
@@ -219,5 +225,44 @@ export const mealService = {
             console.error('Error fetching daily progress:', error);
             throw error;
         }
-    }
+    },
+
+    /**
+     * Delete a logged meal
+     * @param mealId - The ID of the meal to delete
+     * @throws Error if the request fails
+     */
+    deleteMeal: async (mealId: string): Promise<void> => {
+        const token = authTokenService.getToken();
+
+        if (!token) {
+            throw new Error('Authentication required');
+        }
+
+        try {
+            const response = await fetch(`${API_ENDPOINTS.DELETE_MEAL}/${mealId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+            });
+
+            if (!response.ok) {
+                let errorMessage = 'Failed to delete meal';
+                try {
+                    const errorData = await response.json();
+                    if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+                } catch (e) {
+                    // If parsing fails, use the default error message
+                }
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            console.error('Error deleting meal:', error);
+            throw error;
+        }
+    },
 };

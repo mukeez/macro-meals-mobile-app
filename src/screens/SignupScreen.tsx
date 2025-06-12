@@ -12,22 +12,19 @@ import {
     ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import useStore from '../store/useStore';
 import { authService } from '../services/authService';
 import CustomSafeAreaView  from '../components/CustomSafeAreaView';
-import { useMixpanel }  from '@macro-meals/mixpanel';
+import BackButton from '../components/BackButton';
+import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialIcons } from '@expo/vector-icons';
+import { RootStackParamList } from '../types/navigation';
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 
-type RootStackParamList = {
-    Welcome: undefined;
-    MacroInput: undefined;
-    Login: undefined;
-    LoginScreen: undefined;
-    SignUp: undefined;
-};
-
-type SignupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SignUp'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignupScreen'>;
 
 export const SignupScreen: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -35,8 +32,14 @@ export const SignupScreen: React.FC = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [agreedToTerms, setAgreedToTerms] = useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
+    // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    // const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const mixpanel = useMixpanel();
 
@@ -48,11 +51,12 @@ export const SignupScreen: React.FC = () => {
         terms: '',
     });
 
-    const navigation = useNavigation<SignupScreenNavigationProp>();
     const setAuthenticated = useStore((state) => state.setAuthenticated);
+    const navigation = useNavigation<NavigationProp>();
 
     const validateForm = () => {
         let isValid = true;
+        
         const newErrors = {
             email: '',
             nickname: '',
@@ -69,31 +73,31 @@ export const SignupScreen: React.FC = () => {
             isValid = false;
         }
 
-        if (nickname && nickname.length > 30) {
-            newErrors.nickname = 'Nickname must be less than 30 characters';
-            isValid = false;
-        }
+        // if (nickname && nickname.length > 30) {
+        //     newErrors.nickname = 'Nickname must be less than 30 characters';
+        //     isValid = false;
+        // }
 
         if (!password) {
             newErrors.password = 'Password is required';
             isValid = false;
-        } else if (password.length < 6) {
+        } else if (password.length < 8) {
             newErrors.password = 'Password must be at least 6 characters';
             isValid = false;
         }
 
-        if (!confirmPassword) {
-            newErrors.confirmPassword = 'Please confirm your password';
-            isValid = false;
-        } else if (confirmPassword !== password) {
-            newErrors.confirmPassword = 'Passwords do not match';
-            isValid = false;
-        }
+        // if (!confirmPassword) {
+        //     newErrors.confirmPassword = 'Please confirm your password';
+        //     isValid = false;
+        // } else if (confirmPassword !== password) {
+        //     newErrors.confirmPassword = 'Passwords do not match';
+        //     isValid = false;
+        // }
 
-        if (!agreedToTerms) {
-            newErrors.terms = 'You must agree to the Terms of Service and Privacy Policy';
-            isValid = false;
-        }
+        // if (!agreedToTerms) {
+        //     newErrors.terms = 'You must agree to the Terms of Service and Privacy Policy';
+        //     isValid = false;
+        // }
 
         setErrors(newErrors);
         return isValid;
@@ -101,6 +105,7 @@ export const SignupScreen: React.FC = () => {
 
     const handleSignup = async () => {
         if (!validateForm()) {
+            console.log('Invalid form');
             return;
         }
 
@@ -125,11 +130,19 @@ export const SignupScreen: React.FC = () => {
                 });
                 mixpanel.register({signup_time: signUpTime});
             }
-            setAuthenticated(true, '', userId);
+            // setAuthenticated(true, '', userId);
+            const data = await authService.login({ email, password });
+            console.log('Login successful, setting authenticated state');
+            setAuthenticated(true, data.access_token, data.user.id);
+            console.log('Auth state updated, token:', data.access_token);
+            await AsyncStorage.setItem('my_token', data.access_token);
+            console.log('Token saved to AsyncStorage');
+            
+            // Add this to check if the state was actually updated
+            const isAuth = useStore.getState().isAuthenticated;
+            console.log('Current auth state after update:', isAuth);
+            navigation.navigate('Dashboard');
 
-            if (navigation) {
-                navigation.navigate('MacroInput');
-            }
         } catch (error) {
             console.error('Signup error:', error);
 
@@ -150,72 +163,53 @@ export const SignupScreen: React.FC = () => {
     };
 
     return (
-        <CustomSafeAreaView edges={['left', 'right']}>
+        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoBox}>
-                        <Text style={styles.checkmark}>✓</Text>
+                    <View className="flex-row items-center justify-start mb-3">
+                        <BackButton onPress={() => navigation.navigate('LoginScreen')}/>
                     </View>
-                </View>
 
-                <Text style={styles.title}>Create Account</Text>
-                <Text style={styles.subtitle}>Join MacroMate today</Text>
+                <Text className="text-3xl font-medium text-black mb-2 text-left">Begin Macro Tracking</Text>
+                <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Enter your details to set up your account and start your tracking journey.</Text>
 
                 <View style={styles.formContainer}>
-                    <Text style={styles.inputLabel}>Email</Text>
-                    <View style={[styles.inputContainer, errors.email ? styles.inputError : null]}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>✉️</Text>
-                        </View>
+                    <View className="mb-6" style={[errors.email ? styles.inputError : null]}>
+                        
                         <TextInput
-                            style={styles.input}
-                            placeholder="your@email.com"
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                            placeholder="Enter your email"
                             value={email}
                             onChangeText={(text) => {
                                 setEmail(text);
-                                if (errors.email) {
+                                // Validate email on change
+                                if (!text) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is required' }));
+                                } else if (!/\S+@\S+\.\S+/.test(text)) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+                                } else {
                                     setErrors(prev => ({ ...prev, email: '' }));
                                 }
                             }}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoCorrect={false}
+                            textContentType="emailAddress"
+                            spellCheck={false}
+                            autoComplete="email"
                         />
                     </View>
                     {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
-                    <Text style={styles.inputLabel}>Nickname (optional)</Text>
-                    <View style={[styles.inputContainer, errors.nickname ? styles.inputError : null]}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>👤</Text>
-                        </View>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="How we should call you"
-                            value={nickname}
-                            onChangeText={(text) => {
-                                setNickname(text);
-                                if (errors.nickname) {
-                                    setErrors(prev => ({ ...prev, nickname: '' }));
-                                }
-                            }}
-                            autoCorrect={false}
-                        />
-                    </View>
-                    {errors.nickname ? <Text style={styles.errorText}>{errors.nickname}</Text> : null}
 
-                    <Text style={styles.inputLabel}>Password</Text>
-                    <View style={[styles.inputContainer, errors.password ? styles.inputError : null]}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>🔑</Text>
-                        </View>
+                    <View className="relative mb-4" style={[errors.password ? styles.inputError : null]}>
+                        
                         <TextInput
-                            style={styles.input}
-                            placeholder="••••••••"
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                            placeholder="Create password"
                             value={password}
                             onChangeText={(text) => {
                                 setPassword(text);
@@ -225,65 +219,23 @@ export const SignupScreen: React.FC = () => {
                             }}
                             secureTextEntry={!showPassword}
                         />
-                        <TouchableOpacity
-                            style={styles.eyeIconContainer}
-                            onPress={() => setShowPassword(!showPassword)}
-                        >
-                            <Text style={styles.eyeIcon}>👁️</Text>
-                        </TouchableOpacity>
+                        <MaterialIcons className='absolute right-4 top-1/2 -translate-y-1/2' name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
                     </View>
-                    <Text style={styles.passwordHint}>Must be at least 6 characters</Text>
                     {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
-
-                    <Text style={styles.inputLabel}>Confirm Password</Text>
-                    <View style={[styles.inputContainer, errors.confirmPassword ? styles.inputError : null]}>
-                        <View style={styles.inputIconContainer}>
-                            <Text style={styles.inputIcon}>🔑</Text>
-                        </View>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="••••••••"
-                            value={confirmPassword}
-                            onChangeText={(text) => {
-                                setConfirmPassword(text);
-                                if (errors.confirmPassword) {
-                                    setErrors(prev => ({ ...prev, confirmPassword: '' }));
-                                }
-                            }}
-                            secureTextEntry={!showConfirmPassword}
-                        />
-                        <TouchableOpacity
-                            style={styles.eyeIconContainer}
-                            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                            <Text style={styles.eyeIcon}>👁️</Text>
-                        </TouchableOpacity>
+                    <View className='flex-row items-center justify-start mt-2 w-full'>
+                        <View className={`w-[20px] h-[20px] rounded-full justify-center items-center mr-2 ${password.length >= 8 ? 'bg-primary' : 'bg-lightGrey'}`}>
+                            <MaterialIcons name="check" size={16} color='white' />
+                        </View> 
+                        <Text className='text-sm font-normal text-textMediumGrey'>Password must be at least 8 characters</Text>
                     </View>
-                    {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
+                    
 
-                    <View style={styles.checkboxContainer}>
-                        <TouchableOpacity
-                            style={styles.checkboxWrapper}
-                            onPress={() => {
-                                setAgreedToTerms(!agreedToTerms);
-                                if (errors.terms) {
-                                    setErrors(prev => ({ ...prev, terms: '' }));
-                                }
-                            }}
-                        >
-                            <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-                                {agreedToTerms && <Text style={styles.checkboxCheck}>✓</Text>}
-                            </View>
-                        </TouchableOpacity>
-                        <Text style={styles.termsText}>
-                            I agree to the{' '}
-                            <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-                            <Text style={styles.termsLink}>Privacy Policy</Text>
-                        </Text>
-                    </View>
+
+                
                     {errors.terms ? <Text style={styles.errorText}>{errors.terms}</Text> : null}
+                   
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[
                             styles.signupButton,
                             (!email || !password || !confirmPassword || !agreedToTerms) && styles.buttonDisabled
@@ -296,13 +248,31 @@ export const SignupScreen: React.FC = () => {
                         ) : (
                             <Text style={styles.signupButtonText}>Create Account</Text>
                         )}
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
-                    <View style={styles.loginContainer}>
-                        <Text style={styles.loginText}>Already have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation?.navigate('LoginScreen')}>
-                            <Text style={styles.loginLink}>Log in</Text>
-                        </TouchableOpacity>
+                    
+                </View>
+                <View style={styles.bottomContainer}>
+                    <View style={styles.buttonWrapper}>
+                        <CustomTouchableOpacityButton 
+                            className='h-[56px] w-full items-center justify-center bg-primary rounded-[100px]' 
+                            title="Sign up"
+                            textClassName='text-white text-[17px] font-semibold'
+                            disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
+                            onPress={handleSignup}
+                            isLoading={isLoading}
+                        />
+                    </View>
+                    <View className='items-center justify-center px-6 mt-4'>
+                        <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+                            By signing up, you agree to our{' '}
+                            <Text 
+                                className="text-base text-primary font-medium"
+                                onPress={() => navigation.navigate('TermsAndConditions')}
+                            >
+                                Terms of Service and Privacy Policy
+                            </Text>
+                        </Text>
                     </View>
                 </View>
             </ScrollView>
@@ -469,5 +439,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#08a489',
         fontWeight: 'bold',
+    },
+    bottomContainer: {
+        position: 'absolute',
+        bottom: 10,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 16,
+    },
+    buttonWrapper: {
+        width: '100%',
+        alignItems: 'center',
     },
 });

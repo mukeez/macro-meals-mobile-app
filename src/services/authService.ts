@@ -20,9 +20,13 @@ interface SignupData {
     nickname?: string;
 }
 
+interface LoginCredentials {
+    email: string;
+    password: string;
+}
 
 export const authService = {
-    login: async (credentials) => {
+    login: async (credentials: LoginCredentials) => {
         try {
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -31,13 +35,11 @@ export const authService = {
                 },
                 body: JSON.stringify(credentials),
             });
-
+            const responseData = await response.json();
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Login failed');
+                throw new Error(responseData.message || 'Login failed');
             }
-
-            return await response.json();
+            return responseData;
         } catch (error) {
             console.error('Login error:', error);
             throw error;
@@ -81,6 +83,70 @@ export const authService = {
         }
     },
 
+    forgotPassword: async(email: string) => {
+        try{
+            const response = await fetch(`${API_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+            const responseData = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Forgot password failed');
+            }
+
+            return responseData;
+        }catch (error){
+            console.error('Forgot password error:', error);
+        }
+    },
+    verifyCode: async (params: { email: string, otp: string }) => {
+        try {
+            console.log('params', params);
+            const response = await fetch(`${API_URL}/auth/verify-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                console.log('responseData', responseData);
+                throw new Error(responseData.message || 'Verification failed');
+            }
+            console.log('responseData', responseData);
+            return responseData;
+        } catch (error) {
+            console.error('Verification error:', error);
+            throw error;
+        }
+    },
+
+    resetPassword: async (resetPasswordData: { email: string, session_token: string, new_password: string }) => {
+        try {
+            console.log('resetPasswordData', resetPasswordData);
+            const response = await fetch(`${API_URL}/auth/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(resetPasswordData),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Password reset failed');
+            }   
+
+            return responseData;
+        } catch (error) {
+            console.error('Password reset error:', error);
+            throw error;
+        }
+    },
     getCurrentToken: async () => {
         try {
             return await AsyncStorage.getItem('access_token');
@@ -109,6 +175,26 @@ export const authService = {
             return responseData;
         } catch (error) {
             console.error('Password reset error:', error);
+            throw error;
+        }
+    },
+
+    resendVerificationCode: async (params: { email: string }) => {
+        try {
+            const response = await fetch(`${API_URL}/auth/resend-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to resend verification code');
+            }
+            return responseData;
+        } catch (error) {
+            console.error('Resend verification code error:', error);
             throw error;
         }
     }
