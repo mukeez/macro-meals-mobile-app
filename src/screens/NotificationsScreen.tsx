@@ -1,66 +1,35 @@
-import React from "react";
-import { ScrollView, View, Text } from "react-native";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  ListRenderItemInfo,
+} from "react-native";
 import NotificationItem from "../components/NotificationItem";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import Header from "../components/Header";
+import { notificationService } from "../services/notificationsService";
 
 type Notification = {
   id: string;
   text: string;
   timeAgo: string;
-  timestamp: Date;
+  timestamp: Date | string;
+  read?: boolean;
 };
 
 type NotificationsByDay = {
   [section: string]: Notification[];
 };
 
-// Example notifications (replace with your actual data source as needed)
-const notifications: Notification[] = [
-  {
-    id: "1",
-    text: "Your order has been shipped.",
-    timeAgo: "2m ago",
-    timestamp: new Date(Date.now() - 2 * 60 * 1000),
-  },
-  {
-    id: "2",
-    text: "New message received.",
-    timeAgo: "1h ago",
-    timestamp: new Date(Date.now() - 60 * 60 * 1000),
-  },
-  {
-    id: "3",
-    text: "Your verification code: 123456",
-    timeAgo: "23h ago",
-    timestamp: new Date(Date.now() - 23 * 60 * 60 * 1000),
-  },
-  {
-    id: "4",
-    text: "Password changed successfully.",
-    timeAgo: "1d ago",
-    timestamp: new Date(Date.now() - 25 * 60 * 60 * 1000),
-  },
-  {
-    id: "5",
-    text: "Weekly summary is ready.",
-    timeAgo: "2d ago",
-    timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000),
-  },
-  {
-    id: "6",
-    text: "Welcome to our service!",
-    timeAgo: "3d ago",
-    timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000),
-  },
-];
-
 function groupByDay(notifications: Notification[]): NotificationsByDay {
   const now = new Date();
   const sections: NotificationsByDay = {};
 
   notifications.forEach((notif) => {
-    const notifDate = notif.timestamp;
+    const notifDate = new Date(notif.timestamp);
     const notifDay = new Date(
       notifDate.getFullYear(),
       notifDate.getMonth(),
@@ -96,27 +65,126 @@ function groupByDay(notifications: Notification[]): NotificationsByDay {
 }
 
 const NotificationsScreen: React.FC = () => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // To prevent marking as read multiple times
+  const markedAsReadRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    async function fetchNotifs() {
+      try {
+        setLoading(true);
+        const data = await notificationService.getNotifications();
+        // Assume API returns [{ id, text, timestamp, read }, ...]
+        const formatted = (data ?? []).map((n: any) => ({
+          ...n,
+          timestamp: n.timestamp ? new Date(n.timestamp) : new Date(),
+        }));
+        setNotifications(formatted);
+      } catch (e: any) {
+        setError(e?.message || "Could not fetch notifications.");
+        Alert.alert("Error", e?.message || "Could not fetch notifications.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchNotifs();
+  }, []);
+
+  // FlatList wants a flat array, so group, then flatten with section headers
   const notificationsByDay = groupByDay(notifications);
+  const flatListData: Array<
+    { type: "header"; section: string } | { type: "notif"; notif: Notification }
+  > = [];
+  Object.keys(notificationsByDay).forEach((section) => {
+    flatListData.push({ type: "header", section });
+    notificationsByDay[section].forEach((notif) =>
+      flatListData.push({ type: "notif", notif })
+    );
+  });
+
+  // Mark notifications as read when they become visible
+  const onViewableItemsChanged = useCallback(
+    ({
+      viewableItems,
+    }: {
+      viewableItems: Array<ListRenderItemInfo<any>["item"]>;
+    }) => {
+      viewableItems.forEach((item) => {
+        if (
+          item.type === "notif" &&
+          !item.notif.read &&
+          !markedAsReadRef.current.has(item.notif.id)
+        ) {
+          markedAsReadRef.current.add(item.notif.id);
+          notificationService
+            .markAsRead(item.notif.id)
+            .then(() => {
+              setNotifications((prev) =>
+                prev.map((n) =>
+                  n.id === item.notif.id ? { ...n, read: true } : n
+                )
+              );
+            })
+            .catch(() => {
+              // Optional: handle error, maybe remove from markedAsReadRef to retry later
+            });
+        }
+      });
+    },
+    []
+  );
+
+  if (loading) {
+    return (
+      <CustomSafeAreaView>
+        <Header title="Notifications" />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#009688" />
+        </View>
+      </CustomSafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <CustomSafeAreaView>
+        <Header title="Notifications" />
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-red-600">{error}</Text>
+        </View>
+      </CustomSafeAreaView>
+    );
+  }
 
   return (
     <CustomSafeAreaView>
       <Header title="Notifications" />
-      <ScrollView className="bg-white flex-1">
-        {Object.keys(notificationsByDay).map((section) => (
-          <View key={section}>
+      <FlatList
+        data={flatListData}
+        keyExtractor={(item, idx) =>
+          item.type === "header" ? `header-${item.section}` : item.notif.id
+        }
+        renderItem={({ item }) =>
+          item.type === "header" ? (
             <Text className="p-4 text-xs font-bold text-[#777] uppercase">
-              {section}
+              {item.section}
             </Text>
-            {notificationsByDay[section].map((notif) => (
-              <NotificationItem
-                key={notif.id}
-                text={notif.text}
-                timeAgo={notif.timeAgo}
-              />
-            ))}
-          </View>
-        ))}
-      </ScrollView>
+          ) : (
+            <NotificationItem
+              key={item.notif.id}
+              text={item.notif.text}
+              timeAgo={item.notif.timeAgo}
+              read={item.notif.read}
+            />
+          )
+        }
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+        className="bg-white flex-1"
+      />
     </CustomSafeAreaView>
   );
 };
