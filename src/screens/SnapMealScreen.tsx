@@ -2,15 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     StatusBar,
     SafeAreaView,
     Button,
+    ActivityIndicator,
 } from 'react-native';
-import { CameraView, FlashMode, useCameraPermissions } from 'expo-camera';
+import { CameraView, FlashMode, useCameraPermissions, CameraType } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import useStore from '../store/useStore';
+import * as FileSystem from 'expo-file-system';
 
 /**
  * SnapMealScreen component allows users to take photos of their meals
@@ -21,11 +23,13 @@ const SnapMealScreen = () => {
 
     const [permission, requestPermission] = useCameraPermissions();
 
-    const cameraRef = useRef(null);
-    const [facing, setFacing] = useState('back');
-    const [flashMode, setFlashMode] = useState('off');
+    const cameraRef = useRef<CameraView>(null);
+    const [facing, setFacing] = useState<CameraType>('back');
+    const [flashMode, setFlashMode] = useState<FlashMode>('off');
+    const token = useStore((state) => state.token);
 
     const [showOverlay, setShowOverlay] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const overlayTimer = setTimeout(() => {
@@ -42,19 +46,50 @@ const SnapMealScreen = () => {
         if (!cameraRef.current) return;
 
         try {
+            setLoading(true);
             const photo = await cameraRef.current.takePictureAsync({
                 quality: 0.8,
             });
 
-            // For now, we just log the photo URI
-            console.log('Photo captured:', photo.uri);
+            // Prepare the file for upload
+            const fileUri = photo.uri;
+            const fileName = fileUri.split('/').pop() || 'meal.jpg';
+            const fileType = 'image/jpeg';
 
-            // TODO: Implement the photo upload and analysis logic
-            // navigation.navigate('AnalyzeMeal', { photoUri: photo.uri });
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('image', {
+                uri: fileUri,
+                name: fileName,
+                type: fileType,
+            } as any);
+
+            // Send to API
+            const response = await fetch('https://api.macromealsapp.com/api/v1/scan/image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+            console.log('AI Scan Response:', data);
+
+            // If successful and items exist, navigate to AddMealScreen with analyzedData and mealImage
+            if (data && data.items && data.items.length > 0) {
+                navigation.navigate('AddMeal', {
+                    analyzedData: data.items[0],
+                    mealImage: photo.uri,
+                });
+            }
 
         } catch (error) {
-            console.error('Error capturing photo:', error);
-            alert('Failed to capture photo. Please try again.');
+            console.error('Error capturing or uploading photo:', error);
+            alert('Failed to capture or scan photo. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -115,8 +150,8 @@ const SnapMealScreen = () => {
 
     if (!permission.granted) {
         return (
-            <View style={styles.container}>
-                <Text style={{ textAlign: 'center', color: '#fff', marginBottom: 20 }}>
+            <View className="flex-1 bg-black justify-center items-center">
+                <Text className="text-white text-center mb-5">
                     We need camera access to analyze your meals
                 </Text>
                 <Button
@@ -128,165 +163,47 @@ const SnapMealScreen = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView className="flex-1 bg-black">
             <StatusBar barStyle="light-content" backgroundColor="#000" />
-
-            <CameraView
-                ref={cameraRef}
-                style={styles.camera}
-                facing={facing}
-                flashMode={flashMode}
-            >
-                {/* Top controls */}
-                <View style={styles.topControls}>
-                    <TouchableOpacity onPress={handleBack} style={styles.controlButton}>
+            <View className="flex-1 relative">
+                <CameraView
+                    ref={cameraRef}
+                    style={{ flex: 1 }}
+                    facing={facing}
+                    // flashMode={flashMode}
+                />
+                {/* Header */}
+                <View className="absolute top-0 left-0 right-0 flex-row items-center justify-between pt-4 px-4 z-10">
+                    <TouchableOpacity onPress={handleBack} className="p-1">
                         <Ionicons name="close" size={28} color="#fff" />
                     </TouchableOpacity>
-
-                    <View style={styles.rightControls}>
-                        <TouchableOpacity onPress={toggleFlash} style={styles.controlButton}>
-                            <Ionicons name={getFlashIcon()} size={24} color="#fff" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.controlButton}>
-                            <Ionicons name="moon" size={24} color="#fff" />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.controlButton}>
-                            <Ionicons name="timer-outline" size={24} color="#fff" />
-                        </TouchableOpacity>
+                    <Text className="flex-1 text-center text-white text-lg font-semibold">Scan a meal</Text>
+                    <View style={{ width: 28 }} />
+                </View>
+                {/* Overlay Corners */}
+                <View className="absolute inset-0 justify-center items-center pointer-events-none">
+                    <View className="absolute w-[70%]" style={{ aspectRatio: 1 }}>
+                        <View className="absolute top-0 left-0 w-12 h-12 border-t-[12px] border-l-[12px] border-white rounded-tl-lg" />
+                        <View className="absolute top-0 right-0 w-12 h-12 border-t-[12px] border-r-[12px] border-white rounded-tr-lg" />
+                        <View className="absolute bottom-0 left-0 w-12 h-12 border-b-[12px] border-l-[12px] border-white rounded-bl-lg" />
+                        <View className="absolute bottom-0 right-0 w-12 h-12 border-b-[12px] border-r-[12px] border-white rounded-br-lg" />
                     </View>
                 </View>
-
-                {/* Center frame */}
-                <View style={styles.framingContainer}>
-                    <View style={styles.frame}>
-                        {showOverlay && (
-                            <View style={styles.overlayContainer}>
-                                <MaterialCommunityIcons name="food-variant" size={24} color="#fff" />
-                                <Text style={styles.overlayText}>Center your meal in frame</Text>
-                            </View>
-                        )}
-                    </View>
+                {/* Capture Button */}
+                <View className="absolute bottom-10 left-0 right-0 items-center justify-center" pointerEvents="box-none">
+                    <TouchableOpacity onPress={handleCapture} activeOpacity={0.7} className="w-20 h-20 bg-white rounded-full border-4 border-white items-center justify-center shadow-lg">
+                        <View className="w-16 h-16 bg-gray-200 rounded-full" />
+                    </TouchableOpacity>
                 </View>
-
-                {/* Bottom controls */}
-                <View style={styles.bottomControls}>
-                    <View style={styles.cameraOptions}>
-                        <TouchableOpacity
-                            style={styles.optionButton}
-                            onPress={openGallery}
-                        >
-                            <Ionicons name="image" size={24} color="#fff" />
-                            <Text style={styles.optionText}>Photo</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity style={styles.captureButton} onPress={handleCapture}>
-                            <View style={styles.captureButtonInner} />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.optionButton}
-                            onPress={toggleCameraFacing}
-                        >
-                            <Ionicons name="camera-reverse-outline" size={24} color="#fff" />
-                            <Text style={styles.optionText}>Portrait</Text>
-                        </TouchableOpacity>
+                {/* Loading Indicator */}
+                {loading && (
+                    <View className="absolute inset-0 bg-black/40 justify-center items-center z-50">
+                        <ActivityIndicator size="large" color="#fff" />
                     </View>
-
-                    <Text style={styles.modeText}>Food</Text>
-                </View>
-            </CameraView>
+                )}
+            </View>
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#000',
-        justifyContent: 'center',
-    },
-    camera: {
-        flex: 1,
-    },
-    topControls: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    rightControls: {
-        flexDirection: 'row',
-    },
-    controlButton: {
-        marginHorizontal: 10,
-    },
-    framingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    frame: {
-        width: '100%',
-        height: '80%',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        borderRadius: 15,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    overlayContainer: {
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        padding: 15,
-        borderRadius: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    overlayText: {
-        color: '#fff',
-        fontSize: 16,
-        marginLeft: 8,
-    },
-    bottomControls: {
-        paddingBottom: 30,
-        alignItems: 'center',
-    },
-    cameraOptions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        width: '100%',
-        marginBottom: 10,
-    },
-    optionButton: {
-        alignItems: 'center',
-    },
-    optionText: {
-        color: '#fff',
-        marginTop: 5,
-    },
-    captureButton: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    captureButtonInner: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#fff',
-    },
-    modeText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-});
 
 export default SnapMealScreen;
