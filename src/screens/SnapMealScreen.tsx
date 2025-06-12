@@ -7,6 +7,7 @@ import {
     SafeAreaView,
     Button,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { CameraView, FlashMode, useCameraPermissions, CameraType } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
@@ -30,6 +31,8 @@ const SnapMealScreen = () => {
 
     const [showOverlay, setShowOverlay] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [scanError, setScanError] = useState(false);
+    const [isAlertVisible, setIsAlertVisible] = useState(false);
 
     useEffect(() => {
         const overlayTimer = setTimeout(() => {
@@ -47,6 +50,7 @@ const SnapMealScreen = () => {
 
         try {
             setLoading(true);
+            setScanError(false);
             const photo = await cameraRef.current.takePictureAsync({
                 quality: 0.8,
             });
@@ -77,17 +81,19 @@ const SnapMealScreen = () => {
             const data = await response.json();
             console.log('AI Scan Response:', data);
 
-            // If successful and items exist, navigate to AddMealScreen with analyzedData and mealImage
             if (data && data.items && data.items.length > 0) {
                 navigation.navigate('AddMeal', {
                     analyzedData: data.items[0],
                     mealImage: photo.uri,
                 });
+            } else {
+                setScanError(true);
+                setIsAlertVisible(true);
             }
-
         } catch (error) {
+            setScanError(true);
+            setIsAlertVisible(true);
             console.error('Error capturing or uploading photo:', error);
-            alert('Failed to capture or scan photo. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -183,10 +189,10 @@ const SnapMealScreen = () => {
                 {/* Overlay Corners */}
                 <View className="absolute inset-0 justify-center items-center pointer-events-none">
                     <View className="absolute w-[70%]" style={{ aspectRatio: 1 }}>
-                        <View className="absolute top-0 left-0 w-12 h-12 border-t-[12px] border-l-[12px] border-white rounded-tl-lg" />
-                        <View className="absolute top-0 right-0 w-12 h-12 border-t-[12px] border-r-[12px] border-white rounded-tr-lg" />
-                        <View className="absolute bottom-0 left-0 w-12 h-12 border-b-[12px] border-l-[12px] border-white rounded-bl-lg" />
-                        <View className="absolute bottom-0 right-0 w-12 h-12 border-b-[12px] border-r-[12px] border-white rounded-br-lg" />
+                        <View className={`absolute top-0 left-0 w-12 h-12 border-t-[12px] border-l-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-white'} rounded-tl-lg`} />
+                        <View className={`absolute top-0 right-0 w-12 h-12 border-t-[12px] border-r-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-white'} rounded-tr-lg`} />
+                        <View className={`absolute bottom-0 left-0 w-12 h-12 border-b-[12px] border-l-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-white'} rounded-bl-lg`} />
+                        <View className={`absolute bottom-0 right-0 w-12 h-12 border-b-[12px] border-r-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-white'} rounded-br-lg`} />
                     </View>
                 </View>
                 {/* Capture Button */}
@@ -201,6 +207,23 @@ const SnapMealScreen = () => {
                         <ActivityIndicator size="large" color="#fff" />
                     </View>
                 )}
+                <View className="absolute bottom-32 left-0 right-0 items-center">
+                    <Text className={`text-center text-base font-semibold ${scanError ? '' : 'text-white'}`} style={scanError ? { color: '#DB2F2C' } : {}}>
+                        {scanError ? 'Meal scanner not recognising food item' : 'Center the meal within the frame to scan'}
+                    </Text>
+                    {scanError && (
+                        <TouchableOpacity
+                            className="mt-4 px-6 py-3 rounded-full bg-[#DB2F2C]"
+                            onPress={() => {
+                                setIsAlertVisible(false);
+                                setScanError(false);
+                                navigation.navigate('AddMeal', {});
+                            }}
+                        >
+                            <Text className="text-white font-semibold">Add Manually</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
         </SafeAreaView>
     );
