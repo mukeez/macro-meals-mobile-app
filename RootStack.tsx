@@ -26,7 +26,8 @@ import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
 import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
-import { AddMealScreen } from "src/screens/AddMealScreen";
+import AddMealScreen from "src/screens/AddMealScreen";
+import AiMealSuggestionsScreen from "./src/screens/AiMealSuggestionsScreen";
 
 
 
@@ -113,6 +114,7 @@ const DashboardNavigator = () => {
             <Stack.Screen name="MacroInput" component={MacroInputScreen} />
             <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
             <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+            <Stack.Screen name="AiMealSuggestionsScreen" component={AiMealSuggestionsScreen} />
         </Stack.Navigator>
     );
 }

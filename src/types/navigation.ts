@@ -32,9 +32,10 @@ export type RootStackParamList = {
     PaymentScreen: undefined;
     SignupScreen: undefined;
     MacroGoals: undefined;
-    CustomBottomTabs: undefined;
+    CustomBottomTabs: { screen?: string } | undefined;
     Notifications: undefined; 
     TermsOfService: undefined;
     About: undefined;
     PrivacyPolicy: undefined;
+    AiMealSuggestionsScreen: undefined;
 };
