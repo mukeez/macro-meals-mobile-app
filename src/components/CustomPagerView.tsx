@@ -9,9 +9,18 @@ interface CustomPagerViewProps extends ViewProps {
     indicatorActiveColor?: string;
     indicatorInactiveColor?: string;
     indicatorClass?: string;
+    showIndicator?: boolean;
 }
 
-export default function CustomPagerView({children, className, indicatorActiveColor, indicatorInactiveColor, indicatorClass, ...rest}: CustomPagerViewProps){
+export default function CustomPagerView({
+  children, 
+  className, 
+  indicatorActiveColor, 
+  indicatorInactiveColor, 
+  indicatorClass, 
+  showIndicator = true,
+  ...rest
+}: CustomPagerViewProps){
     const [currentPage, setCurrentPage] = useState(0);
     return(
         <View className={className ?? 'flex-1 bg-white mx-5'} {...rest}>
@@ -26,10 +35,14 @@ export default function CustomPagerView({children, className, indicatorActiveCol
             {children}
         </PagerView>
         <View className={indicatorClass ?? "absolute bottom-4 w-full flex-row gap-2 justify-center items-center"}>
-        {Array.from({length: children.length}).map((_, index)=> (
-          <View key={index} className={`w-[10px] h-[10px] rounded-full ${index === currentPage ? indicatorActiveColor ?? 'bg-black' : indicatorInactiveColor ?? 'bg-lightGrey'}`}
-          />
-        ))}
+        {
+          showIndicator && (
+            Array.from({length: children.length}).map((_, index)=> (
+              <View key={index} className={`w-[10px] h-[10px] rounded-full ${index === currentPage ? indicatorActiveColor ?? 'bg-black' : indicatorInactiveColor ?? 'bg-lightGrey'}`}
+              />
+            ))
+          )
+        }
       </View>
         </View>
     )
