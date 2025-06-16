@@ -24,11 +24,11 @@ import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
 import NotificationsScreen from "./src/screens/NotificationsScreen";
 import NotificationsPreferences from "./src/screens/NotificationsPreferences";
-import AddMeal from "./src/screens/AddMeal";
 import AddMealScreen from "./src/screens/AddMealScreen";
 import TermsOfServiceScreen from "./src/screens/TermsOfServiceScreen";
 import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
+import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -114,6 +114,11 @@ const DashboardNavigator = () => {
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen
+        name="ForgotPasswordScreen"
+        component={ForgotPasswordScreen}
+      />
     </Stack.Navigator>
   );
 };

@@ -30,6 +30,7 @@ type RootStackParamList = {
   PrivacyPolicy: undefined;
   About: undefined;
   Notifications: undefined;
+  ChangePassword: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -276,7 +277,9 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {}}
+            onPress={() => {
+              navigation.navigate("ChangePassword");
+            }}
           />
           <SectionItem
             title="Units"
