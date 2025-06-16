@@ -7,11 +7,11 @@ interface MacroCircleProps {
     value: number;
     progress: number;
     color: string;
+    size?: number;
+    strokeWidth?: number;
 }
 
-export const MacroCircle: React.FC<MacroCircleProps> = ({ type, value, progress, color }) => {
-    const size = 80;
-    const strokeWidth = 8;
+export const MacroCircle: React.FC<MacroCircleProps> = ({ type, value, progress, color, size = 80, strokeWidth = 8 }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (progress / 100) * circumference;

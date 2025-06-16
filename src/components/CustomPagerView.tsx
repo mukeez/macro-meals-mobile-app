@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, ViewProps } from "react-native";
 import PagerView from 'react-native-pager-view';
 
@@ -10,6 +9,7 @@ interface CustomPagerViewProps extends ViewProps {
     indicatorInactiveColor?: string;
     indicatorClass?: string;
     showIndicator?: boolean;
+    page?: number;
 }
 
 export default function CustomPagerView({
@@ -19,18 +19,29 @@ export default function CustomPagerView({
   indicatorInactiveColor, 
   indicatorClass, 
   showIndicator = true,
+  page = 0,
   ...rest
 }: CustomPagerViewProps){
-    const [currentPage, setCurrentPage] = useState(0);
+    const [currentPage, setCurrentPage] = useState(page);
+    const pagerRef = useRef<PagerView>(null);
+
+    useEffect(() => {
+      if (pagerRef.current && page !== currentPage) {
+        pagerRef.current.setPage(page);
+        setCurrentPage(page);
+      }
+    }, [page]);
+
     return(
         <View className={className ?? 'flex-1 bg-white mx-5'} {...rest}>
         <PagerView
-        style={{ flex: 1}} 
-        orientation='horizontal'
-        onPageSelected={(e)=> {
-          setCurrentPage(e.nativeEvent.position);
-        }}
-        initialPage={0}
+          ref={pagerRef}
+          style={{ flex: 1}} 
+          orientation='horizontal'
+          onPageSelected={(e)=> {
+            setCurrentPage(e.nativeEvent.position);
+          }}
+          initialPage={0}
         >
             {children}
         </PagerView>

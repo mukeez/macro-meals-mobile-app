@@ -1,0 +1,76 @@
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, TextInput, Platform, Modal, Image } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
+import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
+
+export const GoalsDateOfBirth: React.FC = () => {
+  const dateOfBirth = useGoalsFlowStore((state) => state.dateOfBirth);
+  const setDateOfBirth = useGoalsFlowStore((state) => state.setDateOfBirth);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [tempDate, setTempDate] = useState<Date | null>(null);
+  const endOfYear = new Date(new Date().getFullYear(), 11, 31);
+//   const [showPicker, setShowPicker] = useState(false);
+
+
+  // Date picker modal handlers
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    if (selectedDate) setTempDate(selectedDate);
+  };
+  const handleDateCancel = () => {
+    setShowDateModal(false);
+  };
+  const handleDateDone = () => {
+    if (tempDate) {
+      const formatted = tempDate.toLocaleDateString('en-GB');
+      setDateOfBirth(formatted);
+    }
+    setShowDateModal(false);
+  };
+
+  return (
+    <View className="flex-1 h-full">
+      <Text className="text-3xl font-bold mb-8 mt-4">How old are you?</Text>
+      <TouchableOpacity
+        className="h-[68px] w-full border border-silver rounded-md px-4 flex-row items-center justify-between"
+        onPress={() => setShowDateModal(true)}
+        activeOpacity={0.8}
+      >
+        <Text className={`text-base ${dateOfBirth ? 'text-black' : 'text-gray-400'}`}>
+          {dateOfBirth ? dateOfBirth : 'Enter your date of birth'}
+        </Text>
+        <Image source={IMAGE_CONSTANTS.calendarIcon} className='w-[24px] h-[24px]' />
+      </TouchableOpacity>
+      <Modal
+            visible={showDateModal}
+            transparent
+            animationType="slide"
+            onRequestClose={handleDateCancel}
+          >
+            <View className="flex-1 justify-end bg-black/40">
+              <View className="bg-white rounded-t-xl p-4 ">
+                <Text className="text-center text-base font-semibold mb-2">Select Birthday</Text>
+                <DateTimePicker
+                  value={tempDate || new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                  maximumDate={endOfYear}
+                  style={{ alignSelf: 'center' }}
+                />
+                <View className="flex-row justify-between mt-4">
+                  <TouchableOpacity onPress={handleDateCancel} className="flex-1 items-center py-2">
+                    <Text className="text-lg text-blue-500">Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleDateDone} className="flex-1 items-center py-2">
+                    <Text className="text-lg text-blue-500">Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+    </View>
+  );
+};
+
+export default GoalsDateOfBirth;

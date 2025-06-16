@@ -36,6 +36,7 @@ const CustomSafeAreaView: React.FC<CustomSafeAreaViewProps> = ({
     ...rest
 }) => {
     const insets = useSafeAreaInsets();
+    console.log('CustomSafeAreaView children', children);
     const computedPadding = {
         paddingTop: paddingOverride.top ?? (edges.includes('top') ? insets.top : 0),
         paddingBottom: paddingOverride.bottom ?? (edges.includes('bottom') ? insets.bottom : 0),
