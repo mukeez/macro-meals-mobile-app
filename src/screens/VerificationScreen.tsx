@@ -72,12 +72,9 @@ export const VerificationScreen: React.FC = () => {
       email: routeEmail,
       otp: value,
     };
-    console.log("The verification params are", value);
     try {
       const data = await authService.verifyCode(params);
-      console.log("data", data);
       const session_token = data.session_token;
-      console.log("The session token is", session_token);
       if (session_token) {
         navigation.navigate("ResetPassword", {
           email: routeEmail,
