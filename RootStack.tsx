@@ -1,5 +1,7 @@
-import React from "react";
-import { WelcomeScreen } from "./src/screens/WelcomeScreen";
+import React, { useEffect } from "react";
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import {WelcomeScreen} from "./src/screens/WelcomeScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import ScanScreenType from "./src/screens/ScanScreenType";
 import BarcodeScanScreen from "./src/screens/BarcodeScanScreen";
@@ -16,9 +18,10 @@ import { ForgotPasswordScreen } from "./src/screens/ForgotPasswordScreen";
 import { VerificationScreen } from "./src/screens/VerificationScreen";
 import { MealListScreen } from "./src/screens/MealListScreen";
 import PaymentScreen from "./src/screens/PaymentScreen";
-import { createStackNavigator } from "@react-navigation/stack";
-import "./src/globals.css";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {createStackNavigator} from '@react-navigation/stack';
+import { useMixpanel } from "@macro-meals/mixpanel";
+import './src/globals.css';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
@@ -29,6 +32,12 @@ import TermsOfServiceScreen from "./src/screens/TermsOfServiceScreen";
 import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
+import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
+
+
+
+
+
 
 const Stack = createStackNavigator<RootStackParamList>();
 

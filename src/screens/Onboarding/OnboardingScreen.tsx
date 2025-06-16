@@ -44,7 +44,7 @@ export const OnboardingScreen: React.FC = () => {
                     <CustomPagerView 
                         indicatorActiveColor='bg-indicatorActive' 
                         indicatorInactiveColor='bg-indicatorInactive'
-                        indicatorClass='absolute bottom-44 w-full flex-row gap-2 justify-center items-center'
+                        indicatorClass='absolute bottom-40 w-full flex-row gap-2 justify-center items-center'
                     >
                         {onboardingItems.map((item: OnboardingItem, index: number) => (
                             <View key={index} className="flex-1 mt-[60px] items-center">

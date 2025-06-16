@@ -16,19 +16,29 @@ class ScanService {
                 },
                 body: JSON.stringify({ barcode })  // Send barcode in the body
             });
-            console.log(barcode)
-
-            // console.log(response)
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Failed to scan barcode');
+                const errorData = await response.json();
+                return {
+                    success: false,
+                    error: errorData.detail || 'Failed to scan barcode',
+                    barcode
+                };
             }
 
-            return await response.json();
+            const data = await response.json();
+            return {
+                success: true,
+                data,
+                barcode
+            };
         } catch (error) {
             console.error('Barcode scan error:', error);
-            throw error;
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error occurred',
+                barcode
+            };
         }
     }
 

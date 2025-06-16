@@ -23,6 +23,7 @@ module.exports = {
     extend: {
       colors:{
         primary: '#01675B',
+        primaryLight: '##009688',
         secondary: '#58B74F',
         accent: '#AB8BFF',
         indicatorActive: "#01675B",
@@ -35,6 +36,7 @@ module.exports = {
         gloomyPurple: "#7E54D9",
         lavenderPink: "#E283E0",
         kryptoniteGreen: "#44A047",
+        brightRed: '#FF4343'
       }
     },
   },

@@ -1,27 +1,23 @@
 import React, { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-  Image,
-  Switch,
-  Alert,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import useStore from "../store/useStore";
-import { Picker } from "@react-native-picker/picker";
-import { authService } from "../services/authService";
-import CustomSafeAreaView from "../components/CustomSafeAreaView";
-import { FontAwesome } from "@expo/vector-icons";
-import SectionItem from "../components/SectionItem";
-import ProfileSection from "../components/ProfileSection";
-import ProfileHeader from "../components/ProfileHeader";
-import LogoutButton from "../components/LogOutButton";
-import ContactSupportDrawer from "./ContactSupportDrawer";
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    SafeAreaView,
+    ScrollView,
+    Image,
+    Linking,
+    Platform,
+    Switch, Alert,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import useStore from '../store/useStore';
+import { Picker } from '@react-native-picker/picker';
+import { authService } from '../services/authService';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import { FontAwesome } from '@expo/vector-icons';
 
 type RootStackParamList = {
   Login: undefined;
@@ -34,6 +30,9 @@ type RootStackParamList = {
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+import { appConstants } from '../../constants/appConstants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { deleteItemAsync } from 'expo-secure-store';
 
 /**
  * Settings screen for the application.
@@ -174,10 +173,19 @@ export const SettingsScreen: React.FC = () => {
     // navigation.navigate('HelpSupport' as never);
   };
 
-  const handleModalSheet = () => {
-    console.log("Modal sheet");
-    navigation.navigate("PaymentScreen" as never);
-  };
+    const handleModalSheet = () => {
+        console.log('Modal sheet');
+        navigation.navigate('PaymentScreen' as never);
+    };
+
+    const openEmail = () => {
+        let url = `mailto:${appConstants.email.to}`;
+
+        const subject = `?subject=${encodeURIComponent(appConstants.email.subject)}`;
+        const body = `&body=${encodeURIComponent(appConstants.email.body)}`;
+        url += subject + body;
+        Linking.openURL(url).catch((err)=> console.error('Error opening email', err));
+    }
 
   /**
    * Handle navigation to feedback screen
@@ -325,73 +333,80 @@ export const SettingsScreen: React.FC = () => {
           />
         </ProfileSection>
 
-        {/* Help and Support Section */}
-        <ProfileSection title="HELP & SUPPORT">
-          <SectionItem
-            title="Contact Support"
-            icon="support-agent"
-            rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
-            }
-            onPress={() => setSupportDrawerOpen(true)}
-          />
-          <SectionItem
-            title="Submit Feedback"
-            icon="feedback"
-            rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
-            }
-            onPress={() => {}}
-          />
-          <SectionItem
-            title="Knowledge Base"
-            icon="menu-book"
-            rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
-            }
-            onPress={() => {}}
-          />
-        </ProfileSection>
+                {/* Help and Support Section */}
+                <View style={styles.supportSection}>
+                    <TouchableOpacity
+                        style={styles.supportItem}
+                        onPress={handleHelpSupport}
+                    >
+                        <View style={styles.supportIconContainer}>
+                            <Text style={styles.supportIcon}>❓</Text>
+                        </View>
+                        <Text style={styles.supportText}>Help & Support</Text>
+                    </TouchableOpacity>
 
-        {/* General Section */}
-        <ProfileSection title="GENERAL">
-          <SectionItem
-            title="Terms of Service"
-            icon="gavel"
-            rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
-            }
-            onPress={() => navigation.navigate("TermsOfService")}
-          />
-          <SectionItem
-            title="Privacy Policy"
-            icon="privacy-tip"
-            rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
-            }
-            onPress={() => navigation.navigate("PrivacyPolicy")}
-          />
-          <SectionItem
-            title="About"
-            icon="info"
-            rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
-            }
-            onPress={() => navigation.navigate("About")}
-          />
-        </ProfileSection>
-        <View className="w-4/5 mx-auto my-4">
-          <LogoutButton onPress={handleLogout} />
-        </View>
-      </ScrollView>
-      {supportDrawerOpen && (
-        <ContactSupportDrawer
-          onClose={() => setSupportDrawerOpen(false)}
-          //   appIconSource={require("../assets/icon.png")}
-        />
-      )}
-    </CustomSafeAreaView>
-  );
+                    <TouchableOpacity
+                        style={styles.supportItem}
+                        onPress={openEmail}
+                    >
+                        <View style={styles.supportIconContainer}>
+                            <Text style={styles.supportIcon}>💬</Text>
+                        </View>
+                        <Text style={styles.supportText}>Send Feedback</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.premiumButton}
+                        onPress={handleModalSheet}
+                    >
+                        <Text style={styles.premiumText}>💰</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.supportItem, styles.logoutItem]}
+                        onPress={handleLogout}
+                    >
+                        <View style={[styles.supportIconContainer, styles.logoutIconContainer]}>
+                            <Text style={styles.supportIcon}>🚪</Text>
+                        </View>
+                        <Text style={[styles.supportText, styles.logoutText]}>Logout</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.section}>
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('TermsOfService')}
+                    >
+                        <Text style={styles.menuItemText}>Terms of Service</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('PrivacyPolicy')}
+                    >
+                        <Text style={styles.menuItemText}>Privacy Policy</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => navigation.navigate('About')}
+                    >
+                        <Text style={styles.menuItemText}>About</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.section}>
+                    <TouchableOpacity
+                        style={[styles.menuItem, styles.deleteButton]}
+                        onPress={handleDeleteAccount}
+                    >
+                        <Text style={styles.deleteText}>Delete Account</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </CustomSafeAreaView>
+    );
 };
 
 export default SettingsScreen;

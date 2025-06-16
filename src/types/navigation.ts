@@ -12,6 +12,7 @@ export type RootStackParamList = {
     Auth: { initialAuthScreen: string };
     Dashboard: undefined;
     Welcome: undefined;
+    AccountSettings: undefined;
     Login: undefined;
     SignUp: undefined;
     MacroInput: undefined;

@@ -6,9 +6,12 @@ import {
     TouchableOpacity,
     StatusBar,
     Image,
+    ImageBackground,
+    TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 
 /**
  * ScanScreen component displays the various meal logging options:
@@ -23,13 +26,7 @@ const ScanScreenType: React.FC = () => {
      * Navigate to the camera screen to take a photo of food
      */
     const handleOpenCamera = () => {
-        // You would implement or navigate to a camera capture screen
-        console.log('Opening camera for meal photo');
         navigation.navigate('SnapMeal' as never);
-
-
-        // This would typically navigate to a camera screen, e.g.
-        // navigation.navigate('MealCameraScreen' as never);
     };
 
     /**
@@ -46,234 +43,246 @@ const ScanScreenType: React.FC = () => {
         navigation.navigate('AddMeal' as never);
     };
 
+    const handleMealSuggestions = () => {
+        navigation.navigate('MealSuggestionsScreen' as never);
+    };
+
+    const handleMealFinder = () => {
+        navigation.navigate('MealFinderScreen' as never);
+    };
+
     return (
-        <CustomSafeAreaView edges={['left', 'right']}>
+        <CustomSafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
             <StatusBar barStyle="dark-content" />
-
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoBox}>
-                        <Text style={styles.logoIcon}>🍴</Text>
-                    </View>
-                    <Text style={styles.logoText}>MacroMeal</Text>
-                </View>
-                <TouchableOpacity style={styles.helpButton}>
-                    <Text style={styles.helpIcon}>❓</Text>
+            {/* Header (always on solid white) */}
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerIconBtn}>
+                    <Image source={IMAGE_CONSTANTS.closeIcon} className='w-[14px] h-[14px] object-fill' />
                 </TouchableOpacity>
+                <Text style={styles.headerTitle}>Add a meal</Text>
+                <View style={{ width: 32 }} />
             </View>
-
-            <View style={styles.optionCard}>
-                <View style={styles.optionContent}>
-                    <View style={[styles.optionIconContainer, styles.cameraIconContainer]}>
-                        <Text style={styles.optionIcon}>📷</Text>
-                    </View>
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionTitle}>Scan with Camera</Text>
-                        <Text style={styles.optionSubtitle}>Take a photo of your meal</Text>
-                    </View>
-                </View>
-                <TouchableOpacity
-                    style={[styles.actionButton, styles.cameraButton]}
-                    onPress={handleOpenCamera}
-                >
-                    <Text style={styles.actionButtonText}>Open Camera</Text>
-                </TouchableOpacity>
+            {/* Search Bar (on white) */}
+            <View style={styles.searchBarContainer}>
+             <Image source={IMAGE_CONSTANTS.searchIcon} className='w-[24px] h-[24px] object-fill mr-2' />
+                <TextInput
+                   className=' flex-1 placeholder:text-[18px] placeholder:font-normal placeholder:text-lightGrey'
+                    placeholder="Search for a food"
+                    placeholderTextColor="#B0B0B0"
+                    editable={false}
+                />
             </View>
+ 
+            <View style={{ flex: 1, backgroundColor: '#88cec8' }}>
+                <ImageBackground
+                    source={require('../../assets/add-meal-bg.png')}
+                    style={styles.bg}
+                    resizeMode="cover"
+                >
+      
+                    <View className='mt-10 mx-5'>
+                        <Text className='text-sm font-semibold text-black mb-5'>SCAN OPTIONS</Text>
+                        <View style={styles.scanOptionsRow}>
+                            <TouchableOpacity style={styles.scanOptionCard} onPress={handleScanBarcode}>
+                                <View className='flex-row items-center mb-2 justify-center mr-2 w-[40px] h-[40px] rounded-full bg-lightGreen'>
 
-            <View style={styles.optionCard}>
-                <View style={styles.optionContent}>
-                    <View style={[styles.optionIconContainer, styles.barcodeIconContainer]}>
-                        <Text style={styles.optionIcon}>📊</Text>
+                                <Image source={IMAGE_CONSTANTS.scanBarcodeIcon} className='w-[24px] h-[24px] object-fill' />
+                                </View>
+                                <Text className='text-base font-normal text-black'>Scan a barcode</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.scanOptionCard} onPress={handleOpenCamera}>
+                                <View className='flex-row items-center mb-2 justify-center mr-2 w-[40px] h-[40px] rounded-full bg-lightGreen'>
+                                <Image source={IMAGE_CONSTANTS.scanMealIcon} className='w-[24px] h-[24px] object-fill' />
+                                </View>
+                                <Text className='text-base font-normal text-black'>Scan a meal</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionTitle}>Scan Barcode</Text>
-                        <Text style={styles.optionSubtitle}>Scan product barcode</Text>
+                    {/* Discover More */}
+                    <View className='mt-8 mx-5'>
+                        <Text className='text-sm font-semibold text-black mb-2'>DISCOVER MORE</Text>
+                        <View className='mt-3 bg-white rounded-lg p-1'>      
+                            <TouchableOpacity style={styles.discoverCardInner} onPress={handleManualEntry}>
+                                <View className='flex-row items-center justify-center mr-4 w-[40px] h-[40px] rounded-full bg-lightGreen'>
+                                <Image source={IMAGE_CONSTANTS.editIcon} className='w-[24px] h-[24px] object-fill' />
+                                </View>
+                                <View style={styles.discoverTextWrap}>
+                                    <Text className='text-sm font-semibold text-black mb-2'>Manual entry</Text>
+                                    <Text className='text-xs font-normal text-black'>Log your meal details including portion sizes and ingredients for precise macro tracking.</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                        <View className='mt-3 bg-white rounded-lg p-1'>      
+                            <TouchableOpacity style={styles.discoverCardInner} onPress={handleMealSuggestions}>
+                                <View className='flex-row items-center justify-center mr-4 w-[40px] h-[40px] rounded-full bg-lightGreen'>
+                                <Image source={IMAGE_CONSTANTS.wandIcon} className='w-[24px] h-[24px] object-fill' />
+                                </View>
+                                <View style={styles.discoverTextWrap}>
+                                    <Text className='text-sm font-semibold text-black mb-2'>AI Meal suggestions</Text>
+                                    <Text className='text-xs font-normal text-black'>Get personalized meal recommendations based on your remaining macros.</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                        <View className='mt-3 bg-white rounded-lg p-1 mb-10'>      
+                            <TouchableOpacity style={styles.discoverCardInner} onPress={handleMealFinder}>
+                                <View className='flex-row items-center justify-center mr-4 w-[40px] h-[40px] rounded-full bg-lightGreen'>
+                                <Image source={IMAGE_CONSTANTS.locationIcon} className='w-[24px] h-[24px] object-fill' />
+                                </View>
+                                <View style={styles.discoverTextWrap}>
+                                    <Text className='text-sm font-semibold text-black mb-2'>Meal Finder</Text>
+                                    <Text className='text-xs font-normal text-black'>Discover nearby restaurant options that align with your macro targets and dietary preferences.</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
-                <TouchableOpacity
-                    style={[styles.actionButton, styles.barcodeButton]}
-                    onPress={handleScanBarcode}
-                >
-                    <Text style={styles.actionButtonText}>Scan Barcode</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.optionCard}>
-                <View style={styles.optionContent}>
-                    <View style={[styles.optionIconContainer, styles.manualIconContainer]}>
-                        <Text style={styles.optionIcon}>⌨️</Text>
-                    </View>
-                    <View style={styles.optionTextContainer}>
-                        <Text style={styles.optionTitle}>Manual Entry</Text>
-                        <Text style={styles.optionSubtitle}>Search and log manually</Text>
-                    </View>
-                </View>
-                <TouchableOpacity
-                    style={[styles.actionButton, styles.manualButton]}
-                    onPress={handleManualEntry}
-                >
-                    <Text style={styles.manualButtonText}>Enter Manually</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.tabBar}>
-                <TouchableOpacity
-                    style={styles.tabItem}
-                    onPress={() => navigation.navigate('DashboardScreen' as never)}
-                >
-                    <Text style={styles.tabIcon}>🏠</Text>
-                    <Text style={styles.tabText}>Home</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.tabItem, styles.activeTab]}>
-                    <Text style={[styles.tabIcon, styles.activeTabIcon]}>📷</Text>
-                    <Text style={[styles.tabText, styles.activeTabText]}>Scan</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.tabItem}
-                    onPress={() => navigation.navigate('MealLogScreen' as never)}
-                >
-                    <Text style={styles.tabIcon}>📋</Text>
-                    <Text style={styles.tabText}>Log</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.tabItem}
-                    onPress={() => navigation.navigate('SettingsScreen' as never)}
-                >
-                    <Text style={styles.tabIcon}>👤</Text>
-                    <Text style={styles.tabText}>Profile</Text>
-                </TouchableOpacity>
+                </ImageBackground>
             </View>
         </CustomSafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    bg: {
         flex: 1,
-        backgroundColor: '#fff',
+        width: '100%',
+        height: '100%',
+        paddingBottom: 120,
     },
-    header: {
+    headerRow: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
         paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        paddingTop: 16,
+        paddingBottom: 8,
     },
-    logoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    logoBox: {
-        width: 40,
-        height: 40,
-        backgroundColor: '#3D9A8B',
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logoIcon: {
-        fontSize: 22,
-        color: 'white',
-    },
-    logoText: {
-        fontSize: 22,
-        fontWeight: '600',
-        color: '#3D9A8B',
-        marginLeft: 10,
-    },
-    helpButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#f1f1f1',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    helpIcon: {
-        fontSize: 20,
-        color: '#888',
-    },
-    optionCard: {
-        margin: 16,
-        marginBottom: 8,
-        backgroundColor: '#fff',
+    headerIconBtn: {
+        width: 32,
+        height: 32,
         borderRadius: 16,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 2.5,
-        elevation: 2,
-    },
-    optionContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    optionIconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
-    },
-    cameraIconContainer: {
-        backgroundColor: '#E8F7F3',
-    },
-    barcodeIconContainer: {
-        backgroundColor: '#FFF2E6',
-    },
-    manualIconContainer: {
         backgroundColor: '#F5F5F5',
     },
-    optionIcon: {
-        fontSize: 24,
+    headerIcon: {
+        fontSize: 22,
+        color: '#222',
+        fontWeight: 'bold',
     },
-    optionTextContainer: {
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#1a8a6a',
+        textAlign: 'center',
+    },
+    searchBarContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F5F5F5',
+        borderRadius: 24,
+        marginHorizontal: 20,
+        marginBottom: 18,
+        paddingHorizontal: 16,
+        height: 44,
+    },
+    searchIcon: {
+        fontSize: 18,
+        color: '#B0B0B0',
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#222',
+    },
+    section: {
+        marginHorizontal: 20,
+        marginBottom: 18,
+    },
+    sectionTitle: {
+        fontSize: 14,
+        color: '#222',
+        fontWeight: 'bold',
+        marginBottom: 12,
+        marginTop: 8,
+    },
+    scanOptionsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    scanOptionCard: {
+        flex: 1,
+        backgroundColor: '#fff',
+        borderRadius: 6,
+        alignItems: 'center',
+        paddingVertical: 24,
+
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    scanOptionIconWrap: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#E8F7F3',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    scanOptionIcon: {
+        fontSize: 24,
+        color: '#19a28f',
+    },
+    scanOptionText: {
+        fontSize: 16,
+        color: '#222',
+        fontWeight: '500',
+        textAlign: 'center',
+    },
+    discoverCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    discoverCardInner: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        padding: 16,
+    },
+    discoverIconWrap: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#E8F7F3',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 14,
+    },
+    discoverIcon: {
+        fontSize: 20,
+        color: '#19a28f',
+    },
+    discoverTextWrap: {
         flex: 1,
     },
-    optionTitle: {
-        fontSize: 18,
+    discoverTitle: {
+        fontSize: 16,
         fontWeight: '600',
-        color: '#333',
-        marginBottom: 4,
+        color: '#222',
+        marginBottom: 2,
     },
-    optionSubtitle: {
+    discoverDesc: {
         fontSize: 14,
-        color: '#777',
-    },
-    actionButton: {
-        borderRadius: 12,
-        paddingVertical: 14,
-        alignItems: 'center',
-    },
-    cameraButton: {
-        backgroundColor: '#3D9A8B',
-    },
-    barcodeButton: {
-        backgroundColor: '#F47B20',
-    },
-    manualButton: {
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#ddd',
-    },
-    actionButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    manualButtonText: {
-        color: '#555',
-        fontSize: 16,
-        fontWeight: '600',
+        color: '#666',
     },
     tabBar: {
         flexDirection: 'row',
@@ -282,7 +291,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#eee',
         position: 'absolute',
-        bottom: 20,
+        bottom: 0,
         left: 0,
         right: 0,
     },
