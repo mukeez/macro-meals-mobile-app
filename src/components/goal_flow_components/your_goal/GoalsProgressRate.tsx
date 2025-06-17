@@ -10,7 +10,7 @@ export const GoalsProgressRate: React.FC = () => {
   const setProgressRate = useGoalsFlowStore((s) => s.setProgressRate);
 
   // Default value if not set
-  const value = progressRate ? parseFloat(progressRate) : 2.0;
+  const value = progressRate ? parseFloat(progressRate) : 0.0;
 
   // Calculate monthly rate
   const weekly = value;
@@ -26,7 +26,7 @@ export const GoalsProgressRate: React.FC = () => {
         <View className="items-center w-full mb-4">
           <Slider
             style={{ width: '100%', height: 40 }}
-            minimumValue={0.5}
+            minimumValue={0}
             maximumValue={3.0}
             step={0.01}
             value={value}
