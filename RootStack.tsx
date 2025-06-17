@@ -12,7 +12,6 @@ import { DashboardScreen } from "./src/screens/DashboardScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { SignupScreen } from "./src/screens/SignupScreen";
 import { OnboardingScreen } from "./src/screens/Onboarding/OnboardingScreen";
-import { MacroInputScreen } from "./src/screens/MacroInputScreen";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 import { ForgotPasswordScreen } from "./src/screens/ForgotPasswordScreen";
 import { VerificationScreen } from "./src/screens/VerificationScreen";
@@ -25,12 +24,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
+import NotificationsScreen from "./src/screens/NotificationsScreen"; 
+import AddMeal from "./src/screens/AddMeal";
+import AddMealScreen from "./src/screens/AddMealScreen";
+import TermsOfServiceScreen from "./src/screens/TermsOfServiceScreen";
+import AboutScreen from "./src/screens/AboutScreen";
+import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
+import AiMealSuggestionsScreen from "src/screens/AiMealSuggestionsScreen";
 import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
-import AddMealScreen from "src/screens/AddMealScreen";
-import AiMealSuggestionsScreen from "./src/screens/AiMealSuggestionsScreen";
-
-
-
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -111,7 +112,6 @@ const DashboardNavigator = () => {
             <Stack.Screen name="AddMeal" component={AddMealScreen} />
             <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
             <Stack.Screen name="MealLog" component={MealLogScreen} />
-            <Stack.Screen name="MacroInput" component={MacroInputScreen} />
             <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
             <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
             <Stack.Screen name="AiMealSuggestionsScreen" component={AiMealSuggestionsScreen} />
