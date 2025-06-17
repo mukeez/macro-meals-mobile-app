@@ -12,7 +12,7 @@ import { IMAGE_CONSTANTS } from 'src/constants/imageConstants'
 import BackButton from 'src/components/BackButton'
 import { GoalsDateOfBirth } from 'src/components/goal_flow_components/basic_info/GoalsDateOfBirth'
 import { LinearProgress } from 'src/components/LinearProgress'
-import { GoalsLocation } from 'src/components/goal_flow_components/basic_info/GoalsLocation'
+// import { GoalsLocation } from 'src/components/goal_flow_components/basic_info/GoalsLocation'
 import { GoalBodyMetrics } from 'src/components/goal_flow_components/basic_info/GoalsBodyMetrics'
 import { GoalDailyActivityLevel } from 'src/components/goal_flow_components/basic_info/GoalsDailyActivityLevel'
 import { GoalsDietryPreference } from 'src/components/goal_flow_components/basic_info/GoalsDietryPreference'
@@ -48,18 +48,168 @@ export const GoalsSetupFlow =  () => {
     fitnessGoal,
     targetWeight,
     progressRate,
+    preferences,
+    setPreferences,
+    macroTargets,
+    setMacroTargets,
   } = useGoalsFlowStore();
 
   const [isLoading, setIsLoading] = React.useState(false);
   const token = useStore((state) => state.token);
 
   const majorSteps = ['Basic info', 'Your goal', 'Your plan'];
-  const subStepCounts = [7, 3, 1];
+  const subStepCounts = [5, 3, 1];
+  const isLastStepOfSecondMajor = majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
+
+  React.useEffect(() => {
+    if (isLastStepOfSecondMajor) {
+      const fetchAndStorePreferences = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(`${API_URL}/preferences/get-preferences`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+          });
+          const data = await response.json();
+          setPreferences(data);
+          // Map API response to macroTargets
+          setMacroTargets({
+            carbs: data.carbs_target,
+            fat: data.fat_target,
+            protein: data.protein_target,
+            calorie: data.calorie_target,
+          });
+        } catch (error) {
+          console.error('Error fetching preferences:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchAndStorePreferences();
+      calculateMacros();
+    }
+  }, [isLastStepOfSecondMajor]);
+
+  const calculateMacros = async () => {
+    try {
+      setIsLoading(true);
+      try {
+        setIsLoading(true);
+        console.log('DATE OF BIRTH', dateOfBirth);
+        console.log('GENDER', gender);
+        console.log('DAILY ACTIVITY LEVEL', dailyActivityLevel);
+        console.log('DIETRY PREFERENCE', dietryPreference);
+        console.log('FITNESS GOAL', fitnessGoal);
+        console.log('TARGET WEIGHT', targetWeight);
+        console.log('PROGRESS RATE', progressRate);
+
+        // Validate required fields
+        if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || !progressRate) {
+          throw new Error('Missing required fields');
+        }
+
+        // Calculate height (do not convert, just pass as is)
+        let heightValue = 0;
+        if (unit === 'imperial') {
+          if (heightFt === null) {
+            throw new Error('Missing height measurement');
+          }
+          heightValue = heightFt;
+        } else {
+          if (heightCm === null) {
+            throw new Error('Missing height measurement');
+          }
+          heightValue = heightCm;
+        }
+
+        // Calculate weight (do not convert, just pass as is)
+        let weightValue = 0;
+        if (unit === 'imperial') {
+          if (weightLb === null) {
+            throw new Error('Missing weight measurement');
+          }
+          weightValue = weightLb;
+        } else {
+          if (weightKg === null) {
+            throw new Error('Missing weight measurement');
+          }
+          weightValue = weightKg;
+        }
+
+        // Map and format API fields
+        const sexApi = gender?.toLowerCase(); // "male" or "female"
+        const dobApi = (() => {
+          if (dateOfBirth && dateOfBirth.includes('/')) {
+            const [day, month, year] = dateOfBirth.split('/');
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          }
+          return dateOfBirth;
+        })();
+
+        const activityLevelMap: Record<string, string> = {
+          "Not very active": "sedentary",
+          "Moderately active": "moderate",
+          "Very active": "active"
+        };
+        const activityLevelApi = activityLevelMap[dailyActivityLevel] || "sedentary";
+
+        const goalTypeMap: Record<string, string> = {
+          "Lose weight": "lose",
+          "Maintain weight": "maintain",
+          "Gain weight": "gain"
+        };
+        const goalTypeApi = goalTypeMap[fitnessGoal] || "maintain";
+
+        const manualMacros = {
+          calories: 1, // must be > 0
+          carbs: 0,
+          fat: 0,
+          protein: 0
+        };
+        const response = await fetch(`${API_URL}/macros/calculate-macros`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            activity_level: activityLevelApi,
+            age: calculateAge(dateOfBirth),
+            dietary_preference: dietryPreference,
+            dob: dobApi,
+            goal_type: goalTypeApi,
+            height: heightValue,
+            manual_macros: manualMacros,
+            progress_rate: progressRate,
+            sex: sexApi,
+            target_weight: targetWeight,
+            unit_preference: unit,
+            weight: weightValue
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          Alert.alert('Error', errorText);
+          throw new Error('Failed to calculate macros');
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    } catch (error) {
+      Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
+    }
+  }
 
   const basicInfoSubsteps = [
     <GoalsGender key="gender" />,
     <GoalsDateOfBirth key="dob" />,
-    <GoalsLocation key="location" />,
+    // <GoalsLocation key="location" />,
     <GoalBodyMetrics key="bodymetrics" />,
     <GoalDailyActivityLevel key="activity" />,
     <GoalsDietryPreference key="diet" />,
@@ -71,8 +221,17 @@ export const GoalsSetupFlow =  () => {
     <GoalsProgressRate key="progress" />,
   ];
 
+  // Macro data for GoalsPersonalizedPlan
+  const macroData = macroTargets
+    ? [
+        { type: 'Carbs', value: macroTargets.carbs, color: '#FFC107' },
+        { type: 'Fat', value: macroTargets.fat, color: '#E283E0' },
+        { type: 'Protein', value: macroTargets.protein, color: '#A59DFE' },
+      ]
+    : [];
+
   const yourPlanSubsteps = [
-    <GoalsPersonalizedPlan key="plan" />,
+    <GoalsPersonalizedPlan isLoading={isLoading} key="plan" macroData={macroData} calorieTarget={preferences?.calorie_target} />,
   ];
 
   const substepComponents = [
@@ -89,15 +248,36 @@ export const GoalsSetupFlow =  () => {
     if (majorStep === 0 && subSteps[majorStep] === 1) {
       return !!dateOfBirth;
     }
+    // if (majorStep === 0 && subSteps[majorStep] === 2) {
+    //   return !!location;
+    // }
     if (majorStep === 0 && subSteps[majorStep] === 2) {
-      return !!location;
-    }
-    if (majorStep === 0 && subSteps[majorStep] === 3) {
       if (unit === 'imperial') {
         return heightFt !== null && heightIn !== null && weightLb !== null;
       } else {
         return heightCm !== null && weightKg !== null;
       }
+    }
+    if (majorStep === 0 && subSteps[majorStep] === 3) {
+      return !!dailyActivityLevel;
+    }
+    if (majorStep === 0 && subSteps[majorStep] === 4) {
+      return !!dietryPreference;
+    }
+    if (majorStep === 1 && subSteps[majorStep] === 0) {
+      return !!fitnessGoal;
+    }
+    if (majorStep === 1 && subSteps[majorStep] === 1) {
+      return !!targetWeight;
+    }
+    if (majorStep === 1 && subSteps[majorStep] === 2) { 
+      if (progressRate === '0.00') {
+        return false;
+      }
+      return true;
+    }
+    if (majorStep === 2 && subSteps[majorStep] === 0) {
+      return !!macroTargets;
     }
     // Add more validation for other substeps
     return true;
@@ -106,39 +286,46 @@ export const GoalsSetupFlow =  () => {
   const handleContinue = async () => {
     if (!isCurrentSubStepValid()) return;
 
+    // Check if we're on the last step of the second major step
+    const isLastStepOfSecondMajor = majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
+
+    if (isLastStepOfSecondMajor) {
+        markSubStepComplete(majorStep, subSteps[majorStep]);
+        navigation.navigate('GoalSetupScreen');
+        return;
+    }
+
     // Gender substep
     if (majorStep === 0 && subSteps[majorStep] === 0) {
       if (!gender) return;
-      const success = await postGender(gender);
-      if (!success) return;
     }
 
     // Date of birth substep
     if (majorStep === 0 && subSteps[majorStep] === 1) {
       if (!dateOfBirth) return;
-      const success = await postDateOfBirth(dateOfBirth);
-      if (!success) return;
     }
 
     // Location substep
-    if (majorStep === 0 && subSteps[majorStep] === 2) {
-      if (!location) return;
-      console.log('location', location);
-      const success = await postLocation(location);
-      if (!success) return;
-    }
+    // if (majorStep === 0 && subSteps[majorStep] === 2) {
+    //   if (!location) return;
+    // }
 
     // Body metrics substep
-    if (majorStep === 0 && subSteps[majorStep] === 3) {
-      const success = await postBodyMetrics();
-      if (!success) return;
+    if (majorStep === 0 && subSteps[majorStep] === 2) {
+      if (unit === 'imperial') {
+        if (heightFt === null || heightIn === null || weightLb === null) return;
+      } else {
+        if (heightCm === null || weightKg === null) return;
+      }
     }
 
     // If last Basic Info substep, navigate to GoalSetupScreen
-    if (majorStep === 0 && subSteps[majorStep] === 5) {
+    if (majorStep === 0 && subSteps[majorStep] === 3) {
       if (!dailyActivityLevel) return;
-      const success = await postDailyActivityLevel(dailyActivityLevel);
-      if (!success) return;
+    }
+
+    if (majorStep === 0 && subSteps[majorStep] === 4) {
+      if (!dietryPreference) return;
       markSubStepComplete(majorStep, subSteps[majorStep]);
       navigation.navigate('GoalSetupScreen');
       return;
@@ -146,20 +333,14 @@ export const GoalsSetupFlow =  () => {
 
     if (majorStep === 1 && subSteps[majorStep] === 0) {
       if (!fitnessGoal) return;
-      const success = await postFitnessGoal(fitnessGoal);
-      if (!success) return;
     }
 
     if (majorStep === 1 && subSteps[majorStep] === 1) {
       if (!targetWeight) return;
-      const success = await postTargetWeight(targetWeight);
-      if (!success) return;
     }
 
     if (majorStep === 1 && subSteps[majorStep] === 2) {
       if (!progressRate) return;
-      const success = await postProgressRate(progressRate);
-      if (!success) return;
     }
 
     markSubStepComplete(majorStep, subSteps[majorStep]);
@@ -171,201 +352,28 @@ export const GoalsSetupFlow =  () => {
     setSubStep(majorStep, subSteps[majorStep] + 1);
   };
 
-  const postGender = async (gender: string) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ sex: gender }),
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
+  // Helper function to calculate age from date of birth
+  const calculateAge = (dob: string) => {
+    console.log('DOB', dob);
+    // Parse dob in format 'DD/MM/YYYY'
+    let birthDate: Date | null = null;
+    if (dob && typeof dob === 'string' && dob.includes('/')) {
+      const [day, month, year] = dob.split('/').map(Number);
+      birthDate = new Date(year, month - 1, day);
+    } else {
+      birthDate = new Date(dob);
     }
+    console.log('BIRTH DATE', birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    console.log('AGE', age);
+    return age;
   };
-
-  const postDateOfBirth = async (dateOfBirth: string) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ dob: dateOfBirth }),
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const postLocation = async (location: string) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ location }),
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const postBodyMetrics = async () => {
-    try {
-      setIsLoading(true);
-      let payload = {};
-      if (unit === 'imperial') {
-        payload = { heightFt, heightIn, weightLb };
-      } else {
-        payload = { heightCm, weightKg };
-      }
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify(payload),
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const postDailyActivityLevel = async (dailyActivityLevel: string) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ dailyActivityLevel }),
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const postDietryPreference = async (dietryPreference: string) => {            
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ dietryPreference }),
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-}
-
-  const postFitnessGoal = async (fitnessGoal: string) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ fitnessGoal }),
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const postTargetWeight = async (targetWeight: number) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ targetWeight }),
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const postProgressRate = async (progressRate: string) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ progressRate }),
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  const postPersonalizedPlan = async (personalizedPlan: string) => {
-    try {
-      setIsLoading(true);
-      await fetch(`${API_URL}/user/me`, {
-        method: 'PATCH',
-        body: JSON.stringify({ personalizedPlan }),
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Error', 'Something went wrong');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   // Calculate progress for each major step
   const getStepProgress = (idx: number) => {
@@ -376,47 +384,64 @@ export const GoalsSetupFlow =  () => {
 
   return (
     <CustomSafeAreaView edges={['left', 'right']}>
-      {/* Header and Segmented Progress Bar */}
-      <View className="px-4">
-        <View className="flex-row items-center justify-between">
-          
-          <View style={{ width: 32 }} /> {/* Spacer to balance the row */}
-        </View>
-        <View className="items-center mt-2 mb-2">
-          <View className="bg-aquaSqueeze rounded-full px-5 py-2 flex-row items-center justify-center mb-2">
-            <Image source={IMAGE_CONSTANTS.personAltIcon} className="w-[16px] h-[16px] mr-2" />
-            <Text className="text-base font-normal text-primary">{majorSteps[majorStep]}</Text>
+      <View className="flex-1">
+        {/* Header and Segmented Progress Bar */}
+        <View className="px-4">
+          <View className="flex-row items-center justify-between">
+            <View style={{ width: 32 }} /> {/* Spacer to balance the row */}
           </View>
-          {/* Segmented Progress Bar */}
-          <View className="flex-row items-center justify-between space-x-2 mt-2 w-full">
-          <BackButton onPress={() => navigation.goBack()} />
-            <View className='ml-5 flex-row items-start justify-start gap-3 w-full'>
-            {majorSteps.map((label, idx) => (
-              <LinearProgress
-                key={label}
-                width={81.5}
-                height={6}
-                progress={getStepProgress(idx)}
-                color="#FEBF00"
-                backgroundColor="#E5E5E5"
-              />
-            ))}
+          <View className="items-center mt-2 mb-2">
+            <View className="bg-aquaSqueeze rounded-full px-5 py-2 flex-row items-center justify-center mb-2">
+              <Image source={IMAGE_CONSTANTS.personAltIcon} className="w-[16px] h-[16px] mr-2" />
+              <Text className="text-base font-normal text-primary">{majorSteps[majorStep]}</Text>
+            </View>
+            {/* Segmented Progress Bar */}
+            <View className="flex-row items-center justify-between space-x-2 mt-2 w-full">
+              <BackButton onPress={() => navigation.goBack()} />
+              <View className='ml-5 flex-row items-start justify-start gap-3 w-full'>
+                {majorSteps.map((label, idx) => (
+                  <View key={label}>
+                    <LinearProgress
+                      width={81.5}
+                      height={6}
+                      progress={getStepProgress(idx)}
+                      color="#FEBF00"
+                      backgroundColor="#E5E5E5"
+                    />
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
         </View>
+
+        {/* Pager */}
+          <CustomPagerView
+            page={subSteps[majorStep]}
+            showIndicator={false}
+          >
+            {substepComponents[majorStep]}
+          </CustomPagerView>
+
+        {/* Continue Button */}
+        <View className="absolute bottom-10 left-0 right-0">
+          <TouchableOpacity
+            disabled={!isCurrentSubStepValid() || isLoading}
+            className={`mx-4 bg-primary ${isCurrentSubStepValid() ? 'opacity-100' : 'opacity-50'} h-[56px] rounded-[1000px] p-4 flex-row items-center justify-center gap-3`}
+            onPress={handleContinue}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text className='text-white text-sm font-semibold'>
+                {majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1
+                  ? 'Confirm'
+                  : 'Next'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-      {/* Pager */}
-      <CustomPagerView showIndicator={false} page={subSteps[majorStep]}>
-        {substepComponents[majorStep]}
-      </CustomPagerView>
-      {/* Continue Button */}
-      <TouchableOpacity
-        disabled={!isCurrentSubStepValid() || isLoading}
-        className={`mx-4 absolute bg-primary bottom-10 left-0 right-0 ${isCurrentSubStepValid() ? 'opacity-100' : 'opacity-50'} h-[56px] rounded-[1000px] p-4 flex-row items-center justify-center gap-3`}
-        onPress={handleContinue}
-      >
-        {isLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text className='text-white text-sm font-semibold'>Next</Text>}
-      </TouchableOpacity>
     </CustomSafeAreaView>
   );
 }
