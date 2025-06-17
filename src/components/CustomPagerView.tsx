@@ -10,6 +10,11 @@ interface CustomPagerViewProps extends ViewProps {
     indicatorClass?: string;
     showIndicator?: boolean;
     page?: number;
+    /**
+     * If false, disables swiping/scrolling between pages.
+     * Default: true
+     */
+    scrollEnabled?: boolean;
 }
 
 export default function CustomPagerView({
@@ -20,6 +25,7 @@ export default function CustomPagerView({
   indicatorClass, 
   showIndicator = true,
   page = 0,
+  scrollEnabled = true,
   ...rest
 }: CustomPagerViewProps){
     const [currentPage, setCurrentPage] = useState(page);
@@ -36,12 +42,13 @@ export default function CustomPagerView({
         <View className={className ?? 'flex-1 bg-white mx-5'} {...rest}>
         <PagerView
           ref={pagerRef}
-          style={{ flex: 1}} 
-          orientation='horizontal'
-          onPageSelected={(e)=> {
-            setCurrentPage(e.nativeEvent.position);
-          }}
-          initialPage={0}
+        style={{ flex: 1}} 
+        orientation='horizontal'
+        onPageSelected={(e)=> {
+          setCurrentPage(e.nativeEvent.position);
+        }}
+        initialPage={0}
+        scrollEnabled={scrollEnabled}
         >
             {children}
         </PagerView>
