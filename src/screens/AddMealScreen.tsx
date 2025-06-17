@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
-import Header from "../components/Header"; // Adjust path as needed
+import Header from "../components/Header";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
 

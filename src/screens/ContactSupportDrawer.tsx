@@ -7,7 +7,7 @@ import {
   Image,
   Linking,
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"; // For icons
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
 
@@ -15,12 +15,10 @@ const { height } = Dimensions.get("window");
 
 type ContactSupportDrawerProps = {
   onClose: () => void;
-  appIconSource?: any; // require('./path/to/icon.png')
 };
 
 export default function ContactSupportDrawer({
   onClose,
-  appIconSource,
 }: ContactSupportDrawerProps) {
   return (
     <CustomSafeAreaView>
@@ -49,11 +47,10 @@ export default function ContactSupportDrawer({
             </Text>
           </View>
 
-          {/* ---- START: White Card Box ---- */}
           <View
             className="absolute left-0 right-0 mx-6 rounded-2xl bg-white p-6"
             style={{
-              top: height * 0.27, // adjust this value so it floats at the transition
+              top: height * 0.27,
               zIndex: 10,
               shadowColor: "#000",
               shadowOpacity: 0.17,
@@ -66,7 +63,6 @@ export default function ContactSupportDrawer({
               Start a conversation
             </Text>
 
-            {/* Centered reply time */}
             <View className="items-center my-2">
               <Text className="text-gray-700 text-sm text-center">
                 Our usual reply time
@@ -82,11 +78,10 @@ export default function ContactSupportDrawer({
                 </Text>
               </View>
             </View>
-            {/* Send message button */}
             <TouchableOpacity
               className="mt-5 flex-row items-center justify-start bg-[#009688] w-3/5 rounded-3xl px-4 py-3"
               activeOpacity={0.85}
-              onPress={() => Linking.openURL("mailto:email@macromeals.app")}
+              onPress={() => Linking.openURL("mailto:support@macromeals.com")}
             >
               <Ionicons name="paper-plane" size={17} color="white" />
               <Text className="text-white font-semibold text-base ml-2">
@@ -94,7 +89,6 @@ export default function ContactSupportDrawer({
               </Text>
             </TouchableOpacity>
           </View>
-          {/* ---- END: White Card Box ---- */}
         </View>
         <View className="flex-1 bg-white px-6 py-6 border-b-2"></View>
       </View>

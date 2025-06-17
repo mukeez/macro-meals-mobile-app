@@ -25,8 +25,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
+import NotificationsScreen from "./src/screens/NotificationsScreen";
+import NotificationsPreferences from "./src/screens/NotificationsPreferences";
+import AddMealScreen from "./src/screens/AddMealScreen";
+import TermsOfServiceScreen from "./src/screens/TermsOfServiceScreen";
+import AboutScreen from "./src/screens/AboutScreen";
+import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
+import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
-import { AddMealScreen } from "src/screens/AddMealScreen";
+
+
 
 
 
@@ -102,21 +110,27 @@ const OnboardingNavigator = () => {
 };
 
 const DashboardNavigator = () => {
-    return (
-        <Stack.Navigator screenOptions={{ headerShown: false}}>
-            <Stack.Screen name="CustomBottomTabs" component={CustomBottomTabs} />
-            <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
-            <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
-            <Stack.Screen name="AddMeal" component={AddMealScreen} />
-            <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
-            <Stack.Screen name="MealLog" component={MealLogScreen} />
-            <Stack.Screen name="MacroInput" component={MacroInputScreen} />
-            <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
-            <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-        </Stack.Navigator>
-    );
-}
-
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="CustomBottomTabs" component={CustomBottomTabs} />
+      <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
+      <Stack.Screen name="AddMeal" component={AddMealScreen} />
+      <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
+      <Stack.Screen name="MealLog" component={MealLogScreen} />
+      <Stack.Screen name="MacroInput" component={MacroInputScreen} />
+      <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsPreferences} />
+      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen
+        name="ForgotPasswordScreen"
+        component={ForgotPasswordScreen}
+      />
+    </Stack.Navigator>
+  );
+};
 
 // export function RootStack() {
 //     return <Stack.Navigator
