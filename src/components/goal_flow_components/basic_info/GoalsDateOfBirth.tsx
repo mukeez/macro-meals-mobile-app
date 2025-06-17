@@ -9,7 +9,9 @@ export const GoalsDateOfBirth: React.FC = () => {
   const setDateOfBirth = useGoalsFlowStore((state) => state.setDateOfBirth);
   const [showDateModal, setShowDateModal] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
-  const endOfYear = new Date(new Date().getFullYear(), 11, 31);
+  // Calculate the maximum date as 18 years before today
+  const today = new Date();
+  const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
 //   const [showPicker, setShowPicker] = useState(false);
 
 
@@ -55,7 +57,7 @@ export const GoalsDateOfBirth: React.FC = () => {
                   mode="date"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={handleDateChange}
-                  maximumDate={endOfYear}
+                  maximumDate={maxDate}
                   style={{ alignSelf: 'center' }}
                 />
                 <View className="flex-row justify-between mt-4">
