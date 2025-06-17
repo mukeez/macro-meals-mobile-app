@@ -42,80 +42,6 @@ const initialRequestBody = {
   protein: 0,
 };
 
-const generateDummyMeals = () => {
-  return [
-    {
-      name: "Grilled Chicken Salad",
-      description: "Fresh mixed greens with grilled chicken breast, cherry tomatoes, and balsamic vinaigrette",
-      macros: {
-        calories: 450,
-        carbs: 15,
-        fat: 22,
-        protein: 45
-      },
-      restaurant: {
-        name: "Healthy Bites",
-        location: "2.3 miles away"
-      }
-    },
-    {
-      name: "Salmon Quinoa Bowl",
-      description: "Pan-seared salmon with quinoa, roasted vegetables, and lemon herb sauce",
-      macros: {
-        calories: 580,
-        carbs: 45,
-        fat: 28,
-        protein: 38
-      },
-      restaurant: {
-        name: "Ocean Fresh",
-        location: "1.5 miles away"
-      }
-    },
-    {
-      name: "Turkey Avocado Wrap",
-      description: "Whole grain wrap with turkey, avocado, spinach, and hummus",
-      macros: {
-        calories: 420,
-        carbs: 35,
-        fat: 18,
-        protein: 32
-      },
-      restaurant: {
-        name: "Wrap & Roll",
-        location: "0.8 miles away"
-      }
-    },
-    {
-      name: "Greek Yogurt Parfait",
-      description: "Greek yogurt with mixed berries, granola, and honey",
-      macros: {
-        calories: 320,
-        carbs: 42,
-        fat: 12,
-        protein: 24
-      },
-      restaurant: {
-        name: "Morning Delights",
-        location: "1.2 miles away"
-      }
-    },
-    {
-      name: "Vegetable Stir Fry",
-      description: "Mixed vegetables with tofu in a light soy-ginger sauce",
-      macros: {
-        calories: 380,
-        carbs: 48,
-        fat: 15,
-        protein: 22
-      },
-      restaurant: {
-        name: "Asian Fusion",
-        location: "3.1 miles away"
-      }
-    }
-  ];
-};
 
 const AiMealSuggestionsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -137,17 +63,11 @@ const AiMealSuggestionsScreen: React.FC = () => {
     });
   };
 
-  // useEffect(() => {
-  //   // Set dummy data
-  //   setMeals(generateDummyMeals());
-  // }, []);
-
   useEffect(() => {
-    console.log('Component mounted, preparing to fetch meals...');
     
     const fetchPreferences = async () => {
       try {
-        console.log('Fetching preferences...');
+        
         const response = await fetch(PREFERENCES_URL, {
           method: 'GET',
           headers: {
@@ -157,36 +77,23 @@ const AiMealSuggestionsScreen: React.FC = () => {
         });
 
         if (response.status === 404) {
-          console.log('No preferences found, using default values');
           return defaultPreferences;
         }
-
         if (!response.ok) {
           throw new Error(`Failed to fetch preferences: ${response.status}`);
         }
-
         const preferences = await response.json();
-        console.log('Preferences fetched:', preferences);
         return preferences;
       } catch (err) {
-        console.error('Error fetching preferences:', err);
-        console.log('Using default preferences due to error');
         return defaultPreferences;
       }
     };
-
     const fetchMeals = async () => {
-      console.log('fetchMeals function called');
       try {
-        console.log('Setting loading state...');
         setLoading(true);
         setError(null);
-        console.log('Token status:', token ? 'Token exists' : 'No token');
-
         // First fetch preferences
         const preferences = await fetchPreferences();
-        console.log('Using preferences:', preferences);
-        
         // Update initialRequestBody with preferences data
         const requestBody = {
           ...initialRequestBody,
@@ -195,24 +102,17 @@ const AiMealSuggestionsScreen: React.FC = () => {
           fat: preferences.fat_target,
           protein: preferences.protein_target,
         };
-
         // Update macroData with actual values
         macroData[0].value = preferences.carbs_target;
         macroData[1].value = preferences.fat_target;
         macroData[2].value = preferences.protein_target;
-
         // Create an AbortController for the timeout
-        console.log('Creating AbortController...');
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
-          console.log('Request timeout reached after 1 minute');
           controller.abort();
         }, 60000); // 1 minute timeout
 
         try {
-          console.log('Starting API request to:', API_URL);
-          console.log('Request body:', JSON.stringify(requestBody, null, 2));
-          
           const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 
@@ -222,18 +122,12 @@ const AiMealSuggestionsScreen: React.FC = () => {
             body: JSON.stringify(requestBody),
             signal: controller.signal,
           });
-          
-          console.log('API response status:', response.status);
-          
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
-          
           const data = await response.json();
-          console.log('API response data:', data);
           setMeals(data.meals || []);
         } catch (err: any) {
-          console.error('API fetch error:', err);
           if (err.name === 'AbortError') {
             setError('Request timed out after 1 minute. Please try again.');
           } else {
@@ -244,7 +138,6 @@ const AiMealSuggestionsScreen: React.FC = () => {
           setLoading(false);
         }
       } catch (err: any) {
-        console.error('Error in fetchMeals:', err);
         setError(err.message || 'Error fetching meals');
         setLoading(false);
       }
