@@ -82,7 +82,7 @@ export const GoalsSetupFlow =  () => {
             calorie: data.calorie_target,
           });
         } catch (error) {
-          console.error('Error fetching preferences:', error);
+          Alert.alert('Error', 'Failed to fetch your preferences');
         } finally {
           setIsLoading(false);
         }
@@ -96,15 +96,6 @@ export const GoalsSetupFlow =  () => {
     try {
       setIsLoading(true);
       try {
-        setIsLoading(true);
-        console.log('DATE OF BIRTH', dateOfBirth);
-        console.log('GENDER', gender);
-        console.log('DAILY ACTIVITY LEVEL', dailyActivityLevel);
-        console.log('DIETRY PREFERENCE', dietryPreference);
-        console.log('FITNESS GOAL', fitnessGoal);
-        console.log('TARGET WEIGHT', targetWeight);
-        console.log('PROGRESS RATE', progressRate);
-
         // Validate required fields
         if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || !progressRate) {
           throw new Error('Missing required fields');
@@ -354,7 +345,6 @@ export const GoalsSetupFlow =  () => {
 
   // Helper function to calculate age from date of birth
   const calculateAge = (dob: string) => {
-    console.log('DOB', dob);
     // Parse dob in format 'DD/MM/YYYY'
     let birthDate: Date | null = null;
     if (dob && typeof dob === 'string' && dob.includes('/')) {
@@ -363,7 +353,6 @@ export const GoalsSetupFlow =  () => {
     } else {
       birthDate = new Date(dob);
     }
-    console.log('BIRTH DATE', birthDate);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -371,7 +360,6 @@ export const GoalsSetupFlow =  () => {
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    console.log('AGE', age);
     return age;
   };
 
