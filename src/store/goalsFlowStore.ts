@@ -36,6 +36,10 @@ type GoalsFlowState = {
     setTargetWeight: (weight: number) => void;
     progressRate: string | null;
     setProgressRate: (rate: string) => void;
+    preferences: any | null;
+    setPreferences: (prefs: any) => void;
+    macroTargets: { carbs: number; fat: number; protein: number; calorie: number } | null;
+    setMacroTargets: (macros: { carbs: number; fat: number; protein: number; calorie: number }) => void;
 };
 
 export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
@@ -43,7 +47,7 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
     setGender: (gender) => set({ gender }),
     majorStep: 0,
     subSteps: { 0: 0, 1: 0, 2: 0},
-    completed: {0: Array(6).fill(false), 1: Array(3).fill(false), 2: [false]},
+    completed: {0: Array(5).fill(false), 1: Array(3).fill(false), 2: [false]},
     setMajorStep: (step)=> {
         console.log('[goalsFlowStore] setMajorStep called with:', step);
         set({ majorStep: step });
@@ -82,7 +86,7 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
     resetSteps: () => set({
         majorStep: 0,
         subSteps: { 0: 0, 1: 0, 2: 0 },
-        completed: { 0: Array(6).fill(false), 1: Array(3).fill(false), 2: [false] },
+        completed: { 0: Array(5).fill(false), 1: Array(3).fill(false), 2: [false] },
         gender: null,
         dateOfBirth: null,
         location: null,
@@ -95,6 +99,7 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
         dailyActivityLevel: null,
         dietryPreference: null,
         fitnessGoal: null,
+        targetWeight: null,
     }),
     fitnessGoal: null,
     setFitnessGoal: (goal) => set({ fitnessGoal: goal }),
@@ -102,4 +107,8 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
     setTargetWeight: (weight) => set({ targetWeight: weight }),
     progressRate: null,
     setProgressRate: (rate) => set({ progressRate: rate }),
+    preferences: null,
+    setPreferences: (prefs) => set({ preferences: prefs }),
+    macroTargets: null,
+    setMacroTargets: (macros) => set({ macroTargets: macros }),
 }));
