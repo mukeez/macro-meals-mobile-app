@@ -33,6 +33,7 @@ import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
+import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
 
 
 
@@ -118,7 +119,8 @@ const DashboardNavigator = () => {
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
       <Stack.Screen name="GoalSetupScreen" component={GoalSetupScreen} />
-            <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
+      <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
+      <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
       <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
