@@ -30,7 +30,7 @@ import {
 const CustomSafeAreaView: React.FC<CustomSafeAreaViewProps> = ({
     children,
     style,
-    edges = ['left', 'right', 'bottom'],
+    edges = ['top'],
     paddingOverride = {},
     className,
     ...rest

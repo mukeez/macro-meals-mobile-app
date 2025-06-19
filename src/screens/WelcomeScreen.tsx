@@ -6,15 +6,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import { RootStackParamList } from '../types/navigation';
 
-type RootStackParamList = {
-    Welcome: undefined;
-    Login: undefined;
-    Signup: undefined;
-    Home: undefined;
-};
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'WelcomeScreen'>;
 
 export const WelcomeScreen: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();

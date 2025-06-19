@@ -20,9 +20,13 @@ interface SignupData {
     nickname?: string;
 }
 
+interface LoginCredentials {
+    email: string;
+    password: string;
+}
 
 export const authService = {
-    login: async (credentials) => {
+    login: async (credentials: LoginCredentials) => {
         try {
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -31,13 +35,11 @@ export const authService = {
                 },
                 body: JSON.stringify(credentials),
             });
-
+            const responseData = await response.json();
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Login failed');
+                throw new Error(responseData.message || 'Login failed');
             }
-
-            return await response.json();
+            return responseData;
         } catch (error) {
             console.error('Login error:', error);
             throw error;
@@ -124,7 +126,7 @@ export const authService = {
         }
     },
 
-    resetPassword: async (resetPasswordData: { email: string, session_token: string, password: string }) => {
+    resetPassword: async (resetPasswordData: { email: string, session_token: string, new_password: string }) => {
         try {
             console.log('resetPasswordData', resetPasswordData);
             const response = await fetch(`${API_URL}/auth/reset-password`, {
@@ -173,6 +175,26 @@ export const authService = {
             return responseData;
         } catch (error) {
             console.error('Password reset error:', error);
+            throw error;
+        }
+    },
+
+    resendVerificationCode: async (params: { email: string }) => {
+        try {
+            const response = await fetch(`${API_URL}/auth/resend-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to resend verification code');
+            }
+            return responseData;
+        } catch (error) {
+            console.error('Resend verification code error:', error);
             throw error;
         }
     }
