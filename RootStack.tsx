@@ -36,14 +36,8 @@ import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
+import AdjustTargetsScreen from "./src/screens/AdjustTargetsScreen";
 import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
-
-
-
-
-
-
-
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -138,7 +132,9 @@ const DashboardNavigator = () => {
         name="ForgotPasswordScreen"
         component={ForgotPasswordScreen}
       />
+      <Stack.Screen name="AdjustTargets" component={AdjustTargetsScreen} />
             <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+
     </Stack.Navigator>
   );
 };

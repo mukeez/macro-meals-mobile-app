@@ -44,4 +44,5 @@ export type RootStackParamList = {
     PrivacyPolicy: undefined;
     GoalsSetupFlow: undefined;
     ChangePassword: undefined;
+    AdjustTargets: undefined;
 };
