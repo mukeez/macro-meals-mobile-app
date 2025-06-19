@@ -43,6 +43,7 @@ type Profile = {
   gender?: string;
   is_pro?: boolean;
   has_macros?: boolean;
+  meal_reminder_preferences_set?: boolean;
   is_active?: boolean;
 };
 
@@ -88,6 +89,7 @@ export const DashboardScreen: React.FC = () => {
     gender: undefined,
     is_active: undefined,
     is_pro: undefined,
+    meal_reminder_preferences_set: undefined,
     has_macros: undefined,
   });
 
@@ -132,13 +134,9 @@ export const DashboardScreen: React.FC = () => {
         }
 
         const profileData = await profileResponse.json();
-        console.log("THIS IS THE PROFILE DATA", profileData);
-        console.log(
-          "THIS IS THE PROFILE DATA HAS_MACROS",
-          profileData.has_macros
-        );
+        console.log("THIS IS THE PROFILE DATA OLD", profileData);
         setProfile(profileData);
-        console.log("THIS IS THE PROFILE DATA", profile);
+        console.log("THE SET PROFILE", profile);
         setUsername(profileData.display_name || undefined);
 
         const prefsResponse = await fetch(
@@ -151,7 +149,7 @@ export const DashboardScreen: React.FC = () => {
             },
           }
         );
-
+        console.log('PREFS RESPONSE', prefsResponse.json);
         if (!prefsResponse.ok) {
           throw new Error("Failed to fetch user preferences");
         }
@@ -232,7 +230,8 @@ export const DashboardScreen: React.FC = () => {
   }, [userId, token]);
 
   const handleMacroInput = () => {
-    navigation.navigate("MacroInput");
+    // Do NOT call setMajorStep or setSubStep here. State should only be advanced when user completes a major step.
+    navigation.navigate('GoalSetupScreen', undefined);
   };
 
   const handleScan = () => {
@@ -397,8 +396,8 @@ export const DashboardScreen: React.FC = () => {
                 className="w-[24px] h-[24px] object-fill"
               />
             </View>
-            {profile.has_macros === false ||
-              (profile.has_macros === undefined && (
+            {profile.meal_reminder_preferences_set === false ||
+              profile.meal_reminder_preferences_set === undefined ? (
                 <View className="flex-col bg-paleCyan px-5 py-5">
                   <Image
                     tintColor={"#8BAAA3"}
@@ -423,7 +422,7 @@ export const DashboardScreen: React.FC = () => {
                     </TouchableOpacity>
                   </View>
                 </View>
-              ))}
+              ): <></>}
             <View className="mb-6 bg-white px-5 py-6">
               <View className="flex-row items-center justify-between mb-6">
                 <View className="flex-col">
@@ -497,7 +496,7 @@ export const DashboardScreen: React.FC = () => {
               </View>
             </View>
             {/* See nearby meals */}
-            {profile.has_macros === true && (
+            {profile.meal_reminder_preferences_set === true && (
               <View className="flex-row bg-lightGreen justify-between items-center rounded-md mx-5 mb-4">
                 <View className="flex-1 flex-col pl-5 pr-2 py-6">
                   <Text className="text-base font-semibold">

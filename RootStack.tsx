@@ -13,6 +13,7 @@ import { DashboardScreen } from "./src/screens/DashboardScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { SignupScreen } from "./src/screens/SignupScreen";
 import { OnboardingScreen } from "./src/screens/Onboarding/OnboardingScreen";
+import { GoalSetupScreen } from "./src/screens/GoalSetupScreen";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 
 
@@ -35,6 +36,7 @@ import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
+import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
 
 
 
@@ -116,11 +118,14 @@ const OnboardingNavigator = () => {
 const DashboardNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="CustomBottomTabs" component={CustomBottomTabs} />
+      <Stack.Screen name="MainTabs" component={CustomBottomTabs} />
       <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
       <Stack.Screen name="AddMeal" component={AddMealScreen} />
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
+      <Stack.Screen name="GoalSetupScreen" component={GoalSetupScreen} />
+      <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
+      <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
       <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
       <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
@@ -134,6 +139,7 @@ const DashboardNavigator = () => {
         name="ForgotPasswordScreen"
         component={ForgotPasswordScreen}
       />
+            <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
     </Stack.Navigator>
   );
 };

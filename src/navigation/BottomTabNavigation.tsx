@@ -12,7 +12,7 @@ const Tab = createBottomTabNavigator();
 
 const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
     return (
-        <View className="flex-row items-center justify-between bg-white border-t border-gray-200 h-[90px] px-4 pb-6">
+        <View className="flex-row items-center justify-between bg-white h-[90px] px-4 pb-6">
             {state.routes.map((route, index) => {
                 const { options } = descriptors[route.key];
                 const isFocused = state.index === index;
