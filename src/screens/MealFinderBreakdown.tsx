@@ -126,7 +126,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
             text: 'OK',
             onPress: () => {
               // Navigate to main dashboard
-              navigation.navigate('CustomBottomTabs');
+              navigation.navigate('MainTabs');
             }
           }
         ]
