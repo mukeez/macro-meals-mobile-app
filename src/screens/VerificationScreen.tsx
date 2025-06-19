@@ -1,12 +1,8 @@
-// src/screens/LoginScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
-    TextInput,
     TouchableOpacity,
-    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
@@ -95,7 +91,7 @@ export const VerificationScreen: React.FC = () => {
 
     const handleResendCode = async () => {
         if (!canResend) return;
-        
+
         setIsLoading(true);
         try {
             await authService.forgotPassword(routeEmail);
@@ -119,10 +115,10 @@ export const VerificationScreen: React.FC = () => {
                 <View className="flex-row items-center justify-start mb-3">
                     <BackButton onPress={() => navigation.goBack()}/>
                 </View>
-                <Text className="text-3xl font-medium text-black mb-2 text-">Enter verification code</Text>
+                <Text className="text-3xl font-medium text-black mb-2">Enter verification code</Text>
                 <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">We've sent a 6-digit code to {routeEmail}</Text>
 
-                <View style={styles.formContainer}>
+                <View className="w-full mb-5">
                     <View className="flex-col">  
                         <CodeField
                             ref={ref}
@@ -130,20 +126,26 @@ export const VerificationScreen: React.FC = () => {
                             value={value}
                             onChangeText={setValue}
                             cellCount={CELL_COUNT}
-                            rootStyle={styles.codeFieldRoot}
+                            rootStyle={{
+                                marginTop: 20,
+                                marginBottom: 20,
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                            }}
                             keyboardType="number-pad"
                             renderCell={({ index, symbol, isFocused }) => (
                                 <Text
                                     key={index}
-                                    style={[styles.cell, isFocused && styles.focusCell]}
+                                    className={`w-[50px] h-[56px] border-2 border-gray-300 rounded justify-center items-center text-2xl bg-white text-center ${
+                                        isFocused ? 'border-[#19a28f]' : ''
+                                    }`}
+                                    style={{ lineHeight: 56 }}
                                     onLayout={getCellOnLayoutHandler(index)}>
                                     {symbol || (isFocused ? <Cursor /> : null)}
                                 </Text>
                             )}
                         />
                         {error ? <Text className='text-red-500 text-sm'>{error}</Text> : null}
-                        
-                        
                     </View>
                 </View>
             </ScrollView>
@@ -179,191 +181,3 @@ export const VerificationScreen: React.FC = () => {
         </CustomSafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'white',
-    },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 24,
-        alignItems: 'center',
-    },
-    logoContainer: {
-        marginTop: 40,
-        marginBottom: 20,
-        alignItems: 'center',
-    },
-    logoBox: {
-        width: 70,
-        height: 70,
-        backgroundColor: '#19a28f',
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    checkmark: {
-        color: 'white',
-        fontSize: 36,
-        fontWeight: 'bold',
-    },
-    welcomeTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#19a28f',
-        marginBottom: 10,
-    },
-    welcomeSubtitle: {
-        fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 40,
-    },
-    formContainer: {
-        width: '100%',
-    },
-    inputLabel: {
-        fontSize: 16,
-        color: '#333',
-        marginBottom: 8,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        marginBottom: 20,
-        backgroundColor: '#f9f9f9',
-    },
-    inputIconContainer: {
-        padding: 12,
-    },
-    inputIcon: {
-        fontSize: 18,
-        color: '#999',
-    },
-    input: {
-        flex: 1,
-        height: 48,
-        fontSize: 16,
-    },
-    eyeIconContainer: {
-        padding: 12,
-    },
-    eyeIcon: {
-        fontSize: 18,
-        color: '#999',
-    },
-    rememberForgotContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    rememberContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 4,
-        marginRight: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    checkboxChecked: {
-        backgroundColor: '#19a28f',
-        borderColor: '#19a28f',
-    },
-    checkboxCheck: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    rememberText: {
-        fontSize: 14,
-        color: '#333',
-    },
-    forgotContainer: {},
-    forgotText: {
-        fontSize: 14,
-        color: '#19a28f',
-        fontWeight: '500',
-    },
-    loginButton: {
-        backgroundColor: '#19a28f',
-        borderRadius: 10,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    loginButtonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    orText: {
-        textAlign: 'center',
-        color: '#666',
-        marginBottom: 20,
-    },
-    socialContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        marginBottom: 30,
-    },
-    socialButton: {
-        width: 60,
-        height: 48,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    socialIcon: {
-        fontSize: 20,
-        color: '#333',
-    },
-    signupContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    noAccountText: {
-        fontSize: 16,
-        color: '#666',
-    },
-    signupText: {
-        fontSize: 16,
-        color: '#19a28f',
-        fontWeight: 'bold',
-    },
-    codeFieldRoot: {
-        marginTop: 20,
-        marginBottom: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    cell: {
-        width: 50,
-        height: 56,
-        borderWidth: 2,
-        borderColor: '#ddd',
-        borderRadius: 4,
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: 24,
-        backgroundColor: '#fff',
-        textAlign: 'center',
-        textAlignVertical: 'center',
-        lineHeight: 56,
-    },
-    focusCell: {
-        borderColor: '#19a28f',
-    },
-});
