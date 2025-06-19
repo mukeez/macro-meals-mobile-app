@@ -67,5 +67,6 @@ export const IMAGE_CONSTANTS = {
     vegetarianIcon: require('../../assets/vegetarian-icon.png'),
     veryActiveIcon: require('../../assets/very-active-icon.png'),
     warningIcon: require('../../assets/warning-icon.png'),
+    magicWandAltIcon: require('../../assets/magic-wand-icon2.png'),
 
 }

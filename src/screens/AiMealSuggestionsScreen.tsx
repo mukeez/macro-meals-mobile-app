@@ -148,9 +148,9 @@ const AiMealSuggestionsScreen: React.FC = () => {
 
   return (
     <CustomSafeAreaView edges={['left', 'right']} className="flex-1">
-      <View className="flex-1 bg-grey">
+      <View className="flex-1 bg-gray">
         {/* Header */}
-        <View className="flex-row bg-white items-center justify-between px-5 pt-4 pb-5">
+        <View className="flex-row bg-white items-center justify-between px-5 pt-4 pb-5 mb-5">
           <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
             <Text className="text-[22px]">‹</Text>
           </TouchableOpacity>
@@ -162,8 +162,8 @@ const AiMealSuggestionsScreen: React.FC = () => {
         ) : (
           <ScrollView className="pb-8">
             {/* Macros Donut Row */}
-            <View className="flex-col items-start bg-white mt-3 px-5 pt-3 pb-10 mb-4">
-              <Text className="text-lg text-black mt-2 text-center mb-2 font-medium">Remaining today</Text>
+            <View className="flex-col bg-white items-start mt-3 px-5 pt-3 pb-10 mb-4">
+              <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
               <View className="flex-row w-full justify-between items-center">
 
               {macroData.map((macro) => (
@@ -171,8 +171,9 @@ const AiMealSuggestionsScreen: React.FC = () => {
                   <View className="h-[100px] w-[100px] relative" key={macro.label}>
                     <CircularProgress
                       size={100}
-                      strokeWidth={8}
-                      consumed={macro.value}
+                      strokeWidth={12}
+                      textSize={16}
+                      consumed={macro.value + 'g'}
                       total={macro.value}
                       color={macro.color}
                       backgroundColor="#d0e8d1"
@@ -187,8 +188,8 @@ const AiMealSuggestionsScreen: React.FC = () => {
             </View>
            
             {/* Info Card */}
-            <View className="bg-[#0088D140] flex-row px-8 mt-5 justify-center items-center rounded-xl mx-5 p-4 mb-[18px]">
-              <Image source={IMAGE_CONSTANTS.wandIcon} className="w-[32px] h-[32px] mr-2" />
+            <View className="bg-[#0088D140]  flex-row px-8 mt-5 justify-center items-center rounded-xl mx-5 p-4 mb-[18px]">
+              <Image source={IMAGE_CONSTANTS.magicWandAltIcon} className="w-[32px] h-[32px] ml-2 mr-3" />
               <Text className="text-[#222] text-[15px] text-left">
                 Tailored to your preferences and macro goals, these meals are ordered for maximum effectiveness in reaching your target.
               </Text>

@@ -44,7 +44,7 @@ const ScanScreenType: React.FC = () => {
     };
 
     const handleMealSuggestions = () => {
-        navigation.navigate('MealSuggestionsScreen' as never);
+        navigation.navigate('AiMealSuggestionsScreen' as never);
     };
 
     const handleMealFinder = () => {
@@ -52,7 +52,7 @@ const ScanScreenType: React.FC = () => {
     };
 
     return (
-        <CustomSafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: '#fff' }}>
+        <CustomSafeAreaView edges={['left', 'right']} paddingOverride={{ bottom: -100 }} style={{ flex: 1, backgroundColor: '#fff' }}>
             <StatusBar barStyle="dark-content" />
             {/* Header (always on solid white) */}
             <View style={styles.headerRow}>
