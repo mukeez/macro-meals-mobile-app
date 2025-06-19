@@ -217,7 +217,6 @@ const MealFinderScreen: React.FC = () => {
           };
           setLocationLoading(true);
           try {
-            console.log('Request json body', JSON.stringify(requestBody));
             const response = await fetch(`${API_CONSTANTS.API_URL}${API_CONSTANTS.SUGGEST_MEALS_URL}`, {
               method: 'POST',
               headers: {
@@ -227,7 +226,6 @@ const MealFinderScreen: React.FC = () => {
               body: JSON.stringify(requestBody),
             });
             const data = await response.json();
-            console.log('API response:', data);
             const mealList = Array.isArray(data.meals)
               ? data.meals
               : Array.isArray(data)
@@ -310,7 +308,6 @@ const MealFinderScreen: React.FC = () => {
         body: JSON.stringify(requestBody),
       });
       const data = await response.json();
-      console.log('API response:', data);
       const mealList = Array.isArray(data.meals)
         ? data.meals
         : Array.isArray(data)

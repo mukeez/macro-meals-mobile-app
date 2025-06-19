@@ -40,7 +40,7 @@ export type RootStackParamList = {
     TermsOfService: undefined;
     About: undefined;
     MealFinderScreen: undefined;
-    MealFinderBreakdownScreen: undefined;
+    MealFinderBreakdownScreen: { meal: any };
     PrivacyPolicy: undefined;
     GoalsSetupFlow: undefined;
     ChangePassword: undefined;
