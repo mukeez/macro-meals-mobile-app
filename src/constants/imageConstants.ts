@@ -46,4 +46,9 @@ export const IMAGE_CONSTANTS = {
     chevronRightIcon: require('../../assets/chevron-right-icon.png'),
     fireIcon: require('../../assets/fire-icon.png'),
     mealBg: require('../../assets/mealbg.png'),
+    restaurantIcon: require('../../assets/restaurant-icon.png'),
+    starIcon: require('../../assets/star-icon.png'),
+    locationGray: require('../../assets/location-gray.png'),
+    nearbyLocationIcon: require('../../assets/nearby-location-icon.png'),
+    
 }

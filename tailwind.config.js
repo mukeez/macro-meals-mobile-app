@@ -2,6 +2,9 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  experimental: {
+    useInsertionEffect: false,
+  },
   theme: {
     fontFamily: {
       sans: ['UncutSans'],
@@ -30,13 +33,17 @@ module.exports = {
         indicatorInactive: "#b3d1ce",
         lightGreen: "#DFF4F4",
         lightGrey: "#B0B0B0",
+        mediumGrey: "#707070",
         textMediumGrey: "#4F4F4F",
         paleCyan: "#DFF4F4",
         amber: "#FEBF00",
         gloomyPurple: "#7E54D9",
         lavenderPink: "#E283E0",
         kryptoniteGreen: "#44A047",
-        brightRed: '#FF4343'
+        brightRed: '#FF4343',
+        grey: '#f5f5f5',
+        cornflowerBlue: '#C4E7E3',
+        jungleGreen: '#20A090',
       }
     },
   },
