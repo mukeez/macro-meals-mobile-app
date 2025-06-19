@@ -36,9 +36,11 @@ export type RootStackParamList = {
     SignupScreen: undefined;
     MacroGoals: undefined;
     CustomBottomTabs: undefined;
-    Notifications: undefined; 
+    Notifications: undefined;
     TermsOfService: undefined;
     About: undefined;
+    MealFinderScreen: undefined;
+    MealFinderBreakdownScreen: { meal: any };
     PrivacyPolicy: undefined;
     GoalsSetupFlow: undefined;
     ChangePassword: undefined;
