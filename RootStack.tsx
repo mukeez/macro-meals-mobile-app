@@ -128,7 +128,6 @@ const DashboardNavigator = () => {
       <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
       <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
-      <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
       <Stack.Screen name="MealFinderScreen" component={MealFinderScreen} />
       <Stack.Screen name="MealFinderBreakdownScreen" component={MealFinderBreakdownScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
