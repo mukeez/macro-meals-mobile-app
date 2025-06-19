@@ -22,7 +22,6 @@ import {
         bottom?: number;
         left?: number;
         right?: number;
-
     };
     className?: string;
  }
@@ -45,7 +44,9 @@ const CustomSafeAreaView: React.FC<CustomSafeAreaViewProps> = ({
 
     return (
         <SafeAreaView className={className} style={[styles.container, computedPadding, style]} {...rest}>
+            <View style={styles.content}>
             {children}
+            </View>
         </SafeAreaView>
     );
 };
@@ -54,6 +55,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: 'white',
+    },
+    content: {
+        flex: 1,
     },
 });
 

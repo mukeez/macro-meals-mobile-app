@@ -10,6 +10,7 @@ interface CircularProgressProps {
   color?: string;
   backgroundColor?: string;
   label?: string;
+  showLabel?: boolean;
 }
 
 export function CircularProgress({
@@ -20,6 +21,7 @@ export function CircularProgress({
   color = '#44A047',
   backgroundColor = '#d0e8d1',
   label = 'Consumed',
+  showLabel = true,
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -56,7 +58,7 @@ export function CircularProgress({
       <View className='absolute flex-1 items-center justify-center'>
         <View className='flex-1 items-center justify-center'>
           <Text className='text-3xl text-center font-semibold'>{consumed}</Text>
-          <Text className='text-sm text-black text-center font-medium'>{label}</Text>
+          {showLabel && <Text className='text-sm text-black text-center font-medium'>{label}</Text>}
         </View>
       </View>
     </View>
