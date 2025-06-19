@@ -13,8 +13,8 @@ import {
   View
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import { IMAGE_CONSTANTS } from '../../constants/imageConstants';
-import useStore from '../store/useStore';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import useStore from '../store/useStore'; 
 
 
 
@@ -38,8 +38,8 @@ const Pager = ()=>{
       </PagerView>
       <View className="absolute w-full top-[5rem] left-0">
       <View className="flex-row gap-2 justify-center mb-16">
-        <Text className='text-2xl font-bold text-white'>MacroMate</Text>
-        <View className='flex-row justify-center items-center gap-1 px-2 py-1 bg-primary rounded-md'>
+        <Text className='text-2xl font-bold text-white'>Macro Meals</Text>
+        <View className='flex-row justify-center items-center gap-1 px-2 py-1 bg-primaryLigh rounded-md'>
           <Image source={IMAGE_CONSTANTS.crown} className='w-[18px] h-[14px]' />
           <Text className='text-white mt-0.5 font-medium text-base'>PREMIUM</Text> 
         </View>
@@ -214,7 +214,7 @@ if (isLoading){
              e.preventDefault();
              setSelectedPlan('yearly');
             }}>
-              <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primary rounded-2xl">
+              <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
               <Text className="text-white text-xs font-medium justify-center items-center">50% savings</Text>
             </View>
               <View className='w-full pl-3 pt-8 pb-3'>
@@ -232,7 +232,7 @@ if (isLoading){
               
             </TouchableOpacity>
             
-            <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
+            <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
               e.preventDefault();
               setSelectedPlan('monthly');
             }}>
@@ -258,7 +258,7 @@ if (isLoading){
               activeOpacity={0.8}
               onPress={openPaymentSheet}
             >
-              <View className="bg-primary h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
+              <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
                 <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
               </View>
             </TouchableOpacity>
