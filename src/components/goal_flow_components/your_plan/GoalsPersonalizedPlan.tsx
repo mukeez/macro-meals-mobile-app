@@ -28,7 +28,7 @@ export const GoalsPersonalizedPlan: React.FC<{ isLoading: boolean, macroData: an
       {/* Title & Description */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center bg-white px-4 pt-2">
-          <ActivityIndicator size="large" color="#0000ff" />
+          <ActivityIndicator size="large" color="white" />
         </View>
       ) : (
       <View>
