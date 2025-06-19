@@ -17,7 +17,7 @@ const Header = ({ title }: HeaderProps) => {
       >
         <Ionicons name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
-      <Text className="flex-1 text-center text-2xl font-bold text-gray-800">
+      <Text className="flex-1 text-center text-lg font-semibold text-gray-800">
         {title}
       </Text>
       {/* Spacer to balance the row for proper centering */}

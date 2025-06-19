@@ -29,6 +29,7 @@ import TermsOfServiceScreen from "./src/screens/TermsOfServiceScreen";
 import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
+import AdjustTargetsScreen from "./src/screens/AdjustTargetsScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -119,6 +120,7 @@ const DashboardNavigator = () => {
         name="ForgotPasswordScreen"
         component={ForgotPasswordScreen}
       />
+      <Stack.Screen name="AdjustTargets" component={AdjustTargetsScreen} />
     </Stack.Navigator>
   );
 };
