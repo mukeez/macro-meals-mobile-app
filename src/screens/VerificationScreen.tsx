@@ -105,6 +105,7 @@ export const VerificationScreen: React.FC = () => {
         }
     };
 
+
     return (
         <CustomSafeAreaView className='flex-1 items-start justify-start' edges={['left', 'right']}>
             <KeyboardAvoidingView
