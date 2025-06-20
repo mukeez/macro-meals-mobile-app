@@ -5,12 +5,13 @@ import Svg, { Circle } from 'react-native-svg';
 interface CircularProgressProps {
   size?: number;
   strokeWidth?: number;
-  consumed: number;
+  consumed: string;
   total: number;
   color?: string;
   backgroundColor?: string;
   label?: string;
   showLabel?: boolean;
+  textSize?: number;
 }
 
 export function CircularProgress({
@@ -22,10 +23,11 @@ export function CircularProgress({
   backgroundColor = '#d0e8d1',
   label = 'Consumed',
   showLabel = true,
+  textSize = 32,
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progress = total > 0 ? consumed / total : 0;
+  const progress = total > 0 ? parseInt(consumed) / total : 0;
   const strokeDashoffset = circumference * (1 - progress);
 
   return (
@@ -57,7 +59,7 @@ export function CircularProgress({
       </Svg>
       <View className='absolute flex-1 items-center justify-center'>
         <View className='flex-1 items-center justify-center'>
-          <Text className='text-3xl text-center font-semibold'>{consumed}</Text>
+          <Text className={`text-[${textSize}px] text-center font-semibold`} style={{ fontSize: textSize }}>{consumed}</Text>
           {showLabel && <Text className='text-sm text-black text-center font-medium'>{label}</Text>}
         </View>
       </View>

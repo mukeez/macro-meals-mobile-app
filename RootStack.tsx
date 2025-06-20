@@ -28,12 +28,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
+import AddMeal from "./src/screens/AddMeal";
 import NotificationsScreen from "./src/screens/NotificationsScreen";
 import NotificationsPreferences from "./src/screens/NotificationsPreferences";
 import AddMealScreen from "./src/screens/AddMealScreen";
 import TermsOfServiceScreen from "./src/screens/TermsOfServiceScreen";
 import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
+import AiMealSuggestionsScreen from "src/screens/AiMealSuggestionsScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
 import AdjustTargetsScreen from "./src/screens/AdjustTargetsScreen";
@@ -110,13 +112,15 @@ const OnboardingNavigator = () => {
 };
 
 const DashboardNavigator = () => {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="MainTabs" component={CustomBottomTabs} />
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false}}>
+              <Stack.Screen name="MainTabs" component={CustomBottomTabs} />
       <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
       <Stack.Screen name="AddMeal" component={AddMealScreen} />
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
+      <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
+      <Stack.Screen name="AiMealSuggestionsScreen" component={AiMealSuggestionsScreen} />
       <Stack.Screen name="GoalSetupScreen" component={GoalSetupScreen} />
       <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
       <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
@@ -133,11 +137,12 @@ const DashboardNavigator = () => {
         component={ForgotPasswordScreen}
       />
       <Stack.Screen name="AdjustTargets" component={AdjustTargetsScreen} />
-            <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+          <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
 
-    </Stack.Navigator>
-  );
-};
+      </Stack.Navigator>
+    );
+}
+
 
 // export function RootStack() {
 //     return <Stack.Navigator
