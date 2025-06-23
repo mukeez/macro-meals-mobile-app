@@ -22,7 +22,10 @@ export type RootStackParamList = {
     MealList: undefined;
     SettingsScreen: undefined;
     ScanScreenType: undefined;
+    MainTabs: undefined;
     BarcodeScanScreen: undefined;
+    GoalSetupScreen: undefined;
+    GoalsBasicInfo: undefined;
     AddMeal: undefined;
     SnapMeal: undefined;
     MealLog: undefined;
@@ -33,10 +36,13 @@ export type RootStackParamList = {
     SignupScreen: undefined;
     MacroGoals: undefined;
     CustomBottomTabs: undefined;
-    Notifications: undefined; 
+    Notifications: undefined;
     TermsOfService: undefined;
     About: undefined;
+    MealFinderScreen: undefined;
+    MealFinderBreakdownScreen: { meal: any };
     PrivacyPolicy: undefined;
+    GoalsSetupFlow: undefined;
     ChangePassword: undefined;
     AdjustTargets: undefined;
 };

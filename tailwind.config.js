@@ -2,12 +2,20 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  experimental: {
+    useInsertionEffect: false,
+  },
   theme: {
     fontFamily: {
       sans: ['UncutSans'],
       'sans-medium': ['UncutSans-Medium'],
       'sans-semibold': ['UncutSans-Semibold'],
       'sans-bold': ['UncutSans-Bold'],
+      'general-sans': ['GeneralSans-Regular'],
+      'general-sans-medium': ['GeneralSans-Medium'],
+      'general-sans-semibold': ['GeneralSans-Semibold'],
+      'general-sans-bold': ['GeneralSans-Bold'],
+
     },
     fontSize: {
       'xs': '12px',      // Smallest text (captions, labels)
@@ -28,15 +36,23 @@ module.exports = {
         accent: '#AB8BFF',
         indicatorActive: "#01675B",
         indicatorInactive: "#b3d1ce",
+        aquaSqueeze: "#E6F4F1",
         lightGreen: "#DFF4F4",
+        gray: "#F2F2F2",
         lightGrey: "#B0B0B0",
+        mediumGrey: "#707070",
         textMediumGrey: "#4F4F4F",
         paleCyan: "#DFF4F4",
         amber: "#FEBF00",
         gloomyPurple: "#7E54D9",
         lavenderPink: "#E283E0",
         kryptoniteGreen: "#44A047",
-        brightRed: '#FF4343'
+        brightRed: '#FF4343',
+        cinnabarRed: '##E53835',
+        silver: "#BDBDBD",
+        grey: '#f5f5f5',
+        cornflowerBlue: '#C4E7E3',
+        jungleGreen: '#20A090',
       }
     },
   },

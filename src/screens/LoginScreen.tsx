@@ -46,7 +46,6 @@ export const LoginScreen: React.FC = () => {
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
@@ -75,12 +74,6 @@ export const LoginScreen: React.FC = () => {
             await AsyncStorage.setItem('my_token', data.access_token);
             await AsyncStorage.setItem('isOnboardingCompleted', 'true');
             setIsOnboardingCompleted(true);
-            console.log('Token saved to AsyncStorage');
-            
-            // Add this to check if the state was actually updated
-            const isAuth = useStore.getState().isAuthenticated;
-            console.log('Current auth state after update:', isAuth);
-            navigation.navigate('Dashboard');
         } catch (error) {
             Alert.alert(
                 'Login Failed',
@@ -98,7 +91,6 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.googleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Google login error:', error);
             Alert.alert('Login Failed', 'Google login failed. Please try again.');
@@ -114,7 +106,6 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.appleSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Apple login error:', error);
             Alert.alert('Login Failed', 'Apple login failed. Please try again.');
@@ -129,7 +120,6 @@ export const LoginScreen: React.FC = () => {
             // Use the mock service
             const authData = await mockSocialAuth.facebookSignIn();
             setAuthenticated(true, authData.token, authData.user.id);
-            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Facebook login error:', error);
             Alert.alert('Login Failed', 'Facebook login failed. Please try again.');
@@ -142,17 +132,17 @@ export const LoginScreen: React.FC = () => {
         navigation.navigate('SignupScreen');
     };
     return (
-        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
+        <CustomSafeAreaView className="flex-1 bg-white" edges={['left', 'right']}>
             <KeyboardAvoidingView
-                style={styles.container}
+                className="flex-1"
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-            <ScrollView className='flex-1 relative align-left p-6' contentContainerStyle={{ flexGrow: 1 }}>
-                <Text className="text-3xl font-medium text-black mb-2 text-">Access your account</Text>
+            <ScrollView className="flex-1 relative p-6" contentContainerStyle={{ flexGrow: 1 }}>
+                <Text className="text-3xl font-medium text-black mb-2">Access your account</Text>
                 <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Sign in to track your macros and view personalized meal suggestions.</Text>
 
-                <View style={styles.formContainer}>
-                    <View className="mb-6" style={[errors.email ? styles.inputError : null]}>  
+                <View className="w-full">
+                    <View className={`${errors.email ? 'border border-red-500 rounded-md' : ''}`}>  
                         <TextInput
                             className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
                             placeholder="Enter your email"
@@ -175,11 +165,11 @@ export const LoginScreen: React.FC = () => {
                             spellCheck={false}
                             autoComplete="email"
                         />
-                        {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
-                    </View>
-                    
-                    <View className="relative mb-4" style={[errors.password ? styles.inputError : null]}>
                         
+                    </View>
+                    {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
+                    
+                    <View className={`relative mt-6 mb-4 ${errors.password ? 'border border-red-500 rounded-md' : ''}`}>    
                         <TextInput
                             className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
                             placeholder="Enter password"
@@ -192,27 +182,27 @@ export const LoginScreen: React.FC = () => {
                             }}
                             secureTextEntry={!showPassword}
                         />
-                        <MaterialIcons className='absolute right-4 top-1/2 -translate-y-1/2' name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
-                        {errors.password ? <Text className='text-red-500 text-sm mt-2'>{errors.password}</Text> : null}
+                        <MaterialIcons style={{ position: 'absolute', right: 16, top: 34 }} name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
+                       
                     </View>
-                    <TouchableOpacity style={styles.forgotContainer} onPress={() => navigation.navigate('ForgotPasswordScreen')}>
-                        <Text style={styles.forgotText}>Forgot Password?</Text>
+                    {errors.password ? <Text className='text-red-500 text-sm mt-2 mb-2'>{errors.password}</Text> : null}
+                    <TouchableOpacity className="mb-4" onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+                        <Text className="text-[14px] text-primary font-medium">Forgot Password?</Text>
                     </TouchableOpacity>
-                    
                 </View>
 
-                <View className='absolute bottom-1 px-6 w-full'>
-                    <View className='w-full items-center'>
+                <View className="absolute bottom-0 w-full">
+                    <View className="w-full items-center">
                         <CustomTouchableOpacityButton 
-                            className='h-[56px] w-full items-center justify-center bg-primary rounded-[100px]' 
+                            className={`h-[54px] w-full items-center justify-center bg-primary rounded-[100px] ${isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email) ? 'opacity-50' : ''}`} 
                             title="Sign in"
-                            textClassName='text-white text-[17px] font-semibold'
+                            textClassName="text-white text-[17px] font-semibold"
                             disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
                             onPress={handleLogin}
                             isLoading={isLoading}
                         />
                     </View>
-                    <View className='items-center justify-center px-6 mt-2'>
+                    <View className="items-center justify-center px-6 mt-2">
                         <Text className="text-[17px] text-center text-gray-600 flex-wrap">
                             Don't have an account?{' '}
                             <Text 
@@ -224,175 +214,8 @@ export const LoginScreen: React.FC = () => {
                         </Text>
                     </View>
                 </View>
-              
             </ScrollView>
-            
         </KeyboardAvoidingView>
         </CustomSafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'white',
-    },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 24,
-        alignItems: 'center',
-    },
-    logoContainer: {
-        marginTop: 40,
-        marginBottom: 20,
-        alignItems: 'center',
-    },
-    logoBox: {
-        width: 70,
-        height: 70,
-        backgroundColor: '#19a28f',
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    checkmark: {
-        color: 'white',
-        fontSize: 36,
-        fontWeight: 'bold',
-    },
-    welcomeTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#19a28f',
-        marginBottom: 10,
-    },
-    welcomeSubtitle: {
-        fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 40,
-    },
-    formContainer: {
-        width: '100%',
-    },
-    inputLabel: {
-        fontSize: 16,
-        color: '#333',
-        marginBottom: 8,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        marginBottom: 20,
-        backgroundColor: '#f9f9f9',
-    },
-    inputIconContainer: {
-        padding: 12,
-    },
-    inputIcon: {
-        fontSize: 18,
-        color: '#999',
-    },
-    input: {
-        flex: 1,
-        height: 48,
-        fontSize: 16,
-    },
-    eyeIconContainer: {
-        padding: 12,
-    },
-    eyeIcon: {
-        fontSize: 18,
-        color: '#999',
-    },
-    rememberForgotContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    rememberContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 4,
-        marginRight: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    checkboxChecked: {
-        backgroundColor: '#19a28f',
-        borderColor: '#19a28f',
-    },
-    checkboxCheck: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    rememberText: {
-        fontSize: 14,
-        color: '#333',
-    },
-    forgotContainer: {},
-    forgotText: {
-        fontSize: 14,
-        color: '#19a28f',
-        fontWeight: '500',
-    },
-    loginButton: {
-        backgroundColor: '#19a28f',
-        borderRadius: 10,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    loginButtonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    orText: {
-        textAlign: 'center',
-        color: '#666',
-        marginBottom: 20,
-    },
-    socialContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        marginBottom: 30,
-    },
-    socialButton: {
-        width: 60,
-        height: 48,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    socialIcon: {
-        fontSize: 20,
-        color: '#333',
-    },
-    signupContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    noAccountText: {
-        fontSize: 16,
-        color: '#666',
-    },
-    signupText: {
-        fontSize: 16,
-        color: '#19a28f',
-        fontWeight: 'bold',
-    },
-});

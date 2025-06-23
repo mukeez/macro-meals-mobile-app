@@ -39,9 +39,9 @@ export const VerificationScreen: React.FC = () => {
     email: "",
   });
 
-  const isDisabled = () => {
-    return isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail);
-  };
+    const isDisabled = () => {
+        return isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail);
+    }
 
   const CELL_COUNT = 6;
   const [value, setValue] = useState("");
