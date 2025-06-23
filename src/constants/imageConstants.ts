@@ -46,6 +46,8 @@ export const IMAGE_CONSTANTS = {
     chevronRightIcon: require('../../assets/chevron-right-icon.png'),
     fireIcon: require('../../assets/fire-icon.png'),
     mealBg: require('../../assets/mealbg.png'),
+    likeIcon: require('../../assets/like-icon.png'),
+    dislikeIcon: require('../../assets/dislike-icon.png'),
     restaurantIcon: require('../../assets/restaurant-icon.png'),
     starIcon: require('../../assets/star-icon.png'),
     locationGray: require('../../assets/location-gray.png'),
@@ -69,5 +71,6 @@ export const IMAGE_CONSTANTS = {
     vegetarianIcon: require('../../assets/vegetarian-icon.png'),
     veryActiveIcon: require('../../assets/very-active-icon.png'),
     warningIcon: require('../../assets/warning-icon.png'),
+    magicWandAltIcon: require('../../assets/magic-wand-icon2.png'),
 
 }

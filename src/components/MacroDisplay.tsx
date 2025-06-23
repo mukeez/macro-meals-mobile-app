@@ -32,7 +32,7 @@ export const MacroDisplay: React.FC<MacroDisplayProps> = ({
     if (compact) {
         return (
             <View style={styles.compactContainer}>
-                {label && <Text style={styles.label}>{label}</Text>}
+                {label ? <Text style={styles.label}>{label}</Text> : null}
                 <Text style={styles.compactText}>
                     {macros.calories} cal · P: {macros.protein}g · C: {macros.carbs}g · F: {macros.fat}g
                 </Text>
@@ -42,7 +42,7 @@ export const MacroDisplay: React.FC<MacroDisplayProps> = ({
 
     return (
         <View style={styles.container}>
-            {label && <Text style={styles.label}>{label}</Text>}
+            {label ? <Text style={styles.label}>{label}</Text> : null}
 
             <View style={styles.macroRow}>
                 <Text style={styles.macroLabel}>Calories:</Text>
@@ -53,7 +53,7 @@ export const MacroDisplay: React.FC<MacroDisplayProps> = ({
                 <Text style={styles.macroLabel}>Protein:</Text>
                 <Text style={styles.macroValue}>
                     {macros.protein}g
-                    {showPercentages && ` (${proteinPercentage}%)`}
+                    {showPercentages ? ` (${proteinPercentage}%)` : ''}
                 </Text>
             </View>
 
@@ -61,7 +61,7 @@ export const MacroDisplay: React.FC<MacroDisplayProps> = ({
                 <Text style={styles.macroLabel}>Carbs:</Text>
                 <Text style={styles.macroValue}>
                     {macros.carbs}g
-                    {showPercentages && ` (${carbsPercentage}%)`}
+                    {showPercentages ? ` (${carbsPercentage}%)` : ''}
                 </Text>
             </View>
 
@@ -69,7 +69,7 @@ export const MacroDisplay: React.FC<MacroDisplayProps> = ({
                 <Text style={styles.macroLabel}>Fat:</Text>
                 <Text style={styles.macroValue}>
                     {macros.fat}g
-                    {showPercentages && ` (${fatPercentage}%)`}
+                    {showPercentages ? ` (${fatPercentage}%)` : ''}
                 </Text>
             </View>
         </View>
