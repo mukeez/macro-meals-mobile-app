@@ -23,11 +23,9 @@ import { OnboardingContext } from "../contexts/OnboardingContext";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import BackButton from "../components/BackButton";
+import { RootStackParamList } from "src/types/navigation";
 
-type RootStackParamList = {
-  ForgotPasswordScreen: { source: string };
-  VerificationScreen: { email: string; source: string };
-};
+
 
 type ForgotPasswordScreenRouteProp = RouteProp<
   RootStackParamList,

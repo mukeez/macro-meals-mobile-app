@@ -1,12 +1,8 @@
-// src/screens/LoginScreen.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -17,7 +13,8 @@ import { authService } from "../services/authService";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import BackButton from "../components/BackButton";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../types/navigation";
 import {
   CodeField,
   Cursor,
@@ -25,20 +22,15 @@ import {
   useClearByFocusCell,
 } from "react-native-confirmation-code-field";
 
-type RootStackParamList = {
-  ForgotPasswordScreen: { source: string };
-  VerificationScreen: { email: string; source: string };
-  ResetPassword: { email: string; session_token: string; source: string };
-};
-
-type VerificationScreenNavigationProp = NativeStackNavigationProp<
+type VerificationScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
   "VerificationScreen"
 >;
 
 export const VerificationScreen: React.FC = () => {
-
   const [isLoading, setIsLoading] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
   const navigation = useNavigation<VerificationScreenNavigationProp>();
   const route = useRoute<RouteProp<RootStackParamList, "VerificationScreen">>();
   const { email: routeEmail, source } = route.params;
@@ -51,173 +43,112 @@ export const VerificationScreen: React.FC = () => {
     return isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail);
   };
 
-    const CELL_COUNT = 6;
-    const [value, setValue] = useState('');
-    const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
-    const [error, setError] = useState('');
-    const [props, getCellOnLayoutHandler] = useClearByFocusCell({
-        value,
-        setValue,
-    });
+  const CELL_COUNT = 6;
+  const [value, setValue] = useState("");
+  const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
+  const [error, setError] = useState("");
+  const [props, getCellOnLayoutHandler] = useClearByFocusCell({
+    value,
+    setValue,
+  });
 
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if (countdown > 0) {
-            timer = setInterval(() => {
-                setCountdown((prev) => prev - 1);
-            }, 1000);
-        } else {
-            setCanResend(true);
-        }
-        return () => {
-            if (timer) {
-                clearInterval(timer);
-            }
-        };
-    }, [countdown]);
-
-    const handleVerifyCode = async () => {
-        if (!routeEmail) {
-            Alert.alert('Error', 'Please enter the email associated with your account');
-            return;
-        }
-
-        setIsLoading(true);
-        const params = {
-            email: routeEmail,
-            otp: value,
-        }
-        console.log('The verification params are', value);
-        try {
-            const data = await authService.verifyCode(params);
-            console.log('data', data);
-            const session_token = data.session_token;
-            console.log('The session token is', session_token);
-            if (session_token) {
-                navigation.navigate('ResetPassword', { email: routeEmail, session_token: session_token });
-            } else {
-                Alert.alert('Error', 'Invalid verification code');
-            }
-        } catch (error) {
-            setError(error instanceof Error ?  `${error.message}: Code does not exist. Please try again` : 'Code does not exist. Please try again');
-        } finally {
-            setIsLoading(false);
-        }
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else {
+      setCanResend(true);
+    }
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
     };
+  }, [countdown]);
 
-    const handleResendCode = async () => {
-        if (!canResend) return;
-        
-        setIsLoading(true);
-        try {
-            await authService.forgotPassword(routeEmail);
-            setCountdown(60);
-            setCanResend(false);
-            Alert.alert('Success', 'Verification code has been resent');
-        } catch (error) {
-            Alert.alert('Error', error instanceof Error ? error.message : 'Failed to resend code');
-        } finally {
-            setIsLoading(false);
-        }
+  const handleVerifyCode = async () => {
+    if (!routeEmail) {
+      Alert.alert(
+        "Error",
+        "Please enter the email associated with your account"
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    const params = {
+      email: routeEmail,
+      otp: value,
     };
+    console.log("The verification params are", value);
     try {
       const data = await authService.verifyCode(params);
+      console.log("data", data);
       const session_token = data.session_token;
+      console.log("The session token is", session_token);
       if (session_token) {
         navigation.navigate("ResetPassword", {
           email: routeEmail,
-          session_token,
+          session_token: session_token,
           source,
         });
       } else {
         Alert.alert("Error", "Invalid verification code");
       }
     } catch (error) {
-      Alert.alert(
-        "Forgot Password Failed",
+      setError(
         error instanceof Error
-          ? error.message
-          : "Invalid email. Please try again.",
-        [{ text: "OK" }]
+          ? `${error.message}: Code does not exist. Please try again`
+          : "Code does not exist. Please try again"
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-    return (
-        <CustomSafeAreaView className='flex-1 items-start justify-start' edges={['left', 'right']}>
-            <KeyboardAvoidingView
-                className="flex-1"
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            >
-            <ScrollView className='flex-1 relative align-left p-6'>
-                <View className="flex-row items-center justify-start mb-3">
-                    <BackButton onPress={() => navigation.goBack()}/>
-                </View>
-                <Text className="text-3xl font-medium text-black mb-2 text-">Enter verification code</Text>
-                <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">We've sent a 6-digit code to {routeEmail}</Text>
+  const handleResendCode = async () => {
+    if (!canResend) return;
 
-                <View style={styles.formContainer}>
-                    <View className="flex-col">  
-                        <CodeField
-                            ref={ref}
-                            {...props}
-                            value={value}
-                            onChangeText={setValue}
-                            cellCount={CELL_COUNT}
-                            rootStyle={styles.codeFieldRoot}
-                            keyboardType="number-pad"
-                            renderCell={({ index, symbol, isFocused }) => (
-                                <Text
-                                    key={index}
-                                    style={[styles.cell, isFocused && styles.focusCell]}
-                                    onLayout={getCellOnLayoutHandler(index)}>
-                                    {symbol || (isFocused ? <Cursor /> : null)}
-                                </Text>
-                            )}
-                        />
-                        {error ? <Text className='text-red-500 text-sm'>{error}</Text> : null}
-                        
-                        
-                    </View>
-                </View>
-            </ScrollView>
-            <View className='absolute flex-col bottom-10 px-6 w-full'>
-                    <View className='w-full items-center'>
-                        <CustomTouchableOpacityButton           
-                            className={`h-[56px] w-full items-center justify-center bg-primary rounded-[100px] ${isDisabled() ? 'opacity-30' : 'opacity-100'}`} 
-                            title="Verify code"
-                            textClassName='text-white text-[17px] font-semibold'
-                            disabled={isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail)} 
-                            onPress={handleVerifyCode}
-                            isLoading={isLoading}
-                        />
-                    </View>
-            </View>
-            <View className="mt-2 items-center">
-                {!canResend ? (
-                    <Text className="text-textMediumGrey">
-                        Resend code in {countdown}s
-                    </Text>
-                ) : (
-                    <TouchableOpacity 
-                        onPress={handleResendCode}
-                        disabled={isLoading}
-                    >
-                        <Text className="text-primary font-semibold">
-                            Resend code
-                        </Text>
-                    </TouchableOpacity>
-                )}
-            </View>
-            </KeyboardAvoidingView>
-        </CustomSafeAreaView>
-    );
-};
+    setIsLoading(true);
+    try {
+      await authService.forgotPassword(routeEmail);
+      setCountdown(60);
+      setCanResend(false);
+      Alert.alert("Success", "Verification code has been resent");
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to resend code"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-          <View className="w-full">
-            <View className="mb-6">
+  return (
+    <CustomSafeAreaView
+      className="flex-1 items-start justify-start"
+      edges={["left", "right"]}
+    >
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView className="flex-1 relative align-left p-6">
+          <View className="flex-row items-center justify-start mb-3">
+            <BackButton onPress={() => navigation.goBack()} />
+          </View>
+          <Text className="text-3xl font-medium text-black mb-2">
+            Enter verification code
+          </Text>
+          <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">
+            We've sent a 6-digit code to {routeEmail}
+          </Text>
+
+          <View className="w-full mb-5">
+            <View className="flex-col">
               <CodeField
                 ref={ref}
                 {...props}
@@ -234,47 +165,48 @@ export const VerificationScreen: React.FC = () => {
                 renderCell={({ index, symbol, isFocused }) => (
                   <Text
                     key={index}
-                    style={{
-                      width: 50,
-                      height: 56,
-                      borderWidth: 2,
-                      borderColor: isFocused ? "#19a28f" : "#ddd",
-                      borderRadius: 4,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      fontSize: 24,
-                      backgroundColor: "#fff",
-                      textAlign: "center",
-                      textAlignVertical: "center",
-                      lineHeight: 56,
-                    }}
+                    className={`w-[50px] h-[56px] border-2 border-gray-300 rounded justify-center items-center text-2xl bg-white text-center ${
+                      isFocused ? "border-[#19a28f]" : ""
+                    }`}
+                    style={{ lineHeight: 56 }}
                     onLayout={getCellOnLayoutHandler(index)}
                   >
                     {symbol || (isFocused ? <Cursor /> : null)}
                   </Text>
                 )}
               />
-              {errors.email ? (
-                <Text className="text-red-500 text-sm mt-2">
-                  {errors.email}
-                </Text>
+              {error ? (
+                <Text className="text-red-500 text-sm">{error}</Text>
               ) : null}
             </View>
           </View>
         </ScrollView>
-        <View className="absolute bottom-5 px-6 w-full">
+        <View className="absolute flex-col bottom-10 px-6 w-full">
           <View className="w-full items-center">
             <CustomTouchableOpacityButton
               className={`h-[56px] w-full items-center justify-center bg-primary rounded-[100px] ${
                 isDisabled() ? "opacity-30" : "opacity-100"
               }`}
-              title="Send code"
+              title="Verify code"
               textClassName="text-white text-[17px] font-semibold"
-              disabled={isDisabled()}
+              disabled={
+                isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail)
+              }
               onPress={handleVerifyCode}
               isLoading={isLoading}
             />
           </View>
+        </View>
+        <View className="mt-2 items-center">
+          {!canResend ? (
+            <Text className="text-textMediumGrey">
+              Resend code in {countdown}s
+            </Text>
+          ) : (
+            <TouchableOpacity onPress={handleResendCode} disabled={isLoading}>
+              <Text className="text-primary font-semibold">Resend code</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </KeyboardAvoidingView>
     </CustomSafeAreaView>

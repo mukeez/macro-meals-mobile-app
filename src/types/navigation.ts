@@ -16,13 +16,13 @@ export type RootStackParamList = {
     Login: undefined;
     SignUp: undefined;
     MacroInput: undefined;
-    ForgotPasswordScreen: undefined;
-    VerificationScreen: { email: string };
+     ForgotPasswordScreen: { source: string };
+    VerificationScreen: { email: string; source: string };
+    ResetPassword: { email: string; session_token: string; source: string }; 
     MealList: undefined;
     SettingsScreen: undefined;
     ScanScreenType: undefined;
     BarcodeScanScreen: undefined;
-    ResetPassword: { email: string, session_token: string };
     AddMeal: undefined;
     SnapMeal: undefined;
     MealLog: undefined;

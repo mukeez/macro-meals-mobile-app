@@ -4,13 +4,10 @@ import Header from "../components/Header";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../types/navigation";
+import { StackNavigationProp } from "@react-navigation/stack";
 
-type RootStackParamList = {
-  ForgotPasswordScreen: { source: string };
-};
-
-type NavigationProp = NativeStackNavigationProp<
+type NavigationProp = StackNavigationProp<
   RootStackParamList,
   "ForgotPasswordScreen"
 >;
