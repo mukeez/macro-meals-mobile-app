@@ -12,7 +12,6 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import useStore from "../store/useStore";
 import { authService } from "../services/authService";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
@@ -20,13 +19,14 @@ import BackButton from "../components/BackButton";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialIcons } from "@expo/vector-icons";
+import { RootStackParamList } from "src/types/navigation";
+import { StackNavigationProp } from "@react-navigation/stack";
 
-type RootStackParamList = {
-  ResetPassword: { email: string; session_token: string; source: string };
-  SettingsScreen: undefined;
-  LoginScreen: undefined;
-};
-type NavigationProp = NativeStackNavigationProp<
+type ResetPasswordScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "ResetPassword"
+>;
+type ResetPasswordScreenRouteProp = RouteProp<
   RootStackParamList,
   "ResetPassword"
 >;
@@ -51,8 +51,7 @@ export const ResetPasswordScreen: React.FC = () => {
     confirmPassword: false,
   });
   const setAuthenticated = useStore((state) => state.setAuthenticated);
-  const navigation = useNavigation<NavigationProp>();
-
+  const navigation = useNavigation<ResetPasswordScreenNavigationProp>();
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -105,7 +104,7 @@ export const ResetPasswordScreen: React.FC = () => {
     }
   };
 
-   return (
+  return (
     <CustomSafeAreaView className="flex-1 bg-white" edges={["left", "right"]}>
       <KeyboardAvoidingView
         className="flex-1"
@@ -128,7 +127,9 @@ export const ResetPasswordScreen: React.FC = () => {
           <View className="mt-5">
             <View
               className={`relative mb-2 ${
-                touched.password && errors.password ? "border border-[#ff6b6b] rounded-md" : ""
+                touched.password && errors.password
+                  ? "border border-[#ff6b6b] rounded-md"
+                  : ""
               }`}
             >
               <TextInput
@@ -157,7 +158,9 @@ export const ResetPasswordScreen: React.FC = () => {
               />
             </View>
             {touched.password && errors.password ? (
-              <Text className="text-[#ff6b6b] text-sm mb-3">{errors.password}</Text>
+              <Text className="text-[#ff6b6b] text-sm mb-3">
+                {errors.password}
+              </Text>
             ) : null}
           </View>
           <View className="mb-4" />
@@ -194,7 +197,9 @@ export const ResetPasswordScreen: React.FC = () => {
             />
           </View>
           {touched.confirmPassword && errors.confirmPassword ? (
-            <Text className="text-[#ff6b6b] text-sm mb-3">{errors.confirmPassword}</Text>
+            <Text className="text-[#ff6b6b] text-sm mb-3">
+              {errors.confirmPassword}
+            </Text>
           ) : null}
           {/* Password hint with checkmark */}
           <View className="flex-row items-center justify-start mt-2 w-full">
