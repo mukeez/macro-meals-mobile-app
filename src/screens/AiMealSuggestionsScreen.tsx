@@ -6,6 +6,7 @@ import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import useStore from '../store/useStore';
 import { CircularProgress } from 'src/components/CircularProgress';
+import { mealService } from '../services/mealService';
 
 type RootStackParamList = {
   AddMeal: { analyzedData?: any };
@@ -13,42 +14,18 @@ type RootStackParamList = {
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'AddMeal'>;
 
-const API_URL = 'https://api.macromealsapp.com/api/v1/meals/suggest-meals';
-const PREFERENCES_URL = 'https://api.macromealsapp.com/api/v1/user/preferences';
-
-const defaultPreferences = {
-  calorie_target: 2000,
-  carbs_target: 200,
-  fat_target: 70,
-  protein_target: 150,
-  dietary_restrictions: [],
-  disliked_ingredients: [],
-  favorite_cuisines: []
-};
-
 const macroData = [
   { label: 'Carbs', value: 45, color: '#FFD600' },
   { label: 'Fat', value: 45, color: '#E573D7' },
   { label: 'Protein', value: 45, color: '#6C5CE7' },
 ];
 
-const initialRequestBody = {
-  calories: 0,
-  carbs: 0,
-  fat: 0,
-  latitude: 0,
-  location: '',
-  longitude: 0,
-  protein: 0,
-};
-
-
 const AiMealSuggestionsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const [meals, setMeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const token = useStore((state) => state.token);
+  const [preferences, setPreferences] = useState<any>(null);
 
   const handleMealSelect = (meal: any) => {
     navigation.navigate('AddMeal', {
@@ -64,87 +41,29 @@ const AiMealSuggestionsScreen: React.FC = () => {
   };
 
   useEffect(() => {
-    
-    const fetchPreferences = async () => {
-      try {
-        
-        const response = await fetch(PREFERENCES_URL, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.status === 404) {
-          return defaultPreferences;
-        }
-        if (!response.ok) {
-          throw new Error(`Failed to fetch preferences: ${response.status}`);
-        }
-        const preferences = await response.json();
-        return preferences;
-      } catch (err) {
-        return defaultPreferences;
-      }
-    };
     const fetchMeals = async () => {
       try {
         setLoading(true);
         setError(null);
-        // First fetch preferences
-        const preferences = await fetchPreferences();
-        // Update initialRequestBody with preferences data
-        const requestBody = {
-          ...initialRequestBody,
-          calories: preferences.calorie_target,
-          carbs: preferences.carbs_target,
-          fat: preferences.fat_target,
-          protein: preferences.protein_target,
-        };
+        
+        const result = await mealService.getAiMealSuggestions();
+        setMeals(result.meals);
+        console.log('THIS IS THE PREFERENCES', result.preferences);
+        setPreferences(result.preferences);
+        
         // Update macroData with actual values
-        macroData[0].value = preferences.carbs_target;
-        macroData[1].value = preferences.fat_target;
-        macroData[2].value = preferences.protein_target;
-        // Create an AbortController for the timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-          controller.abort();
-        }, 60000); // 1 minute timeout
-
-        try {
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json', 
-              'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify(requestBody),
-            signal: controller.signal,
-          });
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          setMeals(data.meals || []);
-        } catch (err: any) {
-          if (err.name === 'AbortError') {
-            setError('Request timed out after 1 minute. Please try again.');
-          } else {
-            setError(err.message || 'Error fetching meals');
-          }
-        } finally {
-          clearTimeout(timeoutId);
-          setLoading(false);
-        }
+        macroData[0].value = result.preferences.carbs_target;
+        macroData[1].value = result.preferences.fat_target;
+        macroData[2].value = result.preferences.protein_target;
       } catch (err: any) {
         setError(err.message || 'Error fetching meals');
+      } finally {
         setLoading(false);
       }
     };
 
     fetchMeals();
-  }, [token]);
+  }, []);
 
   return (
     <CustomSafeAreaView edges={['left', 'right']} className="flex-1">
@@ -166,9 +85,9 @@ const AiMealSuggestionsScreen: React.FC = () => {
               <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
               <View className="flex-row w-full justify-between items-center">
 
-              {macroData.map((macro) => (
-                <View>
-                  <View className="h-[100px] w-[100px] relative" key={macro.label}>
+              {macroData.map((macro, index) => (
+                <View key={`${macro.label}-${index}`}>
+                  <View className="h-[100px] w-[100px] relative">
                     <CircularProgress
                       size={100}
                       strokeWidth={12}

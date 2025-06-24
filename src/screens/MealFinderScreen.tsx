@@ -11,6 +11,8 @@ import { RootStackParamList } from '../types/navigation';
 import { Modalize } from 'react-native-modalize';
 import useStore from '../store/useStore';
 import { API_CONSTANTS } from '../constants/api_constants';
+import { mealService } from '../services/mealService';
+import { Meal } from '../types';
 
 
 interface MacroData {
@@ -20,42 +22,12 @@ interface MacroData {
   total: number;
 }
 
-interface Meal {
-  name: string;
-  macros: {
-    calories: number;
-    carbs: number;
-    fat: number;
-    protein: number;
-  };
-  image: any;
-  restaurant: {
-    name: string;
-    location: string;
-  };
-}
-
 interface MockLocation {
   label: string;
   description: string;
   latitude?: number;
   longitude?: number;
 }
-
-const dummyNearbyMeals: Meal[] = [
-  {
-    name: 'Grilled Chicken Bowl',
-    macros: { calories: 520, carbs: 45, fat: 18, protein: 40 },
-    image: IMAGE_CONSTANTS.restaurantIcon,
-    restaurant: { name: 'FitEats', location: '2.3 mi' },
-  },
-  {
-    name: 'Salmon Avocado Sushi',
-    macros: { calories: 410, carbs: 55, fat: 10, protein: 22 },
-    image: IMAGE_CONSTANTS.restaurantIcon,
-    restaurant: { name: 'SushiGo', location: '1.1 mi' },
-  },
-];
 
 const mockLocations: MockLocation[] = [
     {
@@ -146,9 +118,15 @@ const mockLocations: MockLocation[] = [
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const macroData = [
+  { label: 'Carbs', value: 45, color: '#FFD600' },
+  { label: 'Fat', value: 45, color: '#E573D7' },
+  { label: 'Protein', value: 45, color: '#6C5CE7' },
+];
+
 const MealFinderScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'MealFinderScreen'>>();
-  const preferences = useStore((state) => state.preferences);
+  const storePreferences = useStore((state) => state.preferences);
   const [loading, setLoading] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -158,15 +136,9 @@ const MealFinderScreen: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<string>('Getting location...');
   const [search, setSearch] = useState<string>('');
   const [filteredLocations, setFilteredLocations] = useState<MockLocation[]>(mockLocations);
+  const [preferences, setPreferences] = useState<any>(null);
   const modalizeRef = useRef<Modalize>(null);
   const token = useStore((state) => state.token);
-
-  // Dynamic macro data based on user preferences
-  const macroData: MacroData[] = [
-    { label: 'Carbs', value: preferences?.carbs || 0, color: '#FFD600', total: preferences?.carbs || 0 },
-    { label: 'Fat', value: preferences?.fat || 0, color: '#E573D7', total: preferences?.fat || 0 },
-    { label: 'Protein', value: preferences?.protein || 0, color: '#6C5CE7', total: preferences?.protein || 0 },
-  ];
 
   useEffect(() => {
     const fetchLocationAndSuggestions = async () => {
@@ -205,33 +177,30 @@ const MealFinderScreen: React.FC = () => {
 
           // 2. Fetch meal suggestions
           const requestBody = {
-            calories: preferences?.calories || 0,
-            carbs: preferences?.carbs || 0,
+            calories: storePreferences?.calories || 0,
+            carbs: storePreferences?.carbs || 0,
             dietary_preference: '',
             dietary_restrictions: [],
-            fat: preferences?.fat || 0,
+            fat: storePreferences?.fat || 0,
             latitude: location.coords.latitude,
             location: address,
             longitude: location.coords.longitude,
-            protein: preferences?.protein || 0,
+            protein: storePreferences?.protein || 0,
           };
           setLocationLoading(true);
           try {
-            const response = await fetch(`${API_CONSTANTS.API_URL}${API_CONSTANTS.SUGGEST_MEALS_URL}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify(requestBody),
-            });
-            const data = await response.json();
-            const mealList = Array.isArray(data.meals)
-              ? data.meals
-              : Array.isArray(data)
-                ? data
-                : [];
+            const result = await mealService.getAiMealSuggestions();
+            const mealList = result.meals.map((meal) => ({
+              ...meal,
+              image: meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon,
+            }));
             setMeals(mealList);
+            setPreferences(result.preferences);
+            
+            // Update macroData with actual values
+            macroData[0].value = result.preferences.carbs_target;
+            macroData[1].value = result.preferences.fat_target;
+            macroData[2].value = result.preferences.protein_target;
             setError(null);
           } catch (apiError: any) {
             setError('Failed to fetch meal suggestions.');
@@ -287,33 +256,30 @@ const MealFinderScreen: React.FC = () => {
     setLocationLoading(true);
 
     const requestBody = {
-      calories: preferences?.calories || 0,
-      carbs: preferences?.carbs || 0,
+      calories: storePreferences?.calories || 0,
+      carbs: storePreferences?.carbs || 0,
       dietary_preference: '',
       dietary_restrictions: [],
-      fat: preferences?.fat || 0,
+      fat: storePreferences?.fat || 0,
       latitude: location.latitude,
       location: location.label,
       longitude: location.longitude,
-      protein: preferences?.protein || 0,
+      protein: storePreferences?.protein || 0,
     };
 
     try {
-      const response = await fetch(`${API_CONSTANTS.API_URL}${API_CONSTANTS.SUGGEST_MEALS_URL}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
-      const data = await response.json();
-      const mealList = Array.isArray(data.meals)
-        ? data.meals
-        : Array.isArray(data)
-          ? data
-          : [];
+      const result = await mealService.getAiMealSuggestions();
+      const mealList = result.meals.map((meal) => ({
+        ...meal,
+        image: meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon,
+      }));
       setMeals(mealList);
+      setPreferences(result.preferences);
+      
+      // Update macroData with actual values
+      macroData[0].value = result.preferences.carbs_target;
+      macroData[1].value = result.preferences.fat_target;
+      macroData[2].value = result.preferences.protein_target;
       setError(null);
     } catch (apiError: any) {
       setError('Failed to fetch meal suggestions.');
@@ -369,8 +335,9 @@ const MealFinderScreen: React.FC = () => {
                         <CircularProgress
                             size={100}
                             strokeWidth={12}
-                            consumed={macro.value}
-                            total={macro.total}
+                            textSize={16}
+                            consumed={macro.value + 'g'}
+                            total={macro.value}
                             color={macro.color}
                             backgroundColor="#d0e8d1"
                             label={macro.label}
@@ -395,16 +362,16 @@ const MealFinderScreen: React.FC = () => {
                     className="flex-row bg-white rounded-xl mx-5 mb-4 px-3 py-5 shadow-sm"
                 >
                     <View className="flex-row items-center justify-center bg-cornflowerBlue h-[48px] w-[48px] rounded-full mr-2.5">
-                        <Image source={meal.image} className="w-[20px] h-[20px] rounded-full" />
+                        <Image source={meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon} className="w-[20px] h-[20px] rounded-full" />
                     </View>
                     
                     <View className="flex-1 gap-1">
-                        <View className="flex-row items-start justify-between">
+                        {/* <View className="flex-row items-start justify-between">
                             <Text className="text-sm font-medium text-[#222] flex-1 mr-2" numberOfLines={2}>{meal.name}</Text>
                             <View className="flex items-center justify-center py-1 px-1.5 rounded-[100px] bg-primary flex-shrink-0">
                                 <Text className="text-xs text-white text-center font-medium">90% match</Text>
                             </View>
-                        </View>
+                        </View> */}
 
                         <View className="flex-row items-center gap-3 flex-wrap">
                             <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.name}</Text>
