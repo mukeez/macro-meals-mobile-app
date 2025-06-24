@@ -34,6 +34,7 @@ module.exports = {
         primaryLight: '##009688',
         secondary: '#58B74F',
         accent: '#AB8BFF',
+        black: '#333333',
         indicatorActive: "#01675B",
         indicatorInactive: "#b3d1ce",
         aquaSqueeze: "#E6F4F1",
@@ -53,7 +54,17 @@ module.exports = {
         grey: '#f5f5f5',
         cornflowerBlue: '#C4E7E3',
         jungleGreen: '#20A090',
-      }
+        lynch: '#607D8B',
+        galleryBg: '#f3f3f3',
+        textLightGrey: '#8e929a',
+        borderGallery: '#f3f3f3',
+      },
+      spacing: {
+        '11.3': '11.3rem', // 181px
+        '4.25': '4.25rem', // 68px
+        '43': '43px',      // 43px icon
+        '280': '280px',    // quick add card width
+      },
     },
   },
   plugins: [],

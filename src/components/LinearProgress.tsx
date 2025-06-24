@@ -10,7 +10,7 @@ interface LinearProgressProps {
 }
 
 export function LinearProgress({
-  width = 94,
+  width,
   height = 6,
   progress,
   color,
@@ -19,7 +19,7 @@ export function LinearProgress({
   const percentage = Math.min(100, progress);
 
   return (
-    <View style={[styles.container, { width, height, backgroundColor }]}>
+    <View style={[styles.container, { width, height, backgroundColor, flex: width ? undefined : 1 }]}>
       <View
         style={[
           styles.progress,

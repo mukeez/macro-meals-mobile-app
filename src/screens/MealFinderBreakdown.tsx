@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FavoritesService, { FavoriteMeal } from '../services/favoritesService';
 import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
+import { userService } from '../services/userService';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -53,17 +54,13 @@ const MealFinderBreakdownScreen: React.FC = () => {
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [matchPercent] = useState<number>(98);
   const [isLogging, setIsLogging] = useState<boolean>(false);
-
-  // Macro breakdown for progress bars
-  const macroBreakdown: MacroData[] = [
-    { label: 'Carbs', value: meal.macros.carbs, total: 50, color: macroColors.Carbs },
-    { label: 'Fat', value: meal.macros.fat, total: 30, color: macroColors.Fat },
-    { label: 'Protein', value: meal.macros.protein, total: 20, color: macroColors.Protein },
-  ];
+  const [userPreferences, setUserPreferences] = useState<any>(null);
+  const [macroBreakdown, setMacroBreakdown] = useState<MacroData[]>([]);
 
   // Check if meal is in favorites on component mount
   useEffect(() => {
     checkIfFavorite();
+    fetchUserPreferences();
   }, []);
 
   const checkIfFavorite = async (): Promise<void> => {
@@ -72,6 +69,30 @@ const MealFinderBreakdownScreen: React.FC = () => {
       setIsFavorite(isInFavorites);
     } catch (error) {
       console.error('Error checking favorites:', error);
+    }
+  };
+
+  const fetchUserPreferences = async () => {
+    try {
+      const preferences = await userService.getPreferences();
+      setUserPreferences(preferences);
+      
+      // Update macro breakdown with actual user targets
+      const updatedMacroBreakdown: MacroData[] = [
+        { label: 'Carbs', value: meal.macros.carbs, total: preferences.carbs_target, color: macroColors.Carbs },
+        { label: 'Fat', value: meal.macros.fat, total: preferences.fat_target, color: macroColors.Fat },
+        { label: 'Protein', value: meal.macros.protein, total: preferences.protein_target, color: macroColors.Protein },
+      ];
+      setMacroBreakdown(updatedMacroBreakdown);
+    } catch (error) {
+      console.error('Error fetching user preferences:', error);
+      // Fallback to default values if preferences fetch fails
+      const defaultMacroBreakdown: MacroData[] = [
+        { label: 'Carbs', value: meal.macros.carbs, total: 50, color: macroColors.Carbs },
+        { label: 'Fat', value: meal.macros.fat, total: 30, color: macroColors.Fat },
+        { label: 'Protein', value: meal.macros.protein, total: 20, color: macroColors.Protein },
+      ];
+      setMacroBreakdown(defaultMacroBreakdown);
     }
   };
 
@@ -148,12 +169,12 @@ const MealFinderBreakdownScreen: React.FC = () => {
         <ScrollView 
           className="flex-1"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 10 }}
         >
           {/* Top Image */}
           <View style={{ height: SCREEN_HEIGHT * 0.4, width: '100%' }}>
             <Image
-              source={meal.image}
+              source={IMAGE_CONSTANTS.sampleFood}
               style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
             />
             {/* Back and Favorite buttons */}
@@ -166,7 +187,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
                 className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]"
               >
                 <Image 
-                source={IMAGE_CONSTANTS.star} className='h-[16px] w-[16px]'
+                source={IMAGE_CONSTANTS.starIcon} className='h-[16px] w-[16px]'
                 />
               </TouchableOpacity>
             </View>
@@ -179,7 +200,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
           </View>
 
           {/* Match Percentage - SemiCircularProgress */}
-          <View className="items-center my-4">
+          {/* <View className="items-center my-4">
             <View style={{ width: 200, height: 100, alignItems: 'center', justifyContent: 'center' }}>
               <SemiCircularProgress
                 size={200}
@@ -193,7 +214,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
                 <Text className="text-base text-[#222] font-medium">match</Text>
               </View>
             </View>
-          </View>
+          </View> */}
 
           {/* Macro Breakdown Card */}
           <View
@@ -201,46 +222,43 @@ const MealFinderBreakdownScreen: React.FC = () => {
             style={{
               backgroundColor: '#fff',
               shadowColor: '#000',
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 4,
+              shadowOpacity: 0.2,
+              shadowRadius: 5,
+              shadowOffset: { width: 0, height: 1 },
+              elevation: 2,
             }}
           >
-            <Text className="text-lg font-semibold mb-3">Macro breakdown</Text>
+            <Text className="text-lg font-semibold mb-5">Macro breakdown</Text>
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-base text-[#222] font-medium">Total calories</Text>
               <Text className="text-base text-[#222] font-semibold">{meal.macros.calories} cal</Text>
             </View>
-            {macroBreakdown.map((macro: MacroData) => (
+            {macroBreakdown.length > 0 ? macroBreakdown.map((macro: MacroData) => (
               <View key={macro.label} className="mb-5">
-                <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center mb-1 justify-between">
                   <Text className="text-sm font-semibold text-[#222]">{macro.label}</Text>
                   <Text className="text-sm text-[#222] font-semibold">{macro.value}g</Text>
+                  {/* <Text className="text-sm text-[#222] font-semibold">{macro.value}g / {macro.total}g</Text> */}
                 </View>
                 <LinearProgress
                   progress={(macro.value / macro.total) * 100}
                   color={macro.color}
-                  height={8}
+                  height={6}
                 />
               </View>
-            ))}
+            )) : (
+              <View className="items-center py-4">
+                <ActivityIndicator size="small" color="#19a28f" />
+                <Text className="text-sm text-[#888] mt-2">Loading macro breakdown...</Text>
+              </View>
+            )}
           </View>
 
 
         </ScrollView>
 
         {/* Fixed Button at Bottom */}
-        <View style={{
-          backgroundColor: '#fff',
-          padding: 20,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          shadowColor: '#000',
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          elevation: 8,
-        }}>
+        <View className="absolute bottom-0 left-0 right-0 bg-white p-5 rounded-t-[20px] shadow-lg">
           <TouchableOpacity
             className="w-full h-[56px] rounded-full bg-primary items-center justify-center"
             onPress={handleAddToLog}
