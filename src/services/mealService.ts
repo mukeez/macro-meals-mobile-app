@@ -1,5 +1,6 @@
 import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal, LoggedMeal } from '../types';
 import { authTokenService } from './authTokenService';
+import { userService } from './userService';
 
 /**
  * API configuration.
@@ -50,9 +51,100 @@ interface DailyProgressResponse {
 }
 
 /**
+ * Interface for AI meal suggestions request
+ */
+interface AiMealSuggestionsRequest {
+    calories: number;
+    carbs: number;
+    fat: number;
+    latitude: number;
+    location: string;
+    longitude: number;
+    protein: number;
+}
+
+/**
  * Service for meal-related API operations.
  */
 export const mealService = {
+    /**
+     * Fetches AI meal suggestions based on user preferences and macro targets
+     * @param requestBody - The request body with macro targets and location
+     * @returns Promise with suggested meals
+     * @throws Error if the request fails or times out
+     */
+    suggestAiMeals: async (requestBody: AiMealSuggestionsRequest): Promise<Meal[]> => {
+        const token = authTokenService.getToken();
+        
+        if (!token) {
+            throw new Error('Authentication required');
+        }
+
+        // Create an AbortController for the timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, 60000); // 1 minute timeout
+
+        try {
+            const response = await fetch(API_ENDPOINTS.SUGGEST_MEALS, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(requestBody),
+                signal: controller.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.meals || [];
+        } catch (err: any) {
+            if (err.name === 'AbortError') {
+                throw new Error('Request timed out after 1 minute. Please try again.');
+            } else {
+                throw new Error(err.message || 'Error fetching AI meal suggestions');
+            }
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    },
+
+    /**
+     * Fetches AI meal suggestions with automatic preference fetching
+     * @returns Promise with suggested meals
+     * @throws Error if the request fails
+     */
+    getAiMealSuggestions: async (): Promise<{ meals: Meal[], preferences: any }> => {
+        try {
+            // First fetch preferences from userService
+            const preferences = await userService.getPreferences();
+            
+            // Create request body with preferences data
+            const requestBody: AiMealSuggestionsRequest = {
+                calories: preferences.calorie_target,
+                carbs: preferences.carbs_target,
+                fat: preferences.fat_target,
+                protein: preferences.protein_target,
+                latitude: 0,
+                location: '',
+                longitude: 0,
+            };
+
+            // Fetch AI meal suggestions
+            const meals = await mealService.suggestAiMeals(requestBody);
+            
+            return { meals, preferences };
+        } catch (error) {
+            console.error('Error getting AI meal suggestions:', error);
+            throw error;
+        }
+    },
+
     /**
      * Fetches meal suggestions based on user macroAndLocation.
      *
