@@ -46,4 +46,5 @@ export type RootStackParamList = {
     GoalsSetupFlow: undefined;
     ChangePassword: undefined;
     AdjustTargets: undefined;
+    AccountSettingsScreen: undefined;
 };

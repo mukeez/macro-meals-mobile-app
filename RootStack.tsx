@@ -37,9 +37,10 @@ import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import AiMealSuggestionsScreen from "src/screens/AiMealSuggestionsScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
-import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
 import AdjustTargetsScreen from "./src/screens/AdjustTargetsScreen";
 import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
+import AccountSettingsScreen from "src/screens/AccountSettingsScreen";
+
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -118,7 +119,7 @@ const DashboardNavigator = () => {
       <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
       <Stack.Screen name="AddMeal" component={AddMealScreen} />
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
-      <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+      <Stack.Screen name="AccountSettingsScreen" component={AccountSettingsScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
       <Stack.Screen name="AiMealSuggestionsScreen" component={AiMealSuggestionsScreen} />
       <Stack.Screen name="GoalSetupScreen" component={GoalSetupScreen} />
