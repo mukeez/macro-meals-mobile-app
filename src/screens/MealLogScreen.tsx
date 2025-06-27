@@ -1,641 +1,513 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
-    ScrollView,
+    TextInput,
     SafeAreaView,
     StatusBar,
+    ScrollView,
     ActivityIndicator,
-    RefreshControl,
+    Image,
+    Modal,
+    Platform,
     Alert,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Picker } from '@react-native-picker/picker';
+import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from 'src/types/navigation';
 import { mealService } from '../services/mealService';
-import { Meal, LoggedMeal } from '../types';
-import CustomSafeAreaView from '../components/CustomSafeAreaView';
-import { FontAwesome } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import * as ImagePicker from 'expo-image-picker';
+import FavoritesService from '../services/favoritesService';
 
-type RootStackParamList = {
-    MealLog: {
-        date: string;
+interface RouteParams {
+    barcodeData: any;
+    analyzedData?: {
+        name: string;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        quantity: number;
     };
-    Scan: undefined;
-    MealDetails: {
-        id: string;
-    };
+}
+
+interface RecentMeal {
+    id: string;
+    name: string;
+    calories: number;
+}
+
+/**
+ * Determines meal type based on time of day
+ * @param time - The time to check
+ * @returns The appropriate meal type
+ */
+const getMealTypeByTime = (time: Date): string => {
+    const hour = time.getHours();
+    
+    if (hour >= 5 && hour < 11) {
+        return 'breakfast';
+    } else if (hour >= 11 && hour < 17) {
+        return 'lunch';
+    } else if (hour >= 17 && hour < 22) {
+        return 'dinner';
+    } else {
+        return 'other';
+    }
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MealLog'>;
-type MealLogRouteProp = RouteProp<RootStackParamList, 'MealLog'>;
-
-// Enum for meal types
-enum MealType {
-    BREAKFAST = 'breakfast',
-    LUNCH = 'lunch',
-    DINNER = 'dinner'
-}
-
 /**
- * Interface for daily progress data from API
+ * Screen for adding a new meal to the log
  */
-interface DailyProgress {
-    logged_macros: {
-        calories: number;
-        protein: number;
-        carbs: number;
-        fat: number;
-    };
-    target_macros: {
-        calories: number;
-        protein: number;
-        carbs: number;
-        fat: number;
-    };
-    progress_percentage: {
-        calories: number;
-        protein: number;
-        carbs: number;
-        fat: number;
-    };
-}
+export const AddMealScreen: React.FC = () => {
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'AddMeal'>>();
+    const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
+    const params = route.params || {};
+    const { barcodeData, analyzedData } = params;
 
-/**
- * Screen to display daily meal log and macro progress
- */
-export const MealLogScreen: React.FC = () => {
-    const navigation = useNavigation<NavigationProp>();
-    const route = useRoute<MealLogRouteProp>();
-    const { date } = route.params;
+    const [mealName, setMealName] = useState<string>('');
+    const [calories, setCalories] = useState<string>('0');
+    const [protein, setProtein] = useState<string>('0');
+    const [carbs, setCarbs] = useState<string>('0');
+    const [fats, setFats] = useState<string>('0');
+    const userId = useStore((state) => state.userId);
+    const token = useStore((state) => state.token);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [time, setTime] = useState<Date>(new Date());
+    const [showTimeModal, setShowTimeModal] = useState(false);
+    const [tempTime, setTempTime] = useState<Date | null>(null);
+    const [mealImage, setMealImage] = useState<string | null>(null);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [selectedMealType, setSelectedMealType] = useState(getMealTypeByTime(new Date()));
+    const [mealDescription, setMealDescription] = useState('');
+    const [showMealTypeModal, setShowMealTypeModal] = useState(false);
+    const [tempMealType, setTempMealType] = useState(selectedMealType);
 
-    // Access store values
-    const preferences = useStore(state => state.preferences);
-    const loggedMeals = useStore(state => state.loggedMeals || []);
-    const setLoggedMeals = useStore(state => state.setLoggedMeals);
-    const shouldRefreshMeals = useStore(state => state.shouldRefreshMeals);
-    const setShouldRefreshMeals = useStore(state => state.setShouldRefreshMeals);
+    const [recentMeals] = useState<RecentMeal[]>([
+        { id: '1', name: 'Chicken Salad', calories: 1000 },
+        { id: '2', name: 'Protein Bowl', calories: 600 },
+        { id: '3', name: 'Salmon Rice', calories: 800 },
+    ]);
 
-    const [refreshing, setRefreshing] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    // Initialize form with analyzed data if available
+    React.useEffect(() => {
+        if (analyzedData) {
+            setMealName(analyzedData.name || '');
+            setCalories(analyzedData.calories?.toString() || '0');
+            setProtein(analyzedData.protein?.toString() || '0');
+            setCarbs(analyzedData.carbs?.toString() || '0');
+            setFats(analyzedData.fat?.toString() || '0');
+        }
+    }, [analyzedData]);
+
+    React.useEffect(() => {
+      const checkFavorite = async () => {
+        if (mealName.trim()) {
+          const isFav = await FavoritesService.isFavorite(mealName, 'custom');
+          setIsFavorite(isFav);
+        }
+      };
+      checkFavorite();
+    }, [mealName]);
 
     /**
-     * Load both meals and daily progress
+     * Handles going back to the previous screen
      */
-    const loadData = async () => {
+    const handleGoBack = (): void => {
+        navigation.goBack();
+    };
+
+    /**
+     * Handles saving the meal to bookmarks
+     */
+    const handleBookmark = (): void => {
+        // Implementation for bookmarking a meal
+        console.log('Bookmark meal');
+    };
+
+    /**
+     * Quick add a recent meal
+     * @param meal - The recent meal to add
+     */
+    const handleQuickAdd = (meal: RecentMeal): void => {
+        setMealName(meal.name);
+        setCalories(meal.calories.toString());
+    };
+
+    /**
+     * Adds the current meal to the log
+     */
+    const handleAddToLog = async (): Promise<void> => {
         setLoading(true);
-        setError(null);
-
         try {
-            const [mealsPromise, progressPromise] = [
-                mealService.getTodaysMeals(),
-                mealService.getDailyProgress()
-            ];
+            if (!mealName.trim()) {
+                console.error('Please enter a meal name');
+                return;
+            }
 
-            const [meals, progress] = await Promise.all([mealsPromise, progressPromise]);
+            const newMeal = {
+                name: mealName,
+                calories: parseInt(calories, 10) || 0,
+                protein: parseInt(protein, 10) || 0,
+                carbs: parseInt(carbs, 10) || 0,
+                fat: parseInt(fats, 10) || 0,
+                meal_type: selectedMealType,
+                meal_time: time.toISOString(),
+                description: mealDescription || "",
+            };
 
-            setLoggedMeals(meals || []);
-            setDailyProgress(progress);
-            setShouldRefreshMeals(false);
-        } catch (err: any) {
-            console.error('Error loading data:', err);
-            setError('Failed to load meals. Please try again.');
+            console.log('Meal request JSON:', JSON.stringify(newMeal));
+            const response = await mealService.logMeal(newMeal);
+            console.log('Meal log response:', JSON.stringify(response));
+
+            // Navigate back to meal log screen
+            navigation.navigate('MainTabs');
+        } catch (error) {
+            if (error instanceof Error) {
+                console.error('Error adding meal to log:', error.message, error.stack);
+            } else {
+                try {
+                    console.error('Error adding meal to log:', JSON.stringify(error));
+                } catch (e) {
+                    console.error('Error adding meal to log:', error);
+                }
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    /**
+     * Saves the current meal as a template
+     */
+    const handleSaveTemplate = (): void => {
+        // Implementation for saving a meal template
+        console.log('Save as template');
+    };
 
-    useFocusEffect(
-        React.useCallback(() => {
-            if (shouldRefreshMeals) {
-                loadData();
-            }
-            return () => {};
-        }, [shouldRefreshMeals])
-    );
-
-    const onRefresh = async () => {
-        setRefreshing(true);
-        try {
-            await loadData();
-        } catch (error) {
-            console.error('Error refreshing data:', error);
-        } finally {
-            setRefreshing(false);
+    /**
+     * Handles adding a photo to the meal
+     */
+    const handleAddPhoto = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            alert('Sorry, we need camera roll permissions to make this work!');
+            return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: 'images',
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.7,
+        });
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+            setMealImage(result.assets[0].uri);
         }
     };
 
-    const calculateProgress = (consumed: number, target: number): number => {
-        if (!target || target <= 0) return 0;
-        return Math.min((consumed / target) * 100, 100);
+    // Time picker modal handlers
+    const handleTimeChange = (event: any, selectedTime?: Date) => {
+        if (selectedTime) setTempTime(selectedTime);
     };
-
-    const getConsumedMacros = () => {
-        if (dailyProgress && dailyProgress.logged_macros) {
-            return dailyProgress.logged_macros;
-        }
-
-        return (loggedMeals || []).reduce(
-            (acc, meal) => ({
-                protein: acc.protein + (meal?.macros?.protein || 0),
-                carbs: acc.carbs + (meal?.macros?.carbs || 0),
-                fat: acc.fat + (meal?.macros?.fat || 0),
-                calories: acc.calories + (meal?.macros?.calories || 0)
-            }),
-            { protein: 0, carbs: 0, fat: 0, calories: 0 }
-        );
+    const handleTimeCancel = () => setShowTimeModal(false);
+    const handleTimeDone = () => {
+        if (tempTime) setTime(tempTime);
+        setShowTimeModal(false);
     };
+    const formattedTime = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Get target macros from API response or use preferences
-    const getTargetMacros = () => {
-        if (dailyProgress && dailyProgress.target_macros) {
-            return dailyProgress.target_macros;
-        }
-
-        // Fallback: use preferences
-        return {
-            protein: preferences?.protein || 0,
-            carbs: preferences?.carbs || 0,
-            fat: preferences?.fat || 0,
-            calories: preferences?.calories || 0
+    const toggleFavorite = async () => {
+      try {
+        const mealObj = {
+          name: mealName,
+          macros: {
+            calories: parseInt(calories, 10) || 0,
+            carbs: parseInt(carbs, 10) || 0,
+            fat: parseInt(fats, 10) || 0,
+            protein: parseInt(protein, 10) || 0,
+          },
+          image: mealImage || IMAGE_CONSTANTS.mealsIcon,
+          restaurant: { name: 'custom', location: '' },
         };
-    };
-
-    const consumedMacros = getConsumedMacros();
-    const targetMacros = getTargetMacros();
-
-    /**
-     * Navigate to the add meal screen
-     */
-    const handleScan = () => {
-        navigation.navigate('Scan');
-    };
-
-    const handleMealDetails = (mealId: string) => {
-        navigation.navigate('MealDetails', { id: mealId });
-    };
-
-    const handleGoBack = () => {
-        navigation.goBack();
-    };
-
-    /**
-     * Format time from ISO string to AM/PM format
-     * @param dateString - ISO date string to format
-     * @returns Formatted time string in 12-hour format with AM/PM
-     */
-    const formatTime = (dateString: string): string => {
-        if (!dateString) return '';
-
-        try {
-            const date = new Date(dateString);
-            const hours = date.getHours();
-            const minutes = date.getMinutes();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            const formattedHours = hours % 12 || 12;
-            const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-
-            return `${formattedHours}:${formattedMinutes} ${ampm}`;
-        } catch (e) {
-            console.error('Error formatting date:', e);
-            return '';
+        const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
+        setIsFavorite(newFavoriteStatus);
+        if (newFavoriteStatus) {
+          Alert.alert('Added to favorites');
+        } else {
+          Alert.alert('Removed from favorites');
         }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to update favorites');
+      }
     };
-
-    /**
-     * Render a meal card based on meal data
-     * @param meal - The meal data to render
-     * @returns JSX element for the meal card
-     */
-    const renderMealCard = (meal: LoggedMeal) => (
-        <TouchableOpacity
-            key={meal.id}
-            style={styles.mealCard}
-            onPress={() => handleMealDetails(meal.id)}
-        >
-            <View style={styles.mealCardContent}>
-                <Text style={styles.mealName}>{meal.name}</Text>
-                <Text style={styles.mealTime}>{new Date(meal.timestamp).toLocaleTimeString()}</Text>
-                <View style={styles.macroRow}>
-                    <Text style={styles.macroText}>P: {meal.protein}g</Text>
-                    <Text style={styles.macroText}>C: {meal.carbs}g</Text>
-                    <Text style={styles.macroText}>F: {meal.fat}g</Text>
-                    <Text style={styles.calories}>{meal.calories} kcal</Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
 
     return (
-        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={handleGoBack}
-                    >
-                        <FontAwesome name="arrow-left" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Meal Log</Text>
-                </View>
+        <SafeAreaView className="flex-1 bg-white">
+            <StatusBar barStyle="dark-content" />
 
-                <ScrollView
-                    style={styles.scrollContainer}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                        />
-                    }
+            <View className="flex-row items-center justify-between px-4 py-3 border-b border-[#f0f0f0]">
+                <TouchableOpacity onPress={handleGoBack} className="p-1">
+                    <Text className="text-2xl text-[#1a1a1a]">←</Text>
+                </TouchableOpacity>
+                <Text className="text-lg font-semibold text-[#1a1a1a]">Add Meal</Text>
+                <TouchableOpacity
+                  onPress={toggleFavorite}
+                  className={`p-1 ${!mealName.trim() ? 'opacity-50' : ''}`}
+                  disabled={!mealName.trim()}
                 >
-                    {error ? (
-                        <View style={styles.errorContainer}>
-                            <Text style={styles.errorText}>{error}</Text>
-                            <TouchableOpacity style={styles.retryButton} onPress={loadData}>
-                                <Text style={styles.retryButtonText}>Retry</Text>
-                            </TouchableOpacity>
-                        </View>
+                  <Image
+                    source={isFavorite ? IMAGE_CONSTANTS.star : IMAGE_CONSTANTS.starIcon}
+                    className="w-6 h-6"
+                  />
+                </TouchableOpacity>
+            </View>
+
+            <ScrollView className="flex-1 p-4">
+                <TouchableOpacity
+                    className="h-[11.3rem] rounded-xl my-4 justify-center items-center bg-[#f3f3f3]"
+                    onPress={handleAddPhoto}
+                    activeOpacity={0.8}
+                >
+                    {mealImage ? (
+                        <Image
+                            source={{ uri: mealImage }}
+                            className="w-full h-full rounded-xl"
+                            resizeMode="cover"
+                        />
                     ) : (
                         <>
-                            <View style={styles.progressSection}>
-                                <View style={styles.progressHeader}>
-                                    <Text style={styles.progressTitle}>Daily Progress</Text>
-                                    <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
-                                </View>
-
-                                <View style={styles.macroCards}>
-                                    <View style={{...styles.macroCard, ...styles.proteinCard}}>
-                                        <Text style={styles.macroCardTitle}>Protein</Text>
-                                        <Text style={styles.macroCardValue}>{consumedMacros.protein}g</Text>
-                                        <View style={styles.progressBarContainer}>
-                                            <View style={{
-                                                height: '100%',
-                                                borderRadius: 3,
-                                                backgroundColor: '#009688',
-                                                width: `${calculateProgress(consumedMacros.protein, targetMacros.protein)}%`
-                                            }} />
-                                        </View>
-                                    </View>
-
-                                    {/* Carbs Card */}
-                                    <View style={{...styles.macroCard, ...styles.carbsCard}}>
-                                        <Text style={styles.macroCardTitle}>Carbs</Text>
-                                        <Text style={styles.macroCardValue}>{consumedMacros.carbs}g</Text>
-                                        <View style={styles.progressBarContainer}>
-                                            <View style={{
-                                                height: '100%',
-                                                borderRadius: 3,
-                                                backgroundColor: '#FF9800',
-                                                width: `${calculateProgress(consumedMacros.carbs, targetMacros.carbs)}%`
-                                            }} />
-                                        </View>
-                                    </View>
-
-                                    {/* Fats Card */}
-                                    <View style={{...styles.macroCard, ...styles.fatsCard}}>
-                                        <Text style={styles.macroCardTitle}>Fats</Text>
-                                        <Text style={styles.macroCardValue}>{consumedMacros.fat}g</Text>
-                                        <View style={styles.progressBarContainer}>
-                                            <View style={{
-                                                height: '100%',
-                                                borderRadius: 3,
-                                                backgroundColor: '#F44336',
-                                                width: `${calculateProgress(consumedMacros.fat, targetMacros.fat)}%`
-                                            }} />
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-
-                            {/* Meal List */}
-                            <View style={styles.mealList}>
-                                {loading ? (
-                                    <View style={styles.loadingContainer}>
-                                        <ActivityIndicator size="large" color="#009688" />
-                                        <Text style={styles.loadingText}>Loading meals...</Text>
-                                    </View>
-                                ) : !loggedMeals || loggedMeals.length === 0 ? (
-                                    <View style={styles.emptyState}>
-                                        <Text style={styles.emptyStateText}>No meals logged today</Text>
-                                        <Text style={styles.emptyStateSubtext}>Tap "Add Meal" to log your first meal</Text>
-                                    </View>
-                                ) : (
-                                    loggedMeals.map(meal => renderMealCard(meal))
-                                )}
-                            </View>
+                            <Image source={IMAGE_CONSTANTS.mealsIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
+                            <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
                         </>
                     )}
-
-                    <View style={styles.spacer} />
-                </ScrollView>
-
-                <TouchableOpacity style={styles.floatingAddButton} onPress={handleScan}>
-                    <Text style={styles.floatingAddButtonText}>+ Add Meal</Text>
                 </TouchableOpacity>
 
-                <View style={styles.tabBar}>
-                    <TouchableOpacity style={styles.tabItem}>
-                        <Text style={{...styles.tabIcon, ...styles.activeTabIcon}}>🏠</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.tabItem}>
-                        <Text style={styles.tabIcon}>📊</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.tabItem}>
-                        <Text style={styles.tabIcon}>🍽️</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.tabItem}>
-                        <Text style={styles.tabIcon}>👤</Text>
+                <View className="mb-4">
+                    <Text className="text-base font-medium mb-2">Meal Name</Text>
+                    <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                        <TextInput
+                            value={mealName}
+                            onChangeText={setMealName}
+                            className="flex-1 text-base"
+                            placeholder="Enter meal name"
+                            editable={!loading}
+                        />
+                    </View>
+                </View>
+
+                <View className="mb-4">
+                    <Text className="text-base font-medium mb-2">Meal Type</Text>
+                    <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                        <TouchableOpacity
+                          className="flex-1 items-start justify-center h-full"
+                          onPress={() => {
+                            setTempMealType(selectedMealType);
+                            setShowMealTypeModal(true);
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text className="text-base text-[#222]">
+                            {selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}
+                          </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                <View className="mb-4">
+                    <Text className="text-base font-medium text-black mb-2">Time of the day</Text>
+                    <TouchableOpacity
+                        className="border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] placeholder:text-lightGrey text-base flex-row items-center justify-between bg-white"
+                        onPress={() => { setTempTime(time); setShowTimeModal(true); }}
+                        activeOpacity={0.8}
+                    >
+                        <Text className="text-base text-black">{formattedTime}</Text>
+                        <Image source={IMAGE_CONSTANTS.calendarIcon} className="w-6 h-6 opacity-60" />
                     </TouchableOpacity>
                 </View>
+
+                <View className="flex-row justify-between mb-4">
+                    <View className="w-[48%]">
+                        <Text className="text-base font-medium text-black mb-2">Calories</Text>
+                        <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <TextInput
+                                className="flex-1 text-base"
+                                keyboardType="numeric"
+                                value={calories}
+                                onChangeText={setCalories}
+                                placeholder="0"
+                                onFocus={() => { if (calories === '0') setCalories(''); }}
+                            />
+                            <Text className="text-base text-[#8e929a] ml-1">kcal</Text>
+                        </View>
+                    </View>
+
+                    <View className="w-[48%]">
+                        <Text className="text-base font-medium text-black mb-2">Protein</Text>
+                        <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <TextInput
+                                className="flex-1 text-base"
+                                keyboardType="numeric"
+                                value={protein}
+                                onChangeText={setProtein}
+                                placeholder="0"
+                                onFocus={() => { if (protein === '0') setProtein(''); }}
+                            />
+                            <Text className="text-base text-[#8e929a] ml-1">g</Text>
+                        </View>
+                    </View>
+                </View>
+
+                <View className="flex-row justify-between mb-4">
+                    <View className="w-[48%]">
+                        <Text className="text-base font-medium text-black mb-2">Carbs</Text>
+                        <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <TextInput
+                                className="flex-1 text-base"
+                                keyboardType="numeric"
+                                value={carbs}
+                                onChangeText={setCarbs}
+                                placeholder="0"
+                                onFocus={() => { if (carbs === '0') setCarbs(''); }}
+                            />
+                            <Text className="text-base text-[#8e929a] ml-1">g</Text>
+                        </View>
+                    </View>
+
+                    <View className="w-[48%]">
+                        <Text className="text-base text-black mb-2">Fats</Text>
+                          <View className="flex-row items-center placeholder:text-lightGrey text-base border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <TextInput
+                                className="flex-1 text-base"
+                                keyboardType="numeric"
+                                value={fats}
+                                onChangeText={setFats}
+                                placeholder="0"
+                                onFocus={() => { if (fats === '0') setFats(''); }}
+                            />
+                            <Text className="text-base text-[#8e929a] ml-1">g</Text>
+                        </View>
+                    </View>
+                </View>
+
+                <Text className="text-base text-black mt-3 mb-3">Quick add from recent</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8">
+                    {recentMeals.map((meal) => (
+                        <TouchableOpacity
+                            key={meal.id}
+                            className="w-[280px] mr-4 bg-lynch rounded-xl flex-row items-center px-4 py-4"
+                            onPress={() => handleQuickAdd(meal)}
+                        >
+                            <Image source={IMAGE_CONSTANTS.mealsIcon} className="w-[43px] h-[43px] mr-3" />
+                            <View className="flex-1">
+                                <Text className="text-white font-semibold text-base mb-1">{meal.name}</Text>
+                                <Text className="text-white text-xs">{meal.calories} calories</Text>
+                            </View>
+                            <View className="w-8 h-8 rounded-full bg-white items-center justify-center">
+                                <Text className="text-lynch text-2xl">＋</Text>
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+
+
+
+                {/* <TouchableOpacity
+                    className="bg-[#f5f5f5] rounded-lg py-3.5 items-center mb-10"
+                    onPress={handleSaveTemplate}
+                >
+                    <Text className="text-[#333] text-base font-medium">Save as Template</Text>
+                </TouchableOpacity> */}
+            </ScrollView>
+
+            <View className="mx-5 border-t border-gray">
+                <TouchableOpacity
+                    className={`bg-primaryLight mt-3 rounded-full py-5 items-center ${!mealName.trim() ? 'opacity-50' : ''}`}
+                    onPress={handleAddToLog}
+                    disabled={loading || !mealName.trim()}
+                >
+                    {loading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <Text className="text-white text-base font-semibold">Add to log</Text>
+                    )}
+                </TouchableOpacity>
             </View>
-        </CustomSafeAreaView>
+
+            <Modal
+                visible={showTimeModal}
+                transparent
+                animationType="slide"
+                onRequestClose={handleTimeCancel}
+            >
+                <View className="flex-1 justify-end bg-black/40">
+                    <View className="bg-white rounded-t-xl p-4">
+                        <Text className="text-center text-base font-semibold mb-2">Select Time</Text>
+                        <DateTimePicker
+                            value={tempTime || new Date()}
+                            mode="time"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={handleTimeChange}
+                            style={{ alignSelf: 'center' }}
+                        />
+                        <View className="flex-row justify-between mt-4">
+                            <TouchableOpacity onPress={handleTimeCancel} className="flex-1 items-center py-2">
+                                <Text className="text-lg text-blue-500">Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleTimeDone} className="flex-1 items-center py-2">
+                                <Text className="text-lg text-blue-500">Done</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal
+                visible={showMealTypeModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowMealTypeModal(false)}
+            >
+                <View className="flex-1 justify-end bg-black/40">
+                    <View style={{ flex: 1 }} />
+                    <View className="bg-white rounded-t-xl p-4">
+                        <Text className="text-center text-base font-semibold mb-2">Select Meal Type</Text>
+                        <Picker
+                            selectedValue={tempMealType}
+                            onValueChange={setTempMealType}
+                            style={{ width: '100%' }}
+                            itemStyle={{ fontSize: 18, height: 180 }}
+                        >
+                            <Picker.Item label="Breakfast" value="breakfast" />
+                            <Picker.Item label="Lunch" value="lunch" />
+                            <Picker.Item label="Dinner" value="dinner" />
+                            <Picker.Item label="Other" value="other" />
+                        </Picker>
+                        <View className="flex-row justify-between mt-4">
+                            <TouchableOpacity onPress={() => setShowMealTypeModal(false)} className="flex-1 items-center py-2">
+                                <Text className="text-lg text-blue-500">Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setSelectedMealType(tempMealType);
+                                    setShowMealTypeModal(false);
+                                }}
+                                className="flex-1 items-center py-2"
+                            >
+                                <Text className="text-lg text-blue-500">Done</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+        </SafeAreaView>
     );
 };
 
-// Define styles for the component
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8f8f8',
-    },
-    scrollContainer: {
-        flex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        paddingBottom: 8,
-        backgroundColor: '#fff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-    },
-    titleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    iconContainer: {
-        width: 36,
-        height: 36,
-        backgroundColor: '#009688',
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    iconText: {
-        fontSize: 18,
-        color: 'white',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#1a1a1a',
-    },
-    addButton: {
-        width: 36,
-        height: 36,
-        backgroundColor: '#FFF2E0',
-        borderRadius: 18,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    addButtonText: {
-        fontSize: 24,
-        color: '#FF9800',
-        fontWeight: '500',
-    },
-    progressSection: {
-        margin: 16,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    progressHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    progressTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#1a1a1a',
-    },
-    dateText: {
-        fontSize: 14,
-        color: '#666',
-    },
-    macroCards: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    macroCard: {
-        flex: 1,
-        borderRadius: 8,
-        padding: 12,
-        marginHorizontal: 4,
-    },
-    proteinCard: {
-        backgroundColor: '#E8F7F3',
-    },
-    carbsCard: {
-        backgroundColor: '#FFF8E0',
-    },
-    fatsCard: {
-        backgroundColor: '#FFEEEE',
-    },
-    macroCardTitle: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 4,
-    },
-    macroCardValue: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    progressBarContainer: {
-        height: 6,
-        backgroundColor: '#E0E0E0',
-        borderRadius: 3,
-        overflow: 'hidden',
-    },
-    progressBar: {
-        height: '100%',
-        borderRadius: 3,
-    },
-    proteinProgressBar: {
-        backgroundColor: '#009688',
-    },
-    carbsProgressBar: {
-        backgroundColor: '#FF9800',
-    },
-    fatsProgressBar: {
-        backgroundColor: '#F44336',
-    },
-    mealList: {
-        paddingHorizontal: 16,
-        minHeight: 200,
-    },
-    loadingContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-    },
-    loadingText: {
-        marginTop: 12,
-        fontSize: 16,
-        color: '#666',
-    },
-    emptyState: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 40,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        marginVertical: 16,
-    },
-    emptyStateText: {
-        fontSize: 18,
-        fontWeight: '500',
-        color: '#333',
-        marginBottom: 8,
-    },
-    emptyStateSubtext: {
-        fontSize: 14,
-        color: '#666',
-        textAlign: 'center',
-    },
-    errorContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 40,
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        margin: 16,
-    },
-    errorText: {
-        fontSize: 16,
-        color: '#F44336',
-        marginBottom: 16,
-        textAlign: 'center',
-    },
-    retryButton: {
-        backgroundColor: '#009688',
-        paddingVertical: 8,
-        paddingHorizontal: 24,
-        borderRadius: 4,
-    },
-    retryButtonText: {
-        color: '#fff',
-        fontWeight: '500',
-    },
-    mealCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
-    },
-    mealCardContent: {
-        flex: 1,
-    },
-    mealName: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#1a1a1a',
-        marginBottom: 4,
-    },
-    mealTime: {
-        fontSize: 14,
-        color: '#666',
-    },
-    macroRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    macroText: {
-        fontSize: 14,
-        color: '#666',
-    },
-    calories: {
-        fontSize: 14,
-        color: '#333',
-        fontWeight: '500',
-    },
-    floatingAddButton: {
-        position: 'absolute',
-        bottom: 70,
-        left: 16,
-        right: 16,
-        backgroundColor: '#009688',
-        borderRadius: 10,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 4,
-    },
-    floatingAddButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    spacer: {
-        height: 80,
-    },
-    tabBar: {
-        flexDirection: 'row',
-        height: 60,
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderTopColor: '#f0f0f0',
-    },
-    tabItem: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    tabIcon: {
-        fontSize: 24,
-        color: '#bbb',
-    },
-    activeTabIcon: {
-        color: '#009688',
-    },
-    backButton: {
-        width: 36,
-        height: 36,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#1a1a1a',
-    },
-});
+export default AddMealScreen;
 
-export default MealLogScreen;
