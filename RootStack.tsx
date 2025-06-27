@@ -37,9 +37,10 @@ import AboutScreen from "./src/screens/AboutScreen";
 import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import AiMealSuggestionsScreen from "src/screens/AiMealSuggestionsScreen";
 import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
-import { AccountSettingsScreen } from "src/screens/AccountSettingsScreen";
 import AdjustTargetsScreen from "./src/screens/AdjustTargetsScreen";
 import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
+import AccountSettingsScreen from "src/screens/AccountSettingsScreen";
+
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -91,6 +92,7 @@ const AuthNavigator = ({
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen name="TermsOfServiceScreen" component={TermsOfServiceScreen} />
     </Stack.Navigator>
   );
 };
@@ -118,7 +120,7 @@ const DashboardNavigator = () => {
       <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
       <Stack.Screen name="AddMeal" component={AddMealScreen} />
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
-      <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+      <Stack.Screen name="AccountSettingsScreen" component={AccountSettingsScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
       <Stack.Screen name="AiMealSuggestionsScreen" component={AiMealSuggestionsScreen} />
       <Stack.Screen name="GoalSetupScreen" component={GoalSetupScreen} />
@@ -128,7 +130,6 @@ const DashboardNavigator = () => {
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
       <Stack.Screen name="MealFinderScreen" component={MealFinderScreen} />
       <Stack.Screen name="MealFinderBreakdownScreen" component={MealFinderBreakdownScreen} />
-      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />

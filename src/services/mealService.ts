@@ -199,20 +199,21 @@ export const mealService = {
                 body: JSON.stringify(mealData),
             });
 
+            const statusCode = response.status;
+            const responseText = await response.text();
+            let parsedError = null;
+            try {
+                parsedError = JSON.parse(responseText);
+            } catch {}
+
             if (!response.ok) {
-                let errorMessage = 'Failed to log meal';
-                try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
-                } catch (e) {
-                    // If parsing fails, use the default error message
+                if (parsedError && parsedError.detail) {
+                    console.error('Validation error detail:', JSON.stringify(parsedError.detail));
                 }
-                throw new Error(errorMessage);
+                throw new Error(responseText);
             }
 
-            const loggedMeal = await response.json();
+            const loggedMeal = parsedError || {};
             return {
                 id: loggedMeal.id,
                 name: loggedMeal.name,

@@ -96,5 +96,50 @@ export const userService = {
     });
     if (!response.ok) throw new Error(await response.text());
     return await response.json();
+  },
+
+  updateProfile: async (fields: Record<string, any>): Promise<any> => {
+    const token = useStore.getState().token;
+    if (!token) throw new Error("Authentication required");
+
+    const response = await fetch(`${API_BASE_URL}/user/me`, {
+      method: "PATCH",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(fields)
+    });
+    const responseText = await response.text();
+    if (!response.ok) {
+      console.error('[PATCH ERROR] /user/me', response.status, responseText);
+      throw new Error(responseText);
+    }
+    return JSON.parse(responseText);
+  },
+
+  /**
+   * Fetches user data with detailed profile information
+   * @returns User data with profile information
+   * @throws Error if the request fails
+   */
+  fetchUserData: async (): Promise<any> => {
+    const token = useStore.getState().token;
+    if (!token) throw new Error("Authentication required");
+    
+    const response = await fetch(`${API_BASE_URL}/user/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch user profile");
+    }
+
+    const userData = await response.json();
+    return userData;
   }
 };

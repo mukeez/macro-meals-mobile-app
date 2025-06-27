@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     SafeAreaView,
     ScrollView,
@@ -10,29 +9,25 @@ import {
     Linking,
     Platform,
     Switch, Alert,
+    Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { StackNavigationProp } from '@react-navigation/stack';
 import useStore from '../store/useStore';
 import { Picker } from '@react-native-picker/picker';
 import { authService } from '../services/authService';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
-import { FontAwesome } from '@expo/vector-icons';
-
-type RootStackParamList = {
-  Login: undefined;
-  Welcome: undefined;
-  TermsOfService: undefined;
-  PrivacyPolicy: undefined;
-  About: undefined;
-  Notifications: undefined;
-  ChangePassword: undefined;
-};
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { IMAGE_CONSTANTS } from "../constants/imageConstants";
+import { RootStackParamList } from '../types/navigation';
 import { appConstants } from '../../constants/appConstants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { deleteItemAsync } from 'expo-secure-store';
+import ProfileSection from "src/components/ProfileSection";
+import SectionItem from "src/components/SectionItem";
+import { userService } from '../services/userService';
+
+type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 /**
  * Settings screen for the application.
@@ -51,42 +46,49 @@ export const SettingsScreen: React.FC = () => {
   const [units, setUnits] = useState<string>("g/kcal");
   // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [userData, setUserData] = useState({
-    name: "",
+    age: 0,
+    avatar_url: "",
+    created_at: "",
+    display_name: "",
+    dob: "",
     email: "",
-    avatar: "", // Placeholder
+    fcm_token: "",
+    first_name: "",
+    has_macros: false,
+    height: 0,
+    id: "",
+    is_active: true,
+    is_pro: false,
+    last_name: "",
+    meal_reminder_preferences_set: false,
+    sex: "",
+    unit_preference: "metric",
+    updated_at: ""
   });
+
+  // Modal state for units selection
+  const [showUnitsModal, setShowUnitsModal] = useState(false);
+  const [tempUnitPreference, setTempUnitPreference] = useState("metric");
+
+  const UNIT_OPTIONS = [
+    { label: 'Metric', value: 'metric' },
+    { label: 'Imperial', value: 'imperial' },
+  ];
 
   /**
    * Mock fetching user data on component mount
    */
   useEffect(() => {
-    console.log(preferences);
     const fetchUserData = async () => {
-      const profileResponse = await fetch(
-        "https://api.macromealsapp.com/api/v1/user/me",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!profileResponse.ok) {
-        throw new Error("Failed to fetch user profile");
+      try {
+        const profileData = await userService.fetchUserData();
+        setUserData(profileData);
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        // Handle error appropriately
       }
-
-      const profileData = await profileResponse.json();
-      setUserData(profileData);
     };
     fetchUserData();
-
-    setUserData({
-      name: "Sarah Wilson",
-      email: "sarah@example.com",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    });
 
     if (preferences.unitSystem) {
       setUnits(preferences.unitSystem === "Metric" ? "g/kcal" : "oz/cal");
@@ -124,11 +126,23 @@ export const SettingsScreen: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to update preferences");
       }
-
-      console.log("Preferences updated successfully");
     } catch (error) {
       console.error("Error updating preferences:", error);
       // You could add error handling UI here if needed
+    }
+  };
+
+  /**
+   * Handle unit preference change using the same pattern as account settings
+   */
+  const handleUnitPreferenceChange = async (value: string) => {
+    try {
+      const updated = await userService.updateProfile({ unit_preference: value });
+      setUserData((prev) => ({ ...prev, ...updated }));
+      setShowUnitsModal(false);
+    } catch (error) {
+      console.error('Error updating unit preference:', error);
+      // Optionally show error to user
     }
   };
 
@@ -174,7 +188,6 @@ export const SettingsScreen: React.FC = () => {
   };
 
     const handleModalSheet = () => {
-        console.log('Modal sheet');
         navigation.navigate('PaymentScreen' as never);
     };
 
@@ -265,15 +278,17 @@ export const SettingsScreen: React.FC = () => {
         <ProfileSection title="PERSONAL">
           <SectionItem
             title="Account settings"
-            icon="person"
+            image={IMAGE_CONSTANTS.personIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {}}
+            onPress={() => {
+              navigation.navigate('AccountSettingsScreen');
+            }}
           />
           <SectionItem
             title="Adjust targets"
-            icon="whatshot"
+            image={IMAGE_CONSTANTS.fireIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
@@ -281,7 +296,7 @@ export const SettingsScreen: React.FC = () => {
           />
           <SectionItem
             title="Password"
-            icon="lock"
+            image={IMAGE_CONSTANTS.lockIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
@@ -291,11 +306,17 @@ export const SettingsScreen: React.FC = () => {
           />
           <SectionItem
             title="Units"
-            icon="straighten"
+            image={IMAGE_CONSTANTS.balanceIcon}
             rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
+              <View className="flex-row px-2 py-2 gap-1 bg-gray rounded-lg items-center">
+                <Text className="text-md text-black">{userData?.unit_preference}</Text>
+                <FontAwesome name="angle-down" size={15} color="black" />
+              </View>
             }
-            onPress={() => {}}
+            onPress={() => {
+              setTempUnitPreference(userData?.unit_preference || 'metric');
+              setShowUnitsModal(true);
+            }}
           />
         </ProfileSection>
 
@@ -303,7 +324,7 @@ export const SettingsScreen: React.FC = () => {
         <ProfileSection title="ACCOUNT">
           <SectionItem
             title="Account type"
-            icon="verified-user"
+            image={IMAGE_CONSTANTS.accountTypeIcon}
             rightComponent={
               <View className="flex-row items-center">
                 <Text className="text-md text-[#FFC008]  mx-2">Premium</Text>
@@ -313,7 +334,7 @@ export const SettingsScreen: React.FC = () => {
           />
           <SectionItem
             title="Restore Purchases"
-            icon="restore"
+            image={IMAGE_CONSTANTS.restoreIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
@@ -325,7 +346,7 @@ export const SettingsScreen: React.FC = () => {
         <ProfileSection title="NOTIFICATIONS">
           <SectionItem
             title="Notifications"
-            icon="notifications"
+            image={IMAGE_CONSTANTS.notificationIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
@@ -333,80 +354,117 @@ export const SettingsScreen: React.FC = () => {
           />
         </ProfileSection>
 
-                {/* Help and Support Section */}
-                <View style={styles.supportSection}>
-                    <TouchableOpacity
-                        style={styles.supportItem}
-                        onPress={handleHelpSupport}
-                    >
-                        <View style={styles.supportIconContainer}>
-                            <Text style={styles.supportIcon}>❓</Text>
-                        </View>
-                        <Text style={styles.supportText}>Help & Support</Text>
-                    </TouchableOpacity>
+        {/* Help and Support Section */}
+        <ProfileSection title="HELP & SUPPORT">
+          <SectionItem
+            title="Contact support"
+            image={IMAGE_CONSTANTS.supportAgentIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => {handleHelpSupport}}
+          />
+          <SectionItem
+            title="Submit feedback"
+            image={IMAGE_CONSTANTS.chatIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => {openEmail()}}
+          />
+          <SectionItem
+            title="Knowledge base"
+            image={IMAGE_CONSTANTS.knowledgeIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => {}}
+          />
+        </ProfileSection>
 
-                    <TouchableOpacity
-                        style={styles.supportItem}
-                        onPress={openEmail}
-                    >
-                        <View style={styles.supportIconContainer}>
-                            <Text style={styles.supportIcon}>💬</Text>
-                        </View>
-                        <Text style={styles.supportText}>Send Feedback</Text>
-                    </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.premiumButton}
-                        onPress={handleModalSheet}
-                    >
-                        <Text style={styles.premiumText}>💰</Text>
-                    </TouchableOpacity>
+          {/* General Section */}
+        <ProfileSection title="TERMS and conditions">
+          <SectionItem
+            title="Terms of Service"
+            image={IMAGE_CONSTANTS.fileIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => navigation.navigate('TermsOfServiceScreen')}
+          />
+          <SectionItem
+            title="Privacy Policy"
+            image={IMAGE_CONSTANTS.fileIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          />
+          <SectionItem
+            title="About"
+            image={IMAGE_CONSTANTS.infoIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => {}}
+          />
+        </ProfileSection>
 
-                    <TouchableOpacity
-                        style={[styles.supportItem, styles.logoutItem]}
-                        onPress={handleLogout}
-                    >
-                        <View style={[styles.supportIconContainer, styles.logoutIconContainer]}>
-                            <Text style={styles.supportIcon}>🚪</Text>
-                        </View>
-                        <Text style={[styles.supportText, styles.logoutText]}>Logout</Text>
-                    </TouchableOpacity>
-                </View>
 
-                <View style={styles.section}>
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => navigation.navigate('TermsOfService')}
-                    >
-                        <Text style={styles.menuItemText}>Terms of Service</Text>
-                    </TouchableOpacity>
+        <TouchableOpacity
+          className="border border-red-500 rounded-full py-3 items-center bg-transparent my-8 mx-5  "
+        onPress={handleLogout}
+        activeOpacity={0.8}
+      >
+        <View className="flex-row items-center">
+          <Ionicons
+            name="exit-outline"
+            size={20}
+            color="#ef4444"
+            className="mr-2"
+          />
+          <Text className="text-red-500 text-base font-semibold">Log Out</Text>
+        </View>
+  </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => navigation.navigate('PrivacyPolicy')}
-                    >
-                        <Text style={styles.menuItemText}>Privacy Policy</Text>
-                    </TouchableOpacity>
+        {/* Units Selection Modal */}
+        <Modal
+          visible={showUnitsModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowUnitsModal(false)}
+        >
+          <View className="flex-1 justify-end bg-black/40">
+            <View className="bg-white rounded-t-xl p-4">
+              <Text className="text-center text-base font-semibold mb-2">Select Unit System</Text>
+              <Picker
+                selectedValue={tempUnitPreference}
+                onValueChange={setTempUnitPreference}
+                style={{ width: '100%' }}
+                itemStyle={{ fontSize: 18, height: 180 }}
+              >
+                <Picker.Item label="Metric" value="metric" />
+                <Picker.Item label="Imperial" value="imperial" />
+              </Picker>
+              <View className="flex-row justify-between mt-4">
+                <TouchableOpacity onPress={() => setShowUnitsModal(false)} className="flex-1 items-center py-2">
+                  <Text className="text-lg text-blue-500">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleUnitPreferenceChange(tempUnitPreference)}
+                  className="flex-1 items-center py-2"
+                >
+                  <Text className="text-lg text-blue-500">Done</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => navigation.navigate('About')}
-                    >
-                        <Text style={styles.menuItemText}>About</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.section}>
-                    <TouchableOpacity
-                        style={[styles.menuItem, styles.deleteButton]}
-                        onPress={handleDeleteAccount}
-                    >
-                        <Text style={styles.deleteText}>Delete Account</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </CustomSafeAreaView>
-    );
+      </ScrollView>
+    </CustomSafeAreaView>
+  );
 };
 
 export default SettingsScreen;

@@ -1,10 +1,9 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
-import { TouchableOpacity, View, Text } from "react-native";
+import { TouchableOpacity, View, Text, Image, ImageSourcePropType } from "react-native";
 
 type SectionItemProps = {
   title: string;
-  icon?: keyof typeof MaterialIcons.glyphMap; // Better type safety for icons
+  image?: ImageSourcePropType; // Better type safety for icons
   onPress?: () => void;
   rightComponent?: React.ReactNode;
 };
@@ -13,7 +12,7 @@ const ICON_COLOR = "#009688";
 
 const SectionItem: React.FC<SectionItemProps> = ({
   title,
-  icon,
+  image,
   onPress,
   rightComponent,
 }) => (
@@ -24,15 +23,16 @@ const SectionItem: React.FC<SectionItemProps> = ({
     activeOpacity={onPress ? 0.7 : 1}
   >
     {/* Icon on the left */}
-    {icon && (
-      <MaterialIcons
-        name={icon}
-        size={24}
-        color={ICON_COLOR}
-        style={{ marginRight: 16 }}
-      />
+    {image && (
+      <View className="w-8 h-8 justify-center items-center mr-3">
+        <Image
+          source={image}
+          className="w-6 h-6"
+          resizeMode="contain"
+        />
+      </View>
     )}
-    <View className="flex-1 p-2">
+    <View className="flex-1">
       <Text className="text-base font-medium text-[#333]">{title}</Text>
     </View>
     {rightComponent && <View>{rightComponent}</View>}
