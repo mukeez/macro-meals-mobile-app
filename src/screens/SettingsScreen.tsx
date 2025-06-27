@@ -9,6 +9,7 @@ import {
     Linking,
     Platform,
     Switch, Alert,
+    Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -24,6 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { deleteItemAsync } from 'expo-secure-store';
 import ProfileSection from "src/components/ProfileSection";
 import SectionItem from "src/components/SectionItem";
+import { userService } from '../services/userService';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -44,44 +46,49 @@ export const SettingsScreen: React.FC = () => {
   const [units, setUnits] = useState<string>("g/kcal");
   // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [userData, setUserData] = useState({
-    name: "",
+    age: 0,
+    avatar_url: "",
+    created_at: "",
+    display_name: "",
+    dob: "",
     email: "",
-    avatar: "", // Placeholder
-    age: 25, // Added age property to fix linter error
+    fcm_token: "",
+    first_name: "",
+    has_macros: false,
+    height: 0,
+    id: "",
+    is_active: true,
+    is_pro: false,
+    last_name: "",
+    meal_reminder_preferences_set: false,
+    sex: "",
+    unit_preference: "metric",
+    updated_at: ""
   });
+
+  // Modal state for units selection
+  const [showUnitsModal, setShowUnitsModal] = useState(false);
+  const [tempUnitPreference, setTempUnitPreference] = useState("metric");
+
+  const UNIT_OPTIONS = [
+    { label: 'Metric', value: 'metric' },
+    { label: 'Imperial', value: 'imperial' },
+  ];
 
   /**
    * Mock fetching user data on component mount
    */
   useEffect(() => {
-    console.log(preferences);
     const fetchUserData = async () => {
-      const profileResponse = await fetch(
-        "https://api.macromealsapp.com/api/v1/user/me",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!profileResponse.ok) {
-        throw new Error("Failed to fetch user profile");
+      try {
+        const profileData = await userService.fetchUserData();
+        setUserData(profileData);
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        // Handle error appropriately
       }
-
-      const profileData = await profileResponse.json();
-      setUserData(profileData);
     };
     fetchUserData();
-
-    setUserData({
-      name: "Sarah Wilson",
-      email: "sarah@example.com",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      age: 25,
-    });
 
     if (preferences.unitSystem) {
       setUnits(preferences.unitSystem === "Metric" ? "g/kcal" : "oz/cal");
@@ -119,11 +126,23 @@ export const SettingsScreen: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to update preferences");
       }
-
-      console.log("Preferences updated successfully");
     } catch (error) {
       console.error("Error updating preferences:", error);
       // You could add error handling UI here if needed
+    }
+  };
+
+  /**
+   * Handle unit preference change using the same pattern as account settings
+   */
+  const handleUnitPreferenceChange = async (value: string) => {
+    try {
+      const updated = await userService.updateProfile({ unit_preference: value });
+      setUserData((prev) => ({ ...prev, ...updated }));
+      setShowUnitsModal(false);
+    } catch (error) {
+      console.error('Error updating unit preference:', error);
+      // Optionally show error to user
     }
   };
 
@@ -169,7 +188,6 @@ export const SettingsScreen: React.FC = () => {
   };
 
     const handleModalSheet = () => {
-        console.log('Modal sheet');
         navigation.navigate('PaymentScreen' as never);
     };
 
@@ -290,9 +308,15 @@ export const SettingsScreen: React.FC = () => {
             title="Units"
             image={IMAGE_CONSTANTS.balanceIcon}
             rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
+              <View className="flex-row px-2 py-2 gap-1 bg-gray rounded-lg items-center">
+                <Text className="text-md text-black">{userData?.unit_preference}</Text>
+                <FontAwesome name="angle-down" size={15} color="black" />
+              </View>
             }
-            onPress={() => {}}
+            onPress={() => {
+              setTempUnitPreference(userData?.unit_preference || 'metric');
+              setShowUnitsModal(true);
+            }}
           />
         </ProfileSection>
 
@@ -403,6 +427,40 @@ export const SettingsScreen: React.FC = () => {
           <Text className="text-red-500 text-base font-semibold">Log Out</Text>
         </View>
   </TouchableOpacity>
+
+        {/* Units Selection Modal */}
+        <Modal
+          visible={showUnitsModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowUnitsModal(false)}
+        >
+          <View className="flex-1 justify-end bg-black/40">
+            <View className="bg-white rounded-t-xl p-4">
+              <Text className="text-center text-base font-semibold mb-2">Select Unit System</Text>
+              <Picker
+                selectedValue={tempUnitPreference}
+                onValueChange={setTempUnitPreference}
+                style={{ width: '100%' }}
+                itemStyle={{ fontSize: 18, height: 180 }}
+              >
+                <Picker.Item label="Metric" value="metric" />
+                <Picker.Item label="Imperial" value="imperial" />
+              </Picker>
+              <View className="flex-row justify-between mt-4">
+                <TouchableOpacity onPress={() => setShowUnitsModal(false)} className="flex-1 items-center py-2">
+                  <Text className="text-lg text-blue-500">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleUnitPreferenceChange(tempUnitPreference)}
+                  className="flex-1 items-center py-2"
+                >
+                  <Text className="text-lg text-blue-500">Done</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
       </ScrollView>
     </CustomSafeAreaView>

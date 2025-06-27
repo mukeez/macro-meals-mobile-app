@@ -50,6 +50,7 @@ module.exports = {
         kryptoniteGreen: "#44A047",
         brightRed: '#FF4343',
         cinnabarRed: '##E53835',
+        punchRed: '#DB2F2C',
         silver: "#BDBDBD",
         grey: '#f5f5f5',
         cornflowerBlue: '#C4E7E3',
