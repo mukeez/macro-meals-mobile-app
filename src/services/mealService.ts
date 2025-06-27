@@ -190,7 +190,6 @@ export const mealService = {
         }
 
         try {
-            console.log('Logging meal:', JSON.stringify(mealData));
             const response = await fetch(API_ENDPOINTS.LOG_MEAL, {
                 method: 'POST',
                 headers: {
@@ -208,14 +207,12 @@ export const mealService = {
             } catch {}
 
             if (!response.ok) {
-                console.error('Meal log error:', statusCode, responseText);
                 if (parsedError && parsedError.detail) {
                     console.error('Validation error detail:', JSON.stringify(parsedError.detail));
                 }
                 throw new Error(responseText);
             }
 
-            console.log('Meal log response:', statusCode, responseText);
             const loggedMeal = parsedError || {};
             return {
                 id: loggedMeal.id,
