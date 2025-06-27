@@ -37,7 +37,7 @@ export type RootStackParamList = {
     MacroGoals: undefined;
     CustomBottomTabs: { screen?: string } | undefined;
     Notifications: undefined;
-    TermsOfService: undefined;
+    TermsOfServiceScreen: undefined;
     About: undefined;
     MealFinderScreen: undefined;
     MealFinderBreakdownScreen: { meal: any };

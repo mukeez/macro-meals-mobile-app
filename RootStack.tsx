@@ -92,6 +92,7 @@ const AuthNavigator = ({
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen name="TermsOfServiceScreen" component={TermsOfServiceScreen} />
     </Stack.Navigator>
   );
 };
@@ -129,7 +130,6 @@ const DashboardNavigator = () => {
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
       <Stack.Screen name="MealFinderScreen" component={MealFinderScreen} />
       <Stack.Screen name="MealFinderBreakdownScreen" component={MealFinderBreakdownScreen} />
-      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
