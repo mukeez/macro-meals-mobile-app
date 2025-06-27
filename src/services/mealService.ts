@@ -11,6 +11,7 @@ const API_ENDPOINTS = {
     TODAY_MEALS: `${API_BASE_URL}/meals/today`,
     DAILY_PROGRESS: `${API_BASE_URL}/meals/progress/today`,
     DELETE_MEAL: `${API_BASE_URL}/meals/delete`,
+     MEAL_PROGRESS: `${API_BASE_URL}/meals/progress`
 };
 
 /**
@@ -266,3 +267,13 @@ export const mealService = {
         }
     },
 };
+
+export async function getMealProgress(startDate: string, endDate: string) {
+    const url = `${API_ENDPOINTS.MEAL_PROGRESS}?start_date=${startDate}&end_date=${endDate}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch meal progress");
+    }
+    return response.json();
+}

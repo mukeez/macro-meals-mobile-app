@@ -1,3 +1,4 @@
+import { getMealProgress } from "src/services/mealService";
 import { create } from "zustand";
 
 type MacroDay = {
@@ -49,6 +50,8 @@ function getStartDateByRange(range: string): Date {
   return result;
 }
 
+const format = (date: Date) => date.toISOString().split("T")[0];
+
 export const useProgressStore = create<ProgressState>((set) => ({
   data: null,
   loading: false,
@@ -59,11 +62,7 @@ export const useProgressStore = create<ProgressState>((set) => ({
     try {
       const endDate = new Date();
       const startDate = getStartDateByRange(range);
-      const format = (date: Date) => date.toISOString().split("T")[0];
-      const res = await fetch(
-        `/api/v1/meals/progress?start_date=${format(startDate)}&end_date=${format(endDate)}`
-      );
-      const data = await res.json();
+      const data = await getMealProgress(format(startDate), format(endDate));
       set({ data, loading: false });
     } catch (e) {
       set({ data: null, loading: false });
