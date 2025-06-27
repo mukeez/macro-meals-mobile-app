@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useStore from '../store/useStore';
 
 const API_URL = 'https://api.macromealsapp.com/api/v1';
 
@@ -55,7 +56,6 @@ export const authService = {
                 body: JSON.stringify({
                     email: data.email,
                     password: data.password,
-                    nickname: data.nickname || ''
                 }),
             });
 
@@ -105,7 +105,6 @@ export const authService = {
     },
     verifyCode: async (params: { email: string, otp: string }) => {
         try {
-            console.log('params', params);
             const response = await fetch(`${API_URL}/auth/verify-otp`, {
                 method: 'POST',
                 headers: {
@@ -115,7 +114,7 @@ export const authService = {
             });
             const responseData = await response.json();
             if (!response.ok) {
-                console.log('responseData', responseData);
+
                 throw new Error(responseData.message || 'Verification failed');
             }
             console.log('responseData', responseData);
@@ -128,7 +127,6 @@ export const authService = {
 
     resetPassword: async (resetPasswordData: { email: string, session_token: string, new_password: string }) => {
         try {
-            console.log('resetPasswordData', resetPasswordData);
             const response = await fetch(`${API_URL}/auth/reset-password`, {
                 method: 'POST',
                 headers: {
@@ -195,6 +193,25 @@ export const authService = {
             return responseData;
         } catch (error) {
             console.error('Resend verification code error:', error);
+            throw error;
+        }
+    },
+
+    deleteAccount: async () => {
+        try {
+            // Clear all authentication data from AsyncStorage
+            await AsyncStorage.removeItem('my_token');
+            await AsyncStorage.removeItem('user_id');
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('userId');
+            await AsyncStorage.removeItem('access_token');
+            await AsyncStorage.removeItem('refresh_token');
+            
+            // Call the store logout to clear state
+            useStore.getState().logout();
+        } catch (error) {
+            // Even if there's an error, still try to logout
+            useStore.getState().logout();
             throw error;
         }
     }

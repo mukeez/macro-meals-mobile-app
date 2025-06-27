@@ -43,11 +43,34 @@ export const locationService = {
                 return null;
             }
 
+            // Check if location services are enabled
+            const isEnabled = await Location.hasServicesEnabledAsync();
+            if (!isEnabled) {
+                Alert.alert(
+                    'Location Services Disabled',
+                    'Please enable location services in your device settings.',
+                    [{ text: 'OK' }]
+                );
+                return null;
+            }
+
             const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.High,
-                maximumAge: 10000,
-                timeout: 5000
+                accuracy: Location.Accuracy.Balanced // Changed from High to Balanced for better reliability
             });
+
+            // Log the coordinates for debugging
+            console.log('Location obtained:', {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                accuracy: location.coords.accuracy,
+                timestamp: new Date(location.timestamp).toISOString()
+            });
+
+            // Validate coordinates (basic sanity check)
+            if (location.coords.latitude === 0 && location.coords.longitude === 0) {
+                console.warn('Received zero coordinates - likely invalid location');
+                return null;
+            }
 
             return location;
         } catch (error) {
@@ -76,6 +99,43 @@ export const locationService = {
         longitude: number
     ): Promise<string> => {
         try {
+            console.log('Reverse geocoding coordinates:', { latitude, longitude });
+
+            // First try Expo's built-in reverse geocoding
+            try {
+                const expoAddresses = await Location.reverseGeocodeAsync({
+                    latitude,
+                    longitude
+                });
+
+                if (expoAddresses && expoAddresses.length > 0) {
+                    const address = expoAddresses[0];
+                    let locationString = '';
+
+                    // Build address string from Expo's data
+                    if (address.street) {
+                        locationString += address.street;
+                    }
+                    if (address.city) {
+                        locationString += locationString ? `, ${address.city}` : address.city;
+                    }
+                    if (address.region) {
+                        locationString += locationString ? `, ${address.region}` : address.region;
+                    }
+                    if (address.country) {
+                        locationString += locationString ? `, ${address.country}` : address.country;
+                    }
+
+                    if (locationString) {
+                        console.log('Expo reverse geocoding result:', locationString);
+                        return locationString;
+                    }
+                }
+            } catch (expoError) {
+                console.log('Expo reverse geocoding failed, trying OpenStreetMap:', expoError);
+            }
+
+            // Fallback to OpenStreetMap
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
                 {
@@ -90,6 +150,7 @@ export const locationService = {
             }
 
             const data = await response.json();
+            console.log('OpenStreetMap geocoding response:', data);
 
             // Extract street-level details
             const address = data.address;
@@ -114,11 +175,16 @@ export const locationService = {
                 streetLevelLocation += `, ${address.city || address.town}`;
             }
 
+            if (address.country) {
+                streetLevelLocation += `, ${address.country}`;
+            }
+
             if (!streetLevelLocation) {
                 streetLevelLocation = data.display_name ||
                     `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
             }
 
+            console.log('Final geocoding result:', streetLevelLocation);
             return streetLevelLocation.trim();
         } catch (error) {
             console.error('Reverse geocoding error:', error);
