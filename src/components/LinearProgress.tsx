@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 
 interface LinearProgressProps {
   width?: number;
@@ -16,30 +16,27 @@ export function LinearProgress({
   color,
   backgroundColor = '#eee',
 }: LinearProgressProps) {
-  const percentage = Math.min(100, progress);
+  const percentage = progress;
 
   return (
-    <View style={[styles.container, { width, height, backgroundColor, flex: width ? undefined : 1 }]}>
+    <View 
+      className="rounded-lg overflow-hidden"
+      style={{ 
+        width: width || 100, 
+        height, 
+        backgroundColor, 
+        flex: width ? undefined : 1 
+      }}
+    >
       <View
-        style={[
-          styles.progress,
-          {
-            width: `${percentage}%`,
-            height,
-            backgroundColor: color,
-          },
-        ]}
+        className="rounded-lg"
+        style={{
+          width: `${percentage}%`,
+          height,
+          backgroundColor: color,
+          minWidth: 1, // Ensure minimum visibility
+        }}
       />
     </View>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  progress: {
-    borderRadius: 8,
-  },
-}); 
+} 

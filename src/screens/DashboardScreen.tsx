@@ -234,25 +234,16 @@ export const DashboardScreen: React.FC = () => {
     navigation.navigate('GoalSetupScreen', undefined);
   };
 
-  const handleScan = () => {
-    navigation.navigate("Scan");
-  };
 
   const handleMealLog = () => {
-    navigation.navigate("ScanScreenType");
+    navigation.navigate("MealFinderScreen");
   };
 
   const handleRefresh = () => {
     setIsLoading(true);
   };
 
-  const handleSettings = () => {
-    navigation.navigate("Settings");
-  };
 
-  const handleSettingsScreen = () => {
-    navigation.navigate("SettingsScreen");
-  };
 
   const animatedStyle = useAnimatedStyle(() => {
     const animatedProgress = withTiming(progress, { duration: 1000 });
@@ -396,8 +387,8 @@ export const DashboardScreen: React.FC = () => {
                 className="w-[24px] h-[24px] object-fill"
               />
             </View>
-            {profile.meal_reminder_preferences_set === false ||
-              profile.meal_reminder_preferences_set === undefined ? (
+            {profile.has_macros === false ||
+              profile.has_macros === undefined ? (
                 <View className="flex-col bg-paleCyan px-5 py-5">
                   <Image
                     tintColor={"#8BAAA3"}
@@ -438,7 +429,7 @@ export const DashboardScreen: React.FC = () => {
                   <CircularProgress
                     size={150}
                     strokeWidth={8}
-                    consumed={consumed.calories}
+                    consumed={consumed.calories.toString()}
                     total={consumed.calories + remaining.calories}
                     color="#44A047"
                     backgroundColor="#d0e8d1"
@@ -496,7 +487,7 @@ export const DashboardScreen: React.FC = () => {
               </View>
             </View>
             {/* See nearby meals */}
-            {profile.meal_reminder_preferences_set === true && (
+            {profile.has_macros === true && (
               <View className="flex-row bg-lightGreen justify-between items-center rounded-md mx-5 mb-4">
                 <View className="flex-1 flex-col pl-5 pr-2 py-6">
                   <Text className="text-base font-semibold">
