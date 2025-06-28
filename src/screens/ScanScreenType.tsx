@@ -131,9 +131,8 @@ const ScanScreenType: React.FC = () => {
                 description: "",
             };
 
-            console.log('Meal request JSON:', JSON.stringify(newMeal));
             const response = await mealService.logMeal(newMeal);
-            console.log('Meal log response:', JSON.stringify(response));
+
 
             // Navigate back to meal log screen
             navigation.navigate('MainTabs' as never);
