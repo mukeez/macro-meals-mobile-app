@@ -40,6 +40,7 @@ import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 import AdjustTargetsScreen from "./src/screens/AdjustTargetsScreen";
 import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
 import AccountSettingsScreen from "src/screens/AccountSettingsScreen";
+import AISuggestedMealsDetailsScreen from "src/screens/AISuggestedMealsDetails";
 
 
 const Stack = createStackNavigator<RootStackParamList>();
