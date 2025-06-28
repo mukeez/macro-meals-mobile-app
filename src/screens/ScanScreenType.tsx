@@ -9,7 +9,8 @@ import {
     TextInput,
     FlatList,
     Keyboard,
-    Animated
+    Animated,
+    ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
@@ -197,7 +198,9 @@ const ScanScreenType: React.FC = () => {
                           {favoritesLoading ? (
                             <Text className="text-center text-base text-gray-500 mt-10">Loading...</Text>
                           ) : searchResults.length > 0 ? (
-                            <FlatList
+                            <View className="flex-1">
+                                <Text className="text-sm font-semibold text-gray-500 mt-3 mb-1.5">FAVOURITES</Text>
+                                <FlatList
                               data={searchResults}
                               keyExtractor={(item, idx) => item.name + idx}
                               renderItem={({ item }) => (
@@ -247,14 +250,19 @@ const ScanScreenType: React.FC = () => {
                                             </View>
                                     </View>
                                   </View>
-                                  <TouchableOpacity onPress={() => handleAddToLog(item)}>
+                                  {loading ? (
+                                    <ActivityIndicator size="small" color="#01675B" />
+                                  ) : ( 
+                                    <TouchableOpacity onPress={() => handleAddToLog(item)}>
                                     <Text className="text-2xl text-green-700 font-bold">
                                         <Image source={IMAGE_CONSTANTS.fabIcon} className="w-6 h-6 object-fill" />
                                     </Text>
                                   </TouchableOpacity>
+                                  )}
                                 </View>
                               )}
                             />
+                            </View>
                           ) : searchText.length === 0 && favorites.length === 0 ? (
                             <Text className="text-center text-base text-gray-500 mt-10">You have not added any favourite</Text>
                           ) : searchText.length > 0 ? (
@@ -319,7 +327,7 @@ const ScanScreenType: React.FC = () => {
                             </View>
                         </View>
                         {/* Favourites */}
-                        {favorites.length > 0 && (
+                        {/* {favorites.length > 0 && (
                           <View className="mt-4 mx-5">
                             <Text className="text-xs font-bold text-gray-700 mb-2">FAVOURITES</Text>
                             {favorites.map((fav, idx) => (
@@ -347,7 +355,7 @@ const ScanScreenType: React.FC = () => {
                               </View>
                             ))}
                           </View>
-                        )}
+                        )} */}
                         </Animated.View>
                     )}
                 </ImageBackground>
