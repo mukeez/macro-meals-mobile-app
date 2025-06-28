@@ -155,15 +155,15 @@ const ScanScreenType: React.FC = () => {
         <CustomSafeAreaView edges={['left', 'right']} paddingOverride={{ bottom: -100 }} className="flex-1 bg-white">
             <StatusBar barStyle="dark-content" />
             {/* Header (always on solid white) */}
-            <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
-                <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
+            <View className="flex-row items-center justify-between px-5 pt-4 pb-5">
+                <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center">
                     <Image source={IMAGE_CONSTANTS.closeIcon} className="w-[14px] h-[14px] object-fill" />
                 </TouchableOpacity>
-                <Text className="text-[20px] font-semibold text-[#1a8a6a] text-center">Add a meal</Text>
+                <Text className="text-[20px] font-semibold text-primary text-center">Add a meal</Text>
                 <View style={{ width: 32 }} />
             </View>
             {/* Search Bar (on white) */}
-            <View className="flex-row items-center bg-[#F5F5F5] rounded-3xl mx-5 mb-[18px] px-4 h-11">
+            <View className="flex-row items-center bg-gray rounded-3xl h-[48px] mx-5 mb-[18px] px-4">
                 <Image source={IMAGE_CONSTANTS.searchIcon} className="w-6 h-6 object-fill mr-2" />
                 <TextInput
                     className="flex-1 placeholder:text-[18px] placeholder:font-normal placeholder:text-lightGrey"
@@ -186,7 +186,7 @@ const ScanScreenType: React.FC = () => {
                 )}
             </View>
 
-            <View className="flex-1 bg-[#88cec8]">
+            <View className="flex-1 bg-monteCarlo">
                 <ImageBackground
                     source={require('../../assets/add-meal-bg.png')}
                     style={{ flex: 1, width: '100%', height: '100%', paddingBottom: 120 }}
@@ -325,36 +325,6 @@ const ScanScreenType: React.FC = () => {
                                 </TouchableOpacity>
                             </View>
                         </View>
-                        {/* Favourites */}
-                        {/* {favorites.length > 0 && (
-                          <View className="mt-4 mx-5">
-                            <Text className="text-xs font-bold text-gray-700 mb-2">FAVOURITES</Text>
-                            {favorites.map((fav, idx) => (
-                              <View key={fav.id || idx} className="bg-white rounded-lg p-4 mb-3 flex-row items-center justify-between">
-                                <View>
-                                  <Text className="text-base font-semibold mb-1">{fav.name}</Text>
-                                  <View className="flex-row items-center gap-3">
-                                    <View className="flex-row items-center gap-1">
-                                      <Text className="text-green-700 text-xs font-semibold">🟢 {fav.macros.calories} cal</Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-1">
-                                      <Text className="text-yellow-600 text-xs font-semibold">🟡 {fav.macros.carbs}g</Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-1">
-                                      <Text className="text-pink-500 text-xs font-semibold">🟣 {fav.macros.fat}g</Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-1">
-                                      <Text className="text-purple-700 text-xs font-semibold">🟣 {fav.macros.protein}g</Text>
-                                    </View>
-                                  </View>
-                                </View>
-                                <TouchableOpacity>
-                                  <Text className="text-2xl text-green-700 font-bold">+</Text>
-                                </TouchableOpacity>
-                              </View>
-                            ))}
-                          </View>
-                        )} */}
                         </Animated.View>
                     )}
                 </ImageBackground>
