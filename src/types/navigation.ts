@@ -47,4 +47,5 @@ export type RootStackParamList = {
     ChangePassword: undefined;
     AdjustTargets: undefined;
     AccountSettingsScreen: undefined;
+    AISuggestedMealsDetailsScreen: { meal: any };
 };
