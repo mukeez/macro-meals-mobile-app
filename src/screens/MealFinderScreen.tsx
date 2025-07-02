@@ -13,6 +13,7 @@ import useStore from '../store/useStore';
 import { API_CONSTANTS } from '../constants/api_constants';
 import { mealService } from '../services/mealService';
 import { Meal } from '../types';
+import { userService } from '../services/userService';
 
 
 interface MacroData {
@@ -131,9 +132,8 @@ const macroTypeToPreferenceKey = {
 
 const MealFinderScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'MealFinderScreen'>>();
-  const storePreferences = useStore((state) => state.preferences);
   const macrosPreferences = useStore((state) => state.macrosPreferences);
-  const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
+  const token = useStore((state) => state.token);
   const [loading, setLoading] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -144,8 +144,65 @@ const MealFinderScreen: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [filteredLocations, setFilteredLocations] = useState<MockLocation[]>(mockLocations);
   const modalizeRef = useRef<Modalize>(null);
-  const token = useStore((state) => state.token);
   const [macroData, setMacroData] = useState<MacroData[]>(defaultMacroData);
+  const [consumed, setConsumed] = useState({
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    calories: 0,
+  });
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        if (!token) {
+          throw new Error("Authentication token not available");
+        }
+
+        const progressResponse = await fetch(
+          "https://api.macromealsapp.com/api/v1/meals/progress/today",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!progressResponse.ok) {
+          throw new Error("Failed to fetch daily progress");
+        }
+
+        const progressData = await progressResponse.json();
+        console.log('MEAL FINDER - Progress Data:', progressData);
+
+        const consumedValues = {
+          protein: progressData.logged_macros.protein || 0,
+          carbs: progressData.logged_macros.carbs || 0,
+          fat: progressData.logged_macros.fat || 0,
+          calories: progressData.logged_macros.calories || 0,
+        };
+        setConsumed(consumedValues);
+
+        setMacroData([
+          { label: 'Protein', value: consumedValues.protein, color: '#6C5CE7' },
+          { label: 'Carbs', value: consumedValues.carbs, color: '#FFC107' },
+          { label: 'Fat', value: consumedValues.fat, color: '#FF69B4' },
+        ]);
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+        setError('Failed to fetch progress data');
+      }
+    };
+
+    fetchProgress();
+  }, [token]);
+
+  useEffect(() => {
+    console.log('MEAL FINDER - Macros Preferences:', macrosPreferences);
+    console.log('MEAL FINDER - Consumed:', consumed);
+  }, [macrosPreferences, consumed]);
 
   useEffect(() => {
     const fetchLocationAndSuggestions = async () => {
@@ -191,15 +248,15 @@ const MealFinderScreen: React.FC = () => {
 
           // 2. Fetch meal suggestions
           const requestBody = {
-            calories: storePreferences?.calories || 0,
-            carbs: storePreferences?.carbs || 0,
-            dietary_preference: storePreferences?.dietary_preference || '',
-            dietary_restrictions: storePreferences?.dietary_restrictions || [],
-            fat: storePreferences?.fat || 0,
+            calories: macrosPreferences?.calorie_target || 0,
+            carbs: macrosPreferences?.carbs_target || 0,
+            protein: macrosPreferences?.protein_target || 0,
+            fat: macrosPreferences?.fat_target || 0,
+            dietary_preference: '',  // These should come from a different store value
+            dietary_restrictions: [], // These should come from a different store value
             latitude: location.coords.latitude,
             location: address,
             longitude: location.coords.longitude,
-            protein: storePreferences?.protein || 0,
           };
           setLocationLoading(true);
           try {
@@ -289,15 +346,15 @@ const MealFinderScreen: React.FC = () => {
     }
 
     const requestBody = {
-        calories: storePreferences?.calories || 0,
-        carbs: storePreferences?.carbs || 0,
-        dietary_preference: storePreferences?.dietary_preference || '',
-        dietary_restrictions: storePreferences?.dietary_restrictions || [],
-        fat: storePreferences?.fat || 0,
+        calories: macrosPreferences?.calorie_target || 0,
+        carbs: macrosPreferences?.carbs_target || 0,
+        protein: macrosPreferences?.protein_target || 0,
+        fat: macrosPreferences?.fat_target || 0,
+        dietary_preference: '',  // These should come from a different store value
+        dietary_restrictions: [], // These should come from a different store value
         latitude: location.latitude,
         location: location.label,
         longitude: location.longitude,
-        protein: storePreferences?.protein || 0,
     };
 
     try {
@@ -332,17 +389,6 @@ const MealFinderScreen: React.FC = () => {
       setLocationLoading(false);
     }
   };
-
-  // Update macroData when todayProgress changes
-  useEffect(() => {
-    if (todayProgress) {
-      setMacroData([
-        { label: 'Protein', value: todayProgress.protein || 0, color: '#6C5CE7' },
-        { label: 'Carbs', value: todayProgress.carbs || 0, color: '#FFC107' },
-        { label: 'Fat', value: todayProgress.fat || 0, color: '#FF69B4' },
-      ]);
-    }
-  }, [todayProgress]);
 
   if (initializing || locationLoading) {
     return (
@@ -384,24 +430,38 @@ const MealFinderScreen: React.FC = () => {
                 <View className="flex-col items-start bg-white mt-3 px-5 pt-3 pb-10 mb-4">
                 <Text className="text-base text-black mt-2 text-center mb-4 font-medium">Remaining today</Text>
                 <View className="flex-row w-full justify-between items-center">
-                    {macroData.map((macro) => (
-                    <View key={macro.label}>
-                        <View className="h-[100px] w-[100px] relative">
-                        <CircularProgress
-                            size={100}
-                            strokeWidth={12}
-                            textSize={16}
-                            consumed={macro.value + 'g'}
-                            total={macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 100}
-                            color={macro.color}
-                            backgroundColor="#d0e8d1"
-                            label={macro.label}
-                            showLabel={false}
-                        />
-                        <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
+                    {macroData.map((macro) => {
+                      const target = macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 0;
+                      const consumed = macro.value;
+                      const progress = target > 0 ? (consumed / target) * 100 : 0;
+                      
+                      console.log(`${macro.label}:`, {
+                        target,
+                        consumed,
+                        progress,
+                        macrosPreferences,
+                        macroTypeToPreferenceKey: macroTypeToPreferenceKey[macro.label]
+                      });
+                      
+                      return (
+                        <View key={macro.label}>
+                          <View className="h-[100px] w-[100px] relative">
+                            <CircularProgress
+                              size={100}
+                              strokeWidth={12}
+                              textSize={16}
+                              consumed={`${consumed}g`}
+                              total={target}
+                              color={macro.color}
+                              backgroundColor="#d0e8d1"
+                              label={macro.label}
+                              showLabel={false}
+                            />
+                            <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
+                          </View>
                         </View>
-                    </View>
-                    ))}
+                      );
+                    })}
                 </View>
                 </View>
 
