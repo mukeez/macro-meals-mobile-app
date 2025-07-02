@@ -8,7 +8,7 @@ const macroColors = {
 };
 
 const macroLabels = [
-  { key: "carbs", label: "Carbs" },
+  { key: "carbs", label: "Carbohydrates" },
   { key: "fat", label: "Fat" },
   { key: "protein", label: "Protein" },
 ];
@@ -28,18 +28,18 @@ const MacroTableSection = ({
         className="flex-row items-center"
         style={{ width: LABEL_COL_WIDTH }}
       >
-        <Text className="text-black text-base">Macro</Text>
+        <Text className="text-black text-base font-medium">Macro</Text>
       </View>
       <View className="flex-1" />
-      <View className="w-14 items-end">
-        <Text className="text-[13px] text-[#4F4F4F]">Avg</Text>
+      <View className="w-16 items-center">
+        <Text className="text-base font-medium">Avg</Text>
       </View>
-      <View className="w-14 items-end">
-        <Text className="text-[13px] font-bold text-[#1C5897]">Goal</Text>
+      <View className="w-16 items-center">
+        <Text className="text-base font-medium">Goal</Text>
       </View>
     </View>
     {macroLabels.map((macro) => (
-      <View key={macro.key} className="flex-row items-center mb-3 px-2">
+      <View key={macro.key} className="flex-row items-center mb-5 px-2">
         <View
           className="flex-row items-center"
           style={{ width: LABEL_COL_WIDTH }}
@@ -56,13 +56,13 @@ const MacroTableSection = ({
           </Text>
         </View>
         <View className="flex-1" />
-        <View className="w-14 items-end">
-          <Text className="text-[14px] font-medium text-[#4F4F4F]">
+        <View className="w-16 items-center">
+          <Text className="text-sm font-normal text-[#4F4F4F]">
             {avg[macro.key as keyof typeof avg]}%
           </Text>
         </View>
-        <View className="w-14 items-end">
-          <Text className="text-[14px] font-bold text-[#1C5897]">
+        <View className="w-16 items-center">
+          <Text className="text-sm font-normal text-[#1C5897]">
             {goal[macro.key as keyof typeof goal]}%
           </Text>
         </View>

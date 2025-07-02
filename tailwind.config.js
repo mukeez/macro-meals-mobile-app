@@ -59,6 +59,7 @@ module.exports = {
         galleryBg: '#f3f3f3',
         textLightGrey: '#8e929a',
         borderGallery: '#f3f3f3',
+        monteCarlo: '#88cec8',
       },
       spacing: {
         '11.3': '11.3rem', // 181px
