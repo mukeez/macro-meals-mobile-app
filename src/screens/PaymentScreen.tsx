@@ -144,7 +144,7 @@ const PaymentScreen = () => {
     } catch (error) {
       console.error('Error fetching publishable key:', error);
       throw error;
-  }
+    }
   };
 
   const initializePaymentSheet = async () => {
@@ -169,13 +169,13 @@ const PaymentScreen = () => {
       if (!response || !response.client_secret) {
         throw new Error('Invalid response from payment service');
       }
-    
-    const { error } = await initPaymentSheet({
+
+      const { error } = await initPaymentSheet({
         merchantDisplayName: "Macro meals",
         customerId: response.customer_id,
         customerEphemeralKeySecret: response.ephemeral_key,
         setupIntentClientSecret: response.client_secret,
-      allowsDelayedPaymentMethods: true,
+        allowsDelayedPaymentMethods: true,
         returnURL: 'macromeals://stripe-redirect',
         style: 'automatic'
       });
@@ -206,12 +206,12 @@ const PaymentScreen = () => {
 
       if (presentError) {
         Alert.alert(`Error code: ${presentError.code}`, presentError.message);
-    } else {
-      Alert.alert('Success', 'Your order is confirmed!');
-      setHasBeenPromptedForGoals(false);
+      } else {
+        Alert.alert('Success', 'Your order is confirmed!');
+        setHasBeenPromptedForGoals(false);
         setReadyForDashboard(true);
        //navigation.navigate('MainTabs');
-    }
+      }
     } catch (error) {
       console.error('Error processing payment:', error);
       if (error instanceof Error) {
@@ -225,7 +225,7 @@ const PaymentScreen = () => {
       }
     } finally {
       setIsLoading(false);
-}
+    }
   };
 
   return (
@@ -291,14 +291,14 @@ const PaymentScreen = () => {
                 {isLoading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
+                  <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
                 )}
               </View>
             </TouchableOpacity>
           </View>
         </View>
       </View>
-      </StripeProvider>
+    </StripeProvider>
   )
 }
 

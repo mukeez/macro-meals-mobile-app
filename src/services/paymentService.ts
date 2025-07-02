@@ -6,19 +6,19 @@ export const paymentService = {
     getStripeConfig: async () => {
         const token = useStore.getState().token;
         try {
-        const response = await fetch(`${API_BASE_URL}/billing/stripe-config`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+            const response = await fetch(`${API_BASE_URL}/billing/stripe-config`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             
-        if (!response.ok) {
+            if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
                 console.error('Stripe config error:', { status: response.status, data: errorData });
                 throw new Error(`Failed to fetch stripe config: ${response.status}`);
-        }
+            }
             
             const data = await response.json();
             console.log('Stripe config response:', data);
@@ -47,16 +47,16 @@ export const paymentService = {
     createPaymentIntent: async (email: string, user_id: string, plan: string) => {
         const token = useStore.getState().token;
         try {
-        const response = await fetch(`${API_BASE_URL}/billing/create-setup-intent`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
+            const response = await fetch(`${API_BASE_URL}/billing/create-setup-intent`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ email, user_id, plan })
-        });
+            });
 
-        if (!response.ok) {
+            if (!response.ok) {
                 const errorData = await response.json().catch(() => null);
                 console.error('Payment intent error:', { 
                     status: response.status, 
@@ -66,7 +66,7 @@ export const paymentService = {
                     plan 
                 });
                 throw new Error(`Failed to create payment intent: ${response.status}`);
-        }
+            }
 
             const data = await response.json();
             console.log('Payment intent response:', data);

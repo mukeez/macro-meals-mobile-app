@@ -289,15 +289,15 @@ const MealFinderScreen: React.FC = () => {
     }
 
     const requestBody = {
-      calories: storePreferences?.calories || 0,
-      carbs: storePreferences?.carbs || 0,
+        calories: storePreferences?.calories || 0,
+        carbs: storePreferences?.carbs || 0,
         dietary_preference: storePreferences?.dietary_preference || '',
         dietary_restrictions: storePreferences?.dietary_restrictions || [],
-      fat: storePreferences?.fat || 0,
-      latitude: location.latitude,
-      location: location.label,
-      longitude: location.longitude,
-      protein: storePreferences?.protein || 0,
+        fat: storePreferences?.fat || 0,
+        latitude: location.latitude,
+        location: location.label,
+        longitude: location.longitude,
+        protein: storePreferences?.protein || 0,
     };
 
     try {

@@ -96,24 +96,24 @@ const AiMealSuggestionsScreen: React.FC = () => {
             <View className="flex-col bg-white items-start mt-3 px-5 pt-3 pb-10 mb-4">
               <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
               <View className="flex-row w-full justify-between items-center">
-              {macroData.map((macro, index) => (
-                <View key={`${macro.label}-${index}`}>
-                  <View className="h-[100px] w-[100px] relative">
-                    <CircularProgress
-                      size={100}
-                      strokeWidth={12}
-                      textSize={16}
-                      consumed={macro.value + 'g'}
+                {macroData.map((macro, index) => (
+                  <View key={`${macro.label}-${index}`}>
+                    <View className="h-[100px] w-[100px] relative">
+                      <CircularProgress
+                        size={100}
+                        strokeWidth={12}
+                        textSize={16}
+                        consumed={macro.value + 'g'}
                         total={macrosPreferences?.[macroTypeToPreferenceKey[macro.label]] || 100}
-                      color={macro.color}
-                      backgroundColor="#d0e8d1"
-                      label={macro.label}
-                      showLabel={false}
-                    />
-                    <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
-                </View>
-                </View>
-              ))}
+                        color={macro.color}
+                        backgroundColor="#d0e8d1"
+                        label={macro.label}
+                        showLabel={false}
+                      />
+                      <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
+                    </View>
+                  </View>
+                ))}
               </View>
             </View>
            

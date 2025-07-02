@@ -62,10 +62,10 @@ const ProgressScreen = () => {
       // Filter out future dates
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       macroBarData = data.daily_macros
         .filter(dayData => {
-        const date = new Date(dayData.date);
+          const date = new Date(dayData.date);
           date.setHours(0, 0, 0, 0);
           return date <= today;
         })
@@ -113,63 +113,63 @@ const ProgressScreen = () => {
   }
 
   return (
-      <ScrollView className="bg-white"
-        contentContainerStyle={{ paddingBottom: 56 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" colors={["#fff"]} />
-        }
-      >
-        <View className="bg-primaryLight pb-8">
-          <Text className="mt-16 text-white text-xl font-bold text-center p-5">
-            Progress
+    <ScrollView className="bg-white"
+      contentContainerStyle={{ paddingBottom: 56 }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" colors={["#fff"]} />
+      }
+    >
+      <View className="bg-primaryLight pb-8">
+        <Text className="mt-16 text-white text-xl font-bold text-center p-5">
+          Progress
+        </Text>
+        <View className="px-12">
+          <MacroLegend macroColors={macroColors} small />
+        </View>
+        <View className="pl-5 mt-4 mb-6">
+          <Text className="text-white text-xs font-medium mb-[1px]">
+            Avg calories
           </Text>
-          <View className="px-12">
-            <MacroLegend macroColors={macroColors} small />
-          </View>
-          <View className="pl-5 mt-4 mb-6">
-              <Text className="text-white text-xs font-medium mb-[1px]">
-                Avg calories
-              </Text>
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-                <View className="flex-row items-baseline mt-1">
-                  <Text className="text-white text-2xl font-semibold mb-[1px]">
-                  {avgCalories} 
-                </Text>
-                <Text className="text-white text-sm font-medium"> kcal</Text>
-                </View>
+            <View className="flex-row items-baseline mt-1">
+              <Text className="text-white text-2xl font-semibold mb-[1px]">
+                {avgCalories}
+              </Text>
+              <Text className="text-white text-sm font-medium"> kcal</Text>
+            </View>
           )}
-              <Text className="text-white text-[10px]">{dateRange}</Text>
-          </View>
-          <View className="x-5">
+          <Text className="text-white text-[10px]">{dateRange}</Text>
+        </View>
+        <View className="x-5">
           {loading ? (
-              <View className="flex-1 my-5 justify-center items-center">
+            <View className="flex-1 my-5 justify-center items-center">
               <ActivityIndicator color="#fff" size="large" />
               <Text className="text-white text-base mt-2">Loading data...</Text>
-              </View>
+            </View>
           ) : (
             <StackedBarChart data={macroBarData} selectedRange={selectedRange} />
-            )}
-          </View>
-          <View className="flex-row justify-center mb-7 px-2">
-            {dateRanges.map((r) => (
-              <TouchableOpacity
-                key={r.value}
-                onPress={() => setSelectedRange(r.value)}
-                className={`
-                  px-4 py-1.5 mx-3 rounded-full bg-white
-                  ${selectedRange === r.value ? "opacity-100" : "opacity-70"}
-                `}
-                activeOpacity={0.8}
-              >
-                <Text className="text-black text-xs font-semibold">
-                  {r.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          )}
+        </View>
+        <View className="flex-row justify-center mb-7 px-2">
+          {dateRanges.map((r) => (
+            <TouchableOpacity
+              key={r.value}
+              onPress={() => setSelectedRange(r.value)}
+              className={`
+                px-4 py-1.5 mx-3 rounded-full bg-white
+                ${selectedRange === r.value ? "opacity-100" : "opacity-70"}
+              `}
+              activeOpacity={0.8}
+            >
+              <Text className="text-black text-xs font-semibold">
+                {r.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* Overlapping Cards */}
         <View className="absolute bottom-[-40px] left-0 right-0">
@@ -206,11 +206,11 @@ const ProgressScreen = () => {
           </View>
         </View>
       </View>
-          
+
       <View className="mt-[80px]">
         <MacroTableSection avg={avg} goal={goal} />
       </View>
-      </ScrollView>
+    </ScrollView>
   );
 };
 
