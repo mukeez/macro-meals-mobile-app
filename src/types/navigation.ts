@@ -49,4 +49,5 @@ export type RootStackParamList = {
     Progress:undefined;
     AccountSettingsScreen: undefined;
     AISuggestedMealsDetailsScreen: { meal: any };
+    GoalSetupNav: undefined;
 };

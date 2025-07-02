@@ -9,15 +9,17 @@ interface DiscoverCardProps {
 }
 
 const DiscoverCard: React.FC<DiscoverCardProps> = ({ icon, title, description, onPress }) => (
-  <TouchableOpacity className="flex-row items-center bg-white/90 rounded-xl px-4 py-4 shadow-lg mb-4" onPress={onPress}>
-    <View className="w-12 h-12 rounded-full bg-[#C4E7E3] justify-center items-center mr-4">
-      {icon}
-    </View>
-    <View className="flex-1">
-      <Text className="text-base font-semibold text-gray-900">{title}</Text>
-      <Text className="text-xs text-[#404040] mt-1">{description}</Text>
-    </View>
-  </TouchableOpacity>
+  <View className="mt-3 bg-white rounded-lg p-1">
+    <TouchableOpacity className="flex-row items-start p-4" onPress={onPress}>
+      <View className="flex-row items-center justify-center mr-4 w-10 h-10 rounded-full bg-lightGreen">
+        {icon}
+      </View>
+      <View className="flex-1">
+        <Text className="text-sm font-semibold text-black mb-2">{title}</Text>
+        <Text className="text-xs font-normal text-black">{description}</Text>
+      </View>
+    </TouchableOpacity>
+  </View>
 );
 
 export default DiscoverCard; 

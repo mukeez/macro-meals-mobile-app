@@ -49,10 +49,14 @@ export function RootStack({
   isOnboardingCompleted,
   isAuthenticated,
   initialAuthScreen,
+  hasMacros,
+  readyForDashboard
 }: {
   isOnboardingCompleted: boolean;
   isAuthenticated: boolean;
   initialAuthScreen: string;
+  hasMacros: boolean;
+  readyForDashboard: boolean;
 }) {
   console.log("initialAuthScreen", initialAuthScreen);
   return (
@@ -65,8 +69,10 @@ export function RootStack({
           component={AuthNavigator}
           initialParams={{ initialAuthScreen: initialAuthScreen }}
         />
-      ) : (
+      ) : hasMacros && readyForDashboard ? (
         <Stack.Screen name="Dashboard" component={DashboardNavigator} />
+      ) : (
+        <Stack.Screen name="GoalSetupNav" component={GoalSetupNavigator} />
       )}
     </Stack.Navigator>
   );
@@ -114,6 +120,16 @@ const OnboardingNavigator = () => {
   );
 };
 
+const GoalSetupNavigator = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="GoalSetupScreen" component={GoalSetupScreen} />
+      <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+    </Stack.Navigator>
+  );
+};
+
 const DashboardNavigator = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false}}>
@@ -124,13 +140,12 @@ const DashboardNavigator = () => {
       <Stack.Screen name="AccountSettingsScreen" component={AccountSettingsScreen} />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
       <Stack.Screen name="AiMealSuggestionsScreen" component={AiMealSuggestionsScreen} />
-      <Stack.Screen name="GoalSetupScreen" component={GoalSetupScreen} />
-      <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
       <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
       <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
       <Stack.Screen name="MealFinderScreen" component={MealFinderScreen} />
       <Stack.Screen name="MealFinderBreakdownScreen" component={MealFinderBreakdownScreen} />
+      <Stack.Screen name="AISuggestedMealsDetailsScreen" component={AISuggestedMealsDetailsScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />

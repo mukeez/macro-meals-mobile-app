@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Alert, ActivityIndicator, Animated } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearProgress } from '../components/LinearProgress';
@@ -56,6 +56,7 @@ const AISuggestedMealsDetailsScreen: React.FC = () => {
   const [isLogging, setIsLogging] = useState<boolean>(false);
   const [userPreferences, setUserPreferences] = useState<any>(null);
   const [macroBreakdown, setMacroBreakdown] = useState<MacroData[]>([]);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // Check if meal is in favorites on component mount
   useEffect(() => {
@@ -97,6 +98,20 @@ const AISuggestedMealsDetailsScreen: React.FC = () => {
   };
 
   const toggleFavorite = async (): Promise<void> => {
+    // Trigger animation
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.3,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     try {
       const newFavoriteStatus = await FavoritesService.toggleFavorite(meal);
       setIsFavorite(newFavoriteStatus);
@@ -186,9 +201,12 @@ const AISuggestedMealsDetailsScreen: React.FC = () => {
                 onPress={toggleFavorite}
                 className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]"
               >
-                <Image 
-                source={IMAGE_CONSTANTS.starIcon} className='h-[16px] w-[16px]'
-                />
+                <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+                  <Image 
+                  source={isFavorite ? IMAGE_CONSTANTS.star : IMAGE_CONSTANTS.starIcon}
+                  className='h-[16px] w-[16px]'
+                  />
+                </Animated.View>
               </TouchableOpacity>
             </View>
           </View>

@@ -25,6 +25,8 @@ type ProgressState = {
   setSelectedRange: (range: string) => void;
 };
 
+
+
 function getStartDateByRange(range: string): Date {
   const today = new Date();
   const result = new Date(today);
@@ -52,7 +54,7 @@ function getStartDateByRange(range: string): Date {
 
 const format = (date: Date) => date.toISOString().split("T")[0];
 
-export const useProgressStore = create<ProgressState>((set) => ({
+export const useProgressStore = create<ProgressState>((set, get) => ({
   data: null,
   loading: false,
   selectedRange: "1w",
@@ -60,8 +62,17 @@ export const useProgressStore = create<ProgressState>((set) => ({
   fetchData: async (range) => {
     set({ loading: true });
     try {
-      const endDate = new Date();
-      const startDate = getStartDateByRange(range);
+      // Always use start_date and end_date, calculate based on range
+      let endDate = new Date();
+      let startDate = getStartDateByRange(range);
+      
+      // Special handling for 1w to ensure it's exactly 1 week
+      if (range === "1w") {
+        endDate = new Date();
+        startDate = new Date();
+        startDate.setDate(endDate.getDate() - 6);
+      }
+      
       const data = await getMealProgress(format(startDate), format(endDate));
       set({ data, loading: false });
     } catch (e) {

@@ -10,8 +10,12 @@ const MacrosBarGraph = ({
   data: any[];
   macroColors: Record<string, string>;
 }) => {
+  // Log the data for debugging
+  console.log('MacrosBarGraph data:', data);
+
+  // Use the max calories from the data for scaling
   const maxCalories = Math.max(
-    ...data.map((d) => d.protein * 4 + d.carbs * 4 + d.fat * 9),
+    ...data.map((d) => d.calories || 0),
     1500
   );
 
@@ -24,12 +28,13 @@ const MacrosBarGraph = ({
       }}
     >
       {/* Bars + labels */}
-      <View className="flex-1 flex-row items-end" style={{ height: 110 }}>
+      <View className="flex-1 flex-row items-end" style={{ height: 110, marginLeft: 0, marginRight: 20 }}>
         {data.map((day) => {
+          // Calculate macro heights based on their kcal contribution
           const proteinCals = day.protein * 4;
           const carbsCals = day.carbs * 4;
           const fatCals = day.fat * 9;
-          const totalCals = proteinCals + carbsCals + fatCals;
+          const totalCals = day.calories || proteinCals + carbsCals + fatCals;
           const totalBarHeight =
             maxCalories > 0 ? (totalCals / maxCalories) * 110 : 0;
           const proteinHeight = totalBarHeight * (proteinCals / totalCals);
@@ -78,10 +83,31 @@ const MacrosBarGraph = ({
           );
         })}
       </View>
-      {/* Y Axis on right, aligned with bars */}
+      {/* X Axis */}
+      <View style={{ position: 'absolute', left: 0, right: 20, bottom: 0, height: 20, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        {data.map((day) => (
+          <Text key={day.date} style={{ color: '#fff', fontSize: 12, width: 24, textAlign: 'center' }}>
+            {new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' })}
+          </Text>
+        ))}
+      </View>
+      {/* Y Axis on right */}
+      <View style={{ position: 'absolute', right: 0, top: 0, bottom: 20, width: 20, zIndex: 2, alignItems: 'flex-start' }}>
+        <View style={{ flex: 1, justifyContent: 'space-between', height: 110 }}>
+          {[...LANDMARKS].reverse().map((lm, idx) => (
+            <View key={lm} style={{ flexDirection: 'row', alignItems: 'center', height: idx === LANDMARKS.length - 1 ? undefined : 110 / (LANDMARKS.length - 1) }}>
+              <Text style={{ color: '#fff', fontSize: 10, width: 24, textAlign: 'left' }}>{lm}</Text>
+              <View style={{ width: 1, height: 1, backgroundColor: '#fff', marginLeft: 2 }} />
+            </View>
+          ))}
+        </View>
+        {/* Y axis line */}
+        <View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 2, backgroundColor: '#fff', borderRadius: 1 }} />
+      </View>
+      {/* Y Axis grid lines (for grid lines only, behind bars) */}
       <View
         className="justify-between items-start pl-1"
-        style={{ height: 110 }}
+        style={{ height: 110, opacity: 0.2, position: 'absolute', left: 0, right: 20, top: 0, pointerEvents: 'none' }}
       >
         {[...LANDMARKS].reverse().map((lm, idx) => (
           <View
@@ -96,9 +122,8 @@ const MacrosBarGraph = ({
           >
             <View
               className="mr-1"
-              style={{ height: 1, backgroundColor: "#ccc", width: 8 }}
+              style={{ height: 1, backgroundColor: "#ccc", width: '100%' }}
             />
-            <Text className="text-[10px] text-white w-7 text-left">{lm}</Text>
           </View>
         ))}
       </View>

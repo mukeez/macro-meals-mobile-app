@@ -17,6 +17,8 @@ import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import FavoritesService, { FavoriteMeal } from '../services/favoritesService';
 import { mealService } from 'src/services/mealService';
+import useStore from '../store/useStore';
+import DiscoverCard from '../components/DiscoverCard';
 
 const DUMMY_MEALS = [
   { name: 'Brown rice', macros: { calories: 170, carbs: 12, fat: 10, protein: 10 } },
@@ -39,6 +41,7 @@ const ScanScreenType: React.FC = () => {
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const fadeAnim = useRef(new Animated.Value(1)).current;
+    const { profile } = useStore();
 
     // Function to load favorites
     const loadFavorites = () => {
@@ -81,29 +84,49 @@ const ScanScreenType: React.FC = () => {
      * Navigate to the camera screen to take a photo of food
      */
     const handleOpenCamera = () => {
-        navigation.navigate('SnapMeal' as never);
+        if (profile?.has_macros === false || profile?.has_macros === undefined) {
+            navigation.navigate('GoalSetupScreen' as never);
+        } else {
+            navigation.navigate('SnapMeal' as never);
+        }
     };
 
     /**
      * Navigate to barcode scanner screen
      */
     const handleScanBarcode = () => {
-        navigation.navigate('BarcodeScanScreen' as never);
+        if (profile?.has_macros === false || profile?.has_macros === undefined) {
+            navigation.navigate('GoalSetupScreen' as never);
+        } else {
+            navigation.navigate('BarcodeScanScreen' as never);
+        }
     };
 
     /**
      * Navigate to manual meal entry/search screen
      */
     const handleManualEntry = () => {
-        navigation.navigate('AddMeal' as never);
+        if (profile?.has_macros === false || profile?.has_macros === undefined) {
+            navigation.navigate('GoalSetupScreen' as never);
+        } else {
+            navigation.navigate('AddMeal' as never);
+        }
     };
 
     const handleMealSuggestions = () => {
-        navigation.navigate('AiMealSuggestionsScreen' as never);
+        if (profile?.has_macros === false || profile?.has_macros === undefined) {
+            navigation.navigate('GoalSetupScreen' as never);
+        } else {
+            navigation.navigate('AiMealSuggestionsScreen' as never);
+        }
     };
 
     const handleMealFinder = () => {
-        navigation.navigate('MealFinderScreen' as never);
+        if (profile?.has_macros === false || profile?.has_macros === undefined) {
+            navigation.navigate('GoalSetupScreen' as never);
+        } else {
+            navigation.navigate('MealFinderScreen' as never);
+        }
     };
 
     const handleSearchClear = () => {
@@ -291,39 +314,24 @@ const ScanScreenType: React.FC = () => {
                         {/* Discover More */}
                         <View className="mt-8 mx-5">
                             <Text className="text-sm font-semibold text-black mb-2">DISCOVER MORE</Text>
-                            <View className="mt-3 bg-white rounded-lg p-1">
-                                <TouchableOpacity className="flex-row items-start p-4" onPress={handleManualEntry}>
-                                    <View className="flex-row items-center justify-center mr-4 w-10 h-10 rounded-full bg-lightGreen">
-                                        <Image source={IMAGE_CONSTANTS.editIcon} className="w-6 h-6 object-fill" />
-                                    </View>
-                                    <View className="flex-1">
-                                        <Text className="text-sm font-semibold text-black mb-2">Manual entry</Text>
-                                        <Text className="text-xs font-normal text-black">Log your meal details including portion sizes and ingredients for precise macro tracking.</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-                            <View className="mt-3 bg-white rounded-lg p-1">
-                                <TouchableOpacity className="flex-row items-start p-4" onPress={handleMealSuggestions}>
-                                    <View className="flex-row items-center justify-center mr-4 w-10 h-10 rounded-full bg-lightGreen">
-                                        <Image source={IMAGE_CONSTANTS.wandIcon} className="w-6 h-6 object-fill" />
-                                    </View>
-                                    <View className="flex-1">
-                                        <Text className="text-sm font-semibold text-black mb-2">AI Meal suggestions</Text>
-                                        <Text className="text-xs font-normal text-black">Get personalized meal recommendations based on your remaining macros.</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
-                            <View className="mt-3 bg-white rounded-lg p-1 mb-10">
-                                <TouchableOpacity className="flex-row items-start p-4" onPress={handleMealFinder}>
-                                    <View className="flex-row items-center justify-center mr-4 w-10 h-10 rounded-full bg-lightGreen">
-                                        <Image source={IMAGE_CONSTANTS.locationIcon} className="w-6 h-6 object-fill" />
-                                    </View>
-                                    <View className="flex-1">
-                                        <Text className="text-sm font-semibold text-black mb-2">Meal Finder</Text>
-                                        <Text className="text-xs font-normal text-black">Discover nearby restaurant options that align with your macro targets and dietary preferences.</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            </View>
+                            <DiscoverCard
+                                icon={<Image source={IMAGE_CONSTANTS.editIcon} className="w-6 h-6 object-fill" />}
+                                title="Manual entry"
+                                description="Log your meal details including portion sizes and ingredients for precise macro tracking."
+                                onPress={handleManualEntry}
+                            />
+                            <DiscoverCard
+                                icon={<Image source={IMAGE_CONSTANTS.wandIcon} className="w-6 h-6 object-fill" />}
+                                title="AI Meal suggestions"
+                                description="Get personalized meal recommendations based on your remaining macros."
+                                onPress={handleMealSuggestions}
+                            />
+                            <DiscoverCard
+                                icon={<Image source={IMAGE_CONSTANTS.locationIcon} className="w-6 h-6 object-fill" />}
+                                title="Meal Finder"
+                                description="Discover nearby restaurant options that align with your macro targets and dietary preferences."
+                                onPress={handleMealFinder}
+                            />
                         </View>
                         </Animated.View>
                     )}

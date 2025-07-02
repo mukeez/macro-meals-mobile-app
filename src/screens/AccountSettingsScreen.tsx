@@ -60,13 +60,25 @@ export default function AccountSettingsScreen() {
           const patch: any = {};
           patch[field] = value;
           const updated = await userService.updateProfile(patch);
+          
+          setTimeout(async () => {
+            try {
+              const freshUserData = await userService.getProfile();
+              setUser(freshUserData);
+            } catch (e) {
+              // Fallback to the update response
           setUser((prev: any) => ({ ...prev, ...updated }));
+            }
+          }, 500);
         } catch (e) {
+          Alert.alert('Error', 'Failed to update profile',);
           // Optionally show error
         } finally {
           setUpdating((prev) => ({ ...prev, [field]: false }));
         }
-      }, 600);
+      }, 2000);
+    } else {
+      Alert.alert('Error', 'Failed to update profile',);
     }
     return debouncedPatch.current[field];
   };

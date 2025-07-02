@@ -23,6 +23,7 @@ import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityBu
 import { CircularProgress } from "../components/CircularProgress";
 import { LinearProgress } from "../components/LinearProgress";
 import { RootStackParamList } from "../types/navigation";
+import { userService } from "../services/userService";
 
 // type RootStackParamList = {
 //     MacroInput: undefined;
@@ -100,6 +101,9 @@ export const DashboardScreen: React.FC = () => {
   const userId = useStore((state) => state.userId);
   const token = useStore((state) => state.token);
   const preferences = useStore((state) => state.preferences);
+  const setStoreProfile = useStore((state) => state.setProfile);
+  const hasBeenPromptedForGoals = useStore((state) => state.hasBeenPromptedForGoals);
+  const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
 
   // useEffect(() => {
   //     if (preferences.calories === 0 && preferences.protein === 0) {
@@ -118,48 +122,19 @@ export const DashboardScreen: React.FC = () => {
         }
 
         // 1. Fetch user profile info
-        const profileResponse = await fetch(
-          "https://api.macromealsapp.com/api/v1/user/me",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const profileResponse = await userService.getProfile();
+        setStoreProfile(profileResponse);
+        setProfile(profileResponse);
+        setUsername(profileResponse.display_name || undefined);
 
-        if (!profileResponse.ok) {
-          throw new Error("Failed to fetch user profile");
-        }
+        const prefsResponse = await userService.getPreferences();
+        console.log('PREFS RESPONSE', prefsResponse)
 
-        const profileData = await profileResponse.json();
-        console.log("THIS IS THE PROFILE DATA OLD", profileData);
-        setProfile(profileData);
-        console.log("THE SET PROFILE", profile);
-        setUsername(profileData.display_name || undefined);
-
-        const prefsResponse = await fetch(
-          "https://api.macromealsapp.com/api/v1/user/preferences",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        console.log('PREFS RESPONSE', prefsResponse.json);
-        if (!prefsResponse.ok) {
-          throw new Error("Failed to fetch user preferences");
-        }
-
-        const prefsData = await prefsResponse.json();
         setMacros({
-          protein: prefsData.protein_target,
-          carbs: prefsData.carbs_target,
-          fat: prefsData.fat_target,
-          calories: prefsData.calorie_target,
+          protein: prefsResponse.protein_target,
+          carbs: prefsResponse.carbs_target,
+          fat: prefsResponse.fat_target,
+          calories: prefsResponse.calorie_target,
         });
 
         const progressResponse = await fetch(
@@ -178,6 +153,7 @@ export const DashboardScreen: React.FC = () => {
         }
 
         const progressData = await progressResponse.json();
+        console.log('PROGRESS DATA', progressData)
 
         setConsumed({
           protein: progressData.logged_macros.protein,
@@ -191,7 +167,7 @@ export const DashboardScreen: React.FC = () => {
           totalCalories > 0 ? (consumed.calories / totalCalories) * 100 : 0;
         setProgress(Math.min(100, progressPercentage));
         const todayMealsResponse = await fetch(
-          "https://api.macromealsapp.com/api/v1/meals/today",
+          `https://api.macromealsapp.com/api/v1/meals/logs?start_date=${new Date().toISOString().split('T')[0]}&end_date=${new Date().toISOString().split('T')[0]}`,
           {
             method: "GET",
             headers: {
@@ -205,7 +181,6 @@ export const DashboardScreen: React.FC = () => {
           throw new Error("Failed to fetch today's meals");
         }
         const todayMealsData = await todayMealsResponse.json();
-        console.log("THIS IS THE TODAY MEALS DATA", todayMealsData);
         setTodayMeals(todayMealsData);
         setIsLoading(false);
       } catch (error) {

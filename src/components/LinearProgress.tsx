@@ -16,7 +16,8 @@ export function LinearProgress({
   color,
   backgroundColor = '#eee',
 }: LinearProgressProps) {
-  const percentage = progress;
+  // Ensure progress is between 0 and 100
+  const percentage = Math.min(Math.max(progress, 0), 100);
 
   return (
     <View 
@@ -28,15 +29,17 @@ export function LinearProgress({
         flex: width ? undefined : 1 
       }}
     >
-      <View
-        className="rounded-lg"
-        style={{
-          width: `${percentage}%`,
-          height,
-          backgroundColor: color,
-          minWidth: 1, // Ensure minimum visibility
-        }}
-      />
+      {percentage > 0 && (
+        <View
+          className="rounded-lg"
+          style={{
+            width: width ? (width * (percentage / 100)) : ((percentage / 100) * 100),
+            height,
+            backgroundColor: color,
+            minWidth: 1, // Ensure minimum visibility
+          }}
+        />
+      )}
     </View>
   );
 } 
