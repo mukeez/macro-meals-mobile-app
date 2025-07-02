@@ -1,5 +1,11 @@
 // src/screens/WelcomeScreen.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
+
+const API_URL = 'https://api.macromealsapp.com/api/v1';
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
@@ -15,11 +21,29 @@ import {
 import PagerView from 'react-native-pager-view';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import useStore from '../store/useStore'; 
+import { paymentService } from '../services/paymentService';
+import { userService } from '../services/userService';
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+type Profile = {
+  id: string;
+  email: string;
+  display_name?: string;
+  avatar_url?: string;
+  first_name?: string;
+  last_name?: string;
+  gender?: string;
+  is_pro?: boolean;
+  has_macros?: boolean;
+  meal_reminder_preferences_set?: boolean;
+  is_active?: boolean;
+};
 
 const Pager = ()=>{
   const [currentPage, setCurrentPage] = useState(0);
+
+
   return(
     <View className='h-[55%]'>
       <PagerView 
@@ -101,106 +125,108 @@ const BenefitsPager = ()=>{
 
 
 const PaymentScreen = () => {
-
+  const navigation = useNavigation<NavigationProp>();
+  const profile = useStore((state) => state.profile);
+  const setStoreProfile = useStore((state) => state.setProfile);
+  const clearProfile = useStore((state) => state.clearProfile);
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const [selectedPlan, setSelectedPlan] = useState('yearly');
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentSheetParams, setPaymentSheetParams] = useState({});
   const [publishableKey, setPublishableKey] = useState('');
-
-  useEffect(()=>{
-   setIsLoading(true);
-    fetchPublishableKey();
-    initializePaymentSheet();
-    setIsLoading(false);
-  }, []);
-
+  const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
+  const { setReadyForDashboard } = useContext(HasMacrosContext);
 
   const fetchPublishableKey = async () => {
-    const response = await fetch(`https://sunny-stag-aware.ngrok-free.app/api/v1/billing/stripe-config`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    const token = useStore((state) => state.token);
-    console.log('The token is: ', token);
-    const data = await response.json();
-    console.log(data);
-    setPublishableKey(data.publishable_key);
-  }
-
-  const handleCreateSetupIntent = async () => {
-    try{
-    const token = await AsyncStorage.getItem('my_token');
-    console.log('The token is: ', token);
-    const response = await fetch(`https://sunny-stag-aware.ngrok-free.app/api/v1/billing/create-setup-intent`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        "email" : "matrix@simulation.com",
-        "user_id" : "e269b58e-5e72-46d2-b2ef-5df7f35622ef"
-      }),
-    });
-    const data = await response.json();
-    console.log(data);
-    const newData = {
-      clientSecret: data.client_secret,
-      paymentIntent: data.payment_intent,
-      ephemeralKey: data.ephemeral_key,
-      publishableKey: data.publishable_key,
-      customerId: data.customer_id
+    try {
+      const response = await paymentService.getStripeConfig();
+      setPublishableKey(response.publishable_key);
+      return response.publishable_key;
+    } catch (error) {
+      console.error('Error fetching publishable key:', error);
+      throw error;
     }
-    setPaymentSheetParams(newData);
-    return newData;
-  } catch (error) {
-    console.log(error);
-  }
   };
 
   const initializePaymentSheet = async () => {
-    const newData = await handleCreateSetupIntent();
-    console.log(`The new data is: ${JSON.stringify(newData)}`);
-    if (!newData) return;
-    
-    // Log the exact client secret format
-    console.log('Client secret exact value:', newData.clientSecret);
-    
-    const { error } = await initPaymentSheet({
-      merchantDisplayName: "MacroMate",
-      customerId: newData.customerId,
-      customerEphemeralKeySecret: newData.ephemeralKey,
-      setupIntentClientSecret: newData.clientSecret,
-      allowsDelayedPaymentMethods: true,
-    });
-    console.log(`The error is: ${JSON.stringify(error)}`);
-    if (!error) {
+    try {
+      // Clear existing profile and fetch fresh data
+      clearProfile();
+      const fetchedProfile = await userService.getProfile();
+      
+      if (!fetchedProfile?.id || !fetchedProfile?.email) {
+        throw new Error('Invalid profile data received');
+      }
+      
+      const currentProfile = fetchedProfile as Profile;
+      setStoreProfile(currentProfile);
+
+      const response = await paymentService.createPaymentIntent(
+        currentProfile.email,
+        currentProfile.id,
+        selectedPlan
+      );
+
+      if (!response || !response.client_secret) {
+        throw new Error('Invalid response from payment service');
+      }
+
+      const { error } = await initPaymentSheet({
+        merchantDisplayName: "Macro meals",
+        customerId: response.customer_id,
+        customerEphemeralKeySecret: response.ephemeral_key,
+        setupIntentClientSecret: response.client_secret,
+        allowsDelayedPaymentMethods: true,
+        returnURL: 'macromeals://stripe-redirect',
+        style: 'automatic'
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to initialize payment');
+      }
+    } catch (error) {
+      console.error('Error initializing payment sheet:', error);
+      throw error;
+    }
+  };
+
+  const handlePaymentPress = async () => {
+    try {
       setIsLoading(true);
+      
+      // Get publishable key if not already set
+      if (!publishableKey) {
+        await fetchPublishableKey();
+      }
+
+      // Initialize payment sheet (this will now fetch profile if needed)
+      await initializePaymentSheet();
+
+      // Present payment sheet
+      const { error: presentError } = await presentPaymentSheet();
+
+      if (presentError) {
+        Alert.alert(`Error code: ${presentError.code}`, presentError.message);
+      } else {
+        Alert.alert('Success', 'Your order is confirmed!');
+        setHasBeenPromptedForGoals(false);
+        setReadyForDashboard(true);
+       //navigation.navigate('MainTabs');
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      if (error instanceof Error) {
+        if (error.message === 'Failed to fetch user profile' || error.message === 'Invalid profile data' || error.message === 'Invalid profile data received') {
+          Alert.alert('Error', 'Failed to fetch user profile. Please try again.');
+        } else {
+          Alert.alert('Error', 'Failed to process payment. Please try again.');
+        }
+      } else {
+        Alert.alert('Error', 'Failed to process payment. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const openPaymentSheet = async () => {
-    const { error } = await presentPaymentSheet();
-
-    if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
-    } else {
-      Alert.alert('Success', 'Your order is confirmed!');
-    }
-  };
-  
-
-
-if (isLoading){
-  return (
-    <View className="flex-1 justify-center items-center">
-      <ActivityIndicator size="large" color="#19a28f" />
-    </View>
-  );
-}
 
   return (
     <StripeProvider publishableKey={publishableKey}>
@@ -210,7 +236,30 @@ if (isLoading){
           <Text className="text-base font-medium">Select a plan for your free trial</Text>
           <View className="flex-row w-full gap-4 justify-between mt-8">
             
-          <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
+          
+            
+            <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
+              e.preventDefault();
+              setSelectedPlan('monthly');
+            }}>
+              
+              <View className='w-full pl-3 pt-8 pb-3'>
+              <View className='flex-row items-center justify-between gap-2'>
+                <Text className="text-base font-medium rounded-md">MONTHLY</Text>
+                {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
+              </View>
+              <View className='mt-4'>
+                <Text className='font-medium text-[15px]'>$9.99/mo</Text>
+                <Text className='font-medium text-[15px]'></Text>
+              </View>
+              <Text className='mt-4 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+              </View>
+             
+              
+            </TouchableOpacity>
+
+
+            <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
              e.preventDefault();
              setSelectedPlan('yearly');
             }}>
@@ -228,44 +277,28 @@ if (isLoading){
               </View>
               <Text className='mt-4 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
               </View>
-             
-              
-            </TouchableOpacity>
-            
-            <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
-              e.preventDefault();
-              setSelectedPlan('monthly');
-            }}>
-              
-              <View className='w-full pl-3 pt-8 pb-3'>
-              <View className='flex-row items-center justify-between gap-2'>
-                <Text className="text-base font-medium rounded-md">MONTHLY</Text>
-                {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
-              </View>
-              <View className='mt-4'>
-                <Text className='font-medium text-[15px]'>$14.98/mo</Text>
-                <Text className='font-medium text-[15px]'></Text>
-              </View>
-              <Text className='mt-4 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
-              </View>
-             
-              
             </TouchableOpacity>
           </View>
-          <Text className='mt-5 text-[12px] text-[#4F4F4F]'>You can change plans or cancel anytime</Text>
+          <Text className='mt-4 text-[12px] text-[#4F4F4F]'>You can change plans or cancel anytime</Text>
           <View className="w-full mt-[30px]">
             <TouchableOpacity 
               activeOpacity={0.8}
-              onPress={openPaymentSheet}
+              onPress={handlePaymentPress}
+              disabled={isLoading}
+              className={isLoading ? 'opacity-70' : ''}
             >
               <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
-                <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
+                )}
               </View>
             </TouchableOpacity>
           </View>
         </View>
       </View>
-      </StripeProvider>
+    </StripeProvider>
   )
 }
 

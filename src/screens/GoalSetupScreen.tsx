@@ -14,6 +14,7 @@ import { RootStackParamList } from 'src/types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
+import useStore from 'src/store/useStore';
 
 
 
@@ -24,13 +25,17 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export const GoalSetupScreen: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
     const { completed, majorStep, setMajorStep, setSubStep } = useGoalsFlowStore();
+    const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
     return (
         <CustomSafeAreaView className="flex-1 bg-white" edges={['left', 'right']}>
             <ScrollView className="relative flex-1 mx-4" contentContainerStyle={{ flexGrow: 1 }}>
                 <View className="flex-1">
-                <View className="flex-row items-center justify-between">
-                    <BackButton onPress={() => navigation.goBack()} />
-                </View>
+                {/* <View className="flex-row items-center justify-between">
+                    <BackButton onPress={() => {
+                        setHasBeenPromptedForGoals(false);
+                        navigation.navigate('MainTabs' as never);
+                    }} />
+                </View> */}
                 <View className="items-start justify-start mt-4">
                     <Text className="text-3xl font-bold">Welcome</Text>
                     <Text className="mt-2 leading-7 font-normal text-lg text-textMediumGrey">Set up your personalized macro plan in three simple steps. Each completed stage brings you closer to nutrition targets tailored to your body and goals.</Text>
@@ -65,6 +70,7 @@ export const GoalSetupScreen: React.FC = () => {
                     const allCompleted = completed[0]?.every(Boolean) && completed[1]?.every(Boolean) && completed[2]?.every(Boolean);
                     if (allCompleted) {
                         navigation.navigate('PaymentScreen');
+                        setHasBeenPromptedForGoals(false);
                         return;
                     }
                     if (completed[majorStep]?.every(Boolean) && majorStep < 2) {

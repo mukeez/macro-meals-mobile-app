@@ -41,7 +41,8 @@ export const userService = {
    * @returns User preferences or default preferences if not found
    */
   getPreferences: async (): Promise<any> => {
-    const token = authTokenService.getToken();
+    const token = useStore.getState().token;
+    console.log('TOKEN', token)
     
     //! Once there is no token, we will need to log the user out
     //! This implementation will be replaced with axios which will
@@ -49,6 +50,7 @@ export const userService = {
     //! If the token is not valid, we will log the user out
     //! If the token is valid, we will continue with the request
     if (!token) {
+      console.log('NO TOKEN FOUND')
       return defaultPreferences;
     }
 
@@ -62,6 +64,7 @@ export const userService = {
       });
 
       if (response.status === 404) {
+        console.log('404 NO PREFERENCES FOUND')
         return defaultPreferences;
       }
       
@@ -70,6 +73,7 @@ export const userService = {
       }
       
       const preferences = await response.json();
+      console.log('\n\nPREFERENCES\n\n', preferences)
       return preferences;
     } catch (err) {
       console.error('Error fetching preferences:', err);
@@ -100,22 +104,102 @@ export const userService = {
 
   updateProfile: async (fields: Record<string, any>): Promise<any> => {
     const token = useStore.getState().token;
+    console.log('updateProfile called with fields:', fields);
     if (!token) throw new Error("Authentication required");
 
-    const response = await fetch(`${API_BASE_URL}/user/me`, {
-      method: "PATCH",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(fields)
+    console.log('updateProfile called with fields:', fields);
+
+    // Always use FormData to match Postman behavior
+    console.log('Using FormData (matching Postman)');
+    const formData = new FormData();
+    
+    // Map frontend field names to backend field names
+    const fieldMappings: Record<string, string> = {
+      'gender': 'sex',
+      'birthday': 'dob'
+    };
+    
+    Object.keys(fields).forEach(key => {
+      const value = fields[key];
+      // Use mapped field name if it exists, otherwise use original key
+      const backendFieldName = fieldMappings[key] || key;
+      
+      console.log(`Processing field ${key} -> ${backendFieldName}:`, value);
+      
+      if (value !== null && value !== undefined) {
+        if (typeof value === 'object' && value.uri) {
+          // File object
+          console.log(`Appending file for ${backendFieldName}:`, { uri: value.uri, type: value.type, name: value.name });
+          formData.append(backendFieldName, {
+            uri: value.uri,
+            type: value.type || 'image/jpeg',
+            name: value.name || 'file'
+          } as any);
+        } else {
+          // Regular field - convert to string for FormData
+          let fieldValue = String(value);
+          
+          // Ensure gender values are lowercase
+          if (key === 'gender' && typeof value === 'string') {
+            fieldValue = value.toLowerCase();
+            console.log(`Converting gender to lowercase: ${value} -> ${fieldValue}`);
+          }
+          
+          console.log(`Appending regular field ${backendFieldName}:`, fieldValue);
+          formData.append(backendFieldName, fieldValue);
+        }
+      }
     });
+
+    let headers: Record<string, string> = {
+      "Authorization": `Bearer ${token}`,
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0"
+      // IMPORTANT: Don't set Content-Type manually for FormData - React Native needs to set the boundary
+    };
+
+    const fullUrl = `${API_BASE_URL}/user/me`;
+    console.log('=== FULL REQUEST DEBUG ===');
+    console.log('API_BASE_URL:', API_BASE_URL);
+    console.log('Full URL:', fullUrl);
+    console.log('Method: PATCH');
+    console.log('Headers:', headers);
+    console.log('Using FormData body (multipart/form-data)');
+    console.log('FormData fields being sent:', Object.keys(fields));
+    console.log('Original field values:', fields);
+    console.log('=== SENDING REQUEST ===');
+
+    const response = await fetch(fullUrl, {
+      method: "PATCH",
+      headers,
+      body: formData
+    });
+
+    console.log('=== RESPONSE RECEIVED ===');
+    
+    console.log('Response received:');
+    console.log('- Status:', response.status);
+    console.log('- Status Text:', response.statusText);
+    console.log('- Response Headers:', Object.fromEntries(response.headers.entries()));
+    
     const responseText = await response.text();
+    console.log('- Response Body:', responseText);
+    
     if (!response.ok) {
       console.error('[PATCH ERROR] /user/me', response.status, responseText);
       throw new Error(responseText);
     }
-    return JSON.parse(responseText);
+    
+    try {
+      const parsedResponse = JSON.parse(responseText);
+      console.log('- Parsed Response last_name:', parsedResponse.last_name);
+      console.log('- Response updated_at:', parsedResponse.updated_at);
+      return parsedResponse;
+    } catch (parseError) {
+      console.error('Failed to parse response as JSON:', parseError);
+      throw new Error('Invalid JSON response');
+    }
   },
 
   /**

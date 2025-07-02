@@ -1,23 +1,24 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import MacroLegend from "src/components/MacroLegend";
-import MacrosBarGraph from "src/components/MacrosBarGraph";
 import MacroTableSection from "src/components/MacroTableSection";
 import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import { useProgressStore } from "src/store/useProgressStore";
+import StackedBarChart from "src/components/my_chart";
 
 const macroColors = {
-  protein: "#7E54D9",
+  calories: "#ffffff",
   carbs: "#FFC008",
   fat: "#E283E0",
-  calories: "#44A047",
+  protein: "#7E54D9",
 };
 
 const dateRanges = [
@@ -29,127 +30,187 @@ const dateRanges = [
   { label: "All", value: "all" },
 ];
 
+interface MacroBarData {
+  day: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  calories: number;
+  date: string;
+}
+
 const ProgressScreen = () => {
   const { data, loading, selectedRange, setSelectedRange, fetchData } =
     useProgressStore();
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchData(selectedRange);
   }, [selectedRange, fetchData]);
 
-  const macroBarData =
-    data?.daily_macros?.map((day) => ({
-      date: day.date,
-      protein: day.protein,
-      carbs: day.carbs,
-      fat: day.fat,
-      calories: day.calories,
-    })) || [];
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData(selectedRange);
+    setRefreshing(false);
+  }, [fetchData, selectedRange]);
 
-  const avgCalories =
-    macroBarData.length > 0
-      ? Math.round(
-          macroBarData.reduce((sum, d) => sum + (d.calories || 0), 0) /
-            macroBarData.length
-        )
-      : 0;
+  // Process real API data only - no dummy data fallback
+  let macroBarData: MacroBarData[] = [];
+  
+  try {
+    if (data && Array.isArray(data.daily_macros) && data.daily_macros.length > 0) {
+      // Filter out future dates
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-  let dateRange = "";
-  if (data?.start_date && data?.end_date) {
-    const format = (dateStr: string) =>
-      new Date(dateStr).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-      });
-    dateRange = `${format(data.start_date)} - ${format(data.end_date)}`;
+      macroBarData = data.daily_macros
+        .filter(dayData => {
+          const date = new Date(dayData.date);
+          date.setHours(0, 0, 0, 0);
+          return date <= today;
+        })
+        .map(dayData => ({
+          day: new Date(dayData.date).getDay(),
+          protein: Number(dayData.protein) || 0,
+          carbs: Number(dayData.carbs) || 0,
+          fat: Number(dayData.fat) || 0,
+          calories: Number(dayData.calories) || 0,
+          date: dayData.date,
+        }))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+  } catch (err) {
+    console.error('Error processing macro data:', err);
+    macroBarData = [];
   }
 
-  const avg = data?.average_macros || { protein: 0, carbs: 0, fat: 0 };
-  const goal = data?.target_macros || { protein: 0, carbs: 0, fat: 0 };
+  const avgCalories = data?.average_macros?.calories
+    ? Math.round(Number(data.average_macros.calories))
+    : 0;
+
+  const avg = data?.average_macros 
+    ? {
+        protein: Math.round(Number(data.average_macros.protein)) || 0,
+        carbs: Math.round(Number(data.average_macros.carbs)) || 0,
+        fat: Math.round(Number(data.average_macros.fat)) || 0
+      }
+    : { protein: 0, carbs: 0, fat: 0 };
+
+  const goal = data?.target_macros 
+    ? {
+        protein: Math.round(Number(data.target_macros.protein)) || 0,
+        carbs: Math.round(Number(data.target_macros.carbs)) || 0,
+        fat: Math.round(Number(data.target_macros.fat)) || 0
+      }
+    : { protein: 0, carbs: 0, fat: 0 };
+
+  // Format date range for display
+  let dateRange = "";
+  if (data?.start_date && data?.end_date) {
+    const start = new Date(data.start_date);
+    const end = new Date(data.end_date);
+    dateRange = `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+  }
 
   return (
-    <CustomSafeAreaView className="flex-1 bg-white">
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 56 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="bg-[#009688] pb-2">
-          <Text className="text-white text-xl font-bold text-center p-5 mb-2">
-            Progress
+    <ScrollView className="bg-white"
+      contentContainerStyle={{ paddingBottom: 56 }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" colors={["#fff"]} />
+      }
+    >
+      <View className="bg-primaryLight pb-8">
+        <Text className="mt-16 text-white text-xl font-bold text-center p-5">
+          Progress
+        </Text>
+        <View className="px-12">
+          <MacroLegend macroColors={macroColors} small />
+        </View>
+        <View className="pl-5 mt-4 mb-6">
+          <Text className="text-white text-xs font-medium mb-[1px]">
+            Avg calories
           </Text>
-          <View className="px-5">
-            <MacroLegend macroColors={macroColors} small />
-            <View className="mt-2 mb-6">
-              <Text className="text-white text-[11px] font-medium mb-[1px]">
-                Avg calories
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <View className="flex-row items-baseline mt-1">
+              <Text className="text-white text-2xl font-semibold mb-[1px]">
+                {avgCalories}
               </Text>
-              <Text className="text-white text-[28px] font-bold mb-[1px]">
-                {loading ? <ActivityIndicator color="#fff" /> : avgCalories}
-              </Text>
-              <Text className="text-white text-[10px]">{dateRange}</Text>
+              <Text className="text-white text-sm font-medium"> kcal</Text>
             </View>
-          </View>
-          <View className="py-4 mb-7 min-h-[160px]">
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <MacrosBarGraph data={macroBarData} macroColors={macroColors} />
-            )}
-          </View>
-          <View className="flex-row justify-center mb-7 px-2">
-            {dateRanges.map((r) => (
-              <TouchableOpacity
-                key={r.value}
-                onPress={() => setSelectedRange(r.value)}
-                className={`
-                  px-4 py-1 mx-3 rounded-full bg-white
-                  ${selectedRange === r.value ? "opacity-100" : "opacity-70"}
-                `}
-                activeOpacity={0.8}
+          )}
+          <Text className="text-white text-[10px]">{dateRange}</Text>
+        </View>
+        <View className="x-5">
+          {loading ? (
+            <View className="flex-1 my-5 justify-center items-center">
+              <ActivityIndicator color="#fff" size="large" />
+              <Text className="text-white text-base mt-2">Loading data...</Text>
+            </View>
+          ) : (
+            <StackedBarChart data={macroBarData} selectedRange={selectedRange} />
+          )}
+        </View>
+        <View className="flex-row justify-center mb-7 px-2">
+          {dateRanges.map((r) => (
+            <TouchableOpacity
+              key={r.value}
+              onPress={() => setSelectedRange(r.value)}
+              className={`
+                px-4 py-1.5 mx-3 rounded-full bg-white
+                ${selectedRange === r.value ? "opacity-100" : "opacity-70"}
+              `}
+              activeOpacity={0.8}
+            >
+              <Text className="text-black text-xs font-semibold">
+                {r.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Overlapping Cards */}
+        <View className="absolute bottom-[-40px] left-0 right-0">
+          <View className="flex-row px-4" style={{ transform: [{ translateY: 50 }] }}>
+            <View className="flex-1 bg-[#C4E7E3] mx-1 rounded-2xl items-center py-6 shadow-lg">
+              <View
+                className="w-12 h-12 rounded-full justify-center items-center mb-3"
+                style={{ backgroundColor: "#253238" }}
               >
-                <Text className="text-black text-xs font-semibold">
-                  {r.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        {/* Cards */}
-        <View className="bg-white flex-row p-4 my-2 z-10">
-          <View className="flex-1 bg-[#C4E7E3] mx-1 rounded-2xl items-center py-6 shadow-lg">
-            <View
-              className="w-12 h-12 rounded-full justify-center items-center mb-3"
-              style={{ backgroundColor: "#253238" }}
-            >
-              <FontAwesome5 name="trophy" size={22} color="white" />
+                <FontAwesome5 name="trophy" size={22} color="white" />
+              </View>
+              <Text className="text-sm text-black text-center">
+                {data?.target_macros?.calories || "-"} cal
+              </Text>
+              <Text className="text-xs opacity-65 text-black text-center">
+                Net goal
+              </Text>
             </View>
-            <Text className="text-sm text-black text-center">
-              {data?.target_macros?.calories || "-"} cal
-            </Text>
-            <Text className="text-xs opacity-65 text-black text-center">
-              Net goal
-            </Text>
-          </View>
-          <View className="flex-1 bg-[#C4E7E3] mx-1 rounded-2xl items-center py-6 shadow-lg">
-            <View
-              className="w-12 h-12 rounded-full justify-center items-center mb-3"
-              style={{ backgroundColor: "#253238" }}
-            >
-              <FontAwesome5 name="fire" size={22} color="white" />
+
+            <View className="flex-1 bg-[#C4E7E3] mx-1 rounded-2xl items-center py-6 shadow-lg">
+              <View
+                className="w-12 h-12 rounded-full justify-center items-center mb-3"
+                style={{ backgroundColor: "#253238" }}
+              >
+                <FontAwesome5 name="fire" size={22} color="white" />
+              </View>
+              <Text className="text-sm text-black text-center">
+                {avgCalories} cal
+              </Text>
+              <Text className="text-xs opacity-65 text-black text-center">
+                Net daily avg.
+              </Text>
             </View>
-            <Text className="text-sm text-black text-center">
-              {avgCalories} cal
-            </Text>
-            <Text className="text-xs opacity-65 text-black text-center">
-              Net daily avg.
-            </Text>
           </View>
         </View>
-        <View className="flex-1 pb-6">
-          <MacroTableSection avg={avg} goal={goal} />
-        </View>
-      </ScrollView>
-    </CustomSafeAreaView>
+      </View>
+
+      <View className="mt-[80px]">
+        <MacroTableSection avg={avg} goal={goal} />
+      </View>
+    </ScrollView>
   );
 };
 

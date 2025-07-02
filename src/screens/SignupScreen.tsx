@@ -22,6 +22,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types/navigation';
 import { useMixpanel } from '@macro-meals/mixpanel';
+import { useGoalsFlowStore } from '../store/goalsFlowStore';
+import { OnboardingContext } from 'src/contexts/OnboardingContext';
+import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignupScreen'>;
@@ -33,6 +36,8 @@ export const SignupScreen: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
+    const { hasMacros, setHasMacros, setReadyForDashboard } = React.useContext(HasMacrosContext);
     
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -53,6 +58,7 @@ export const SignupScreen: React.FC = () => {
 
     const setAuthenticated = useStore((state) => state.setAuthenticated);
     const navigation = useNavigation<NavigationProp>();
+    const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
 
     const validateForm = () => {
         let isValid = true;
@@ -129,9 +135,41 @@ export const SignupScreen: React.FC = () => {
                 mixpanel.register({signup_time: signUpTime});
             }
             // setAuthenticated(true, '', userId);
-            const data = await authService.login({ email, password });
-            setAuthenticated(true, data.access_token, data.user.id);
-            await AsyncStorage.setItem('my_token', data.access_token);
+            // First get login data
+           // First get login data
+           const loginData = await authService.login({ email, password });
+            
+           // Store token temporarily for profile fetch
+           const token = loginData.access_token;
+           const loginUserId = loginData.user.id;
+           
+           // Then get profile using the token directly
+           const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
+               method: "GET",
+               headers: {
+                   "Authorization": `Bearer ${token}`,
+                   "Content-Type": "application/json"
+               }
+           });
+           
+           if (!profileResponse.ok) {
+               throw new Error(await profileResponse.text());
+           }
+           
+           const profile = await profileResponse.json();
+           
+           // Update storage
+           await Promise.all([
+               AsyncStorage.setItem('my_token', token),
+               AsyncStorage.setItem('user_id', loginUserId),
+               AsyncStorage.setItem('isOnboardingCompleted', 'true')
+           ]);
+            resetSteps();
+            setIsOnboardingCompleted(true);
+            // If user has macros, they should be ready for dashboard
+            setHasMacros(profile.has_macros);
+            setReadyForDashboard(profile.has_macros);
+            setAuthenticated(true, token, loginUserId);
             navigation.navigate('Dashboard');
 
         } catch (error) {
