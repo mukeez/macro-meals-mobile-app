@@ -23,6 +23,36 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
     activityLevel: undefined,
     goal: undefined,
     unitSystem: 'Metric',
+    has_macros: false,
+};
+
+// Add Profile interface
+interface Profile {
+    id: string;
+    display_name?: string;
+    email?: string;
+    avatar_url?: string;
+    first_name?: string;
+    last_name?: string;
+    gender?: string;
+    is_active?: boolean;
+    is_pro?: boolean;
+    meal_reminder_preferences_set?: boolean;
+    has_macros?: boolean;
+}
+
+type MacrosPreferences = {
+    protein_target: number;
+    carbs_target: number;
+    fat_target: number;
+    calorie_target: number;
+};
+
+type TodayProgress = {
+    protein: number;
+    carbs: number;
+    fat: number;
+    calories: number;
 };
 
 /**
@@ -38,6 +68,16 @@ interface AppState {
     setAuthenticated: (authenticated: boolean, token: string, userId: string) => void;
     checkAuth: () => Promise<boolean>;
     logout: () => void;
+
+    // Profile state
+    profile: Profile | null;
+    setProfile: (profile: Profile) => void;
+    updateProfile: (updates: Partial<Profile>) => void;
+    clearProfile: () => void;
+
+    // Goal setup state
+    hasBeenPromptedForGoals: boolean;
+    setHasBeenPromptedForGoals: (prompted: boolean) => void;
 
     // User preferences state
     preferences: UserPreferences;
@@ -59,6 +99,15 @@ interface AppState {
     refreshMeals: () => Promise<void>;
     shouldRefreshMeals: boolean;
     setShouldRefreshMeals: (shouldRefresh: boolean) => void;
+
+    // Macros preferences state and actions
+    macrosPreferences: MacrosPreferences;
+    setMacrosPreferences: (preferences: MacrosPreferences) => void;
+
+    // Today's progress state and actions
+    todayProgress: TodayProgress;
+    setTodayProgress: (progress: TodayProgress) => void;
+    fetchTodayProgress: () => Promise<void>;
 }
 
 /**
@@ -148,7 +197,7 @@ const useStore = create<AppState>()(
 
             refreshMeals: async () => {
                 try {
-                    if (!mealService || !mealService.getTodaysMeals) {
+                    if (!mealService || !mealService.getLoggedMeals) {
                         console.error('Meal service not available');
                         return;
                     }
@@ -192,7 +241,21 @@ const useStore = create<AppState>()(
                         suggestedMeals: [],
                         suggestionsError: null,
                         loggedMeals: [], // Clear logged meals on logout
-                        shouldRefreshMeals: false
+                        shouldRefreshMeals: false,
+                        profile: null,
+                        hasBeenPromptedForGoals: false,
+                        macrosPreferences: {
+                            protein_target: 0,
+                            carbs_target: 0,
+                            fat_target: 0,
+                            calorie_target: 0,
+                        },
+                        todayProgress: {
+                            protein: 0,
+                            carbs: 0,
+                            fat: 0,
+                            calories: 0,
+                        },
                     });
 
                     // Clear stored authentication data
@@ -236,6 +299,49 @@ const useStore = create<AppState>()(
                 set(() => ({
                     suggestionsError: error,
                 })),
+
+            // Profile state
+            profile: null,
+            setProfile: (profile) => set({ profile }),
+            updateProfile: (updates) => set((state) => ({ profile: { ...state.profile, ...updates } })),
+            clearProfile: () => set({ profile: null }),
+
+            // Goal setup state
+            hasBeenPromptedForGoals: false,
+            setHasBeenPromptedForGoals: (prompted) => set({ hasBeenPromptedForGoals: prompted }),
+
+            // Macros preferences
+            macrosPreferences: {
+                protein_target: 0,
+                carbs_target: 0,
+                fat_target: 0,
+                calorie_target: 0,
+            },
+            setMacrosPreferences: (preferences) => set({ macrosPreferences: preferences }),
+
+            // Today's progress
+            todayProgress: {
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+                calories: 0,
+            },
+            setTodayProgress: (progress) => set({ todayProgress: progress }),
+            fetchTodayProgress: async () => {
+                try {
+                    const progressData = await mealService.getDailyProgress();
+                    set({
+                        todayProgress: {
+                            protein: progressData.logged_macros.protein || 0,
+                            carbs: progressData.logged_macros.carbs || 0,
+                            fat: progressData.logged_macros.fat || 0,
+                            calories: progressData.logged_macros.calories || 0,
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error fetching today\'s progress:', error);
+                }
+            },
         }),
         {
             name: 'macromate-storage',
@@ -247,7 +353,11 @@ const useStore = create<AppState>()(
                 preferences: state.preferences,
                 suggestedMeals: state.suggestedMeals,
                 suggestionsError: state.suggestionsError,
-                loggedMeals: state.loggedMeals
+                loggedMeals: state.loggedMeals,
+                profile: state.profile,
+                hasBeenPromptedForGoals: state.hasBeenPromptedForGoals,
+                macrosPreferences: state.macrosPreferences,
+                todayProgress: state.todayProgress,
             }),
         }
     )

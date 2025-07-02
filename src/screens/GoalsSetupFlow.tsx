@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native'
 import CustomSafeAreaView from 'src/components/CustomSafeAreaView'
 import CustomPagerView from 'src/components/CustomPagerView'
@@ -20,10 +20,11 @@ import { GoalsFitnessGoal } from 'src/components/goal_flow_components/your_goal/
 import { GoalsTargetWeight } from 'src/components/goal_flow_components/your_goal/GoalsTargetWeight'
 import { GoalsProgressRate } from 'src/components/goal_flow_components/your_goal/GoalsProgressRate'
 import { GoalsPersonalizedPlan } from 'src/components/goal_flow_components/your_plan/GoalsPersonalizedPlan'
+import { HasMacrosContext } from '../contexts/HasMacrosContext'
 
 const API_URL = 'https://api.macromealsapp.com/api/v1';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'GoalsSetupFlow'>;
 
 export const GoalsSetupFlow =  () => {
   const navigation = useNavigation<NavigationProp>();
@@ -55,7 +56,9 @@ export const GoalsSetupFlow =  () => {
   } = useGoalsFlowStore();
 
   const [isLoading, setIsLoading] = React.useState(false);
+  const [macroCalculationResponse, setMacroCalculationResponse] = React.useState<any>(null);
   const token = useStore((state) => state.token);
+  const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
 
   const majorSteps = ['Basic info', 'Your goal', 'Your plan'];
   const subStepCounts = [5, 3, 1];
@@ -153,12 +156,6 @@ export const GoalsSetupFlow =  () => {
         };
         const goalTypeApi = goalTypeMap[fitnessGoal] || "maintain";
 
-        const manualMacros = {
-          calories: 1, // must be > 0
-          carbs: 0,
-          fat: 0,
-          protein: 0
-        };
         const response = await fetch(`${API_URL}/macros/calculate-macros`, {
           method: 'POST',
           headers: {
@@ -172,7 +169,6 @@ export const GoalsSetupFlow =  () => {
             dob: dobApi,
             goal_type: goalTypeApi,
             height: heightValue,
-            manual_macros: manualMacros,
             progress_rate: progressRate,
             sex: sexApi,
             target_weight: targetWeight,
@@ -186,6 +182,25 @@ export const GoalsSetupFlow =  () => {
           Alert.alert('Error', errorText);
           throw new Error('Failed to calculate macros');
         }
+
+        const responseData = await response.json();
+        console.log('Macro calculation response:', responseData);
+        setMacroCalculationResponse(responseData);
+        
+        // Update macro targets with the response data
+        setMacroTargets({
+          carbs: responseData.carbs,
+          fat: responseData.fat,
+          protein: responseData.protein,
+          calorie: responseData.calories,
+        });
+
+        // Set hasMacros to true after successful calculation
+        setHasMacros(true);
+        
+        // Navigate to PaymentScreen
+        // navigation.navigate('PaymentScreen');
+        
       } catch (error) {
         Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
       } finally {
@@ -196,6 +211,11 @@ export const GoalsSetupFlow =  () => {
       Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
     }
   }
+
+  // Add a function to handle going to dashboard
+  const handleGoToDashboard = () => {
+    setReadyForDashboard(true);
+  };
 
   const basicInfoSubsteps = [
     <GoalsGender key="gender" />,
@@ -222,7 +242,13 @@ export const GoalsSetupFlow =  () => {
     : [];
 
   const yourPlanSubsteps = [
-    <GoalsPersonalizedPlan isLoading={isLoading} key="plan" macroData={macroData} calorieTarget={preferences?.calorie_target} />,
+    <GoalsPersonalizedPlan 
+      isLoading={isLoading} 
+      key="plan" 
+      macroData={macroData} 
+      calorieTarget={preferences?.calorie_target}
+      macroCalculationResponse={macroCalculationResponse}
+    />,
   ];
 
   const substepComponents = [

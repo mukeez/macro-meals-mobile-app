@@ -71,11 +71,14 @@ const BarcodeScanScreen = () => {
     const handleBarCodeScanned = async (scanningResult: { data: string }) => {
         const currentTime = Date.now();
         if (processingRef.current || isAlertVisible || (lastBarcodeRef.current === scanningResult.data && currentTime - lastScanTimeRef.current < scanInterval)) {
+            console.log('BARCODE ALREADY SCANNED', scanningResult.data);
             return;
         }
         processingRef.current = true;
+        console.log('BARCODE SCANNED', scanningResult.data);
         lastBarcodeRef.current = scanningResult.data;
         lastScanTimeRef.current = currentTime;
+        console.log('BARCODE SCANNED', scanningResult.data);
         setIsProcessing(true);
         try {
             const response = await scanService.scanBarcode(scanningResult.data);
@@ -271,7 +274,7 @@ const BarcodeScanScreen = () => {
             </View>
             <View className="w-full items-center bg-black">
                 <View
-                    className="w-full mt-4 rounded-2xl overflow-hidden"
+                    className="w-full mt-4 rounded-2xl overflow-hidden relative"
                     style={{ aspectRatio: 1 }}
                 >
                     <CameraView
@@ -286,21 +289,20 @@ const BarcodeScanScreen = () => {
                             ]
                         }}
                         onBarcodeScanned={isProcessing ? undefined : handleBarCodeScanned}
-                    >
-                        <View className="flex-1 justify-center items-center" pointerEvents="none">
-                            <View className="absolute inset-0 bg-black/50 z-0">
-                                <View className="flex-1 items-center justify-center">
-                                    <View className="w-[70%]" style={{ aspectRatio: 1, backgroundColor: 'transparent' }} />
-                                </View>
-                            </View>
-                            <View className="absolute w-[70%]" style={{ aspectRatio: 1 }}>
-                                <View className={`absolute top-0 left-0 w-16 h-16 border-t-[12px] border-l-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-tl-lg`} />
-                                <View className={`absolute top-0 right-0 w-16 h-16 border-t-[12px] border-r-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-tr-lg`} />
-                                <View className={`absolute bottom-0 left-0 w-16 h-16 border-b-[12px] border-l-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-bl-lg`} />
-                                <View className={`absolute bottom-0 right-0 w-16 h-16 border-b-[12px] border-r-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-tr-lg rounded-br-lg`} />
+                    />
+                    <View className="absolute inset-0 flex-1 justify-center items-center" pointerEvents="none">
+                        <View className="absolute inset-0 bg-black/50 z-0">
+                            <View className="flex-1 items-center justify-center">
+                                <View className="w-[70%]" style={{ aspectRatio: 1, backgroundColor: 'transparent' }} />
                             </View>
                         </View>
-                    </CameraView>
+                        <View className="absolute w-[70%]" style={{ aspectRatio: 1 }}>
+                            <View className={`absolute top-0 left-0 w-16 h-16 border-t-[12px] border-l-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-tl-lg`} />
+                            <View className={`absolute top-0 right-0 w-16 h-16 border-t-[12px] border-r-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-tr-lg`} />
+                            <View className={`absolute bottom-0 left-0 w-16 h-16 border-b-[12px] border-l-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-bl-lg`} />
+                            <View className={`absolute bottom-0 right-0 w-16 h-16 border-b-[12px] border-r-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-tr-lg rounded-br-lg`} />
+                        </View>
+                    </View>
                 </View>
             </View>
             <View className="bg-black w-full py-4">
@@ -309,7 +311,7 @@ const BarcodeScanScreen = () => {
                 </Text>
             </View>
             <View className="flex-1 bg-white items-center justify-center">
-                <TouchableOpacity className="w-20 h-20 bg-teal-600 rounded-full items-center justify-center" activeOpacity={0.8} onPress={() => { }}>
+                <TouchableOpacity className="w-20 h-20 bg-teal-600 rounded-full items-center justify-center" activeOpacity={0.8} onPress={() => { handleManualCapture() }}>
                     <MaterialCommunityIcons name="barcode-scan" size={40} color="#fff" />
                 </TouchableOpacity>
             </View>

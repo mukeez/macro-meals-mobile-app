@@ -25,6 +25,9 @@ import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityBu
 import BackButton from '../components/BackButton';
 import { RootStackParamList } from '../types/navigation';
 import { MaterialIcons } from '@expo/vector-icons';
+import { userService } from '../services/userService';
+import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
+import { useGoalsFlowStore } from '../store/goalsFlowStore';
 
 // type RootStackParamList = {
 //     Welcome: undefined;
@@ -43,8 +46,10 @@ export const LoginScreen: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
+    const { hasMacros, setHasMacros, setReadyForDashboard } = React.useContext(HasMacrosContext);
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -67,14 +72,50 @@ export const LoginScreen: React.FC = () => {
         setIsLoading(true);
 
         try {
-            const data = await authService.login({ email, password });
-            console.log('Login successful, setting authenticated state');
-            setAuthenticated(true, data.access_token, data.user.id);
-            console.log('Auth state updated, token:', data.access_token);
-            await AsyncStorage.setItem('my_token', data.access_token);
-            await AsyncStorage.setItem('isOnboardingCompleted', 'true');
+            // First get login data
+            const loginData = await authService.login({ email, password });
+            
+            // Store token temporarily for profile fetch
+            const token = loginData.access_token;
+            const userId = loginData.user.id;
+            
+            // Then get profile using the token directly
+            const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (!profileResponse.ok) {
+                throw new Error(await profileResponse.text());
+            }
+            
+            const profile = await profileResponse.json();
+            
+            // Update storage
+            await Promise.all([
+                AsyncStorage.setItem('my_token', token),
+                AsyncStorage.setItem('user_id', userId),
+                AsyncStorage.setItem('isOnboardingCompleted', 'true')
+            ]);
+
+            // Reset steps before setting other states
+            resetSteps();
+            
+            // Set all state in the correct order
             setIsOnboardingCompleted(true);
+            // If user has macros, they should be ready for dashboard
+            setHasMacros(profile.has_macros);
+            setReadyForDashboard(profile.has_macros);
+            // Set authenticated last to trigger navigation
+            setAuthenticated(true, token, userId);
+            
         } catch (error) {
+            setAuthenticated(false, '', '');
+            setHasMacros(false);
+            setReadyForDashboard(false);
             Alert.alert(
                 'Login Failed',
                 error instanceof Error ? error.message : 'Invalid email or password. Please try again.',

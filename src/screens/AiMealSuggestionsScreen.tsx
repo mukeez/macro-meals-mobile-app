@@ -10,14 +10,27 @@ import { mealService } from '../services/mealService';
 
 type RootStackParamList = {
   AddMeal: { analyzedData?: any };
+  AISuggestedMealsDetailsScreen: { meal: any };
 };
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'AddMeal'>;
 
-const macroData = [
-  { label: 'Carbs', value: 45, color: '#FFD600' },
-  { label: 'Fat', value: 45, color: '#E573D7' },
-  { label: 'Protein', value: 45, color: '#6C5CE7' },
+interface MacroData {
+  label: 'Protein' | 'Carbs' | 'Fat';
+  value: number;
+  color: string;
+}
+
+const macroTypeToPreferenceKey = {
+  'Protein': 'protein_target',
+  'Carbs': 'carbs_target',
+  'Fat': 'fat_target',
+} as const;
+
+const defaultMacroData: MacroData[] = [
+  { label: 'Protein', value: 0, color: '#6C5CE7' },
+  { label: 'Carbs', value: 0, color: '#FFC107' },
+  { label: 'Fat', value: 0, color: '#FF69B4' },
 ];
 
 const AiMealSuggestionsScreen: React.FC = () => {
@@ -26,19 +39,24 @@ const AiMealSuggestionsScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<any>(null);
+  const macrosPreferences = useStore((state) => state.macrosPreferences);
+  const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
+  const [macroData, setMacroData] = useState<MacroData[]>(defaultMacroData);
 
   const handleMealSelect = (meal: any) => {
-    navigation.navigate('AddMeal', {
-      analyzedData: {
-        name: meal.name,
-        calories: meal.macros.calories,
-        protein: meal.macros.protein,
-        carbs: meal.macros.carbs,
-        fat: meal.macros.fat,
-        quantity: 1
-      }
-    });
+    navigation.navigate('AISuggestedMealsDetailsScreen', { meal });
   };
+
+  // Update macroData when todayProgress changes
+  useEffect(() => {
+    if (todayProgress) {
+      setMacroData([
+        { label: 'Protein', value: todayProgress.protein || 0, color: '#6C5CE7' },
+        { label: 'Carbs', value: todayProgress.carbs || 0, color: '#FFC107' },
+        { label: 'Fat', value: todayProgress.fat || 0, color: '#FF69B4' },
+      ]);
+    }
+  }, [todayProgress]);
 
   useEffect(() => {
     const fetchMeals = async () => {
@@ -48,15 +66,9 @@ const AiMealSuggestionsScreen: React.FC = () => {
         
         const result = await mealService.getAiMealSuggestions();
         setMeals(result.meals);
-        console.log('THIS IS THE PREFERENCES', result.preferences);
         setPreferences(result.preferences);
-        
-        // Update macroData with actual values
-        macroData[0].value = result.preferences.carbs_target;
-        macroData[1].value = result.preferences.fat_target;
-        macroData[2].value = result.preferences.protein_target;
       } catch (err: any) {
-        setError(err.message || 'Error fetching meals');
+        setError(err.message || 'Failed to fetch meal suggestions');
       } finally {
         setLoading(false);
       }
@@ -84,25 +96,24 @@ const AiMealSuggestionsScreen: React.FC = () => {
             <View className="flex-col bg-white items-start mt-3 px-5 pt-3 pb-10 mb-4">
               <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
               <View className="flex-row w-full justify-between items-center">
-
-              {macroData.map((macro, index) => (
-                <View key={`${macro.label}-${index}`}>
-                  <View className="h-[100px] w-[100px] relative">
-                    <CircularProgress
-                      size={100}
-                      strokeWidth={12}
-                      textSize={16}
-                      consumed={macro.value + 'g'}
-                      total={macro.value}
-                      color={macro.color}
-                      backgroundColor="#d0e8d1"
-                      label={macro.label}
-                      showLabel={false}
-                    />
-                    <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
-                </View>
-                </View>
-              ))}
+                {macroData.map((macro, index) => (
+                  <View key={`${macro.label}-${index}`}>
+                    <View className="h-[100px] w-[100px] relative">
+                      <CircularProgress
+                        size={100}
+                        strokeWidth={12}
+                        textSize={16}
+                        consumed={macro.value + 'g'}
+                        total={macrosPreferences?.[macroTypeToPreferenceKey[macro.label]] || 100}
+                        color={macro.color}
+                        backgroundColor="#d0e8d1"
+                        label={macro.label}
+                        showLabel={false}
+                      />
+                      <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
+                    </View>
+                  </View>
+                ))}
               </View>
             </View>
            

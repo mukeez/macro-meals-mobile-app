@@ -48,4 +48,6 @@ export type RootStackParamList = {
     AdjustTargets: undefined;
     Progress:undefined;
     AccountSettingsScreen: undefined;
+    AISuggestedMealsDetailsScreen: { meal: any };
+    GoalSetupNav: undefined;
 };

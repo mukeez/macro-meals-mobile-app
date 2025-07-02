@@ -2,7 +2,7 @@
   "expo": {
     "name": "macro-meals",
     "slug": "macro-meals",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,8 +18,13 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to find nearby meals that match your macro goals",
         "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals",
-        "UIBackgroundModes": ["remote-notification"],
-        "NSUserNotificationsUsageDescription": "We need to send you notifications about your meals and updates"
+        "NSCameraUsageDescription": "Macro Meals needs camera access to scan barcodes and take photos of your meals for accurate macro tracking and meal logging.",
+        "UIBackgroundModes": [
+          "remote-notification",
+          "remote-notification"
+        ],
+        "NSUserNotificationsUsageDescription": "We need to send you notifications about your meals and updates",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "appleTeamId": "SA3LF6JRDF",
       "googleServicesFile": "./GoogleService-Info.plist"
@@ -52,6 +57,7 @@
     "plugins": [
       "./plugins/notifee-mod.js",
       "expo-secure-store",
+      "expo-camera",
       [
         "expo-location",
         {

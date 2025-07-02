@@ -16,10 +16,9 @@ import { Meal } from '../types';
 
 
 interface MacroData {
-  label: string;
+  label: 'Protein' | 'Carbs' | 'Fat';
   value: number;
   color: string;
-  total: number;
 }
 
 interface MockLocation {
@@ -118,15 +117,23 @@ const mockLocations: MockLocation[] = [
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const macroData = [
-  { label: 'Carbs', value: 45, color: '#FFD600' },
-  { label: 'Fat', value: 45, color: '#E573D7' },
-  { label: 'Protein', value: 45, color: '#6C5CE7' },
+const defaultMacroData: MacroData[] = [
+  { label: 'Protein', value: 0, color: '#6C5CE7' },
+  { label: 'Carbs', value: 0, color: '#FFC107' },
+  { label: 'Fat', value: 0, color: '#FF69B4' },
 ];
+
+const macroTypeToPreferenceKey = {
+  'Protein': 'protein_target',
+  'Carbs': 'carbs_target',
+  'Fat': 'fat_target',
+} as const;
 
 const MealFinderScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'MealFinderScreen'>>();
   const storePreferences = useStore((state) => state.preferences);
+  const macrosPreferences = useStore((state) => state.macrosPreferences);
+  const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const [loading, setLoading] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(false);
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -136,9 +143,9 @@ const MealFinderScreen: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<string>('Getting location...');
   const [search, setSearch] = useState<string>('');
   const [filteredLocations, setFilteredLocations] = useState<MockLocation[]>(mockLocations);
-  const [preferences, setPreferences] = useState<any>(null);
   const modalizeRef = useRef<Modalize>(null);
   const token = useStore((state) => state.token);
+  const [macroData, setMacroData] = useState<MacroData[]>(defaultMacroData);
 
   useEffect(() => {
     const fetchLocationAndSuggestions = async () => {
@@ -175,12 +182,19 @@ const MealFinderScreen: React.FC = () => {
           setCurrentLocation(address);
           setSelectedLocation(shortAddress);
 
+          // Skip if no coordinates
+          if (typeof location.coords.latitude !== 'number' || typeof location.coords.longitude !== 'number') {
+            setError('Location coordinates not available');
+            setLocationLoading(false);
+            return;
+          }
+
           // 2. Fetch meal suggestions
           const requestBody = {
             calories: storePreferences?.calories || 0,
             carbs: storePreferences?.carbs || 0,
-            dietary_preference: '',
-            dietary_restrictions: [],
+            dietary_preference: storePreferences?.dietary_preference || '',
+            dietary_restrictions: storePreferences?.dietary_restrictions || [],
             fat: storePreferences?.fat || 0,
             latitude: location.coords.latitude,
             location: address,
@@ -189,20 +203,31 @@ const MealFinderScreen: React.FC = () => {
           };
           setLocationLoading(true);
           try {
-            const result = await mealService.getAiMealSuggestions();
-            const mealList = result.meals.map((meal) => ({
-              ...meal,
-              image: meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon,
+            const suggestedMeals = await mealService.suggestAiMeals(requestBody);
+            const mealList: Meal[] = suggestedMeals.map((meal: any) => ({
+              id: meal.id || String(Math.random()),
+              name: meal.name,
+              macros: {
+                calories: meal.macros.calories,
+                carbs: meal.macros.carbs,
+                fat: meal.macros.fat,
+                protein: meal.macros.protein,
+              },
+              restaurant: {
+                name: meal.restaurant.name,
+                location: meal.restaurant.location,
+              },
+              imageUrl: meal.imageUrl,
+              description: meal.description || '',
+              price: meal.price,
+              distance: meal.distance,
+              date: new Date().toISOString(),
+              mealType: meal.meal_type || 'lunch',
             }));
             setMeals(mealList);
-            setPreferences(result.preferences);
-            
-            // Update macroData with actual values
-            macroData[0].value = result.preferences.carbs_target;
-            macroData[1].value = result.preferences.fat_target;
-            macroData[2].value = result.preferences.protein_target;
             setError(null);
           } catch (apiError: any) {
+            console.error('API Error:', apiError);
             setError('Failed to fetch meal suggestions.');
             setMeals([]);
           } finally {
@@ -214,6 +239,7 @@ const MealFinderScreen: React.FC = () => {
           setMeals([]);
         }
       } catch (error) {
+        console.error('Location Error:', error);
         setCurrentLocation('Location unavailable');
         setSelectedLocation('Location unavailable');
         setMeals([]);
@@ -255,39 +281,68 @@ const MealFinderScreen: React.FC = () => {
     closeLocationSheet();
     setLocationLoading(true);
 
+    // Skip if no coordinates
+    if (typeof location.latitude !== 'number' || typeof location.longitude !== 'number') {
+        setError('Location coordinates not available');
+        setLocationLoading(false);
+        return;
+    }
+
     const requestBody = {
-      calories: storePreferences?.calories || 0,
-      carbs: storePreferences?.carbs || 0,
-      dietary_preference: '',
-      dietary_restrictions: [],
-      fat: storePreferences?.fat || 0,
-      latitude: location.latitude,
-      location: location.label,
-      longitude: location.longitude,
-      protein: storePreferences?.protein || 0,
+        calories: storePreferences?.calories || 0,
+        carbs: storePreferences?.carbs || 0,
+        dietary_preference: storePreferences?.dietary_preference || '',
+        dietary_restrictions: storePreferences?.dietary_restrictions || [],
+        fat: storePreferences?.fat || 0,
+        latitude: location.latitude,
+        location: location.label,
+        longitude: location.longitude,
+        protein: storePreferences?.protein || 0,
     };
 
     try {
-      const result = await mealService.getAiMealSuggestions();
-      const mealList = result.meals.map((meal) => ({
-        ...meal,
-        image: meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon,
+      const suggestedMeals = await mealService.suggestAiMeals(requestBody);
+      const mealList: Meal[] = suggestedMeals.map((meal: any) => ({
+        id: meal.id || String(Math.random()),
+        name: meal.name,
+        macros: {
+          calories: meal.macros.calories,
+          carbs: meal.macros.carbs,
+          fat: meal.macros.fat,
+          protein: meal.macros.protein,
+        },
+        restaurant: {
+          name: meal.restaurant.name,
+          location: meal.restaurant.location,
+        },
+        imageUrl: meal.imageUrl,
+        description: meal.description || '',
+        price: meal.price,
+        distance: meal.distance,
+        date: new Date().toISOString(),
+        mealType: meal.meal_type || 'lunch',
       }));
       setMeals(mealList);
-      setPreferences(result.preferences);
-      
-      // Update macroData with actual values
-      macroData[0].value = result.preferences.carbs_target;
-      macroData[1].value = result.preferences.fat_target;
-      macroData[2].value = result.preferences.protein_target;
       setError(null);
     } catch (apiError: any) {
+      console.error('API Error:', apiError);
       setError('Failed to fetch meal suggestions.');
       setMeals([]);
     } finally {
       setLocationLoading(false);
     }
   };
+
+  // Update macroData when todayProgress changes
+  useEffect(() => {
+    if (todayProgress) {
+      setMacroData([
+        { label: 'Protein', value: todayProgress.protein || 0, color: '#6C5CE7' },
+        { label: 'Carbs', value: todayProgress.carbs || 0, color: '#FFC107' },
+        { label: 'Fat', value: todayProgress.fat || 0, color: '#FF69B4' },
+      ]);
+    }
+  }, [todayProgress]);
 
   if (initializing || locationLoading) {
     return (
@@ -337,7 +392,7 @@ const MealFinderScreen: React.FC = () => {
                             strokeWidth={12}
                             textSize={16}
                             consumed={macro.value + 'g'}
-                            total={macro.value}
+                            total={macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 100}
                             color={macro.color}
                             backgroundColor="#d0e8d1"
                             label={macro.label}
@@ -374,9 +429,10 @@ const MealFinderScreen: React.FC = () => {
                         </View> */}
 
                         <View className="flex-row items-center gap-3 flex-wrap">
+                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.name}</Text>
+                            {/* <View className="w-[4px] h-[4px] rounded-full bg-[#253238]"></View> */}
                             <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.name}</Text>
-                            <View className="w-[4px] h-[4px] rounded-full bg-[#253238]"></View>
-                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.location} away</Text>
+                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.location.split(',').slice(0, -1).join(',')}</Text>
                         </View>
                         
                         <View className="flex-row items-center gap-2 mt-1">

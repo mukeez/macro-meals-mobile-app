@@ -24,6 +24,9 @@ export interface UserPreferences extends MacroTargets {
     activityLevel?: 'Sedentary' | 'Moderate' | 'Active';
     goal?: 'Lose' | 'Maintain' | 'Gain';
     unitSystem?: 'Metric' | 'Imperial';
+    has_macros?: boolean;
+    dietary_preference: string;
+    dietary_restrictions: string[];
 }
 
 /**

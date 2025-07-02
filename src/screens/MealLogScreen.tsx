@@ -395,7 +395,7 @@ export const AddMealScreen: React.FC = () => {
                     </View>
                 </View>
 
-                <Text className="text-base text-black mt-3 mb-3">Quick add from recent</Text>
+                <Text className="text-base text-black mt-3 mb-3">Quick add from favourites</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8">
                     {recentMeals.map((meal) => (
                         <TouchableOpacity
