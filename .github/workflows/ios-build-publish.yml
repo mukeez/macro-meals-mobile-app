@@ -25,28 +25,28 @@ jobs:
       build-id: ${{ steps.build.outputs.build-id }}
 
     steps:
-      - name: 🏗 Setup repo
+      - name: Setup repo
         uses: actions/checkout@v3
 
-      - name: 🏗 Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: 🏗 Setup Expo and EAS
+      - name: Setup Expo and EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: 🔍 Run tests
+      - name: Run tests
         run: npm test
 
-      - name: 📱 Build iOS app
+      - name: Build iOS app
         id: build
         run: |
           BUILD_OUTPUT=$(eas build --platform ios --profile production --non-interactive --json)
@@ -95,10 +95,10 @@ jobs:
     environment: production
 
     steps:
-      - name: 🏗 Setup repo
+      - name: Setup repo
         uses: actions/checkout@v3
 
-      - name: 🏗 Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
