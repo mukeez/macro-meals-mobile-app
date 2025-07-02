@@ -30,15 +30,15 @@ export function LinearProgress({
       }}
     >
       {percentage > 0 && (
-        <View
-          className="rounded-lg"
-          style={{
+      <View
+        className="rounded-lg"
+        style={{
             width: width ? (width * (percentage / 100)) : ((percentage / 100) * 100),
-            height,
-            backgroundColor: color,
-            minWidth: 1, // Ensure minimum visibility
-          }}
-        />
+          height,
+          backgroundColor: color,
+          minWidth: 1, // Ensure minimum visibility
+        }}
+      />
       )}
     </View>
   );
