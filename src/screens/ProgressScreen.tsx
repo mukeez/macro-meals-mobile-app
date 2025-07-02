@@ -56,6 +56,7 @@ const ProgressScreen = () => {
 
   // Process real API data only - no dummy data fallback
   let macroBarData: MacroBarData[] = [];
+  let hasNonZeroData = false;
   
   try {
     if (data && Array.isArray(data.daily_macros) && data.daily_macros.length > 0) {
@@ -69,15 +70,23 @@ const ProgressScreen = () => {
           date.setHours(0, 0, 0, 0);
           return date <= today;
         })
-        .map(dayData => ({
-          day: new Date(dayData.date).getDay(),
-          protein: Number(dayData.protein) || 0,
-          carbs: Number(dayData.carbs) || 0,
-          fat: Number(dayData.fat) || 0,
-          calories: Number(dayData.calories) || 0,
-          date: dayData.date,
-        }))
+        .map(dayData => {
+          const date = new Date(dayData.date);
+          return {
+            day: date.getDay() + 1, // Convert 0-6 (Sun-Sat) to 1-7 (Mon-Sun)
+            protein: Number(dayData.protein) || 0,
+            carbs: Number(dayData.carbs) || 0,
+            fat: Number(dayData.fat) || 0,
+            calories: Number(dayData.calories) || 0,
+            date: dayData.date,
+          };
+        })
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      // Check if we have any non-zero values
+      hasNonZeroData = macroBarData.some(day => 
+        day.protein > 0 || day.carbs > 0 || day.fat > 0 || day.calories > 0
+      );
     }
   } catch (err) {
     console.error('Error processing macro data:', err);
@@ -149,8 +158,14 @@ const ProgressScreen = () => {
               <ActivityIndicator color="#fff" size="large" />
               <Text className="text-white text-base mt-2">Loading data...</Text>
             </View>
+          ) : !hasNonZeroData ? (
+            <View className="flex-1 my-5 justify-center items-center">
+              <Text className="text-white text-sm text-center">
+                No macro data available for this period.{"\n"}Log your meals to see your progress!
+              </Text>
+            </View>
           ) : (
-            <StackedBarChart data={macroBarData} selectedRange={selectedRange} />
+            <StackedBarChart data={macroBarData} />
           )}
         </View>
         <View className="flex-row justify-center mb-7 px-2">
