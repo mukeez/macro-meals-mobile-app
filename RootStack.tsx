@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 import MealFinderScreen from "src/screens/MealFinderScreen";
-import {WelcomeScreen} from "./src/screens/WelcomeScreen";
+import { WelcomeScreen } from "./src/screens/WelcomeScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import ScanScreenType from "./src/screens/ScanScreenType";
 import BarcodeScanScreen from "./src/screens/BarcodeScanScreen";
@@ -16,15 +16,14 @@ import { OnboardingScreen } from "./src/screens/Onboarding/OnboardingScreen";
 import { GoalSetupScreen } from "./src/screens/GoalSetupScreen";
 import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 
-
 import { ForgotPasswordScreen } from "./src/screens/ForgotPasswordScreen";
 import { VerificationScreen } from "./src/screens/VerificationScreen";
 import { MealListScreen } from "./src/screens/MealListScreen";
 import PaymentScreen from "./src/screens/PaymentScreen";
-import {createStackNavigator} from '@react-navigation/stack';
+import { createStackNavigator } from "@react-navigation/stack";
 import { useMixpanel } from "@macro-meals/mixpanel";
-import './src/globals.css';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import "./src/globals.css";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
@@ -42,7 +41,6 @@ import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
 import AccountSettingsScreen from "src/screens/AccountSettingsScreen";
 import AISuggestedMealsDetailsScreen from "src/screens/AISuggestedMealsDetails";
 
-
 const Stack = createStackNavigator<RootStackParamList>();
 
 export function RootStack({
@@ -50,7 +48,7 @@ export function RootStack({
   isAuthenticated,
   initialAuthScreen,
   hasMacros,
-  readyForDashboard
+  readyForDashboard,
 }: {
   isOnboardingCompleted: boolean;
   isAuthenticated: boolean;
@@ -99,7 +97,6 @@ const AuthNavigator = ({
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
-      <Stack.Screen name="TermsOfServiceScreen" component={TermsOfServiceScreen} />
     </Stack.Navigator>
   );
 };
@@ -131,21 +128,33 @@ const GoalSetupNavigator = () => {
 };
 
 const DashboardNavigator = () => {
-    return (
-        <Stack.Navigator screenOptions={{ headerShown: false}}>
-              <Stack.Screen name="MainTabs" component={CustomBottomTabs} />
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={CustomBottomTabs} />
       <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
       <Stack.Screen name="AddMeal" component={AddMealScreen} />
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
-      <Stack.Screen name="AccountSettingsScreen" component={AccountSettingsScreen} />
+      <Stack.Screen
+        name="AccountSettingsScreen"
+        component={AccountSettingsScreen}
+      />
       <Stack.Screen name="MealLog" component={MealLogScreen} />
-      <Stack.Screen name="AiMealSuggestionsScreen" component={AiMealSuggestionsScreen} />
+      <Stack.Screen
+        name="AiMealSuggestionsScreen"
+        component={AiMealSuggestionsScreen}
+      />
       <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
       <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
       <Stack.Screen name="MealFinderScreen" component={MealFinderScreen} />
-      <Stack.Screen name="MealFinderBreakdownScreen" component={MealFinderBreakdownScreen} />
-      <Stack.Screen name="AISuggestedMealsDetailsScreen" component={AISuggestedMealsDetailsScreen} />
+      <Stack.Screen
+        name="MealFinderBreakdownScreen"
+        component={MealFinderBreakdownScreen}
+      />
+      <Stack.Screen
+        name="AISuggestedMealsDetailsScreen"
+        component={AISuggestedMealsDetailsScreen}
+      />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
@@ -154,12 +163,14 @@ const DashboardNavigator = () => {
         component={ForgotPasswordScreen}
       />
       <Stack.Screen name="AdjustTargets" component={AdjustTargetsScreen} />
-          <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
-
-      </Stack.Navigator>
-    );
-}
-
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+      <Stack.Screen
+        name="TermsOfServiceScreen"
+        component={TermsOfServiceScreen}
+      />
+    </Stack.Navigator>
+  );
+};
 
 // export function RootStack() {
 //     return <Stack.Navigator
