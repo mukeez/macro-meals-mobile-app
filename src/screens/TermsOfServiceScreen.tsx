@@ -16,7 +16,7 @@ export default function TermsOfServiceScreen() {
         {termsContent.map(({ title, paragraphs }, index) => (
           <Section title={title} key={index}>
             {paragraphs.map((text, idx) => (
-              <Text className="text-sm leading-6 mb-2" key={idx}>
+              <Text className="text-sm mb-2 opacity-60" key={idx}>
                 {text}
               </Text>
             ))}

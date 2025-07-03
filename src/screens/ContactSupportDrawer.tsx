@@ -23,11 +23,10 @@ export default function ContactSupportDrawer({
   return (
     <CustomSafeAreaView>
       <View
-        className="absolute left-0 bottom-0 w-full rounded-t-3xl overflow-hidden shadow-2xl"
+        className=" w-full rounded-t-3xl overflow-hidden shadow-2xl"
         style={{ height: height * 0.85 }}
       >
-        {/* Top half with green bg */}
-        <View className="bg-[#009688] py-16 px-6 rounded-t-3xl">
+        <View className="bg-[#009688] py-8  px-6 rounded-t-3xl">
           <View className="flex-row items-center justify-between">
             <Image
               source={IMAGE_CONSTANTS.splashIcon}
@@ -39,16 +38,16 @@ export default function ContactSupportDrawer({
             </TouchableOpacity>
           </View>
           <View className="mt-8">
-            <Text className="text-3xl font-bold text-gray-300">
+            <Text className="text-4xl font-bold text-[#FFFFFF] opacity-50">
               Hi there 👋
             </Text>
-            <Text className="text-white text-3xl font-bold">
+            <Text className="text-white text-4xl mb-12 font-bold">
               How can we help?
             </Text>
           </View>
 
           <View
-            className="absolute left-0 right-0 mx-6 rounded-2xl bg-white p-6"
+            className="absolute left-0 right-0 mx-6 rounded-xl bg-white p-6"
             style={{
               top: height * 0.27,
               zIndex: 10,
@@ -64,7 +63,7 @@ export default function ContactSupportDrawer({
             </Text>
 
             <View className="items-center my-2">
-              <Text className="text-gray-700 text-sm text-center">
+              <Text className="text-[#737376] text-sm text-center">
                 Our usual reply time
               </Text>
               <View className="flex-row items-center justify-center mt-0.5">
@@ -79,18 +78,26 @@ export default function ContactSupportDrawer({
               </View>
             </View>
             <TouchableOpacity
-              className="mt-5 flex-row items-center justify-start bg-[#009688] w-3/5 rounded-3xl px-4 py-3"
+              className="my-5 flex-row items-center justify-start bg-[#009688] w-3/5 rounded-3xl px-4 py-3"
               activeOpacity={0.85}
               onPress={() => Linking.openURL("mailto:support@macromeals.com")}
             >
               <Ionicons name="paper-plane" size={17} color="white" />
-              <Text className="text-white font-semibold text-base ml-2">
+              <Text className="text-white font-semibold text-sm ml-2">
                 Send us a message
               </Text>
             </TouchableOpacity>
+            {/* Add border under button */}
+            <View
+              style={{
+                borderBottomColor: "#EFEFEF",
+                borderBottomWidth: 1,
+                marginTop: 8,
+                marginBottom: 16, // white space under border
+              }}
+            />
           </View>
         </View>
-        <View className="flex-1 bg-white px-6 py-6 border-b-2"></View>
       </View>
     </CustomSafeAreaView>
   );
