@@ -39,7 +39,7 @@ export default function AboutScreen() {
                     >
                       <Text className="text-sm mb-2">
                         {label}:{" "}
-                        <Text className="text-sm text-teal-700 underline">
+                        <Text className="text-sm text-[#009688] underline">
                           {email}
                         </Text>
                       </Text>

@@ -1,31 +1,33 @@
 import React, { useState, useEffect } from "react";
 import {
-    View,
-    Text,
-    TouchableOpacity,
-    SafeAreaView,
-    ScrollView,
-    Image,
-    Linking,
-    Platform,
-    Switch, Alert,
-    Modal,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import useStore from '../store/useStore';
-import { Picker } from '@react-native-picker/picker';
-import { authService } from '../services/authService';
-import CustomSafeAreaView from '../components/CustomSafeAreaView';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Image,
+  Linking,
+  Platform,
+  Switch,
+  Alert,
+  Modal,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import useStore from "../store/useStore";
+import { Picker } from "@react-native-picker/picker";
+import { authService } from "../services/authService";
+import CustomSafeAreaView from "../components/CustomSafeAreaView";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
-import { RootStackParamList } from '../types/navigation';
-import { appConstants } from '../../constants/appConstants';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { deleteItemAsync } from 'expo-secure-store';
+import { RootStackParamList } from "../types/navigation";
+import { appConstants } from "../../constants/appConstants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { deleteItemAsync } from "expo-secure-store";
 import ProfileSection from "src/components/ProfileSection";
 import SectionItem from "src/components/SectionItem";
-import { userService } from '../services/userService';
+import { userService } from "../services/userService";
+import ContactSupportDrawer from "./ContactSupportDrawer";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -40,8 +42,7 @@ export const SettingsScreen: React.FC = () => {
   const updatePreferences = useStore((state) => state.updatePreferences);
   const logout = useStore((state) => state.logout);
   const setAuthenticated = useStore((state) => state.setAuthenticated);
-  const [supportDrawerOpen, setSupportDrawerOpen] = React.useState(false);
-
+  const [showDrawer, setShowDrawer] = useState(false);
   // Local state for settings
   const [units, setUnits] = useState<string>("g/kcal");
   // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -63,7 +64,7 @@ export const SettingsScreen: React.FC = () => {
     meal_reminder_preferences_set: false,
     sex: "",
     unit_preference: "metric",
-    updated_at: ""
+    updated_at: "",
   });
 
   // Modal state for units selection
@@ -71,8 +72,8 @@ export const SettingsScreen: React.FC = () => {
   const [tempUnitPreference, setTempUnitPreference] = useState("metric");
 
   const UNIT_OPTIONS = [
-    { label: 'Metric', value: 'metric' },
-    { label: 'Imperial', value: 'imperial' },
+    { label: "Metric", value: "metric" },
+    { label: "Imperial", value: "imperial" },
   ];
 
   /**
@@ -84,7 +85,7 @@ export const SettingsScreen: React.FC = () => {
         const profileData = await userService.fetchUserData();
         setUserData(profileData);
       } catch (error) {
-        console.error('Failed to fetch user profile:', error);
+        console.error("Failed to fetch user profile:", error);
         // Handle error appropriately
       }
     };
@@ -137,11 +138,13 @@ export const SettingsScreen: React.FC = () => {
    */
   const handleUnitPreferenceChange = async (value: string) => {
     try {
-      const updated = await userService.updateProfile({ unit_preference: value });
+      const updated = await userService.updateProfile({
+        unit_preference: value,
+      });
       setUserData((prev) => ({ ...prev, ...updated }));
       setShowUnitsModal(false);
     } catch (error) {
-      console.error('Error updating unit preference:', error);
+      console.error("Error updating unit preference:", error);
       // Optionally show error to user
     }
   };
@@ -181,24 +184,24 @@ export const SettingsScreen: React.FC = () => {
   /**
    * Handle navigation to help screen
    */
-  const handleHelpSupport = () => {
-    // Navigate to help screen
-    Alert.alert("Help + Support ", "Help + Support coming soon!");
-    // navigation.navigate('HelpSupport' as never);
+  const handleHelpSupport = () => setShowDrawer(true);
+
+  const handleModalSheet = () => {
+    navigation.navigate("PaymentScreen" as never);
   };
 
-    const handleModalSheet = () => {
-        navigation.navigate('PaymentScreen' as never);
-    };
+  const openEmail = () => {
+    let url = `mailto:${appConstants.email.to}`;
 
-    const openEmail = () => {
-        let url = `mailto:${appConstants.email.to}`;
-
-        const subject = `?subject=${encodeURIComponent(appConstants.email.subject)}`;
-        const body = `&body=${encodeURIComponent(appConstants.email.body)}`;
-        url += subject + body;
-        Linking.openURL(url).catch((err)=> console.error('Error opening email', err));
-    }
+    const subject = `?subject=${encodeURIComponent(
+      appConstants.email.subject
+    )}`;
+    const body = `&body=${encodeURIComponent(appConstants.email.body)}`;
+    url += subject + body;
+    Linking.openURL(url).catch((err) =>
+      console.error("Error opening email", err)
+    );
+  };
 
   /**
    * Handle navigation to feedback screen
@@ -240,7 +243,7 @@ export const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <CustomSafeAreaView className="flex-1 bg-white" edges={["left", "right"]}>
+    <CustomSafeAreaView className="flex-1 bg-white">
       <ScrollView contentContainerStyle={{ backgroundColor: "#f8f8f8" }}>
         {/* Header with back button and title */}
         {/* <View className="flex-row items-center p-4 border-b border-b-gray-200">
@@ -283,7 +286,7 @@ export const SettingsScreen: React.FC = () => {
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
             onPress={() => {
-              navigation.navigate('AccountSettingsScreen');
+              navigation.navigate("AccountSettingsScreen");
             }}
           />
           <SectionItem
@@ -292,7 +295,9 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {}}
+            onPress={() => {
+              navigation.navigate("AdjustTargets");
+            }}
           />
           <SectionItem
             title="Password"
@@ -309,12 +314,14 @@ export const SettingsScreen: React.FC = () => {
             image={IMAGE_CONSTANTS.balanceIcon}
             rightComponent={
               <View className="flex-row px-2 py-2 gap-1 bg-gray rounded-lg items-center">
-                <Text className="text-md text-black">{userData?.unit_preference}</Text>
+                <Text className="text-md text-black">
+                  {userData?.unit_preference}
+                </Text>
                 <FontAwesome name="angle-down" size={15} color="black" />
               </View>
             }
             onPress={() => {
-              setTempUnitPreference(userData?.unit_preference || 'metric');
+              setTempUnitPreference(userData?.unit_preference || "metric");
               setShowUnitsModal(true);
             }}
           />
@@ -362,7 +369,7 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {handleHelpSupport}}
+            onPress={handleHelpSupport}
           />
           <SectionItem
             title="Submit feedback"
@@ -370,28 +377,33 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {openEmail()}}
+            onPress={() => {
+              openEmail();
+            }}
           />
           <SectionItem
             title="Knowledge base"
             image={IMAGE_CONSTANTS.knowledgeIcon}
             rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
+              <View className="flex-row items-center bg-[#01675B33] rounded-lg">
+                <Text className="text-sm text-[#01675B]  p-2 mx-2">
+                  Coming Soon
+                </Text>
+              </View>
             }
             onPress={() => {}}
           />
         </ProfileSection>
 
-
-          {/* General Section */}
-        <ProfileSection title="TERMS and conditions">
+        {/* General Section */}
+        <ProfileSection title="GENERAL">
           <SectionItem
             title="Terms of Service"
             image={IMAGE_CONSTANTS.fileIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => navigation.navigate('TermsOfServiceScreen')}
+            onPress={() => navigation.navigate("TermsOfServiceScreen")}
           />
           <SectionItem
             title="Privacy Policy"
@@ -399,7 +411,7 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => navigation.navigate('PrivacyPolicy')}
+            onPress={() => navigation.navigate("PrivacyPolicy")}
           />
           <SectionItem
             title="About"
@@ -407,26 +419,29 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {}}
+            onPress={() => {
+              navigation.navigate("About");
+            }}
           />
         </ProfileSection>
 
-
         <TouchableOpacity
           className="border border-red-500 rounded-full py-3 items-center bg-transparent my-8 mx-5  "
-        onPress={handleLogout}
-        activeOpacity={0.8}
-      >
-        <View className="flex-row items-center">
-          <Ionicons
-            name="exit-outline"
-            size={20}
-            color="#ef4444"
-            className="mr-2"
-          />
-          <Text className="text-red-500 text-base font-semibold">Log Out</Text>
-        </View>
-  </TouchableOpacity>
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <View className="flex-row items-center">
+            <Ionicons
+              name="exit-outline"
+              size={20}
+              color="#ef4444"
+              className="mr-2"
+            />
+            <Text className="text-red-500 text-base font-semibold">
+              Log Out
+            </Text>
+          </View>
+        </TouchableOpacity>
 
         {/* Units Selection Modal */}
         <Modal
@@ -437,18 +452,23 @@ export const SettingsScreen: React.FC = () => {
         >
           <View className="flex-1 justify-end bg-black/40">
             <View className="bg-white rounded-t-xl p-4">
-              <Text className="text-center text-base font-semibold mb-2">Select Unit System</Text>
+              <Text className="text-center text-base font-semibold mb-2">
+                Select Unit System
+              </Text>
               <Picker
                 selectedValue={tempUnitPreference}
                 onValueChange={setTempUnitPreference}
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
                 itemStyle={{ fontSize: 18, height: 180 }}
               >
                 <Picker.Item label="Metric" value="metric" />
                 <Picker.Item label="Imperial" value="imperial" />
               </Picker>
               <View className="flex-row justify-between mt-4">
-                <TouchableOpacity onPress={() => setShowUnitsModal(false)} className="flex-1 items-center py-2">
+                <TouchableOpacity
+                  onPress={() => setShowUnitsModal(false)}
+                  className="flex-1 items-center py-2"
+                >
                   <Text className="text-lg text-blue-500">Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -461,7 +481,14 @@ export const SettingsScreen: React.FC = () => {
             </View>
           </View>
         </Modal>
-
+        <Modal
+          visible={showDrawer}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowDrawer(false)}
+        >
+          <ContactSupportDrawer onClose={() => setShowDrawer(false)} />
+        </Modal>
       </ScrollView>
     </CustomSafeAreaView>
   );

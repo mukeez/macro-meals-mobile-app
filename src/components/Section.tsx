@@ -9,7 +9,7 @@ type SectionProps = {
 export default function Section({ title, children }: SectionProps) {
   return (
     <View className="mb-2">
-      <Text className="text-base font-bold mb-2">{title}</Text>
+      <Text className="text-sm font-semibold mb-2">{title}</Text>
       {children}
     </View>
   );
