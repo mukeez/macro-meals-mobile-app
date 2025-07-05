@@ -7,6 +7,7 @@ type GoalsFlowState = {
     setMajorStep: (step: number) => void;
     setSubStep: (major: number, sub: number) => void;
     markSubStepComplete: (major: number, sub: number) => void;
+    handleBackNavigation: () => { canGoBack: boolean; shouldExitFlow: boolean };
     gender: string | null;
     setGender: (gender: string) => void;
     dateOfBirth: string | null;
@@ -42,7 +43,7 @@ type GoalsFlowState = {
     setMacroTargets: (macros: { carbs: number; fat: number; protein: number; calorie: number }) => void;
 };
 
-export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
+export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
     gender: null,
     setGender: (gender) => set({ gender }),
     majorStep: 0,
@@ -111,4 +112,25 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
     setPreferences: (prefs) => set({ preferences: prefs }),
     macroTargets: null,
     setMacroTargets: (macros) => set({ macroTargets: macros }),
+    handleBackNavigation: () => {
+        const state = get();
+        const currentMajorStep = state.majorStep;
+        const currentSubStep = state.subSteps[currentMajorStep];
+
+        // If we can go back to a previous sub-step
+        if (currentSubStep > 0) {
+            set((state) => ({
+                subSteps: { ...state.subSteps, [currentMajorStep]: currentSubStep - 1 }
+            }));
+            return { canGoBack: true, shouldExitFlow: false };
+        }
+        
+        // If we're at the first sub-step of any major step except the first
+        if (currentMajorStep > 0 && currentSubStep === 0) {
+            return { canGoBack: true, shouldExitFlow: false };
+        }
+
+        // If we're at the first sub-step of the first major step
+        return { canGoBack: false, shouldExitFlow: true };
+    },
 }));

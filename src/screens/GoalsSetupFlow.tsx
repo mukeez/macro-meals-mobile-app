@@ -34,7 +34,8 @@ export const GoalsSetupFlow =  () => {
     subSteps, 
     setSubStep, 
     completed, 
-    markSubStepComplete, 
+    markSubStepComplete,
+    handleBackNavigation,
     gender, 
     dateOfBirth, 
     location, 
@@ -396,6 +397,38 @@ export const GoalsSetupFlow =  () => {
     return 0;
   };
 
+  const handleBack = () => {
+    const { canGoBack, shouldExitFlow } = handleBackNavigation();
+    
+    if (shouldExitFlow) {
+      // We're at the first step of the first major step
+      // Ask user if they want to exit the flow
+      Alert.alert(
+        "Exit Setup",
+        "Are you sure you want to exit the setup process? Your progress will be saved.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Exit",
+            onPress: () => navigation.navigate('GoalSetupScreen')
+          }
+        ]
+      );
+      return;
+    }
+
+    if (canGoBack) {
+      if (subSteps[majorStep] === 0) {
+        // We're at the first sub-step of a major step (but not the first major step)
+        navigation.navigate('GoalSetupScreen');
+      }
+      // The store has already handled updating the sub-step if we're not at the first sub-step
+    }
+  };
+
   return (
     <CustomSafeAreaView edges={['left', 'right']}>
       <View className="flex-1">
@@ -411,7 +444,7 @@ export const GoalsSetupFlow =  () => {
             </View>
             {/* Segmented Progress Bar */}
             <View className="flex-row items-center justify-between space-x-2 mt-2 w-full">
-              <BackButton onPress={() => navigation.goBack()} />
+              <BackButton onPress={handleBack} />
               <View className='ml-5 flex-row items-start justify-start gap-3 w-full'>
                 {majorSteps.map((label, idx) => (
                   <View key={label}>
