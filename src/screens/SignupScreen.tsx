@@ -170,7 +170,7 @@ export const SignupScreen: React.FC = () => {
             setHasMacros(profile.has_macros);
             setReadyForDashboard(profile.has_macros);
             setAuthenticated(true, token, loginUserId);
-            navigation.navigate('Dashboard');
+            //navigation.navigate('Dashboard');
 
         } catch (error) {
             let errorMessage = 'Failed to create account';
