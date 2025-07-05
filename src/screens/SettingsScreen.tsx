@@ -338,7 +338,7 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {}}
+            onPress={() => { navigation.navigate('PaymentScreen') }}
           />
         </ProfileSection>
 
