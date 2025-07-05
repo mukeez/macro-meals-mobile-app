@@ -4,11 +4,12 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
+import { MERCHANT_IDENTIFIER } from '@env';
 
 const API_URL = 'https://api.macromealsapp.com/api/v1';
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
+import { StripeProvider, useStripe, PlatformPayButton, isPlatformPaySupported, PlatformPay, confirmPlatformPayPayment } from '@stripe/stripe-react-native';
 import {
   ActivityIndicator,
   Alert,
@@ -135,6 +136,17 @@ const PaymentScreen = () => {
   const [publishableKey, setPublishableKey] = useState('');
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const { setReadyForDashboard } = useContext(HasMacrosContext);
+  const [isApplePaySupported, setIsApplePaySupported] = useState(false);
+  const [amount, setAmount] = useState(9.99);
+
+  console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
+
+  useEffect(() => {
+    (async function () {
+      setIsApplePaySupported(await isPlatformPaySupported());
+    })();
+  }, [isPlatformPaySupported]);
+
 
   const fetchPublishableKey = async () => {
     try {
@@ -228,8 +240,70 @@ const PaymentScreen = () => {
     }
   };
 
+  const handleApplePayPress = async () => {
+    try {
+      // Get publishable key if not already set
+      if (!publishableKey) {
+        await fetchPublishableKey();
+      }
+
+      // Clear existing profile and fetch fresh data
+      clearProfile();
+      const fetchedProfile = await userService.getProfile();
+      
+      if (!fetchedProfile?.id || !fetchedProfile?.email) {
+        throw new Error('Invalid profile data received');
+      }
+      
+      const currentProfile = fetchedProfile as Profile;
+      setStoreProfile(currentProfile);
+      const response = await paymentService.createPaymentIntent(
+        currentProfile.email,
+        currentProfile.id,
+        selectedPlan
+      );  
+      const { error } = await confirmPlatformPayPayment(
+        response.client_secret,
+        {
+          applePay: {
+            cartItems: [
+              {
+                label: `Macro Meals ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'}`,
+                amount: amount.toString(),  
+                paymentType: PlatformPay.PaymentType.Immediate,
+              },
+              {
+                label: 'Total',
+                amount: amount.toString(),
+                paymentType: PlatformPay.PaymentType.Immediate,
+              },
+            ],
+            merchantCountryCode: 'US',
+            currencyCode: 'USD',
+            requiredShippingAddressFields: [
+              PlatformPay.ContactField.PostalAddress,
+            ],
+            requiredBillingContactFields: [PlatformPay.ContactField.PhoneNumber],
+          },
+        }
+      );
+      if (error) {
+        console.error('Apple Pay error:', error);
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Success', 'Your order is confirmed!');
+        setHasBeenPromptedForGoals(false);
+        setReadyForDashboard(true);
+      }
+    } catch (error) {
+      console.error('Error processing Apple Pay:', error);
+      Alert.alert('Error', 'Failed to process Apple Pay payment. Please try again.');
+    }
+  };
+
   return (
-    <StripeProvider publishableKey={publishableKey}>
+    <StripeProvider publishableKey={publishableKey}
+    merchantIdentifier={MERCHANT_IDENTIFIER}>
       <View className='relative h-screen bg-[##F2F2F2]'>
         <Pager />
         <View className="flex px-[20px] mt-8 justify-center items-center w-full">
@@ -241,6 +315,7 @@ const PaymentScreen = () => {
             <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
               e.preventDefault();
               setSelectedPlan('monthly');
+              setAmount(9.99);
             }}>
               
               <View className='w-full pl-3 pt-8 pb-3'>
@@ -262,6 +337,7 @@ const PaymentScreen = () => {
             <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
              e.preventDefault();
              setSelectedPlan('yearly');
+             setAmount(70.00);
             }}>
               <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
               <Text className="text-white text-xs font-medium justify-center items-center">50% savings</Text>
@@ -281,20 +357,33 @@ const PaymentScreen = () => {
           </View>
           <Text className='mt-4 text-[12px] text-[#4F4F4F]'>You can change plans or cancel anytime</Text>
           <View className="w-full mt-[30px]">
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              onPress={handlePaymentPress}
-              disabled={isLoading}
-              className={isLoading ? 'opacity-70' : ''}
-            >
-              <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
-                )}
-              </View>
-            </TouchableOpacity>
+              {isApplePaySupported ? (
+                <PlatformPayButton
+                  type={PlatformPay.ButtonType.Subscribe}
+                  appearance={PlatformPay.ButtonStyle.Black}
+                  borderRadius={4}
+                  style={{
+                    width: '100%',
+                    height: 50,
+                  }}
+                  onPress={handleApplePayPress}
+                />
+              ) : (
+                <TouchableOpacity 
+                  activeOpacity={0.8}
+                  onPress={handlePaymentPress}
+                  disabled={isLoading}
+                  className={isLoading ? 'opacity-70' : ''}
+                >
+                  <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
           </View>
         </View>
       </View>
