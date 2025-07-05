@@ -110,6 +110,8 @@ export default function App() {
                 console.error('Error initializing app:', error);
             } finally {
                 setIsLoading(false);
+                // Add delay before hiding splash screen
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds delay
                 await SplashScreen.hideAsync();
             }
         }
