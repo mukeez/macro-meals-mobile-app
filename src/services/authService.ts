@@ -219,7 +219,7 @@ export const authService = {
     },
        resendEmailVerification: async (params: { email: string }) => {
         try {
-            const response = await fetch(`${API_URL}/auth/resend-otp`, {
+            const response = await fetch(`${API_URL}/auth/resend-verification`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
