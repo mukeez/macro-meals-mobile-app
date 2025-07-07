@@ -50,4 +50,5 @@ export type RootStackParamList = {
     AccountSettingsScreen: undefined;
     AISuggestedMealsDetailsScreen: { meal: any };
     GoalSetupNav: undefined;
+    EmailVerificationScreen: { email: string, password: string};
 };

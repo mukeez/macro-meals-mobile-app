@@ -201,7 +201,20 @@ export const userService = {
       throw new Error('Invalid JSON response');
     }
   },
-
+updateUserProfile: async (data: any): Promise<any> => {
+  const token = useStore.getState().token;
+  if (!token) throw new Error("Authentication required");
+  const response = await fetch(`${API_BASE_URL}/user/me`, {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return await response.json();
+},
   /**
    * Fetches user data with detailed profile information
    * @returns User data with profile information
@@ -225,5 +238,5 @@ export const userService = {
 
     const userData = await response.json();
     return userData;
-  }
-};
+  },
+}

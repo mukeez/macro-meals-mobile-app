@@ -36,7 +36,7 @@ export default function NotificationsPreferences() {
     async function fetchPreferences() {
       setLoading((prev) => ({ ...prev, initial: true }));
       try {
-        const user = await userService.getPreferences();
+        const user = await userService.getProfile();
         if (isMounted) {
           setToggles({ mealReminders: !!user.meal_reminder_preferences_set });
         }
@@ -61,7 +61,7 @@ export default function NotificationsPreferences() {
     setToggles((prev) => ({ ...prev, mealReminders: value }));
     setLoading((prev) => ({ ...prev, mealReminders: true }));
     try {
-      await userService.updatePreferences({
+      await userService.updateUserProfile({
         meal_reminder_preferences_set: value,
       });
     } catch (e) {
