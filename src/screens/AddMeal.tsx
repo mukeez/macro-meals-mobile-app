@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { ScrollView, View, Text, Image, TouchableOpacity, Modal, Pressable, ActionSheetIOS, Platform, RefreshControl, ActivityIndicator } from "react-native";
+import { ScrollView, View, Text, Image, TouchableOpacity, Modal, Pressable, ActionSheetIOS, Platform, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { LinearProgress } from "../components/LinearProgress";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
 import { getMeals } from "../services/mealService";
+import { mealService } from "../services/mealService";
 import useStore from "../store/useStore";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../types/navigation";
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const FILTER_OPTIONS = [
   { label: "Today", value: "today" },
@@ -39,6 +45,7 @@ const macroData = [
 ] as const;
 
 const AddMeal: React.FC = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [selectedRange, setSelectedRange] = useState("today");
   const [modalVisible, setModalVisible] = useState(false);
   const [meals, setMeals] = useState<any[]>([]);
@@ -68,6 +75,33 @@ const AddMeal: React.FC = () => {
     setRefreshing(true);
     await fetchMeals();
     setRefreshing(false);
+  };
+
+  const handleDeleteMeal = async (mealId: string) => {
+    Alert.alert(
+      "Delete Meal",
+      "Are you sure you want to delete this meal?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await mealService.deleteMeal(mealId);
+              // Refresh the meals list
+              fetchMeals();
+            } catch (error) {
+              console.error('Error deleting meal:', error);
+              Alert.alert('Error', 'Failed to delete meal. Please try again.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   // Group meals by mealType
@@ -212,12 +246,43 @@ const AddMeal: React.FC = () => {
                             {meal.name}
                           </Text>
                           <TouchableOpacity>
-                            <View className="w-[24px] h-[24px] rounded-full justify-center items-center bg-gray-100">
-                              <Image
-                                source={IMAGE_CONSTANTS.editIcon}
-                                className="w-[13px] h-[13px]"
-                                tintColor="#253238"
-                              />
+                            <View className="flex-row items-center gap-3">
+                            <TouchableOpacity
+                              onPress={() => {
+                                navigation.navigate('EditMealScreen', {
+                                  analyzedData: {
+                                    name: meal.name,
+                                    calories: meal.calories,
+                                    protein: meal.protein,
+                                    carbs: meal.carbs,
+                                    fat: meal.fat,
+                                    quantity: meal.quantity || 1,
+                                    meal_type: meal.meal_type,
+                                    serving_size: meal.serving_size,
+                                    no_of_servings: meal.no_of_servings,
+                                    logging_mode: meal.logging_mode,
+                                    meal_time: meal.meal_time
+                                  }
+                                });
+                              }}
+                            >
+                              <View className="w-[24px] h-[24px] bg-gray rounded-full justify-center items-center bg-gray-100">
+                                <Image
+                                  source={IMAGE_CONSTANTS.editIcon}
+                                  className="w-[13px] h-[13px]"
+                                  tintColor="#253238"
+                                />
+                              </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => handleDeleteMeal(meal.id)}>
+                              <View className="w-[24px] h-[24px] rounded-full bg-gray justify-center items-center bg-gray-100">
+                                <Image
+                                  source={IMAGE_CONSTANTS.deleteIcon}
+                                  className="w-[11px] h-[13px]"
+                                  tintColor="#253238"
+                                />
+                              </View>
+                            </TouchableOpacity>
                             </View>
                           </TouchableOpacity>
                         </View>
