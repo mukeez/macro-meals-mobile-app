@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, Image } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, Image, TextInput, TouchableOpacity } from 'react-native';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 import CustomRuler from 'src/components/goal_flow_components/your_goal/CustomRuler';
-import { MaterialIcons } from '@expo/vector-icons';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
 
 export const GoalsTargetWeight: React.FC = () => {
@@ -32,6 +31,18 @@ export const GoalsTargetWeight: React.FC = () => {
   }, [targetWeight, previousWeight, unit]);
 
   const [weight, setWeight] = useState(initialWeight);
+  const [inputValue, setInputValue] = useState(initialWeight.toString());
+  const [isEditing, setIsEditing] = useState(false);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Weight ranges based on unit
+  const weightRange = useMemo(() => {
+    if (unit === 'imperial') {
+      return { min: 80, max: 400 };
+    } else {
+      return { min: 35, max: 180 }; // kg range
+    }
+  }, [unit]);
 
   // Determine if the weight text should be red
   const isRed = useMemo(() => {
@@ -44,35 +55,44 @@ export const GoalsTargetWeight: React.FC = () => {
     return false;
   }, [fitnessGoal, weight, previousWeight]);
 
-  // Weight ranges based on unit
-  const weightRange = useMemo(() => {
-    if (unit === 'imperial') {
-      return { min: 80, max: 400 };
-    } else {
-      return { min: 35, max: 180 }; // kg range
-    }
-  }, [unit]);
-
   // Display unit
   const weightUnit = unit === 'imperial' ? 'lbs' : 'kg';
 
   // Save to store on change
   React.useEffect(() => {
-    setTargetWeight(weight);
+    if (weight >= weightRange.min) {
+      setTargetWeight(weight);
+    }
   }, [weight, setTargetWeight]);
 
-  // Update weight when unit changes
-  React.useEffect(() => {
-    if (unit === 'imperial' && weightKg) {
-      // Convert from kg to lbs
-      const newWeight = Math.round(weightKg * 2.20462);
-      setWeight(newWeight);
-    } else if (unit === 'metric' && weightLb) {
-      // Convert from lbs to kg
-      const newWeight = Math.round(weightLb / 2.20462);
-      setWeight(newWeight);
+  // Handle input change with debounce
+  const handleInputChange = (text: string) => {
+    setInputValue(text);
+    
+    // Clear any existing timeout
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
     }
-  }, [unit, weightKg, weightLb]);
+
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      const numValue = parseInt(text, 10);
+      if (!isNaN(numValue) && numValue >= weightRange.min && numValue <= weightRange.max) {
+        setWeight(numValue);
+      }
+    }, 2000); // 2 second delay
+
+    setDebounceTimeout(timeout);
+  };
+
+  // Handle input blur
+  const handleInputBlur = () => {
+    setIsEditing(false);
+    const numValue = parseInt(inputValue, 10);
+    if (isNaN(numValue) || numValue < weightRange.min || numValue > weightRange.max) {
+      setInputValue(weight.toString());
+    }
+  };
 
   return (
     <View className="flex-1 bg-white">
@@ -80,16 +100,36 @@ export const GoalsTargetWeight: React.FC = () => {
       <Text className="text-base text-gray-500 mt-3 mb-10">You can always change it later.</Text>
       <View className="items-center mt-8">
         <Text className="text-base text-center mb-4">{fitnessGoal || 'Set your goal'}</Text>
-        <Text className={`text-4xl font-semibold mb-4 ${isRed ? 'text-cinnabarRed' : 'text-black'}`}>
-          {weight} {weightUnit}
-        </Text>
+        <TouchableOpacity 
+          onPress={() => setIsEditing(true)}
+          className="flex-row items-center justify-center"
+        >
+          {isEditing ? (
+            <TextInput
+              className={`text-4xl font-semibold mb-4 ${isRed ? 'text-cinnabarRed' : 'text-black'}`}
+              value={inputValue}
+              onChangeText={handleInputChange}
+              onBlur={handleInputBlur}
+              keyboardType="numeric"
+              autoFocus
+              selectTextOnFocus
+              maxLength={3}
+            />
+          ) : (
+            <Text className={`text-4xl font-semibold mb-4 ${isRed ? 'text-cinnabarRed' : 'text-black'}`}>
+              {weight} {weightUnit}
+            </Text>
+          )}
+        </TouchableOpacity>
         <View className="w-full">
-          <CustomRuler
-            min={weightRange.min}
-            max={weightRange.max}
-            initialValue={weight}
-            onValueChange={setWeight}
-          />
+          {weight >= weightRange.min && (
+            <CustomRuler
+              min={weightRange.min}
+              max={weightRange.max}
+              initialValue={weight}
+              onValueChange={setWeight}
+            />
+          )}
         </View>
         {isRed && (
           <View className="flex-row items-center mt-2">

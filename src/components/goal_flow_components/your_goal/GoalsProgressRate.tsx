@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
@@ -19,8 +19,25 @@ export const GoalsProgressRate: React.FC = () => {
   // Calculate weight difference
   const weightDifference = Math.abs((targetWeight || 0) - currentWeight);
 
-  // Default value if not set
-  const value = progressRate ? parseFloat(progressRate) : 0.0;
+  // Get recommended rate based on fitness goal
+  const getRecommendedRate = () => {
+    if (fitnessGoal === 'Lose weight') {
+      return unit === 'imperial' ? 1.0 : 0.45; // 1 lb or 0.45 kg per week
+    } else if (fitnessGoal === 'Gain weight') {
+      return unit === 'imperial' ? 0.5 : 0.23; // 0.5 lb or 0.23 kg per week
+    }
+    return 0;
+  };
+
+  // Default value if not set, otherwise use recommended rate
+  const value = progressRate ? parseFloat(progressRate) : getRecommendedRate();
+
+  // Set initial recommended rate
+  useEffect(() => {
+    if (!progressRate) {
+      setProgressRate(getRecommendedRate().toFixed(2));
+    }
+  }, []);
 
   // Calculate monthly rate
   const weekly = value;
@@ -56,6 +73,9 @@ export const GoalsProgressRate: React.FC = () => {
   // Weight unit for display
   const weightUnit = unit === 'imperial' ? 'lbs' : 'kg';
 
+  // Rate sign based on fitness goal
+  const rateSign = fitnessGoal === 'Lose weight' ? '-' : '+';
+
   return (
     <View className="flex-1 bg-white px-4 pt-2">
       {/* Title */}
@@ -73,8 +93,8 @@ export const GoalsProgressRate: React.FC = () => {
           <Slider
             style={{ width: '100%', height: 40 }}
             minimumValue={0}
-            maximumValue={3.0}
-            step={0.01}
+            maximumValue={unit === 'imperial' ? 3.0 : 1.36} // 3 lbs or 1.36 kg
+            step={unit === 'imperial' ? 0.01 : 0.005}
             value={value}
             minimumTrackTintColor={trackColor}
             maximumTrackTintColor="#E0E0E0"
@@ -86,10 +106,10 @@ export const GoalsProgressRate: React.FC = () => {
         
         {/* Rate display */}
         <Text className="text-base font-normal text-black text-center mb-2">
-          +{value.toFixed(2)} {weightUnit} / week
+          {rateSign}{value.toFixed(2)} {weightUnit} / week
         </Text>
         <Text className="text-base text-black text-center mb-4">
-          +{monthly} {weightUnit} / month
+          {rateSign}{monthly} {weightUnit} / month
         </Text>
       </View>
     </View>

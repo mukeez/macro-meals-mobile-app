@@ -308,9 +308,16 @@ export const GoalsSetupFlow =  () => {
     const isLastStepOfSecondMajor = majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
 
     if (isLastStepOfSecondMajor) {
-        markSubStepComplete(majorStep, subSteps[majorStep]);
-        navigation.navigate('GoalSetupScreen');
-        return;
+      markSubStepComplete(majorStep, subSteps[majorStep]);
+      navigation.navigate('GoalSetupScreen');
+      return;
+    }
+
+    // If on fitness goal step and "Maintain weight" is selected, skip to next major step
+    if (majorStep === 1 && subSteps[majorStep] === 0 && fitnessGoal === 'Maintain weight') {
+      markSubStepComplete(majorStep, subSteps[majorStep]);
+      navigation.navigate('GoalSetupScreen');
+      return;
     }
 
     // Gender substep

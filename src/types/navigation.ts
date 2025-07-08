@@ -27,6 +27,18 @@ export type RootStackParamList = {
     GoalSetupScreen: undefined;
     GoalsBasicInfo: undefined;
     AddMeal: undefined;
+    AddMealScreen: {
+      analyzedData?: {
+        name: string;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        quantity: number;
+        meal_type?: string;
+        meal_time?: string;
+      };
+    };
     SnapMeal: undefined;
     MealLog: undefined;
     NearbyMeals: undefined;
@@ -50,4 +62,20 @@ export type RootStackParamList = {
     AccountSettingsScreen: undefined;
     AISuggestedMealsDetailsScreen: { meal: any };
     GoalSetupNav: undefined;
+    NotificationsScreen: undefined;
+    EditMealScreen: {
+      analyzedData?: {
+        name: string;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        quantity: number;
+        meal_type?: string;
+        serving_size?: number;
+        no_of_servings?: number;
+        logging_mode?: string;
+        meal_time?: string;
+      };
+    };
 };
