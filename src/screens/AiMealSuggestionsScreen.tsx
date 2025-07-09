@@ -153,6 +153,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
                       </View>
                   </View>
                   <Text className="text-sm font-medium text-[#222] mb-0.5">{meal.name}</Text>
+                  <Text className="text-sm font-semibold text-[#222] mb-0.5">{meal.restaurant.name}</Text>
                   <View className="flex-row items-center gap-2 mt-2">
                         <View className="flex-row items-center justify-center gap-1">
                             <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">

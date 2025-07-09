@@ -82,7 +82,7 @@ const SnapMealScreen = () => {
             console.log('AI Scan Response:', data);
 
             if (data && data.items && data.items.length > 0) {
-                navigation.navigate('AddMeal', {
+                navigation.navigate('AddMealScreen', {
                     analyzedData: data.items[0],
                     mealImage: photo.uri,
                 });
@@ -217,7 +217,7 @@ const SnapMealScreen = () => {
                             onPress={() => {
                                 setIsAlertVisible(false);
                                 setScanError(false);
-                                navigation.navigate('AddMeal', {});
+                                navigation.navigate('AddMealScreen', {});
                             }}
                         >
                             <Text className="text-white font-semibold">Add Manually</Text>

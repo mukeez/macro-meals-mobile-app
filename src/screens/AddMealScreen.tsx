@@ -25,6 +25,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import * as ImagePicker from 'expo-image-picker';
 import FavoritesService from '../services/favoritesService';
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 interface RouteParams {
     barcodeData: any;
@@ -35,10 +36,27 @@ interface RouteParams {
         carbs: number;
         fat: number;
         quantity: number;
+        serving_size?: number;
+        no_of_servings?: number;
+        meal_type?: string;
+        meal_time?: string;
     };
 }
 
 import { FavoriteMeal } from '../services/favoritesService';
+import { FavouriteIcon } from 'src/components/FavouriteIcon';
+
+const SERVING_UNITS = [
+    'g',
+    'ml',
+    'oz',
+    'cup',
+    'tbsp',
+    'tsp',
+    'slice',
+    'piece',
+    'serving'
+];
 
 /**
  * Screen for adding a new meal to the log
@@ -62,13 +80,18 @@ export const AddMealScreen: React.FC = () => {
     const [showTimeModal, setShowTimeModal] = useState(false);
     const [tempTime, setTempTime] = useState<Date | null>(null);
     const [mealImage, setMealImage] = useState<string | null>(null);
+    const [servingUnit, setServingUnit] = useState<string>('serving');
+    const [noOfServings, setNoOfServings] = useState<string>('1');  // Default to '1'
+    const [showServingUnitModal, setShowServingUnitModal] = useState(false);
+    const [tempServingUnit, setTempServingUnit] = useState('serving');
     const [isFavorite, setIsFavorite] = useState(false);
     const [mealDescription, setMealDescription] = useState('');
     const [showMealTypeModal, setShowMealTypeModal] = useState(false);
     const [tempMealType, setTempMealType] = useState('breakfast');
-
+    const [mealType, setMealType] = useState('breakfast');
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
     const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
+    const mixpanel = useMixpanel();
 
     // Initialize form with analyzed data if available
     React.useEffect(() => {
@@ -77,7 +100,10 @@ export const AddMealScreen: React.FC = () => {
             setCalories(analyzedData.calories?.toString() || '0');
             setProtein(analyzedData.protein?.toString() || '0');
             setCarbs(analyzedData.carbs?.toString() || '0');
+            setNoOfServings(analyzedData.no_of_servings?.toString() || '0');
             setFats(analyzedData.fat?.toString() || '0');
+            setMealType(analyzedData.meal_type || 'breakfast');
+
         }
     }, [analyzedData]);
 
@@ -131,13 +157,14 @@ export const AddMealScreen: React.FC = () => {
         setCalories(meal.macros.calories.toString());
         setProtein(meal.macros.protein.toString());
         setCarbs(meal.macros.carbs.toString());
+        setNoOfServings(meal.no_of_servings.toString());
         setFats(meal.macros.fat.toString());
     };
 
     /**
      * Adds the current meal to the log
      */
-    const handleAddToLog = async (): Promise<void> => {
+    const handleAddMealLog = async (): Promise<void> => {
         setLoading(true);
         try {
             if (!mealName.trim()) {
@@ -145,33 +172,57 @@ export const AddMealScreen: React.FC = () => {
                 return;
             }
 
-            const newMeal = {
-                name: mealName,
-                calories: parseInt(calories, 10) || 0,
-                protein: parseInt(protein, 10) || 0,
-                carbs: parseInt(carbs, 10) || 0,
-                fat: parseInt(fats, 10) || 0,
-                meal_type: tempMealType,
-                meal_time: time.toISOString(),
-                description: mealDescription || "",
+            // Ensure amount is at least 1 and is an integer
+            const amount = Math.max(1, parseInt(noOfServings) || 1);
+
+            // Calculate adjusted macros based on amount
+            const adjustedMacros = {
+                calories: Math.round((parseInt(calories, 10) || 0) * amount),
+                protein: Math.round((parseInt(protein, 10) || 0) * amount),
+                carbs: Math.round((parseInt(carbs, 10) || 0) * amount),
+                fat: Math.round((parseInt(fats, 10) || 0) * amount),
             };
 
-            console.log('Meal request JSON:', JSON.stringify(newMeal));
-            const response = await mealService.logMeal(newMeal);
-            console.log('Meal log response:', JSON.stringify(response));
+            // Create the meal request object that matches LogMealRequest interface
+            const mealRequest = {
+                name: mealName,
+                calories: adjustedMacros.calories,
+                protein: adjustedMacros.protein,
+                carbs: adjustedMacros.carbs,
+                fat: adjustedMacros.fat,
+                meal_type: tempMealType,
+                meal_time: time.toISOString(),
+                serving_size: servingUnit,
+                description: mealDescription || undefined,
+                photo: mealImage ? {
+                    uri: mealImage,
+                    type: 'image/jpeg',
+                    name: 'meal_photo.jpg'
+                } : undefined
+            };
 
-            // Navigate back to meal log screen
+            // Log the request data for debugging
+            console.log('Meal request data:', JSON.stringify(mealRequest, null, 2));
+
+            // Send the request
+            await mealService.logMeal(mealRequest);
+
+            // Track meal logging
+            mixpanel?.track({
+                name: 'meal_logged',
+                properties: {
+                    method: 'manual',
+                    meal_type: tempMealType,
+                    amount: amount,
+                    serving_size: servingUnit,
+                    ...adjustedMacros
+                }
+            });
+
             navigation.navigate('MainTabs');
         } catch (error) {
-            if (error instanceof Error) {
-                console.error('Error adding meal to log:', error.message, error.stack);
-            } else {
-                try {
-                    console.error('Error adding meal to log:', JSON.stringify(error));
-                } catch (e) {
-                    console.error('Error adding meal to log:', error);
-                }
-            }
+            console.error('Error adding meal:', error);
+            Alert.alert('Error', 'Failed to add meal');
         } finally {
             setLoading(false);
         }
@@ -189,19 +240,34 @@ export const AddMealScreen: React.FC = () => {
      * Handles adding a photo to the meal
      */
     const handleAddPhoto = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== 'granted') {
-            alert('Sorry, we need camera roll permissions to make this work!');
-            return;
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: 'images',
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.7,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            setMealImage(result.assets[0].uri);
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert(
+                    'Permission Required',
+                    'Please grant camera roll access to add photos to your meals.',
+                    [{ text: 'OK' }]
+                );
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.7,
+            });
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                setMealImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('Error picking image:', error);
+            Alert.alert(
+                'Error',
+                'There was a problem selecting the image. Please try again.',
+                [{ text: 'OK' }]
+            );
         }
     };
 
@@ -218,6 +284,10 @@ export const AddMealScreen: React.FC = () => {
 
     const toggleFavorite = async () => {
       try {
+        if (!mealName.trim()){
+            Alert.alert('Please enter a meal name');
+            return;
+        }
         const mealObj = {
           name: mealName,
           macros: {
@@ -226,6 +296,10 @@ export const AddMealScreen: React.FC = () => {
             fat: parseInt(fats, 10) || 0,
             protein: parseInt(protein, 10) || 0,
           },
+          serving_size: parseInt(noOfServings, 10) || 0,
+          no_of_servings: parseInt(noOfServings, 10) || 0,
+          meal_type: mealType,
+          meal_time: time.toISOString(),
           image: mealImage || IMAGE_CONSTANTS.mealIcon,
           restaurant: { name: 'custom', location: '' },
         };
@@ -268,7 +342,8 @@ export const AddMealScreen: React.FC = () => {
                     <Text className="text-2xl text-[#1a1a1a]">←</Text>
                 </TouchableOpacity>
                 <Text className="text-lg font-semibold text-[#1a1a1a]">Add Meal</Text>
-                <TouchableOpacity
+                <FavouriteIcon isFavourite={isFavorite} onPress={toggleFavorite} />
+                {/* <TouchableOpacity
                   onPress={toggleFavorite}
                   className={`p-1 ${!mealName.trim() ? 'opacity-50' : ''}`}
                   disabled={!mealName.trim()}
@@ -277,7 +352,7 @@ export const AddMealScreen: React.FC = () => {
                     source={isFavorite ? IMAGE_CONSTANTS.star : IMAGE_CONSTANTS.starIcon}
                     className="w-6 h-6"
                   />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             <KeyboardAvoidingView 
@@ -304,7 +379,7 @@ export const AddMealScreen: React.FC = () => {
                             />
                         ) : (
                             <>
-                                <Image source={IMAGE_CONSTANTS.fileIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
+                                <Image source={IMAGE_CONSTANTS.galleryIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
                                 <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
                             </>
                         )}
@@ -417,6 +492,60 @@ export const AddMealScreen: React.FC = () => {
                         </View>
                     </View>
 
+                    <View className="flex-row justify-between mb-4">
+                        <View className="w-[48%]">
+                            <Text className="text-base font-medium text-black mb-2">Amount</Text>
+                            <View className="flex-row items-center placeholder:text-lightGrey text-base border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                                <TextInput
+                                    className="flex-1 text-base"
+                                    keyboardType="number-pad"
+                                    value={noOfServings}
+                                    onChangeText={(text) => {
+                                        // Remove any non-numeric characters
+                                        const cleanText = text.replace(/[^0-9]/g, '');
+                                        // Allow empty string but set to '1' if parsed number is less than 1
+                                        if (cleanText === '') {
+                                            setNoOfServings('');
+                                        } else {
+                                            const num = parseInt(cleanText);
+                                            if (isNaN(num)) {
+                                                setNoOfServings('1');
+                                            } else {
+                                                setNoOfServings(cleanText);
+                                            }
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // Ensure value is at least 1 when input loses focus
+                                        const num = parseInt(noOfServings);
+                                        if (noOfServings === '' || isNaN(num) || num < 1) {
+                                            setNoOfServings('1');
+                                        }
+                                    }}
+                                    placeholder="1"
+                                />
+                            </View>
+                        </View>
+
+                        <View className="w-[48%]">
+                            <Text className="text-base font-medium text-black mb-2">Serving Size</Text>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setTempServingUnit(servingUnit);
+                                    setShowServingUnitModal(true);
+                                }}
+                                className="flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white"
+                            >
+                                <Text className="flex-1 text-base text-[#222]">{servingUnit}</Text>
+                                <Image 
+                                    source={IMAGE_CONSTANTS.chevronRightIcon} 
+                                    className="w-4 h-4" 
+                                    style={{ transform: [{ rotate: '90deg' }] }}
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
                     {favoriteMeals.length > 0 && (
                         <>
                     <Text className="text-base text-black mt-3 mb-3">Quick add from favourites</Text>
@@ -454,7 +583,7 @@ export const AddMealScreen: React.FC = () => {
                 <View className="mx-5 border-t border-gray">
                     <TouchableOpacity
                         className={`bg-primaryLight mt-1 mb-1 rounded-full py-5 items-center ${!mealName.trim() ? 'opacity-50' : ''}`}
-                        onPress={handleAddToLog}
+                        onPress={handleAddMealLog}
                         disabled={loading || !mealName.trim()}
                     >
                         {loading ? (
@@ -523,6 +652,47 @@ export const AddMealScreen: React.FC = () => {
                                 onPress={() => {
                                     setSelectedMealType(tempMealType);
                                     setShowMealTypeModal(false);
+                                }}
+                                className="flex-1 items-center py-2"
+                            >
+                                <Text className="text-lg text-blue-500">Done</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Unit Picker Modal */}
+            <Modal
+                visible={showServingUnitModal}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowServingUnitModal(false)}
+            >
+                <View className="flex-1 justify-end bg-black/40">
+                    <View className="bg-white rounded-t-xl p-4">
+                        <Text className="text-center text-base font-semibold mb-2">Select Serving Unit</Text>
+                        <Picker
+                            selectedValue={tempServingUnit}
+                            onValueChange={setTempServingUnit}
+                            style={{ width: '100%' }}
+                            itemStyle={{ fontSize: 18, height: 180 }}
+                        >
+                            {SERVING_UNITS.map((unit) => (
+                                <Picker.Item key={unit} label={unit} value={unit} />
+                            ))}
+                        </Picker>
+                        <View className="flex-row justify-between mt-4">
+                            <TouchableOpacity 
+                                onPress={() => setShowServingUnitModal(false)} 
+                                className="flex-1 items-center py-2"
+                            >
+                                <Text className="text-lg text-blue-500">Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setServingUnit(tempServingUnit);
+                                    setShowServingUnitModal(false);
                                 }}
                                 className="flex-1 items-center py-2"
                             >

@@ -28,6 +28,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { userService } from '../services/userService';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import { useGoalsFlowStore } from '../store/goalsFlowStore';
+// import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 
 // type RootStackParamList = {
 //     Welcome: undefined;

@@ -109,7 +109,7 @@ const ScanScreenType: React.FC = () => {
         if (profile?.has_macros === false || profile?.has_macros === undefined) {
             navigation.navigate('GoalSetupScreen' as never);
         } else {
-            navigation.navigate('AddMeal' as never);
+            navigation.navigate('AddMealScreen' as never);
         }
     };
 

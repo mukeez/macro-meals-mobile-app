@@ -106,13 +106,13 @@ const BarcodeScanScreen = () => {
             "We couldn't find this product in our database. Would you like to add it manually?",
             [
                 { text: "Cancel", style: "cancel", onPress: () => { resetScanState(); } },
-                { text: "Add Manually", onPress: () => { setIsAlertVisible(false); navigation.navigate('AddMeal', { barcodeData }); } }
+                { text: "Add Manually", onPress: () => { setIsAlertVisible(false); navigation.navigate('AddMealScreen', { barcodeData }); } }
             ]
         );
     };
 
     const handleSuccessfulScan = (barcodeData: string, product: any) => {
-        navigation.navigate('AddMeal', {
+        navigation.navigate('AddMealScreen', {
             barcodeData: '',
             analyzedData: {
                 name: product.name,
@@ -120,7 +120,8 @@ const BarcodeScanScreen = () => {
                 protein: product.protein,
                 carbs: product.carbs,
                 fat: product.fat,
-                quantity: product.quantity
+                quantity: product.quantity,
+                logging_mode: '',
             }
         });
     };
@@ -140,7 +141,7 @@ const BarcodeScanScreen = () => {
 
                 if (response.items && response.items.length > 0) {
                     const product = response.items[0];
-                    navigation.navigate('AddMeal', {
+                    navigation.navigate('AddMealScreen', {
                         barcodeData: '',
                         analyzedData: {
                             name: product.name,
