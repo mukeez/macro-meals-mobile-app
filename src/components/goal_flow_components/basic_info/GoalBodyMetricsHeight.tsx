@@ -9,7 +9,8 @@ const heightsCm = Array.from({ length: 121 }, (_, i) => 100 + i); // 100cm to 22
 
 export const GoalBodyMetricsHeight = () => {
   const {
-    unit, setUnit,
+    height_unit_preference,
+    setHeightUnitPreference,
     heightFt, setHeightFt,
     heightIn, setHeightIn,
     heightCm, setHeightCm,
@@ -21,14 +22,24 @@ export const GoalBodyMetricsHeight = () => {
   // Local state for validation
   const [isValid, setIsValid] = useState(false);
 
+  // Reset values when unit preference changes
+  useEffect(() => {
+    if (height_unit_preference === 'imperial') {
+      setHeightCm(null);
+    } else {
+      setHeightFt(null);
+      setHeightIn(null);
+    }
+  }, [height_unit_preference]);
+
   // Validate inputs whenever they change
   useEffect(() => {
-    if (unit === 'imperial') {
+    if (height_unit_preference === 'imperial') {
       setIsValid(heightFt !== null && heightIn !== null);
     } else {
       setIsValid(heightCm !== null);
     }
-  }, [unit, heightFt, heightIn, heightCm]);
+  }, [height_unit_preference, heightFt, heightIn, heightCm]);
 
   // Mark step as complete when valid
   useEffect(() => {
@@ -39,22 +50,22 @@ export const GoalBodyMetricsHeight = () => {
 
   return (
     <View className="flex-1 bg-white px-4">
-      <Text className="text-3xl font-bold mt-4">Body metrics</Text>
+      <Text className="text-3xl font-bold mt-4">Height metrics</Text>
       <Text className="text-base text-gray-500 mb-6">This will be used to calibrate your custom plan</Text>
       {/* Unit Switch */}
       <View className="flex-row items-center justify-center mb-6">
-        <Text className={`text-lg mr-2 ${unit === 'imperial' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Imperial</Text>
+        <Text className={`text-lg mr-2 ${height_unit_preference === 'imperial' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Imperial</Text>
         <Switch
-          value={unit === 'metric'}
-          onValueChange={v => setUnit(v ? 'metric' : 'imperial')}
+          value={height_unit_preference === 'metric'}
+          onValueChange={v => setHeightUnitPreference(v ? 'metric' : 'imperial')}
           trackColor={{ false: '', true: '#ccc' }}
-          thumbColor={unit === 'metric' ? '#ffffff' : '#f4f3f4'}
+          thumbColor={height_unit_preference === 'metric' ? '#ffffff' : '#f4f3f4'}
         />
-        <Text className={`text-lg ml-2 ${unit === 'metric' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Metric</Text>
+        <Text className={`text-lg ml-2 ${height_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Metric</Text>
       </View>
 
       {/* Height Pickers */}
-      {unit === 'imperial' ? (
+      {height_unit_preference === 'imperial' ? (
         <View className="flex-row justify-between ml-5">
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>
