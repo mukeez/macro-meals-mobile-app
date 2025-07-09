@@ -1,292 +1,313 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CommonActions } from '@react-navigation/native';
-import useStore from '../store/useStore';
-import { authService } from '../services/authService';
-import CustomSafeAreaView  from '../components/CustomSafeAreaView';
-import BackButton from '../components/BackButton';
-import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialIcons } from '@expo/vector-icons';
-import { RootStackParamList } from '../types/navigation';
-import { useMixpanel } from '@macro-meals/mixpanel';
-import { useGoalsFlowStore } from '../store/goalsFlowStore';
-import { OnboardingContext } from 'src/contexts/OnboardingContext';
-import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { CommonActions } from "@react-navigation/native";
+import useStore from "../store/useStore";
+import { authService } from "../services/authService";
+import CustomSafeAreaView from "../components/CustomSafeAreaView";
+import BackButton from "../components/BackButton";
+import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { MaterialIcons } from "@expo/vector-icons";
+import { RootStackParamList } from "../types/navigation";
+import { useMixpanel } from "@macro-meals/mixpanel";
+import { useGoalsFlowStore } from "../store/goalsFlowStore";
+import { OnboardingContext } from "src/contexts/OnboardingContext";
+import { HasMacrosContext } from "src/contexts/HasMacrosContext";
 
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignupScreen'>;
+type NavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "SignupScreen"
+>;
 
 export const SignupScreen: React.FC = () => {
-    const [email, setEmail] = useState('');
-    const [nickname, setNickname] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
-    const { hasMacros, setHasMacros, setReadyForDashboard } = React.useContext(HasMacrosContext);
-    
-    const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword);
+  const [email, setEmail] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
+  const { hasMacros, setHasMacros, setReadyForDashboard } =
+    React.useContext(HasMacrosContext);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const mixpanel = useMixpanel();
+
+  const [errors, setErrors] = useState({
+    email: "",
+    nickname: "",
+    password: "",
+    confirmPassword: "",
+    terms: "",
+  });
+
+  const setAuthenticated = useStore((state) => state.setAuthenticated);
+  const navigation = useNavigation<NavigationProp>();
+  const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+
+  const validateForm = () => {
+    let isValid = true;
+
+    const newErrors = {
+      email: "",
+      nickname: "",
+      password: "",
+      confirmPassword: "",
+      terms: "",
     };
 
-    // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    // const [agreedToTerms, setAgreedToTerms] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const mixpanel = useMixpanel();
+    if (!email) {
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email is invalid";
+      isValid = false;
+    }
 
-    const [errors, setErrors] = useState({
-        email: '',
-        nickname: '',
-        password: '',
-        confirmPassword: '',
-        terms: '',
+    // if (nickname && nickname.length > 30) {
+    //     newErrors.nickname = 'Nickname must be less than 30 characters';
+    //     isValid = false;
+    // }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+      isValid = false;
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 6 characters";
+      isValid = false;
+    }
+
+    // if (!confirmPassword) {
+    //     newErrors.confirmPassword = 'Please confirm your password';
+    //     isValid = false;
+    // } else if (confirmPassword !== password) {
+    //     newErrors.confirmPassword = 'Passwords do not match';
+    //     isValid = false;
+    // }
+
+    // if (!agreedToTerms) {
+    //     newErrors.terms = 'You must agree to the Terms of Service and Privacy Policy';
+    //     isValid = false;
+    // }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+ const handleSignup = async () => {
+  if (!validateForm()) {
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const signUpTime = new Date().toISOString();
+    // user does NOT log in yet
+    const userId = await authService.signup({
+      email,
+      password,
     });
 
-    const setAuthenticated = useStore((state) => state.setAuthenticated);
-    const navigation = useNavigation<NavigationProp>();
-    const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+    if (mixpanel) {
+      mixpanel.identify(userId);
+      mixpanel.track({
+        name: "user_signed_up",
+        properties: {
+          signup_method: "email",
+          platform: Platform.OS,
+          signup_time: signUpTime,
+        },
+      });
+      mixpanel.register({ signup_time: signUpTime });
+    }
 
-    const validateForm = () => {
-        let isValid = true;
-        
-        const newErrors = {
-            email: '',
-            nickname: '',
-            password: '',
-            confirmPassword: '',
-            terms: '',
-        };
+    navigation.navigate("EmailVerificationScreen", {
+      email,
+      password,
+    });
 
-        if (!email) {
-            newErrors.email = 'Email is required';
-            isValid = false;
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            newErrors.email = 'Email is invalid';
-            isValid = false;
-        }
+  } catch (error) {
+    let errorMessage = "Failed to create account";
 
-        // if (nickname && nickname.length > 30) {
-        //     newErrors.nickname = 'Nickname must be less than 30 characters';
-        //     isValid = false;
-        // }
+    if (error instanceof Error) {
+      if (error.message.includes("email")) {
+        errorMessage =
+          "This email is already registered. Please use a different email or log in.";
+      } else {
+        errorMessage = error.message;
+      }
+    }
 
-        if (!password) {
-            newErrors.password = 'Password is required';
-            isValid = false;
-        } else if (password.length < 8) {
-            newErrors.password = 'Password must be at least 6 characters';
-            isValid = false;
-        }
+    Alert.alert("Signup Failed", errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-        // if (!confirmPassword) {
-        //     newErrors.confirmPassword = 'Please confirm your password';
-        //     isValid = false;
-        // } else if (confirmPassword !== password) {
-        //     newErrors.confirmPassword = 'Passwords do not match';
-        //     isValid = false;
-        // }
+  return (
+    <CustomSafeAreaView className="flex-1" edges={["left", "right"]}>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView className="flex-1 relative p-6">
+          <View className="flex-row items-center justify-start mb-3">
+            <BackButton onPress={() => navigation.navigate("LoginScreen")} />
+          </View>
 
-        // if (!agreedToTerms) {
-        //     newErrors.terms = 'You must agree to the Terms of Service and Privacy Policy';
-        //     isValid = false;
-        // }
+          <Text className="text-3xl font-medium text-black mb-2">
+            Begin Macro Tracking
+          </Text>
+          <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">
+            Enter your details to set up your account and start your tracking
+            journey.
+          </Text>
 
-        setErrors(newErrors);
-        return isValid;
-    };
-
-    const handleSignup = async () => {
-        if (!validateForm()) {
-            return;
-        }
-
-        setIsLoading(true);
-
-        try {
-            const signUpTime = new Date().toISOString();
-            const userId = await authService.signup({
-                email,
-                password,
-            });
-            if (mixpanel) {
-                mixpanel.identify(userId);
-                mixpanel.track({
-                    name: 'user_signed_up',
-                    properties:{
-                        signup_method: "email",
-                        platform: Platform.OS,
-                        signup_time: signUpTime,
-                    }
-                });
-                mixpanel.register({signup_time: signUpTime});
-            }
-            // setAuthenticated(true, '', userId);
-            // First get login data
-           // First get login data
-           const loginData = await authService.login({ email, password });
-            
-           // Store token temporarily for profile fetch
-           const token = loginData.access_token;
-           const loginUserId = loginData.user.id;
-           
-           // Then get profile using the token directly
-           const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
-               method: "GET",
-               headers: {
-                   "Authorization": `Bearer ${token}`,
-                   "Content-Type": "application/json"
-               }
-           });
-           
-           if (!profileResponse.ok) {
-               throw new Error(await profileResponse.text());
-           }
-           
-           const profile = await profileResponse.json();
-           
-           // Update storage
-           await Promise.all([
-               AsyncStorage.setItem('my_token', token),
-               AsyncStorage.setItem('user_id', loginUserId),
-               AsyncStorage.setItem('isOnboardingCompleted', 'true')
-           ]);
-            resetSteps();
-            setIsOnboardingCompleted(true);
-            // If user has macros, they should be ready for dashboard
-            setHasMacros(profile.has_macros);
-            setReadyForDashboard(profile.has_macros);
-            setAuthenticated(true, token, loginUserId);
-            navigation.navigate('Dashboard');
-
-        } catch (error) {
-            let errorMessage = 'Failed to create account';
-
-            if (error instanceof Error) {
-                if (error.message.includes('email')) {
-                    errorMessage = 'This email is already registered. Please use a different email or log in.';
-                } else {
-                    errorMessage = error.message;
-                }
-            }
-
-            Alert.alert('Signup Failed', errorMessage);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
-            <KeyboardAvoidingView
-                className="flex-1"
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          <View className="w-full">
+            <View
+              className={`${
+                errors.email ? "border border-red-500 rounded-md" : ""
+              }`}
             >
-            <ScrollView className="flex-1 relative p-6">
-                    <View className="flex-row items-center justify-start mb-3">
-                        <BackButton onPress={() => navigation.navigate('LoginScreen')}/>
-                    </View>
-
-                <Text className="text-3xl font-medium text-black mb-2">Begin Macro Tracking</Text>
-                <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Enter your details to set up your account and start your tracking journey.</Text>
-
-                <View className="w-full">
-                    <View className={`${errors.email ? 'border border-red-500 rounded-md' : ''}`}>
-                        
-                        <TextInput
-                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChangeText={(text) => {
-                                setEmail(text);
-                                // Validate email on change
-                                if (!text) {
-                                    setErrors(prev => ({ ...prev, email: 'Email is required' }));
-                                } else if (!/\S+@\S+\.\S+/.test(text)) {
-                                    setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
-                                } else {
-                                    setErrors(prev => ({ ...prev, email: '' }));
-                                }
-                            }}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            textContentType="emailAddress"
-                            spellCheck={false}
-                            autoComplete="email"
-                        />
-                    </View>
-                    {errors.email ? <Text className="text-red-500 text-sm mt-2">{errors.email}</Text> : null}
-
-
-                    <View className={`relative mt-6 mb-4 ${errors.password ? 'border border-red-500 rounded-md' : ''}`}>
-                        
-                        <TextInput
-                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-                            placeholder="Create password"
-                            value={password}
-                            onChangeText={(text) => {
-                                setPassword(text);
-                                if (errors.password) {
-                                    setErrors(prev => ({ ...prev, password: '' }));
-                                }
-                            }}
-                            secureTextEntry={!showPassword}
-                        />
-                        <MaterialIcons className='absolute right-4 top-1/2 -translate-y-1/2' name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
-                    </View>
-                    {errors.password ? <Text className="text-red-500 text-sm mt-2 mb-2">{errors.password}</Text> : null}
-                    <View className='flex-row items-center justify-start mt-2 w-full'>
-                        <View className={`w-[20px] h-[20px] rounded-full justify-center items-center mr-2 ${password.length >= 8 ? 'bg-primary' : 'bg-lightGrey'}`}>
-                            <MaterialIcons name="check" size={16} color='white' />
-                        </View> 
-                        <Text className='text-sm font-normal text-textMediumGrey'>Password must be at least 8 characters</Text>
-                    </View>
-                    
-
-                    {errors.terms ? <Text className="text-red-500 text-sm mb-3">{errors.terms}</Text> : null}
-                   
-
-                </View>
-            </ScrollView>
-
-            <View className="px-6 absolute bottom-0 w-full">
-                <View className="w-full items-center">
-                    <CustomTouchableOpacityButton 
-                        className={`h-[54px] w-full items-center justify-center bg-primary rounded-[100px] ${isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email) ? 'opacity-50' : ''}`} 
-                        title="Sign up"
-                        textClassName="text-white text-[17px] font-semibold"
-                        disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
-                        onPress={handleSignup}
-                        isLoading={isLoading}
-                    />
-                </View>
-                <View className="items-center justify-center px-6 mt-2">
-                    <Text className="text-[17px] text-center text-gray-600 flex-wrap">
-                        By signing up, you agree to our{' '}
-                        <Text 
-                            className="text-base text-primary font-medium"
-                            onPress={() => navigation.navigate('TermsOfServiceScreen')}
-                        >
-                            Terms of Service and Privacy Policy
-                        </Text>
-                    </Text>
-                </View>
+              <TextInput
+                className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  // Validate email on change
+                  if (!text) {
+                    setErrors((prev) => ({
+                      ...prev,
+                      email: "Email is required",
+                    }));
+                  } else if (!/\S+@\S+\.\S+/.test(text)) {
+                    setErrors((prev) => ({
+                      ...prev,
+                      email: "Email is invalid",
+                    }));
+                  } else {
+                    setErrors((prev) => ({ ...prev, email: "" }));
+                  }
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="emailAddress"
+                spellCheck={false}
+                autoComplete="email"
+              />
             </View>
-        </KeyboardAvoidingView>
-        </CustomSafeAreaView>
-    );
+            {errors.email ? (
+              <Text className="text-red-500 text-sm mt-2">{errors.email}</Text>
+            ) : null}
+
+            <View
+              className={`relative mt-6 mb-4 ${
+                errors.password ? "border border-red-500 rounded-md" : ""
+              }`}
+            >
+              <TextInput
+                className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                placeholder="Create password"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) {
+                    setErrors((prev) => ({ ...prev, password: "" }));
+                  }
+                }}
+                secureTextEntry={!showPassword}
+              />
+              <MaterialIcons
+                className="absolute right-4 top-1/2 -translate-y-1/2"
+                name={isPasswordVisible ? "visibility" : "visibility-off"}
+                size={24}
+                color="#000"
+                onPress={togglePasswordVisibility}
+              />
+            </View>
+            {errors.password ? (
+              <Text className="text-red-500 text-sm mt-2 mb-2">
+                {errors.password}
+              </Text>
+            ) : null}
+            <View className="flex-row items-center justify-start mt-2 w-full">
+              <View
+                className={`w-[20px] h-[20px] rounded-full justify-center items-center mr-2 ${
+                  password.length >= 8 ? "bg-primary" : "bg-lightGrey"
+                }`}
+              >
+                <MaterialIcons name="check" size={16} color="white" />
+              </View>
+              <Text className="text-sm font-normal text-textMediumGrey">
+                Password must be at least 8 characters
+              </Text>
+            </View>
+
+            {errors.terms ? (
+              <Text className="text-red-500 text-sm mb-3">{errors.terms}</Text>
+            ) : null}
+          </View>
+        </ScrollView>
+
+        <View className="px-6 absolute bottom-0 w-full">
+          <View className="w-full items-center">
+            <CustomTouchableOpacityButton
+              className={`h-[54px] w-full items-center justify-center bg-primary rounded-[100px] ${
+                isLoading ||
+                !email ||
+                !password ||
+                password.length < 8 ||
+                !/\S+@\S+\.\S+/.test(email)
+                  ? "opacity-50"
+                  : ""
+              }`}
+              title="Sign up"
+              textClassName="text-white text-[17px] font-semibold"
+              disabled={
+                isLoading ||
+                !email ||
+                !password ||
+                password.length < 8 ||
+                !/\S+@\S+\.\S+/.test(email)
+              }
+              onPress={handleSignup}
+              isLoading={isLoading}
+            />
+          </View>
+          <View className="items-center justify-center px-6 mt-2">
+            <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+              By signing up, you agree to our{" "}
+              <Text
+                className="text-base text-primary font-medium"
+                onPress={() => navigation.navigate("TermsOfServiceScreen")}
+              >
+                Terms of Service and Privacy Policy
+              </Text>
+            </Text>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </CustomSafeAreaView>
+  );
 };

@@ -168,18 +168,35 @@ export const SettingsScreen: React.FC = () => {
   /**
    * Handle logout action
    */
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      setAuthenticated(false, "", "");
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
+ const handleLogout = async () => {
+  Alert.alert(
+    "Are you sure you want to log out?",
+    "",
+    [
+      {
+        text: "Cancel",
+        style: "cancel"
+      },
+      {
+        text: "Log Out",
+        style: "destructive", 
+        onPress: async () => {
+          try {
+            await authService.logout();
+            setAuthenticated(false, "", "");
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+          } catch (error) {
+            console.error("Logout error:", error);
+          }
+        }
+      }
+    ],
+    { cancelable: true }
+  );
+};
 
   /**
    * Handle navigation to help screen
