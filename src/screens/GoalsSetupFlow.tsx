@@ -13,7 +13,8 @@ import BackButton from 'src/components/BackButton'
 import { GoalsDateOfBirth } from 'src/components/goal_flow_components/basic_info/GoalsDateOfBirth'
 import { LinearProgress } from 'src/components/LinearProgress'
 // import { GoalsLocation } from 'src/components/goal_flow_components/basic_info/GoalsLocation'
-import { GoalBodyMetrics } from 'src/components/goal_flow_components/basic_info/GoalsBodyMetrics'
+import { GoalBodyMetricsHeight } from 'src/components/goal_flow_components/basic_info/GoalBodyMetricsHeight'
+import { GoalBodyMetricsWeight } from 'src/components/goal_flow_components/basic_info/GoalsBodyMetricsWeight'
 import { GoalDailyActivityLevel } from 'src/components/goal_flow_components/basic_info/GoalsDailyActivityLevel'
 import { GoalsDietryPreference } from 'src/components/goal_flow_components/basic_info/GoalsDietryPreference'
 import { GoalsFitnessGoal } from 'src/components/goal_flow_components/your_goal/GoalsFitnessGoal'
@@ -60,158 +61,213 @@ export const GoalsSetupFlow =  () => {
   const [macroCalculationResponse, setMacroCalculationResponse] = React.useState<any>(null);
   const token = useStore((state) => state.token);
   const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
+  const [hasStartedCalculation, setHasStartedCalculation] = React.useState(false);
 
   const majorSteps = ['Basic info', 'Your goal', 'Your plan'];
-  const subStepCounts = [5, 3, 1];
+  const subStepCounts = [6, 3, 1];
   const isLastStepOfSecondMajor = majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
 
   React.useEffect(() => {
-    if (isLastStepOfSecondMajor) {
-      const fetchAndStorePreferences = async () => {
+    if (isLastStepOfSecondMajor && !hasStartedCalculation) {
+      const fetchDataAndCalculateMacros = async () => {
+        setHasStartedCalculation(true);
         setIsLoading(true);
         try {
-          const response = await fetch(`${API_URL}/preferences/get-preferences`, {
+          // Validate token first
+          if (!token) {
+            console.error('No auth token available');
+            Alert.alert('Error', 'Please log in again');
+            return;
+          }
+
+          // Fetch preferences first
+          console.log('Fetching preferences...');
+          const prefsResponse = await fetch(`${API_URL}/preferences/get-preferences`, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
           });
-          const data = await response.json();
-          setPreferences(data);
-          // Map API response to macroTargets
-          setMacroTargets({
-            carbs: data.carbs_target,
-            fat: data.fat_target,
-            protein: data.protein_target,
-            calorie: data.calorie_target,
-          });
-        } catch (error) {
-          Alert.alert('Error', 'Failed to fetch your preferences');
+
+          if (!prefsResponse.ok) {
+            if (prefsResponse.status === 401) {
+              console.error('Token expired or invalid');
+              Alert.alert('Session Expired', 'Please log in again');
+              return;
+            }
+            throw new Error('Failed to fetch preferences');
+          }
+
+          const data = await prefsResponse.json();
+          console.log('Preferences fetched:', data);
+          
+          if (data.detail === "Not Found") {
+            console.error('Preferences not found');
+            // Continue with macro calculation even if preferences aren't found
+          } else {
+            setPreferences(data);
+            // Map API response to macroTargets
+            setMacroTargets({
+              carbs: data.carbs_target,
+              fat: data.fat_target,
+              protein: data.protein_target,
+              calorie: data.calorie_target,
+            });
+          }
+
+          // Then calculate macros
+          console.log('Starting macro calculation...');
+          await calculateMacros();
+        } catch (error: any) {
+          console.error('Error in fetchDataAndCalculateMacros:', error);
+          if (!error.message?.includes('Failed to calculate macros')) {
+            Alert.alert('Error', 'Failed to fetch your preferences');
+          }
         } finally {
           setIsLoading(false);
         }
       };
-      fetchAndStorePreferences();
-      calculateMacros();
+      fetchDataAndCalculateMacros();
     }
   }, [isLastStepOfSecondMajor]);
 
   const calculateMacros = async () => {
     try {
-      setIsLoading(true);
-      try {
-        // Validate required fields
-        if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || !progressRate) {
-          throw new Error('Missing required fields');
-        }
-
-        // Calculate height (do not convert, just pass as is)
-        let heightValue = 0;
-        if (unit === 'imperial') {
-          if (heightFt === null) {
-            throw new Error('Missing height measurement');
-          }
-          heightValue = heightFt;
-        } else {
-          if (heightCm === null) {
-            throw new Error('Missing height measurement');
-          }
-          heightValue = heightCm;
-        }
-
-        // Calculate weight (do not convert, just pass as is)
-        let weightValue = 0;
-        if (unit === 'imperial') {
-          if (weightLb === null) {
-            throw new Error('Missing weight measurement');
-          }
-          weightValue = weightLb;
-        } else {
-          if (weightKg === null) {
-            throw new Error('Missing weight measurement');
-          }
-          weightValue = weightKg;
-        }
-
-        // Map and format API fields
-        const sexApi = gender?.toLowerCase(); // "male" or "female"
-        const dobApi = (() => {
-          if (dateOfBirth && dateOfBirth.includes('/')) {
-            const [day, month, year] = dateOfBirth.split('/');
-            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-          }
-          return dateOfBirth;
-        })();
-
-        const activityLevelMap: Record<string, string> = {
-          "Not very active": "sedentary",
-          "Moderately active": "moderate",
-          "Very active": "active"
-        };
-        const activityLevelApi = activityLevelMap[dailyActivityLevel] || "sedentary";
-
-        const goalTypeMap: Record<string, string> = {
-          "Lose weight": "lose",
-          "Maintain weight": "maintain",
-          "Gain weight": "gain"
-        };
-        const goalTypeApi = goalTypeMap[fitnessGoal] || "maintain";
-
-        const response = await fetch(`${API_URL}/macros/calculate-macros`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            activity_level: activityLevelApi,
-            age: calculateAge(dateOfBirth),
-            dietary_preference: dietryPreference,
-            dob: dobApi,
-            goal_type: goalTypeApi,
-            height: heightValue,
-            progress_rate: progressRate,
-            sex: sexApi,
-            target_weight: targetWeight,
-            unit_preference: unit,
-            weight: weightValue
-          })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          Alert.alert('Error', errorText);
-          throw new Error('Failed to calculate macros');
-        }
-
-        const responseData = await response.json();
-        console.log('Macro calculation response:', responseData);
-        setMacroCalculationResponse(responseData);
-        
-        // Update macro targets with the response data
-        setMacroTargets({
-          carbs: responseData.carbs,
-          fat: responseData.fat,
-          protein: responseData.protein,
-          calorie: responseData.calories,
-        });
-
-        // Set hasMacros to true after successful calculation
-        setHasMacros(true);
-        
-        // Navigate to PaymentScreen
-        // navigation.navigate('PaymentScreen');
-        
-      } catch (error) {
-        Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
-      } finally {
-        setIsLoading(false);
+      if (!token) {
+        throw new Error('No auth token available');
       }
-      return;
-    } catch (error) {
-      Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
+
+      // Validate required fields
+      console.log('Validating fields for macro calculation...');
+      if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || !progressRate) {
+        console.error('Missing required fields:', {
+          dateOfBirth: !!dateOfBirth,
+          gender: !!gender,
+          dailyActivityLevel: !!dailyActivityLevel,
+          dietryPreference: !!dietryPreference,
+          fitnessGoal: !!fitnessGoal,
+          targetWeight: !!targetWeight,
+          progressRate: !!progressRate
+        });
+        throw new Error('Missing required fields');
+      }
+
+      // Calculate height (do not convert, just pass as is)
+      let heightValue = 0;
+      if (unit === 'imperial') {
+        if (heightFt === null) {
+          console.error('Missing imperial height measurement');
+          throw new Error('Missing height measurement');
+        }
+        heightValue = heightFt;
+      } else {
+        if (heightCm === null) {
+          console.error('Missing metric height measurement');
+          throw new Error('Missing height measurement');
+        }
+        heightValue = heightCm;
+      }
+
+      // Calculate weight (do not convert, just pass as is)
+      let weightValue = 0;
+      if (unit === 'imperial') {
+        if (weightLb === null) {
+          console.error('Missing imperial weight measurement');
+          throw new Error('Missing weight measurement');
+        }
+        weightValue = weightLb;
+      } else {
+        if (weightKg === null) {
+          console.error('Missing metric weight measurement');
+          throw new Error('Missing weight measurement');
+        }
+        weightValue = weightKg;
+      }
+
+      // Map and format API fields
+      const sexApi = gender?.toLowerCase(); // "male" or "female"
+      const dobApi = (() => {
+        if (dateOfBirth && dateOfBirth.includes('/')) {
+          const [day, month, year] = dateOfBirth.split('/');
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        return dateOfBirth;
+      })();
+
+      const activityLevelMap: Record<string, string> = {
+        "Not very active": "sedentary",
+        "Moderately active": "moderate",
+        "Very active": "active"
+      };
+      const activityLevelApi = activityLevelMap[dailyActivityLevel] || "sedentary";
+
+      const goalTypeMap: Record<string, string> = {
+        "Lose weight": "lose",
+        "Maintain weight": "maintain",
+        "Gain weight": "gain"
+      };
+      const goalTypeApi = goalTypeMap[fitnessGoal] || "maintain";
+
+      const requestData = {
+        activity_level: activityLevelApi,
+        age: calculateAge(dateOfBirth),
+        dietary_preference: dietryPreference,
+        dob: dobApi,
+        goal_type: goalTypeApi,
+        height: heightValue,
+        progress_rate: progressRate,
+        sex: sexApi,
+        target_weight: targetWeight,
+        unit_preference: unit,
+        weight: weightValue
+      };
+
+      console.log('Making macro calculation API request with data:', requestData);
+
+      const response = await fetch(`${API_URL}/macros/calculate-macros`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Macro calculation API error:', errorText);
+        
+        if (response.status === 401) {
+          Alert.alert('Session Expired', 'Please log in again');
+          return;
+        }
+        
+        Alert.alert('Error', 'Failed to calculate your macros');
+        throw new Error('Failed to calculate macros');
+      }
+
+      const responseData = await response.json();
+      console.log('Macro calculation successful, response:', responseData);
+      setMacroCalculationResponse(responseData);
+      
+      // Update macro targets with the response data
+      setMacroTargets({
+        carbs: responseData.carbs,
+        fat: responseData.fat,
+        protein: responseData.protein,
+        calorie: responseData.calories,
+      });
+
+      // Set hasMacros to true after successful calculation
+      setHasMacros(true);
+    } catch (error: any) {
+      console.error('Error in calculateMacros:', error);
+      if (!error.message?.includes('No auth token')) {
+        Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
+      }
+      throw error;
     }
-  }
+  };
 
   // Add a function to handle going to dashboard
   const handleGoToDashboard = () => {
@@ -221,8 +277,8 @@ export const GoalsSetupFlow =  () => {
   const basicInfoSubsteps = [
     <GoalsGender key="gender" />,
     <GoalsDateOfBirth key="dob" />,
-    // <GoalsLocation key="location" />,
-    <GoalBodyMetrics key="bodymetrics" />,
+    <GoalBodyMetricsHeight key="height_metrics" />,
+    <GoalBodyMetricsWeight key="weight_metrics" />,
     <GoalDailyActivityLevel key="activity" />,
     <GoalsDietryPreference key="diet" />,
   ];
@@ -234,15 +290,15 @@ export const GoalsSetupFlow =  () => {
   ];
 
   // Macro data for GoalsPersonalizedPlan
-  const macroData = macroTargets
+  const macroData = React.useMemo(() => macroTargets
     ? [
         { type: 'Carbs', value: macroTargets.carbs, color: '#FFC107' },
         { type: 'Fat', value: macroTargets.fat, color: '#E283E0' },
         { type: 'Protein', value: macroTargets.protein, color: '#A59DFE' },
       ]
-    : [];
+    : [], [macroTargets]);
 
-  const yourPlanSubsteps = [
+  const yourPlanSubsteps = React.useMemo(() => [
     <GoalsPersonalizedPlan 
       isLoading={isLoading} 
       key="plan" 
@@ -250,7 +306,7 @@ export const GoalsSetupFlow =  () => {
       calorieTarget={preferences?.calorie_target}
       macroCalculationResponse={macroCalculationResponse}
     />,
-  ];
+  ], [isLoading, macroData, preferences?.calorie_target, macroCalculationResponse]);
 
   const substepComponents = [
     basicInfoSubsteps,
@@ -271,15 +327,22 @@ export const GoalsSetupFlow =  () => {
     // }
     if (majorStep === 0 && subSteps[majorStep] === 2) {
       if (unit === 'imperial') {
-        return heightFt !== null && heightIn !== null && weightLb !== null;
+        return heightFt !== null && heightIn !== null;
       } else {
-        return heightCm !== null && weightKg !== null;
+        return heightCm !== null;
       }
     }
     if (majorStep === 0 && subSteps[majorStep] === 3) {
-      return !!dailyActivityLevel;
+      if (unit === 'imperial') {
+        return weightLb !== null;
+      } else {
+        return weightKg !== null;
+      }
     }
     if (majorStep === 0 && subSteps[majorStep] === 4) {
+      return !!dailyActivityLevel;
+    }
+    if (majorStep === 0 && subSteps[majorStep] === 5) {
       return !!dietryPreference;
     }
     if (majorStep === 1 && subSteps[majorStep] === 0) {
@@ -335,21 +398,31 @@ export const GoalsSetupFlow =  () => {
     //   if (!location) return;
     // }
 
-    // Body metrics substep
+    // Height metrics substep
     if (majorStep === 0 && subSteps[majorStep] === 2) {
       if (unit === 'imperial') {
-        if (heightFt === null || heightIn === null || weightLb === null) return;
+        if (heightFt === null || heightIn === null) return;
       } else {
-        if (heightCm === null || weightKg === null) return;
+        if (heightCm === null) return;
+      }
+    }
+    
+    // Weight metrics substep
+    if (majorStep === 0 && subSteps[majorStep] === 3) {
+      if (unit === 'imperial') {
+        if (weightLb === null) return;
+      } else {
+        if (weightKg === null) return;
       }
     }
 
-    // If last Basic Info substep, navigate to GoalSetupScreen
-    if (majorStep === 0 && subSteps[majorStep] === 3) {
+    // Daily Activity Level substep
+    if (majorStep === 0 && subSteps[majorStep] === 4) {
       if (!dailyActivityLevel) return;
     }
 
-    if (majorStep === 0 && subSteps[majorStep] === 4) {
+    // Dietary Preference substep (last Basic Info substep)
+    if (majorStep === 0 && subSteps[majorStep] === 5) {
       if (!dietryPreference) return;
       markSubStepComplete(majorStep, subSteps[majorStep]);
       navigation.navigate('GoalSetupScreen');
