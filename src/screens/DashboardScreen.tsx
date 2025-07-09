@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -24,6 +25,8 @@ import { CircularProgress } from "../components/CircularProgress";
 import { LinearProgress } from "../components/LinearProgress";
 import { RootStackParamList } from "../types/navigation";
 import { userService } from "../services/userService";
+import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
+import { appConstants } from "constants/appConstants";
 
 // type RootStackParamList = {
 //     MacroInput: undefined;
@@ -60,6 +63,12 @@ interface TodayMeal {
   meal_time: string;
   created_at: string;
   user_id: string;
+  photo_url?: string;
+  logging_mode?: string;
+  amount?: number;
+  serving_unit?: string;
+  read_only?: boolean;
+  meal_type?: string;
 }
 
 export const DashboardScreen: React.FC = () => {
@@ -125,6 +134,12 @@ export const DashboardScreen: React.FC = () => {
         const profileResponse = await userService.getProfile();
         setStoreProfile(profileResponse);
         setProfile(profileResponse);
+        macroMealsCrashlytics.setUserAttributes({
+          userId: profileResponse.id,
+          email: profileResponse.email,
+          userType: profileResponse.is_pro ? 'pro' : 'free',
+        });
+        console.log('PROFILE RESPONSE', profileResponse)
         setUsername(profileResponse.display_name || undefined);
 
         const prefsResponse = await userService.getPreferences();
@@ -136,6 +151,8 @@ export const DashboardScreen: React.FC = () => {
           fat: prefsResponse.fat_target,
           calories: prefsResponse.calorie_target,
         });
+
+        // macroMealsCrashlytics.triggerCrash();
 
         const progressResponse = await fetch(
           "https://api.macromealsapp.com/api/v1/meals/progress/today",
@@ -357,10 +374,12 @@ export const DashboardScreen: React.FC = () => {
                   {getGreeting(username)}
                 </Text>
               </View>
+              <TouchableOpacity onPress={() => navigation.navigate('NotificationsScreen')}>
               <Image
-                source={IMAGE_CONSTANTS.mealsIcon}
+                source={IMAGE_CONSTANTS.notificationIcon}
                 className="w-[24px] h-[24px] object-fill"
               />
+              </TouchableOpacity>
             </View>
             {profile.has_macros === false ||
               profile.has_macros === undefined ? (
@@ -505,10 +524,10 @@ export const DashboardScreen: React.FC = () => {
                 </View>
               ) : (
                 todayMeals.map((meal, index) => (
-                  <View key={index} className="flex-row items-start mt-3">
+                  <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
                     <Image
-                      source={IMAGE_CONSTANTS.sampleFood}
-                      className="w-[90px] h-[90px] object-fill mr-2"
+                      source={meal.photo_url ? { uri: meal.photo_url } : IMAGE_CONSTANTS.sampleFood}
+                      className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
                     />
                     <View className="flex-1 flex-col">
                       <View className="flex-row items-center justify-between mb-2">
@@ -519,8 +538,26 @@ export const DashboardScreen: React.FC = () => {
                         >
                           {meal.name}
                         </Text>
-                        <TouchableOpacity>
-                          <View className="w-[24px] h-[24px] rounded-full justify-center items-center bg-gray-100">
+                        <TouchableOpacity onPress={() => {
+                                  navigation.navigate('EditMealScreen', {
+                                    analyzedData: {
+                                      id: meal.id,
+                                      name: meal.name,
+                                      calories: meal.calories,
+                                      protein: meal.protein,
+                                      carbs: meal.carbs,
+                                      fat: meal.fat,
+                                      meal_type: meal.meal_type,
+                                      serving_unit: meal.serving_unit || 'serving',
+                                      amount: meal.amount,
+                                      logging_mode: meal.logging_mode,
+                                      meal_time: meal.meal_time,
+                                      photo_url: meal.photo_url,
+                                      read_only: meal.read_only
+                                    }
+                                  });
+                                }}>
+                          <View className="w-[24px] h-[24px] rounded-full justify-center items-center bg-grey">
                             <Image
                               source={IMAGE_CONSTANTS.editIcon}
                               className="w-[13px] h-[13px]"
@@ -535,11 +572,17 @@ export const DashboardScreen: React.FC = () => {
                         </Text>
                         <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
                         <Image
-                          source={IMAGE_CONSTANTS.mealScan}
-                          className="w-[16px] h-[16px] object-fill mr-1"
+                          tintColor="#000000"
+                          source={
+                            meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
+                            meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
+                            meal.logging_mode === 'scan' ? IMAGE_CONSTANTS.scanMealIcon :
+                            IMAGE_CONSTANTS.fireIcon // default to fire icon
+                          }
+                          className="w-[12px] h-[12px] object-fill mr-1"
                         />
                         <Text className="text-sm text-textMediumGrey text-center font-medium">
-                          Meal Scan
+                          {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}
                         </Text>
                       </View>
 

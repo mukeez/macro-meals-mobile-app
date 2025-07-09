@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "privacyPolicy": "https://your-privacy-policy-url.com",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -19,6 +20,7 @@
         "NSLocationWhenInUseUsageDescription": "We need your location to find nearby meals that match your macro goals",
         "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals",
         "NSCameraUsageDescription": "Macro Meals needs camera access to scan barcodes and take photos of your meals for accurate macro tracking and meal logging.",
+        "NSPhotoLibraryUsageDescription": "Macro Meals needs access to your photo library to let you add photos of your meals for logging.",
         "UIBackgroundModes": [
           "remote-notification",
           "remote-notification"
@@ -27,7 +29,9 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "appleTeamId": "SA3LF6JRDF",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "merchantId": "merchant.com.macromeals.app",
+      "usesApplePay": true
     },
     "android": {
       "splash": {
@@ -47,9 +51,12 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.WAKE_LOCK",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "extraProguardRules": "-dontwarn com.stripe.android.pushProvisioning.** -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivity$g -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Args -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Error -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter -dontwarn com.stripe.android.pushProvisioning.PushProvisioningEphemeralKeyProvider -dontwarn com.stripe.android.pushProvisioning.EphemeralKeyUpdateListener"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -73,11 +80,17 @@
         }
       ],
       "@react-native-firebase/messaging",
+      "@react-native-firebase/crashlytics",
       [
         "expo-build-properties",
         {
           "ios": {
             "useFrameworks": "static"
+          },
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableDexGuardInReleaseBuilds": true,
+            "extraProguardRules": "-dontwarn com.stripe.android.pushProvisioning.** -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivity$g -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Args -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Error -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter -dontwarn com.stripe.android.pushProvisioning.PushProvisioningEphemeralKeyProvider -dontwarn com.stripe.android.pushProvisioning.EphemeralKeyUpdateListener"
           }
         }
       ],
