@@ -35,8 +35,12 @@ export type RootStackParamList = {
         carbs: number;
         fat: number;
         quantity: number;
+        amount?: number;
+        serving_unit?: string;
+        is_favourite?: boolean;
         meal_type?: string;
         meal_time?: string;
+        logging_mode?: string;
       };
     };
     SnapMeal: undefined;
@@ -65,17 +69,19 @@ export type RootStackParamList = {
     NotificationsScreen: undefined;
     EditMealScreen: {
       analyzedData?: {
+        id: string;
         name: string;
         calories: number;
         protein: number;
         carbs: number;
         fat: number;
-        quantity: number;
         meal_type?: string;
-        serving_size?: number;
-        no_of_servings?: number;
+        serving_unit?: string;
+        amount?: number;
         logging_mode?: string;
         meal_time?: string;
+        photo_url?: string;
+        read_only?: boolean;
       };
     };
 };
