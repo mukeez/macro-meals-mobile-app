@@ -22,8 +22,9 @@ import { GoalsTargetWeight } from 'src/components/goal_flow_components/your_goal
 import { GoalsProgressRate } from 'src/components/goal_flow_components/your_goal/GoalsProgressRate'
 import { GoalsPersonalizedPlan } from 'src/components/goal_flow_components/your_plan/GoalsPersonalizedPlan'
 import { HasMacrosContext } from '../contexts/HasMacrosContext'
+import { API_CONSTANTS } from 'src/constants/api_constants';
 
-const API_URL = 'https://api.macromealsapp.com/api/v1';
+const API_URL = API_CONSTANTS.API_URL;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'GoalsSetupFlow'>;
 
@@ -40,14 +41,15 @@ export const GoalsSetupFlow =  () => {
     gender, 
     dateOfBirth, 
     location, 
-    unit, 
+    height_unit_preference,
+    weight_unit_preference,
     heightFt, 
     heightIn, 
     heightCm, 
     weightLb, 
     weightKg, 
     dailyActivityLevel, 
-    dietryPreference ,
+    dietryPreference,
     fitnessGoal,
     targetWeight,
     progressRate,
@@ -80,14 +82,19 @@ export const GoalsSetupFlow =  () => {
             return;
           }
 
+          console.log('Starting preferences fetch with token:', token.substring(0, 10) + '...');
+
           // Fetch preferences first
-          console.log('Fetching preferences...');
-          const prefsResponse = await fetch(`${API_URL}/preferences/get-preferences`, {
+          const prefsResponse = await fetch(`${API_URL}/user/preferences`, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
           });
+
+          console.log('Preferences response status:', prefsResponse.status);
+          const responseText = await prefsResponse.text();
+          console.log('Raw response:', responseText);
 
           if (!prefsResponse.ok) {
             if (prefsResponse.status === 401) {
@@ -95,11 +102,18 @@ export const GoalsSetupFlow =  () => {
               Alert.alert('Session Expired', 'Please log in again');
               return;
             }
+            console.error('Failed to fetch preferences. Status:', prefsResponse.status, 'Response:', responseText);
             throw new Error('Failed to fetch preferences');
           }
 
-          const data = await prefsResponse.json();
-          console.log('Preferences fetched:', data);
+          let data;
+          try {
+            data = JSON.parse(responseText);
+            console.log('Preferences fetched successfully:', data);
+          } catch (e) {
+            console.error('Failed to parse preferences response:', e);
+            throw new Error('Failed to parse preferences response');
+          }
           
           if (data.detail === "Not Found") {
             console.error('Preferences not found');
@@ -120,6 +134,11 @@ export const GoalsSetupFlow =  () => {
           await calculateMacros();
         } catch (error: any) {
           console.error('Error in fetchDataAndCalculateMacros:', error);
+          console.error('Full error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
           if (!error.message?.includes('Failed to calculate macros')) {
             Alert.alert('Error', 'Failed to fetch your preferences');
           }
@@ -129,7 +148,7 @@ export const GoalsSetupFlow =  () => {
       };
       fetchDataAndCalculateMacros();
     }
-  }, [isLastStepOfSecondMajor]);
+  }, [isLastStepOfSecondMajor, token]);
 
   const calculateMacros = async () => {
     try {
@@ -138,7 +157,23 @@ export const GoalsSetupFlow =  () => {
       }
 
       // Validate required fields
-      console.log('Validating fields for macro calculation...');
+      console.log('Validating fields for macro calculation with:', {
+        dateOfBirth,
+        gender,
+        dailyActivityLevel,
+        dietryPreference,
+        fitnessGoal,
+        targetWeight,
+        progressRate,
+        height_unit_preference,
+        weight_unit_preference,
+        heightFt,
+        heightIn,
+        heightCm,
+        weightLb,
+        weightKg
+      });
+
       if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || !progressRate) {
         console.error('Missing required fields:', {
           dateOfBirth: !!dateOfBirth,
@@ -154,7 +189,7 @@ export const GoalsSetupFlow =  () => {
 
       // Calculate height (do not convert, just pass as is)
       let heightValue = 0;
-      if (unit === 'imperial') {
+      if (height_unit_preference === 'imperial') {
         if (heightFt === null) {
           console.error('Missing imperial height measurement');
           throw new Error('Missing height measurement');
@@ -170,7 +205,7 @@ export const GoalsSetupFlow =  () => {
 
       // Calculate weight (do not convert, just pass as is)
       let weightValue = 0;
-      if (unit === 'imperial') {
+      if (weight_unit_preference === 'imperial') {
         if (weightLb === null) {
           console.error('Missing imperial weight measurement');
           throw new Error('Missing weight measurement');
@@ -218,13 +253,13 @@ export const GoalsSetupFlow =  () => {
         progress_rate: progressRate,
         sex: sexApi,
         target_weight: targetWeight,
-        unit_preference: unit,
+        unit_preference: height_unit_preference, // Use height_unit_preference
         weight: weightValue
       };
 
       console.log('Making macro calculation API request with data:', requestData);
 
-      const response = await fetch(`${API_URL}/macros/calculate-macros`, {
+      const response = await fetch(`${API_URL}/macros/macros-setup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -326,14 +361,14 @@ export const GoalsSetupFlow =  () => {
     //   return !!location;
     // }
     if (majorStep === 0 && subSteps[majorStep] === 2) {
-      if (unit === 'imperial') {
+      if (height_unit_preference === 'imperial') {
         return heightFt !== null && heightIn !== null;
       } else {
         return heightCm !== null;
       }
     }
     if (majorStep === 0 && subSteps[majorStep] === 3) {
-      if (unit === 'imperial') {
+      if (weight_unit_preference === 'imperial') {
         return weightLb !== null;
       } else {
         return weightKg !== null;
@@ -365,12 +400,35 @@ export const GoalsSetupFlow =  () => {
   };
 
   const handleContinue = async () => {
+    console.log('handleContinue called with:', {
+      majorStep,
+      subSteps,
+      isCurrentSubStepValid: isCurrentSubStepValid(),
+      macroTargets,
+      fitnessGoal,
+      targetWeight,
+      progressRate,
+      height_unit_preference,
+      weight_unit_preference,
+      weightKg,
+      weightLb,
+      heightCm,
+      heightFt,
+      heightIn,
+      dailyActivityLevel,
+      dietryPreference,
+      gender,
+      dateOfBirth
+    });
+
     if (!isCurrentSubStepValid()) return;
 
     // Check if we're on the last step of the second major step
     const isLastStepOfSecondMajor = majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
+    console.log('Is last step of second major:', isLastStepOfSecondMajor);
 
     if (isLastStepOfSecondMajor) {
+      console.log('Marking substep complete and navigating to GoalSetupScreen');
       markSubStepComplete(majorStep, subSteps[majorStep]);
       navigation.navigate('GoalSetupScreen');
       return;
@@ -400,7 +458,7 @@ export const GoalsSetupFlow =  () => {
 
     // Height metrics substep
     if (majorStep === 0 && subSteps[majorStep] === 2) {
-      if (unit === 'imperial') {
+      if (height_unit_preference === 'imperial') {
         if (heightFt === null || heightIn === null) return;
       } else {
         if (heightCm === null) return;
@@ -409,7 +467,7 @@ export const GoalsSetupFlow =  () => {
     
     // Weight metrics substep
     if (majorStep === 0 && subSteps[majorStep] === 3) {
-      if (unit === 'imperial') {
+      if (weight_unit_preference === 'imperial') {
         if (weightLb === null) return;
       } else {
         if (weightKg === null) return;

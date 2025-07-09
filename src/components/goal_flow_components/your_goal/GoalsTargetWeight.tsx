@@ -8,27 +8,27 @@ export const GoalsTargetWeight: React.FC = () => {
   const targetWeight = useGoalsFlowStore((s) => s.targetWeight);
   const setTargetWeight = useGoalsFlowStore((s) => s.setTargetWeight);
   const fitnessGoal = useGoalsFlowStore((s) => s.fitnessGoal);
-  const unit = useGoalsFlowStore((s) => s.unit);
+  const weight_unit_preference = useGoalsFlowStore((s) => s.weight_unit_preference);
   const weightLb = useGoalsFlowStore((s) => s.weightLb);
   const weightKg = useGoalsFlowStore((s) => s.weightKg);
 
   // Convert previous weight to the current unit
   const previousWeight = useMemo(() => {
-    if (unit === 'imperial') {
+    if (weight_unit_preference === 'imperial') {
       return weightLb ?? 0;
-    } else if (unit === 'metric') {
+    } else if (weight_unit_preference === 'metric') {
       return weightKg ?? 0;
     }
     return 0;
-  }, [unit, weightLb, weightKg]);
+  }, [weight_unit_preference, weightLb, weightKg]);
 
   // Initialize weight based on unit and previous weight
   const initialWeight = useMemo(() => {
     if (targetWeight) {
       return targetWeight;
     }
-    return Math.round(previousWeight) || (unit === 'imperial' ? 150 : 70);
-  }, [targetWeight, previousWeight, unit]);
+    return Math.round(previousWeight) || (weight_unit_preference === 'imperial' ? 150 : 70);
+  }, [targetWeight, previousWeight, weight_unit_preference]);
 
   const [weight, setWeight] = useState(initialWeight);
   const [inputValue, setInputValue] = useState(initialWeight.toString());
@@ -37,12 +37,12 @@ export const GoalsTargetWeight: React.FC = () => {
 
   // Weight ranges based on unit
   const weightRange = useMemo(() => {
-    if (unit === 'imperial') {
+    if (weight_unit_preference === 'imperial') {
       return { min: 80, max: 400 };
     } else {
       return { min: 35, max: 180 }; // kg range
     }
-  }, [unit]);
+  }, [weight_unit_preference]);
 
   // Determine if the weight text should be red
   const isRed = useMemo(() => {
@@ -56,7 +56,7 @@ export const GoalsTargetWeight: React.FC = () => {
   }, [fitnessGoal, weight, previousWeight]);
 
   // Display unit
-  const weightUnit = unit === 'imperial' ? 'lbs' : 'kg';
+  const weightUnit = weight_unit_preference === 'imperial' ? 'lbs' : 'kg';
 
   // Save to store on change
   React.useEffect(() => {

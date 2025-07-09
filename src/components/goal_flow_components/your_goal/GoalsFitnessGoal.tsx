@@ -9,7 +9,7 @@ export const GoalsFitnessGoal: React.FC = () => {
     const setFitnessGoal = useGoalsFlowStore((state) => state.setFitnessGoal);
     const setTargetWeight = useGoalsFlowStore((state) => state.setTargetWeight);
     const setProgressRate = useGoalsFlowStore((state) => state.setProgressRate);
-    const unit = useGoalsFlowStore((state) => state.unit);
+    const weight_unit_preference = useGoalsFlowStore((state) => state.weight_unit_preference);
     const weightLb = useGoalsFlowStore((state) => state.weightLb);
     const weightKg = useGoalsFlowStore((state) => state.weightKg);
     const markSubStepComplete = useGoalsFlowStore((state) => state.markSubStepComplete);
@@ -17,7 +17,7 @@ export const GoalsFitnessGoal: React.FC = () => {
     const handleMaintainWeight = () => {
         setFitnessGoal('Maintain weight');
         // Set target weight to current weight
-        const currentWeight = unit === 'imperial' ? weightLb : weightKg;
+        const currentWeight = weight_unit_preference === 'imperial' ? weightLb : weightKg;
         if (currentWeight !== null) {
             setTargetWeight(currentWeight);
             // Set progress rate to 0

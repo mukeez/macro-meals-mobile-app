@@ -7,14 +7,14 @@ import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
 export const GoalsProgressRate: React.FC = () => {
   const progressRate = useGoalsFlowStore((s) => s.progressRate);
   const setProgressRate = useGoalsFlowStore((s) => s.setProgressRate);
-  const unit = useGoalsFlowStore((s) => s.unit);
+  const weight_unit_preference = useGoalsFlowStore((s) => s.weight_unit_preference);
   const weightLb = useGoalsFlowStore((s) => s.weightLb);
   const weightKg = useGoalsFlowStore((s) => s.weightKg);
   const targetWeight = useGoalsFlowStore((s) => s.targetWeight);
   const fitnessGoal = useGoalsFlowStore((s) => s.fitnessGoal);
 
   // Get current weight based on unit
-  const currentWeight = unit === 'imperial' ? (weightLb || 0) : (weightKg || 0);
+  const currentWeight = weight_unit_preference === 'imperial' ? (weightLb || 0) : (weightKg || 0);
   
   // Calculate weight difference
   const weightDifference = Math.abs((targetWeight || 0) - currentWeight);
@@ -22,9 +22,9 @@ export const GoalsProgressRate: React.FC = () => {
   // Get recommended rate based on fitness goal
   const getRecommendedRate = () => {
     if (fitnessGoal === 'Lose weight') {
-      return unit === 'imperial' ? 1.0 : 0.45; // 1 lb or 0.45 kg per week
+      return weight_unit_preference === 'imperial' ? 1.0 : 0.45; // 1 lb or 0.45 kg per week
     } else if (fitnessGoal === 'Gain weight') {
-      return unit === 'imperial' ? 0.5 : 0.23; // 0.5 lb or 0.23 kg per week
+      return weight_unit_preference === 'imperial' ? 0.5 : 0.23; // 0.5 lb or 0.23 kg per week
     }
     return 0;
   };
@@ -71,7 +71,7 @@ export const GoalsProgressRate: React.FC = () => {
   const rateText = unreasonable ? "Faster (be careful)" : "Standard (Recommended)";
   
   // Weight unit for display
-  const weightUnit = unit === 'imperial' ? 'lbs' : 'kg';
+  const weightUnit = weight_unit_preference === 'imperial' ? 'lbs' : 'kg';
 
   // Rate sign based on fitness goal
   const rateSign = fitnessGoal === 'Lose weight' ? '-' : '+';
@@ -93,8 +93,8 @@ export const GoalsProgressRate: React.FC = () => {
           <Slider
             style={{ width: '100%', height: 40 }}
             minimumValue={0}
-            maximumValue={unit === 'imperial' ? 3.0 : 1.36} // 3 lbs or 1.36 kg
-            step={unit === 'imperial' ? 0.01 : 0.005}
+            maximumValue={weight_unit_preference === 'imperial' ? 3.0 : 1.36} // 3 lbs or 1.36 kg
+            step={weight_unit_preference === 'imperial' ? 0.01 : 0.005}
             value={value}
             minimumTrackTintColor={trackColor}
             maximumTrackTintColor="#E0E0E0"
