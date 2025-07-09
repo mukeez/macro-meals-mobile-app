@@ -14,13 +14,15 @@ type GoalsFlowState = {
     setDateOfBirth: (date: string) => void;
     location: string | null;
     setLocation: (location: string) => void;
-    unit: 'imperial' | 'metric';
+    height_unit_preference: 'imperial' | 'metric';
+    weight_unit_preference: 'imperial' | 'metric';
     heightFt: number | null;
     heightIn: number | null;
     heightCm: number | null;
     weightLb: number | null;
     weightKg: number | null;
-    setUnit: (unit: 'imperial' | 'metric') => void;
+    setHeightUnitPreference: (unit: 'imperial' | 'metric') => void;
+    setWeightUnitPreference: (unit: 'imperial' | 'metric') => void;
     setHeightFt: (ft: number | null) => void;
     setHeightIn: (inch: number | null) => void;
     setHeightCm: (cm: number | null) => void;
@@ -48,7 +50,7 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
     setGender: (gender) => set({ gender }),
     majorStep: 0,
     subSteps: { 0: 0, 1: 0, 2: 0},
-    completed: {0: Array(5).fill(false), 1: Array(3).fill(false), 2: [false]},
+    completed: {0: Array(6).fill(false), 1: Array(3).fill(false), 2: [false]},
     setMajorStep: (step)=> {
         console.log('[goalsFlowStore] setMajorStep called with:', step);
         set({ majorStep: step });
@@ -68,13 +70,15 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
     setDateOfBirth: (date) => set({ dateOfBirth: date }),
     location: null,
     setLocation: (location) => set({ location}),
-    unit: 'imperial',
+    height_unit_preference: 'metric',
+    weight_unit_preference: 'metric',
     heightFt: null,
     heightIn: null,
     heightCm: null,
     weightLb: null,
     weightKg: null,
-    setUnit: (unit) => set({ unit }),
+    setHeightUnitPreference: (unit) => set({ height_unit_preference: unit }),
+    setWeightUnitPreference: (unit) => set({ weight_unit_preference: unit }),
     setHeightFt: (ft) => set({ heightFt: ft }),
     setHeightIn: (inch) => set({ heightIn: inch }),
     setHeightCm: (cm) => set({ heightCm: cm }),
@@ -96,7 +100,8 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
         heightCm: null,
         weightLb: null,
         weightKg: null,
-        unit: 'imperial',
+        height_unit_preference: 'metric',
+        weight_unit_preference: 'metric',
         dailyActivityLevel: null,
         dietryPreference: null,
         fitnessGoal: null,
