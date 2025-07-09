@@ -488,14 +488,21 @@ const MealFinderScreen: React.FC = () => {
                             </View>
                         </View> */}
 
-                        <View className="flex-row items-center gap-3 flex-wrap">
-                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.name}</Text>
+                        <View className="flex-col justify-start flex-wrap">
+                            <Text className="text-sm font-medium text-[#222] flex-shrink flex-wrap mb-1" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.name}</Text>
                             {/* <View className="w-[4px] h-[4px] rounded-full bg-[#253238]"></View> */}
-                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.name}</Text>
-                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.location.split(',').slice(0, -1).join(',')}</Text>
+                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap mb-1" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.name}</Text>
+                            {meal.restaurant?.location ? (
+                              <Text 
+                                  className="text-sm font-normal text-[#222] flex-shrink flex-wrap mb-1" 
+                                  style={{ flexWrap: 'wrap', flexShrink: 1 }}
+                              >
+                                  {meal.restaurant.location.split(',').slice(0, -1).join(',') ?? ''}
+                              </Text>
+                          ) : null}
                         </View>
                         
-                        <View className="flex-row items-center gap-2 mt-1">
+                        <View className="flex-row items-center gap-2">
                             <View className="flex-row items-center gap-1">
                                 <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
                                     <Text className="text-white text-[10px] text-center font-medium">
