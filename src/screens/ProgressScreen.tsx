@@ -12,7 +12,7 @@ import MacroLegend from "src/components/MacroLegend";
 import MacroTableSection from "src/components/MacroTableSection";
 import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import { useProgressStore } from "src/store/useProgressStore";
-import StackedBarChart from "src/components/my_chart";
+import VictoryStackedBarChart from "src/components/VictoryStackedBarChart";
 
 const macroColors = {
   calories: "#ffffff",
@@ -154,18 +154,18 @@ const ProgressScreen = () => {
         </View>
         <View className="x-5">
           {loading ? (
-            <View className="flex-1 my-5 justify-center items-center">
+            <View className="flex-1 h-[250px] my-2 justify-center items-center">
               <ActivityIndicator color="#fff" size="large" />
               <Text className="text-white text-base mt-2">Loading data...</Text>
             </View>
           ) : !hasNonZeroData ? (
-            <View className="flex-1 my-5 justify-center items-center">
+            <View className="flex-1 h-[250px] my-2 justify-center items-center">
               <Text className="text-white text-sm text-center">
                 No macro data available for this period.{"\n"}Log your meals to see your progress!
               </Text>
             </View>
           ) : (
-            <StackedBarChart data={macroBarData} />
+            <VictoryStackedBarChart data={macroBarData} timePeriod={selectedRange as any} />
           )}
         </View>
         <View className="flex-row justify-center mb-7 px-2">
