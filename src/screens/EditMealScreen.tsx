@@ -240,7 +240,7 @@ export const EditMealScreen: React.FC = () => {
                 });
             }
 
-            navigation.goBack();
+            navigation.navigate('MainTabs');
         } catch (error) {
             console.error('Error editing meal:', error);
             Alert.alert('Error', 'Failed to edit meal');
