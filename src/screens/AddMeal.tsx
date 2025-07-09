@@ -79,8 +79,8 @@ const AddMeal: React.FC = () => {
 
   const handleDeleteMeal = async (mealId: string) => {
     Alert.alert(
-      "Delete Meal",
-      "Are you sure you want to delete this meal?",
+      "Delete log",
+      "This action cannot be undone and will adjust your remaining macro calculations and progress metrics.",
       [
         {
           text: "Cancel",
@@ -91,12 +91,15 @@ const AddMeal: React.FC = () => {
           style: "destructive",
           onPress: async () => {
             try {
+              setLoading(true);
               await mealService.deleteMeal(mealId);
               // Refresh the meals list
               fetchMeals();
             } catch (error) {
               console.error('Error deleting meal:', error);
               Alert.alert('Error', 'Failed to delete meal. Please try again.');
+            } finally {
+              setLoading(false);
             }
           }
         }
@@ -222,142 +225,157 @@ const AddMeal: React.FC = () => {
           <>
             {/* Single Meals Card - Full Width */}
             <View className="bg-white py-3">
-              {mealSections.map((section, sectionIndex) => (
-                <View key={section.key}>
-                  {/* Section Header inside the card */}
-                  {section.meals.length > 0 && (
-                    <View className="flex-row items-center mb-3 px-4 mt-3">
-                      <Text className="text-lg font-semibold">{section.emoji} {section.label}</Text>
-                    </View>
-                  )}
-                  {section.meals.map((meal, index) => (
-                    <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
-                      <Image
-                        source={meal.image || IMAGE_CONSTANTS.sampleFood}
-                        className="w-[90px] h-[90px] object-fill mr-2"
-                      />
-                      <View className="flex-1 flex-col">
-                        <View className="flex-row items-center justify-between mb-2">
-                          <Text
-                            className="text-sm text-textMediumGrey font-medium flex-1 mr-2"
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
-                          >
-                            {meal.name}
-                          </Text>
-                          <TouchableOpacity>
-                            <View className="flex-row items-center gap-3">
-                            <TouchableOpacity
-                              onPress={() => {
-                                navigation.navigate('EditMealScreen', {
-                                  analyzedData: {
-                                    name: meal.name,
-                                    calories: meal.calories,
-                                    protein: meal.protein,
-                                    carbs: meal.carbs,
-                                    fat: meal.fat,
-                                    quantity: meal.quantity || 1,
-                                    meal_type: meal.meal_type,
-                                    serving_size: meal.serving_size,
-                                    no_of_servings: meal.no_of_servings,
-                                    logging_mode: meal.logging_mode,
-                                    meal_time: meal.meal_time
-                                  }
-                                });
-                              }}
+
+              {mealSections.length === 0 ? (
+                <View className="flex-1 w-full py-1">
+                  <Text className="text-textMediumGrey text-center">You haven't logged any meals yet.</Text>
+                  <TouchableOpacity className="mt-4 py-2 px-4 border-t border-gray" onPress={() => navigation.navigate('ScanScreenType')}>
+                    <Text className="text-primary font-semibold">+ ADD FOOD</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                mealSections.map((section, sectionIndex) => (
+                  <View key={section.key}>
+                    {/* Section Header inside the card */}
+                    {section.meals.length > 0 && (
+                      <View className="flex-row items-center mb-3 px-4 mt-3">
+                        <Text className="text-lg font-semibold">{section.emoji} {section.label}</Text>
+                      </View>
+                    )}
+                    {section.meals.map((meal, index) => (
+                      <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
+                        <Image
+                          source={meal.photo_url ? { uri: meal.photo_url } : IMAGE_CONSTANTS.sampleFood}
+                          className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
+                        />
+                        <View className="flex-1 flex-col">
+                          <View className="flex-row items-center justify-between mb-2">
+                            <Text
+                              className="text-sm text-textMediumGrey font-medium flex-1 mr-2"
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
                             >
-                              <View className="w-[24px] h-[24px] bg-gray rounded-full justify-center items-center bg-gray-100">
+                              {meal.name}
+                            </Text>
+                            <View className="flex-row items-center gap-3">
+                              <TouchableOpacity
+                                onPress={() => {
+                                  navigation.navigate('EditMealScreen', {
+                                    analyzedData: {
+                                      id: meal.id,
+                                      name: meal.name,
+                                      calories: meal.calories,
+                                      protein: meal.protein,
+                                      carbs: meal.carbs,
+                                      fat: meal.fat,
+                                      amount: meal.quantity || 1,
+                                      meal_type: meal.meal_type,
+                                      serving_unit: meal.serving_unit,
+                                      logging_mode: meal.logging_mode,
+                                      meal_time: meal.meal_time,
+                                      photo_url: meal.photo_url,
+                                      read_only: meal.read_only
+                                    }
+                                  });
+                                }}
+                              >
+                                <View className="w-[24px] h-[24px] bg-gray rounded-full justify-center items-center bg-gray-100">
+                                  <Image
+                                    source={IMAGE_CONSTANTS.editIcon}
+                                    className="w-[13px] h-[13px]"
+                                    tintColor="#253238"
+                                  />
+                                </View>
+                              </TouchableOpacity>
+                              <TouchableOpacity onPress={() => handleDeleteMeal(meal.id)}>
+                                <View className="w-[24px] h-[24px] rounded-full bg-gray justify-center items-center bg-gray-100">
+                                  <Image
+                                    source={IMAGE_CONSTANTS.deleteIcon}
+                                    className="w-[11px] h-[13px]"
+                                    tintColor="#253238"
+                                  />
+                                </View>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                          <View className="flex-row items-center mb-2">
+                            <Text className="text-sm text-textMediumGrey text-center font-medium mr-2">
+                              {meal.meal_time ? new Date(meal.meal_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                            </Text>
+                            <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
+                            <Image
+                              source={
+                                meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
+                                meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
+                                meal.logging_mode === 'scan' ? IMAGE_CONSTANTS.scanMealIcon :
+                                IMAGE_CONSTANTS.fireIcon // default to fire icon
+                              }
+                              className="w-[16px] h-[16px] object-fill mr-1"
+                            />
+                            <Text className="text-sm text-textMediumGrey text-center font-medium">
+                              {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}
+                            </Text>
+                          </View>
+                          <View className="flex-row items-center gap-3">
+                            <View className="flex-row items-center justify-center gap-1">
+                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
                                 <Image
-                                  source={IMAGE_CONSTANTS.editIcon}
-                                  className="w-[13px] h-[13px]"
-                                  tintColor="#253238"
+                                  source={IMAGE_CONSTANTS.caloriesIcon}
+                                  className="w-[10px] h-[10px] object-fill"
                                 />
                               </View>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => handleDeleteMeal(meal.id)}>
-                              <View className="w-[24px] h-[24px] rounded-full bg-gray justify-center items-center bg-gray-100">
-                                <Image
-                                  source={IMAGE_CONSTANTS.deleteIcon}
-                                  className="w-[11px] h-[13px]"
-                                  tintColor="#253238"
-                                />
+                              <Text className="text-xsm text-black text-center font-medium">
+                                {meal.calories} cal
+                              </Text>
+                            </View>
+                            <View className="flex-row items-center gap-1">
+                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
+                                <Text className="text-white text-[10px] text-center font-medium">
+                                  C
+                                </Text>
                               </View>
-                            </TouchableOpacity>
-                            </View>
-                          </TouchableOpacity>
-                        </View>
-                        <View className="flex-row items-center mb-2">
-                          <Text className="text-sm text-textMediumGrey text-center font-medium mr-2">
-                            {meal.meal_time ? new Date(meal.meal_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                          </Text>
-                          <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
-                          <Image
-                            source={IMAGE_CONSTANTS.mealScan}
-                            className="w-[16px] h-[16px] object-fill mr-1"
-                          />
-                          <Text className="text-sm text-textMediumGrey text-center font-medium">
-                            {meal.meal_type || 'Manual log'}
-                          </Text>
-                        </View>
-
-                        <View className="flex-row items-center gap-3">
-                          <View className="flex-row items-center justify-center gap-1">
-                            <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
-                              <Image
-                                source={IMAGE_CONSTANTS.caloriesIcon}
-                                className="w-[10px] h-[10px] object-fill"
-                              />
-                            </View>
-                            <Text className="text-xsm text-black text-center font-medium">
-                              {meal.calories} cal
-                            </Text>
-                          </View>
-                          <View className="flex-row items-center gap-1">
-                            <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
-                              <Text className="text-white text-[10px] text-center font-medium">
-                                C
+                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                {meal.carbs}g
                               </Text>
                             </View>
-                            <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                              {meal.carbs}g
-                            </Text>
-                          </View>
-
-                          <View className="flex-row items-center gap-1">
-                            <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
-                              <Text className="text-white text-[10px] text-center font-medium">
-                                F
+                            <View className="flex-row items-center gap-1">
+                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
+                                <Text className="text-white text-[10px] text-center font-medium">
+                                  F
+                                </Text>
+                              </View>
+                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                {meal.fat}g
                               </Text>
                             </View>
-                            <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                              {meal.fat}g
-                            </Text>
-                          </View>
-
-                          <View className="flex-row items-center gap-1">
-                            <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
-                              <Text className="text-white text-[10px] text-center font-medium">
-                                P
+                            <View className="flex-row items-center gap-1">
+                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
+                                <Text className="text-white text-[10px] text-center font-medium">
+                                  P
+                                </Text>
+                              </View>
+                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                {meal.protein}g
                               </Text>
                             </View>
-                            <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                              {meal.protein}g
-                            </Text>
                           </View>
                         </View>
                       </View>
-                    </View>
-                  ))}
-                  {/* Add Food Button for this section */}
-                  <TouchableOpacity className="mt-4 py-4 px-4 border-t border-gray">
-                    <Text className="text-primary font-semibold">+ ADD FOOD</Text>
-                  </TouchableOpacity>
-                  {/* Add vertical separation between sections */}
-                  {sectionIndex < mealSections.length - 1 && section.meals.length > 0 && (
-                    <View className="h-6 bg-[#F5F5F5]"></View>
-                  )}
-                </View>
-              ))}
+                    ))}
+                    {/* Add Food Button for this section */}
+                    <TouchableOpacity 
+                      className="mt-4 py-4 px-4 border-t border-gray"
+                      onPress={() => navigation.navigate('ScanScreenType')}
+                    >
+                      <Text className="text-primary font-semibold">+ ADD FOOD</Text>
+                    </TouchableOpacity>
+                    {/* Add vertical separation between sections */}
+                    {sectionIndex < mealSections.length - 1 && section.meals.length > 0 && (
+                      <View className="h-6 bg-[#F5F5F5]"></View>
+                    )}
+                  </View>
+                ))
+              )}
             </View>
           </>
         )}

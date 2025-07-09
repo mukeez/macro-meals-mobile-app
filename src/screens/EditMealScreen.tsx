@@ -14,6 +14,7 @@ import {
     Platform,
     Alert,
     KeyboardAvoidingView,
+    Image as RNImage,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
@@ -30,6 +31,7 @@ import { useMixpanel } from '@macro-meals/mixpanel';
 interface RouteParams {
     barcodeData: any;
     analyzedData?: {
+        id: string;
         name: string;
         calories: number;
         protein: number;
@@ -40,11 +42,26 @@ interface RouteParams {
         no_of_servings?: number;
         meal_type?: string;
         meal_time?: string;
+        photo_url?: string;
+        serving_unit?: string;
+        read_only?: boolean;
     };
 }
 
 import { FavoriteMeal } from '../services/favoritesService';
 import { FavouriteIcon } from 'src/components/FavouriteIcon';
+
+const SERVING_UNITS = [
+    'g',
+    'ml',
+    'oz',
+    'cup',
+    'tbsp',
+    'tsp',
+    'slice',
+    'piece',
+    'serving'
+];
 
 /**
  * Screen for adding a new meal to the log
@@ -74,10 +91,15 @@ export const EditMealScreen: React.FC = () => {
     const [tempMealType, setTempMealType] = useState('breakfast');
     const [servingSize, setServingSize] = useState<string>('0');
     const [noOfServings, setNoOfServings] = useState<string>('0');
+    const [mealId, setMealId] = useState<string>('');
     const [mealType, setMealType] = useState('breakfast');
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
     const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
+    const [isReadOnly, setIsReadOnly] = useState(false);
     const mixpanel = useMixpanel();
+    const [servingUnit, setServingUnit] = useState<string>('g');
+    const [showServingUnitModal, setShowServingUnitModal] = useState(false);
+    const [tempServingUnit, setTempServingUnit] = useState('g');
 
     // Initialize form with analyzed data if available
     React.useEffect(() => {
@@ -88,8 +110,17 @@ export const EditMealScreen: React.FC = () => {
             setCarbs(analyzedData.carbs?.toString() || '0');
             setFats(analyzedData.fat?.toString() || '0');
             setServingSize(analyzedData.serving_size?.toString() || '0');
-            setNoOfServings(analyzedData.no_of_servings?.toString() || '0');
+            setNoOfServings(analyzedData.no_of_servings?.toString() || '1');
             setMealType(analyzedData.meal_type || 'breakfast');
+            setMealId(analyzedData.id || '');
+            setServingUnit(analyzedData.serving_unit || 'g');
+            setIsReadOnly(analyzedData.read_only || false);
+            if (analyzedData.photo_url) {
+                setMealImage(analyzedData.photo_url);
+            }
+            if (analyzedData.meal_time) {
+                setTime(new Date(analyzedData.meal_time));
+            }
         }
     }, [analyzedData]);
 
@@ -147,7 +178,7 @@ export const EditMealScreen: React.FC = () => {
     };
 
     /**
-     * Adds the current meal to the log
+     * Edits the current meal in the log
      */
     const handleEditMealLog = async (): Promise<void> => {
         setLoading(true);
@@ -157,61 +188,62 @@ export const EditMealScreen: React.FC = () => {
                 return;
             }
 
+            console.log('Editing meal with ID:', mealId);
+            console.log('Current meal type:', tempMealType);
+            console.log('Current time:', time.toISOString());
+
+            // Calculate adjusted macros based on amount
+            const servingsMultiplier = parseFloat(noOfServings) || 1;
+            const adjustedMacros = {
+                calories: Math.round((parseInt(calories, 10) || 0) * servingsMultiplier),
+                protein: Math.round((parseInt(protein, 10) || 0) * servingsMultiplier),
+                carbs: Math.round((parseInt(carbs, 10) || 0) * servingsMultiplier),
+                fat: Math.round((parseInt(fats, 10) || 0) * servingsMultiplier),
+            };
+
             const newMeal = {
                 name: mealName,
-                calories: parseInt(calories, 10) || 0,
-                protein: parseInt(protein, 10) || 0,
-                carbs: parseInt(carbs, 10) || 0,
-                fat: parseInt(fats, 10) || 0,
+                calories: adjustedMacros.calories,
+                protein: adjustedMacros.protein,
+                carbs: adjustedMacros.carbs,
+                fat: adjustedMacros.fat,
                 meal_type: tempMealType,
                 meal_time: time.toISOString(),
-                description: mealDescription || "",
+                amount: parseFloat(noOfServings) || 1,
+                serving_unit: servingUnit,
+                description: mealDescription || undefined,
+                favorite: isFavorite,
+                logging_mode: 'manual',
+                notes: undefined,
+                photo: mealImage ? {
+                    uri: mealImage,
+                    type: 'image/jpeg',
+                    name: 'meal_photo.jpg'
+                } : undefined
             };
 
             console.log('Meal request JSON:', JSON.stringify(newMeal));
-            const response = await mealService.logMeal(newMeal);
+            const response = await mealService.updateMeal(newMeal, mealId);
             console.log('Meal log response:', JSON.stringify(response));
-            if (mixpanel){
-                const firstMealLogged = await mixpanel?.getSuperProperty('first_meal_logged');
-                const signupTime = await mixpanel?.getSuperProperty('signup_time') as string;
-                console.log('firstMealLogged', firstMealLogged);
-                let properties: {
-                    method: string;
-                    meal_type: string;
-                    calories: number;
-                    protein: number;
-                    carbs: number;
-                    fats: number;
-                    time_to_first_meal?: number;
-                } = {
-                    method: "manual",
-                    meal_type: newMeal.name.toLowerCase(),
-                    calories: newMeal.calories,
-                    protein: newMeal.protein,
-                    carbs: newMeal.carbs,
-                    fats: newMeal.fat,
-                };
-                if (!firstMealLogged){
-                    const now = new Date();
-                    const timeForFirstMealLogged = (now.getTime() - new Date(signupTime).getTime()) / 1000;
-                    properties.time_to_first_meal = timeForFirstMealLogged;
-                    mixpanel?.register({firt_meal_logged: true})
-                }
-                mixpanel?.track({name: 'meal_logged', properties: properties as any});
+
+            // Track meal edit in mixpanel
+            if (mixpanel) {
+                mixpanel?.track({
+                    name: 'meal_edited',
+                    properties: {
+                        meal_id: mealId,
+                        meal_type: tempMealType,
+                        amount: parseFloat(noOfServings) || 1,
+                        serving_unit: servingUnit,
+                        ...adjustedMacros
+                    }
+                });
             }
 
-            // Navigate back to meal log screen
-            navigation.navigate('MainTabs');
+            navigation.goBack();
         } catch (error) {
-            if (error instanceof Error) {
-                console.error('Error adding meal to log:', error.message, error.stack);
-            } else {
-                try {
-                    console.error('Error adding meal to log:', JSON.stringify(error));
-                } catch (e) {
-                    console.error('Error adding meal to log:', error);
-                }
-            }
+            console.error('Error editing meal:', error);
+            Alert.alert('Error', 'Failed to edit meal');
         } finally {
             setLoading(false);
         }
@@ -321,6 +353,15 @@ export const EditMealScreen: React.FC = () => {
     }, []);
 
     const [selectedMealType, setSelectedMealType] = useState(tempMealType);
+
+    const handleUnitCancel = () => {
+        setShowServingUnitModal(false);
+    };
+
+    const handleUnitDone = () => {
+        setServingUnit(tempServingUnit);
+        setShowServingUnitModal(false);
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -483,33 +524,60 @@ export const EditMealScreen: React.FC = () => {
 
                     <View className="flex-row justify-between mb-4">
                         <View className="w-[48%]">
-                            <Text className="text-base font-medium text-black mb-2">Serving size</Text>
-                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <Text className="text-base font-medium text-black mb-2">Amount</Text>
+                            <View className="flex-row items-center placeholder:text-lightGrey text-base border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
                                 <TextInput
                                     className="flex-1 text-base"
-                                    keyboardType="numeric"
-                                    value={servingSize}
-                                    onChangeText={setServingSize}
-                                    placeholder="0"
-                                    onFocus={() => { if (servingSize === '0') setServingSize(''); }}
+                                    keyboardType="number-pad"
+                                    value={noOfServings}
+                                    onChangeText={(text) => {
+                                        // Remove any non-numeric characters
+                                        const cleanText = text.replace(/[^0-9]/g, '');
+                                        // Allow empty string but set to '1' if parsed number is less than 1
+                                        if (cleanText === '') {
+                                            setNoOfServings('');
+                                        } else {
+                                            const num = parseInt(cleanText);
+                                            if (isNaN(num)) {
+                                                setNoOfServings('1');
+                                            } else {
+                                                setNoOfServings(cleanText);
+                                            }
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // Ensure value is at least 1 when input loses focus
+                                        const num = parseInt(noOfServings);
+                                        if (noOfServings === '' || isNaN(num) || num < 1) {
+                                            setNoOfServings('1');
+                                        }
+                                    }}
+                                    placeholder="1"
                                 />
-                                <Text className="text-base text-[#8e929a] ml-1">g</Text>
                             </View>
                         </View>
 
                         <View className="w-[48%]">
-                            <Text className="text-base text-black mb-2">No of servings</Text>
-                              <View className="flex-row items-center placeholder:text-lightGrey text-base border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
-                                <TextInput
-                                    className="flex-1 text-base"
-                                    keyboardType="numeric"
-                                    value={noOfServings}
-                                    onChangeText={setNoOfServings}
-                                    placeholder="0"
-                                    onFocus={() => { if (noOfServings === '0') setNoOfServings(''); }}
-                                />
-                                <Text className="text-base text-[#8e929a] ml-1">g</Text>
-                            </View>
+                            <Text className="text-base font-medium text-black mb-2">Serving Size</Text>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    if (!isReadOnly) {
+                                        setTempServingUnit(servingUnit);
+                                        setShowServingUnitModal(true);
+                                    }
+                                }}
+                                className={`flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white ${isReadOnly ? 'opacity-50' : ''}`}
+                                disabled={isReadOnly}
+                            >
+                                <Text className="flex-1 text-base text-[#222]">{servingUnit}</Text>
+                                {!isReadOnly && (
+                                    <Image 
+                                        source={IMAGE_CONSTANTS.chevronRightIcon} 
+                                        className="w-4 h-4" 
+                                        style={{ transform: [{ rotate: '90deg' }] }}
+                                    />
+                                )}
+                            </TouchableOpacity>
                         </View>
                     </View>
 
@@ -556,7 +624,7 @@ export const EditMealScreen: React.FC = () => {
                         {loading ? (
                             <ActivityIndicator size="small" color="#fff" />
                         ) : (
-                            <Text className="text-white text-base font-semibold">Add to log</Text>
+                            <Text className="text-white text-base font-semibold">Update log</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -622,6 +690,49 @@ export const EditMealScreen: React.FC = () => {
                                 }}
                                 className="flex-1 items-center py-2"
                             >
+                                <Text className="text-lg text-blue-500">Done</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Unit Picker Modal */}
+            <Modal
+                visible={showServingUnitModal}
+                transparent
+                animationType="slide"
+                onRequestClose={handleUnitCancel}
+            >
+                <View className="flex-1 justify-end bg-black/40">
+                    <View className="bg-white rounded-t-xl p-4">
+                        <Text className="text-center text-base font-semibold mb-2">Select Unit</Text>
+                        {Platform.OS === 'ios' ? (
+                            <Picker
+                                selectedValue={tempServingUnit}
+                                onValueChange={setTempServingUnit}
+                                itemStyle={{ height: 120, fontSize: 20 }}
+                            >
+                                {SERVING_UNITS.map((unit) => (
+                                    <Picker.Item key={unit} label={unit} value={unit} />
+                                ))}
+                            </Picker>
+                        ) : (
+                            <Picker
+                                selectedValue={tempServingUnit}
+                                onValueChange={setTempServingUnit}
+                                style={{ alignSelf: 'center' }}
+                            >
+                                {SERVING_UNITS.map((unit) => (
+                                    <Picker.Item key={unit} label={unit} value={unit} />
+                                ))}
+                            </Picker>
+                        )}
+                        <View className="flex-row justify-between mt-4">
+                            <TouchableOpacity onPress={handleUnitCancel} className="flex-1 items-center py-2">
+                                <Text className="text-lg text-blue-500">Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleUnitDone} className="flex-1 items-center py-2">
                                 <Text className="text-lg text-blue-500">Done</Text>
                             </TouchableOpacity>
                         </View>
