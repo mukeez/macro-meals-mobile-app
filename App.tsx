@@ -105,6 +105,13 @@ export default function App() {
                         // Get FCM token only after permissions are granted
                         const token = await messaging().getToken();
                         await pushNotifications.intializeMessaging();
+                        
+                        // Store the FCM token for later use
+                        if (token) {
+                            await AsyncStorage.setItem('fcm_token', token);
+                            console.log('FCM token stored during app initialization:', token);
+                        }
+                        
                         return token;
                     } else {
                         return null;

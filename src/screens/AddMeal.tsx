@@ -54,7 +54,36 @@ const AddMeal: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const macrosPreferences = useStore((state) => state.macrosPreferences);
+  const preferences = useStore((state) => state.preferences);
   const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
+  const token = useStore((state) => state.token);
+  
+  // State for consumed calories (same as DashboardScreen)
+  const [consumed, setConsumed] = useState({
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    calories: 0,
+  });
+
+  // Use macrosPreferences for target values (same as DashboardScreen)
+  const macros = {
+    protein: macrosPreferences?.protein_target || 0,
+    carbs: macrosPreferences?.carbs_target || 0,
+    fat: macrosPreferences?.fat_target || 0,
+    calories: macrosPreferences?.calorie_target || 0,
+  };
+
+  // Calculate today's total macros from meals (same as DashboardScreen)
+  const todayMealsSum = meals.reduce(
+    (acc, meal) => ({
+      carbs: acc.carbs + (meal.carbs || 0),
+      fat: acc.fat + (meal.fat || 0),
+      protein: acc.protein + (meal.protein || 0),
+      calories: acc.calories + (meal.calories || 0),
+    }),
+    { carbs: 0, fat: 0, protein: 0, calories: 0 }
+  );
 
   const fetchMeals = async () => {
     const { startDate, endDate } = getStartEndDates(selectedRange);
@@ -72,6 +101,40 @@ const AddMeal: React.FC = () => {
   useEffect(() => {
     fetchMeals();
   }, [selectedRange]);
+
+  // Fetch consumed data from API (same as DashboardScreen)
+  useEffect(() => {
+    const fetchConsumedData = async () => {
+      if (!token) return;
+      
+      try {
+        const progressResponse = await fetch(
+          "https://api.macromealsapp.com/api/v1/meals/progress/today",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (progressResponse.ok) {
+          const progressData = await progressResponse.json();
+          setConsumed({
+            protein: progressData.logged_macros.protein,
+            carbs: progressData.logged_macros.carbs,
+            fat: progressData.logged_macros.fat,
+            calories: progressData.logged_macros.calories,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching consumed data:', error);
+      }
+    };
+
+    fetchConsumedData();
+  }, [token]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -177,7 +240,7 @@ const AddMeal: React.FC = () => {
         <View className="bg-white/20 rounded-2xl mt-3 px-4 py-4">
           <View className="flex-row items-center justify-start mb-3">
             <Text className="text-white text-base font-medium">
-              Calories remaining ({Math.max(0, (macrosPreferences?.calorie_target || 0) - todayProgress.calories)})
+              Calories remaining ({Math.max(0, macros.calories - consumed.calories)})
             </Text>
           </View>
           <View className="flex-row items-center justify-between w-full">
@@ -185,16 +248,16 @@ const AddMeal: React.FC = () => {
               <View key={macro.label} className="flex-col items-center justify-center">
                 <Text className="text-white text-[11px] font-medium mb-1">
                   {macro.key === 'calories' 
-                    ? `${todayProgress.calories}/${macrosPreferences?.calorie_target || 0}`
-                    : `${todayProgress[macro.key]}/${macrosPreferences?.[`${macro.key}_target`] || 0}`
+                    ? `${todayMealsSum.calories}/${macros.calories}`
+                    : `${todayMealsSum[macro.key]}/${macros[macro.key]}`
                   }
                 </Text>
                 <LinearProgress
                   width={78}
                   progress={
                     macro.key === 'calories' 
-                      ? (todayProgress.calories / (macrosPreferences?.calorie_target || 1)) * 100
-                      : (todayProgress[macro.key] / (macrosPreferences?.[`${macro.key}_target`] || 1)) * 100
+                      ? (todayMealsSum.calories / (macros.calories || 1)) * 100
+                      : (todayMealsSum[macro.key] / (macros[macro.key] || 1)) * 100
                   }
                   color={macro.color}
                   backgroundColor="#E5E5E5"

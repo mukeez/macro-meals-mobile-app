@@ -32,23 +32,24 @@ interface LoginCredentials {
 export const authService = {
     login: async (credentials: LoginCredentials) => {
         try {
-            // Check for stored FCM token first
+            // Use stored FCM token from app initialization, or get a new one if needed
             let fcmToken = await AsyncStorage.getItem('fcm_token');
-            
-            // If no stored token, get a new one
-            if (!fcmToken) {
-                console.log('No stored FCM token found, requesting new token...');
-                fcmToken = await pushNotifications.getFCMToken();
-                
-                // Store the new token if we got one
-                if (fcmToken) {
-                    await AsyncStorage.setItem('fcm_token', fcmToken);
-                    console.log('FCM token stored successfully', fcmToken);
-                } else {
-                    console.log('Failed to get FCM token');
-                }
+            if (fcmToken) {
+                console.log('FCM TOKEN FROM APP INITIALIZATION', fcmToken);
+                console.log('Using stored FCM token from app initialization');
             } else {
-                console.log('Using stored FCM token');
+                console.log('No stored FCM token, attempting to get a new one...');
+                try {
+                    fcmToken = await pushNotifications.getFCMToken();
+                    if (fcmToken) {
+                        await AsyncStorage.setItem('fcm_token', fcmToken);
+                        console.log('New FCM token obtained and stored:', fcmToken);
+                    } else {
+                        console.log('Failed to get new FCM token, continuing without push notifications');
+                    }
+                } catch (error) {
+                    console.log('Error getting FCM token:', error);
+                }
             }
 
             // Prepare login payload with FCM token if available
@@ -58,10 +59,12 @@ export const authService = {
                 ...(fcmToken && { fcm_token: fcmToken })
             };
 
+
+
             console.log('Login payload being sent:', {
-                // email: loginPayload.email,
-                // hasFcmToken: !!loginPayload.fcm_token,
-                // fcmTokenLength: loginPayload.fcm_token?.length
+                email: loginPayload.email,
+                hasFcmToken: !!loginPayload.fcm_token,
+                fcmTokenLength: loginPayload.fcm_token?.length
             });
 
             const response = await fetch(`${API_URL}/auth/login`, {
@@ -124,34 +127,34 @@ export const authService = {
     },
 
     // Function to refresh FCM token
-    // refreshFCMToken: async () => {
-    //     try {
-    //         console.log('Refreshing FCM token...');
-    //         const newToken = await pushNotifications.getFCMToken();
+    refreshFCMToken: async () => {
+        try {
+            console.log('Refreshing FCM token...');
+            const newToken = await pushNotifications.getFCMToken();
             
-    //         if (newToken) {
-    //             await AsyncStorage.setItem('fcm_token', newToken);
-    //             console.log('FCM token refreshed and stored successfully');
-    //             return newToken;
-    //         } else {
-    //             console.log('Failed to refresh FCM token');
-    //             return null;
-    //         }
-    //     } catch (error) {
-    //         console.error('Error refreshing FCM token:', error);
-    //         return null;
-    //     }
-    // },
+            if (newToken) {
+                await AsyncStorage.setItem('fcm_token', newToken);
+                console.log('FCM token refreshed and stored successfully');
+                return newToken;
+            } else {
+                console.log('Failed to refresh FCM token');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error refreshing FCM token:', error);
+            return null;
+        }
+    },
 
-    // // Function to get current FCM token
-    // getFCMToken: async () => {
-    //     try {
-    //         return await AsyncStorage.getItem('fcm_token');
-    //     } catch (error) {
-    //         console.error('Error getting FCM token:', error);
-    //         return null;
-    //     }
-    // },
+    // Function to get current FCM token
+    getFCMToken: async () => {
+        try {
+            return await AsyncStorage.getItem('fcm_token');
+        } catch (error) {
+            console.error('Error getting FCM token:', error);
+            return null;
+        }
+    },
 
     forgotPassword: async(email: string) => {
         try{

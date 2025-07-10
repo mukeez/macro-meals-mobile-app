@@ -56,6 +56,9 @@ const SERVING_UNITS = [
     'tbsp',
     'tsp',
     'slice',
+    'scoop',
+    'plate',
+    'bowl',
     'piece',
     'serving'
 ];
@@ -517,23 +520,23 @@ export const AddMealScreen: React.FC = () => {
                                     onChangeText={(text) => {
                                         // Remove any non-numeric characters
                                         const cleanText = text.replace(/[^0-9]/g, '');
-                                        // Allow empty string but set to '1' if parsed number is less than 1
+                                        // Allow empty string or valid numbers
                                         if (cleanText === '') {
-                                            setNoOfServings('');
+                                            setAmount('');
                                         } else {
                                             const num = parseInt(cleanText);
                                             if (isNaN(num)) {
-                                                setNoOfServings('1');
+                                                setAmount('1');
                                             } else {
-                                                setNoOfServings(cleanText);
+                                                setAmount(cleanText);
                                             }
                                         }
                                     }}
                                     onBlur={() => {
                                         // Ensure value is at least 1 when input loses focus
-                                        const num = parseInt(noOfServings);
-                                        if (noOfServings === '' || isNaN(num) || num < 1) {
-                                            setNoOfServings('1');
+                                        const num = parseInt(amount);
+                                        if (amount === '' || isNaN(num) || num < 1) {
+                                            setAmount('1');
                                         }
                                     }}
                                     placeholder="1"

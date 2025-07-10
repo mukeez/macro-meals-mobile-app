@@ -62,11 +62,49 @@ class PushNotifications {
 
   async getFCMToken() {
     try {
-      const messaging = getMessaging();
-      const fcmToken = await getToken(messaging);
+      // For iOS, ensure we have proper initialization
+      if (Platform.OS === 'ios') {
+        // Check if we have authorization
+        const authStatus = await messaging().hasPermission();
+        if (authStatus !== AuthorizationStatus.AUTHORIZED && 
+            authStatus !== AuthorizationStatus.PROVISIONAL) {
+          console.log('No push notification permission, requesting...');
+          const newAuthStatus = await messaging().requestPermission();
+          if (newAuthStatus !== AuthorizationStatus.AUTHORIZED && 
+              newAuthStatus !== AuthorizationStatus.PROVISIONAL) {
+            console.log('Push notification permission denied');
+            return null;
+          }
+        }
+        // Force device registration for remote messages (fixes APNS token issue)
+        try {
+          await messaging().registerDeviceForRemoteMessages();
+          console.log('Device registered for remote messages');
+        } catch (registrationError) {
+          console.log('Device already registered or registration failed:', registrationError);
+        }
+        // Add a small delay to ensure APNS token is ready
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      const fcmToken = await messaging().getToken();
       return fcmToken;
     } catch (error) {
       console.error('Failed to get FCM token:', error);
+      // If it's an APNS token error, try forcing device registration
+      if (error instanceof Error && error.message && error.message.includes('APNS token')) {
+        console.log('APNS token error detected, trying to force device registration...');
+        try {
+          if (Platform.OS === 'ios') {
+            await messaging().registerDeviceForRemoteMessages();
+            // Retry getting token after registration
+            const retryToken = await messaging().getToken();
+            return retryToken;
+          }
+        } catch (retryError) {
+          console.log('Retry failed:', retryError);
+        }
+        return null;
+      }
       return null;
     }
   }

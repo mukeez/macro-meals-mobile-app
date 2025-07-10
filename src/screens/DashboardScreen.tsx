@@ -114,6 +114,7 @@ export const DashboardScreen: React.FC = () => {
   const setStoreProfile = useStore((state) => state.setProfile);
   const hasBeenPromptedForGoals = useStore((state) => state.hasBeenPromptedForGoals);
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
+  const setMacrosPreferences = useStore((state) => state.setMacrosPreferences);
 
   // useEffect(() => {
   //     if (preferences.calories === 0 && preferences.protein === 0) {
@@ -146,12 +147,20 @@ export const DashboardScreen: React.FC = () => {
         const prefsResponse = await userService.getPreferences();
         console.log('PREFS RESPONSE', prefsResponse)
 
+        const macrosPreferences = {
+          protein_target: prefsResponse.protein_target,
+          carbs_target: prefsResponse.carbs_target,
+          fat_target: prefsResponse.fat_target,
+          calorie_target: prefsResponse.calorie_target,
+        };
+        
         setMacros({
           protein: prefsResponse.protein_target,
           carbs: prefsResponse.carbs_target,
           fat: prefsResponse.fat_target,
           calories: prefsResponse.calorie_target,
         });
+        setMacrosPreferences(macrosPreferences);
 
         // macroMealsCrashlytics.triggerCrash();
 
@@ -538,7 +547,7 @@ export const DashboardScreen: React.FC = () => {
                         onLoad={() => {
                           console.log('✅ ExpoImage loaded successfully for meal:', meal.name, meal.photo_url);
                         }}
-                        onError={(error) => {
+                        onError={(error: any) => {
                           console.log('❌ ExpoImage failed to load for meal:', meal.name, meal.photo_url, error);
                         }}
                         onLoadStart={() => {
