@@ -63,6 +63,7 @@ export const useMixpanel = ()=> {
                 return null;
             }
         },
+        
         reset: ()=> {
             try {
                 console.log('[MIXPANEL] 🔄 Resetting');

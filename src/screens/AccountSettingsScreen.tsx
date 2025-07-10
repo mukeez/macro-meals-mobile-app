@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 function debounce(func: (...args: any[]) => void, wait: number) {
   let timeout: NodeJS.Timeout;
@@ -40,6 +41,7 @@ export default function AccountSettingsScreen() {
   const userRef = useRef<any>(null);
   const navigation = useNavigation();
   const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>({});
+  const mixpanel = useMixpanel();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -70,6 +72,36 @@ export default function AccountSettingsScreen() {
     }
   }, [focusedField]);
 
+  // Update Mixpanel user properties when user data changes
+  const updateMixpanelUserProperties = useCallback((updatedFields: any) => {
+    if (!mixpanel) return;
+
+    const propertiesToUpdate: any = {};
+    
+    // Map backend field names to Mixpanel property names
+    if (updatedFields.first_name !== undefined) {
+      propertiesToUpdate.first_name = updatedFields.first_name;
+    }
+    if (updatedFields.last_name !== undefined) {
+      propertiesToUpdate.last_name = updatedFields.last_name;
+    }
+    if (updatedFields.sex !== undefined) {
+      propertiesToUpdate.gender = updatedFields.sex;
+    }
+    if (updatedFields.dob !== undefined) {
+      propertiesToUpdate.birthday = updatedFields.dob;
+    }
+    if (updatedFields.height !== undefined) {
+      propertiesToUpdate.height = updatedFields.height;
+    }
+
+    // Only update if there are properties to update
+    if (Object.keys(propertiesToUpdate).length > 0) {
+      mixpanel.setUserProperties(propertiesToUpdate);
+      console.log('[MIXPANEL] 📝 Updated user properties:', propertiesToUpdate);
+    }
+  }, [mixpanel]);
+
   const getDebouncedPatch = (field: string) => {
     if (!debouncedPatch.current[field]) {
       debouncedPatch.current[field] = debounce(async (value: any) => {
@@ -80,6 +112,9 @@ export default function AccountSettingsScreen() {
           const patch: any = {};
           patch[field] = value;
           await userService.updateProfile(patch);
+          
+          // Update Mixpanel user properties
+          updateMixpanelUserProperties(patch);
           
           // Update user data in background without affecting the UI
           setTimeout(async () => {
@@ -127,6 +162,17 @@ export default function AccountSettingsScreen() {
           style: "destructive",
           onPress: async () => {
             try {
+              // Track account deletion in Mixpanel
+              mixpanel?.track({
+                name: 'account_deleted',
+                properties: {
+                  user_id: userRef.current?.id,
+                  email: userRef.current?.email,
+                  account_age_days: userRef.current?.created_at ? 
+                    Math.floor((Date.now() - new Date(userRef.current.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0
+                }
+              });
+              
               await authService.deleteAccount();
             } catch (error) {
               console.error('Error during account deletion:', error);

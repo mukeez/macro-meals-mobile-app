@@ -2,7 +2,7 @@
 import React, {useEffect, useState} from 'react';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
-import firebase from '@react-native-firebase/app';
+// import firebase from '@react-native-firebase/app';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
 
@@ -10,9 +10,9 @@ import useStore from "./src/store/useStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {RootStack} from "./RootStack";
 import { MIXPANEL_TOKEN } from '@env';
-import { MixpanelProvider } from "@macro-meals/mixpanel";
+import { MixpanelProvider, useMixpanel } from "@macro-meals/mixpanel";
 import {pushNotifications} from '@macro-meals/push-notifications';
-import messaging from '@react-native-firebase/messaging';
+import messaging, { firebase } from '@react-native-firebase/messaging';
 import {macroMealsCrashlytics} from '@macro-meals/crashlytics';
 import { OnboardingContext } from './src/contexts/OnboardingContext';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
@@ -20,6 +20,29 @@ import Constants from 'expo-constants';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+// Component to handle Mixpanel identification for authenticated users
+function MixpanelIdentifier() {
+    const { isAuthenticated, userId } = useStore();
+    const mixpanel = useMixpanel();
+
+    useEffect(() => {
+        if (isAuthenticated && userId && mixpanel) {
+            // Identify the user in Mixpanel
+            mixpanel.identify(userId);
+            
+            // Set basic user properties
+            mixpanel.setUserProperties({
+                user_id: userId,
+                is_authenticated: true
+            });
+            
+            console.log('[MIXPANEL] 👤 User identified:', userId);
+        }
+    }, [isAuthenticated, userId, mixpanel]);
+
+    return null;
+}
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
@@ -213,6 +236,7 @@ export default function App() {
                     setReadyForDashboard 
                 }}>
                 <NavigationContainer>
+                    <MixpanelIdentifier />
                     <RootStack 
                         isOnboardingCompleted={isOnboardingCompleted} 
                         initialAuthScreen={initialAuthScreen}
