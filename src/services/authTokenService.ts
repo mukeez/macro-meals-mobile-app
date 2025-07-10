@@ -8,7 +8,7 @@ export const authTokenService = {
             return await AsyncStorage.getItem('my_token');
         } catch (error) {
             console.error('Error getting token:', error);
-            return null;
+        return null;
         }
     },
     setToken: (token: string | null) => {
