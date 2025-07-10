@@ -5,6 +5,7 @@ interface CustomRulerProps {
   min: number;
   max: number;
   initialValue: number;
+  value?: number;
   onValueChange?: (value: number) => void;
   segmentWidth?: number;
   segmentSpacing?: number;
@@ -19,6 +20,7 @@ const CustomRuler: React.FC<CustomRulerProps> = ({
   min,
   max,
   initialValue,
+  value,
   onValueChange,
   segmentWidth = 1,
   segmentSpacing = 10,
@@ -34,6 +36,7 @@ const CustomRuler: React.FC<CustomRulerProps> = ({
   const scrollViewRef = useRef<ScrollView | null>(null);
   const textInputRef = useRef<TextInput | null>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
+  const lastScrolledValue = useRef<number | null>(null);
 
   useEffect(() => {
     const listener = scrollX.addListener(({ value }) => {
@@ -48,17 +51,22 @@ const CustomRuler: React.FC<CustomRulerProps> = ({
     return () => scrollX.removeListener(listener);
   }, [min, onValueChange, snapSegment, valueFormatter, scrollX]);
 
+  // Scroll to the correct value when value or initialValue changes
   useEffect(() => {
-    setTimeout(() => {
-      if (scrollViewRef.current) {
-        scrollViewRef.current.scrollTo({
-          x: (initialValue - min) * snapSegment,
-          y: 0,
-          animated: true,
-        });
-      }
-    }, 100);
-  }, [initialValue, min, snapSegment]);
+    const scrollToValue = value !== undefined ? value : initialValue;
+    if (lastScrolledValue.current !== scrollToValue) {
+      setTimeout(() => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({
+            x: (scrollToValue - min) * snapSegment,
+            y: 0,
+            animated: true,
+          });
+          lastScrolledValue.current = scrollToValue;
+        }
+      }, 100);
+    }
+  }, [value, initialValue, min, snapSegment]);
 
   return (
     <View className="w-full bg-primary">

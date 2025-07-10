@@ -8,6 +8,7 @@ type GoalsFlowState = {
     setSubStep: (major: number, sub: number) => void;
     markSubStepComplete: (major: number, sub: number) => void;
     handleBackNavigation: () => { canGoBack: boolean; shouldExitFlow: boolean };
+    navigateToMajorStep: (step: number) => void;
     gender: string | null;
     setGender: (gender: string) => void;
     dateOfBirth: string | null;
@@ -137,5 +138,18 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
 
         // If we're at the first sub-step of the first major step
         return { canGoBack: false, shouldExitFlow: true };
+    },
+    navigateToMajorStep: (step: number) => {
+        const state = get();
+        
+        // Only allow navigation to fully completed major steps
+        const canNavigate = state.completed[step]?.every(Boolean);
+        
+        if (canNavigate) {
+            set({ 
+                majorStep: step,
+                subSteps: { ...state.subSteps, [step]: 0 } // Reset to first substep of the target major step
+            });
+        }
     },
 }));

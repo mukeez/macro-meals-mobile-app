@@ -40,6 +40,8 @@ interface RouteParams {
         no_of_servings?: number;
         meal_type?: string;
         meal_time?: string;
+        amount?: number;
+        logging_mode?: string;
     };
 }
 
@@ -47,7 +49,7 @@ import { FavoriteMeal } from '../services/favoritesService';
 import { FavouriteIcon } from 'src/components/FavouriteIcon';
 
 const SERVING_UNITS = [
-    'g',
+    'grams',
     'ml',
     'oz',
     'cup',
@@ -73,6 +75,7 @@ export const AddMealScreen: React.FC = () => {
     const [protein, setProtein] = useState<string>('0');
     const [carbs, setCarbs] = useState<string>('0');
     const [fats, setFats] = useState<string>('0');
+    const [amount, setAmount] = useState<string>('1');
     const userId = useStore((state) => state.userId);
     const token = useStore((state) => state.token);
     const [loading, setLoading] = useState<boolean>(false);
@@ -80,15 +83,16 @@ export const AddMealScreen: React.FC = () => {
     const [showTimeModal, setShowTimeModal] = useState(false);
     const [tempTime, setTempTime] = useState<Date | null>(null);
     const [mealImage, setMealImage] = useState<string | null>(null);
-    const [servingUnit, setServingUnit] = useState<string>('serving');
+    const [servingUnit, setServingUnit] = useState<string>('grams');
     const [noOfServings, setNoOfServings] = useState<string>('1');  // Default to '1'
     const [showServingUnitModal, setShowServingUnitModal] = useState(false);
-    const [tempServingUnit, setTempServingUnit] = useState('serving');
+    const [tempServingUnit, setTempServingUnit] = useState('grams');
     const [isFavorite, setIsFavorite] = useState(false);
     const [mealDescription, setMealDescription] = useState('');
     const [showMealTypeModal, setShowMealTypeModal] = useState(false);
     const [tempMealType, setTempMealType] = useState('breakfast');
     const [mealType, setMealType] = useState('breakfast');
+    const [logging_mode, setLoggingMode] = useState('manual');
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
     const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
     const mixpanel = useMixpanel();
@@ -103,6 +107,8 @@ export const AddMealScreen: React.FC = () => {
             setNoOfServings(analyzedData.no_of_servings?.toString() || '0');
             setFats(analyzedData.fat?.toString() || '0');
             setMealType(analyzedData.meal_type || 'breakfast');
+            setAmount(analyzedData.amount?.toString() || '1');
+            setLoggingMode(analyzedData.logging_mode || 'manual');
 
         }
     }, [analyzedData]);
@@ -159,6 +165,8 @@ export const AddMealScreen: React.FC = () => {
         setCarbs(meal.macros.carbs.toString());
         setNoOfServings(meal.no_of_servings.toString());
         setFats(meal.macros.fat.toString());
+        setLoggingMode('favorite');
+        setMealType(meal.meal_type);
     };
 
     /**
@@ -192,8 +200,10 @@ export const AddMealScreen: React.FC = () => {
                 fat: adjustedMacros.fat,
                 meal_type: tempMealType,
                 meal_time: time.toISOString(),
+                amount: amount,
                 serving_size: servingUnit,
                 description: mealDescription || undefined,
+                logging_mode: logging_mode,
                 photo: mealImage ? {
                     uri: mealImage,
                     type: 'image/jpeg',
@@ -211,8 +221,9 @@ export const AddMealScreen: React.FC = () => {
             mixpanel?.track({
                 name: 'meal_logged',
                 properties: {
-                    method: 'manual',
+                    logging_mode: logging_mode,
                     meal_type: tempMealType,
+                    meal_time: time.toISOString(),
                     amount: amount,
                     serving_size: servingUnit,
                     ...adjustedMacros
@@ -299,6 +310,9 @@ export const AddMealScreen: React.FC = () => {
           serving_size: parseInt(noOfServings, 10) || 0,
           no_of_servings: parseInt(noOfServings, 10) || 0,
           meal_type: mealType,
+          logging_mode: logging_mode,
+          amount: parseInt(amount, 10) || 0,
+          serving_unit: servingUnit,
           meal_time: time.toISOString(),
           image: mealImage || IMAGE_CONSTANTS.mealIcon,
           restaurant: { name: 'custom', location: '' },
@@ -499,7 +513,7 @@ export const AddMealScreen: React.FC = () => {
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="number-pad"
-                                    value={noOfServings}
+                                    value={amount}
                                     onChangeText={(text) => {
                                         // Remove any non-numeric characters
                                         const cleanText = text.replace(/[^0-9]/g, '');

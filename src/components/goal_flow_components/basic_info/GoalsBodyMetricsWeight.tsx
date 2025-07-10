@@ -11,7 +11,7 @@ const weightsKg = Array.from({ length: 221 }, (_, i) => 30 + i); // 30kg to 250k
 
 export const GoalBodyMetricsWeight = () => {
   const {
-    unit, setUnit,
+    weight_unit_preference, setWeightUnitPreference,
     heightFt, setHeightFt,
     heightIn, setHeightIn,
     heightCm, setHeightCm,
@@ -25,17 +25,17 @@ export const GoalBodyMetricsWeight = () => {
       <Text className="text-base text-gray-500 mb-6">This will be used to calibrate your custom plan</Text>
       {/* Unit Switch */}
       <View className="flex-row items-center justify-center mb-6">
-        <Text className={`text-lg mr-2 ${unit === 'imperial' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Imperial</Text>
+        <Text className={`text-lg mr-2 ${weight_unit_preference === 'imperial' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Imperial</Text>
         <Switch
-          value={unit === 'metric'}
-          onValueChange={v => setUnit(v ? 'metric' : 'imperial')}
+          value={weight_unit_preference === 'metric'}
+          onValueChange={v => setWeightUnitPreference(v ? 'metric' : 'imperial')}
           trackColor={{ false: '', true: '#ccc' }}
-          thumbColor={unit === 'metric' ? '#ffffff' : '#f4f3f4'}
+          thumbColor={weight_unit_preference === 'metric' ? '#ffffff' : '#f4f3f4'}
         />
-        <Text className={`text-lg ml-2 ${unit === 'metric' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Metric</Text>
+        <Text className={`text-lg ml-2 ${weight_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Metric</Text>
       </View>
       {/* Height & Weight Pickers */}
-      {unit === 'imperial' ? (
+      {weight_unit_preference === 'imperial' ? (
         <View className="flex-row justify-between ml-5">
           {/* <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>

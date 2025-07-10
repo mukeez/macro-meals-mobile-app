@@ -10,7 +10,7 @@ const MAX_WEIGHT_KG = 227; // ~500 lbs
 
 export const GoalBodyMetricsWeight = () => {
   const {
-    unit,
+    weight_unit_preference, setWeightUnitPreference,
     weightLb,
     weightKg,
     setWeightLb,
@@ -25,7 +25,7 @@ export const GoalBodyMetricsWeight = () => {
 
   // Validate inputs whenever they change
   useEffect(() => {
-    if (unit === 'imperial') {
+    if (weight_unit_preference === 'imperial') {
       setIsValid(
         weightLb !== null && 
         weightLb >= MIN_WEIGHT_LB && 
@@ -38,7 +38,7 @@ export const GoalBodyMetricsWeight = () => {
         weightKg <= MAX_WEIGHT_KG
       );
     }
-  }, [unit, weightLb, weightKg]);
+  }, [weight_unit_preference, weightLb, weightKg]);
 
   // Mark step as complete when valid
   useEffect(() => {
@@ -60,7 +60,7 @@ export const GoalBodyMetricsWeight = () => {
     <View className="flex-1 bg-white px-4">
       <Text className="text-2xl font-bold mb-6">What's your weight?</Text>
       
-      {unit === 'imperial' ? (
+      {weight_unit_preference === 'imperial' ? (
         <View>
           <Text className="text-base mb-2">Pounds</Text>
           <TextInput

@@ -25,8 +25,9 @@ import { CircularProgress } from "../components/CircularProgress";
 import { LinearProgress } from "../components/LinearProgress";
 import { RootStackParamList } from "../types/navigation";
 import { userService } from "../services/userService";
-import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
+// import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 import { appConstants } from "constants/appConstants";
+import { Image as ExpoImage } from 'expo-image';
 
 // type RootStackParamList = {
 //     MacroInput: undefined;
@@ -134,11 +135,11 @@ export const DashboardScreen: React.FC = () => {
         const profileResponse = await userService.getProfile();
         setStoreProfile(profileResponse);
         setProfile(profileResponse);
-        macroMealsCrashlytics.setUserAttributes({
-          userId: profileResponse.id,
-          email: profileResponse.email,
-          userType: profileResponse.is_pro ? 'pro' : 'free',
-        });
+        // macroMealsCrashlytics.setUserAttributes({
+        //   userId: profileResponse.id,
+        //   email: profileResponse.email,
+        //   userType: profileResponse.is_pro ? 'pro' : 'free',
+        // });
         console.log('PROFILE RESPONSE', profileResponse)
         setUsername(profileResponse.display_name || undefined);
 
@@ -198,6 +199,7 @@ export const DashboardScreen: React.FC = () => {
           throw new Error("Failed to fetch today's meals");
         }
         const todayMealsData = await todayMealsResponse.json();
+        console.log('TODAY MEALS DATA', JSON.stringify(todayMealsData, null, 2))
         setTodayMeals(todayMealsData);
         setIsLoading(false);
       } catch (error) {
@@ -525,10 +527,31 @@ export const DashboardScreen: React.FC = () => {
               ) : (
                 todayMeals.map((meal, index) => (
                   <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
-                    <Image
-                      source={meal.photo_url ? { uri: meal.photo_url } : IMAGE_CONSTANTS.sampleFood}
-                      className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
-                    />
+                    {meal.photo_url ? (
+                      <ExpoImage
+                        placeholder={appConstants.blurhash}
+                        cachePolicy="disk"
+                        contentFit="cover"
+                        transition={300}
+                        source={{ uri: meal.photo_url }}
+                        style={{ width: 90, height: 90, borderRadius: 8, marginRight: 8 }}
+                        onLoad={() => {
+                          console.log('✅ ExpoImage loaded successfully for meal:', meal.name, meal.photo_url);
+                        }}
+                        onError={(error) => {
+                          console.log('❌ ExpoImage failed to load for meal:', meal.name, meal.photo_url, error);
+                        }}
+                        onLoadStart={() => {
+                          console.log('🔄 ExpoImage started loading for meal:', meal.name, meal.photo_url);
+                        }}
+                      />
+                    ) : (
+                      <Image
+                        source={IMAGE_CONSTANTS.mealIcon}
+                        className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
+                        resizeMode="cover"
+                      />
+                    )}
                     <View className="flex-1 flex-col">
                       <View className="flex-row items-center justify-between mb-2">
                         <Text
@@ -576,7 +599,7 @@ export const DashboardScreen: React.FC = () => {
                           source={
                             meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
                             meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
-                            meal.logging_mode === 'scan' ? IMAGE_CONSTANTS.scanMealIcon :
+                            meal.logging_mode === 'scanned' ? IMAGE_CONSTANTS.scanMealIcon :
                             IMAGE_CONSTANTS.fireIcon // default to fire icon
                           }
                           className="w-[12px] h-[12px] object-fill mr-1"
