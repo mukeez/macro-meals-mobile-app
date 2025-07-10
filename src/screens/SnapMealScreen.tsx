@@ -14,13 +14,25 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import useStore from '../store/useStore';
 import * as FileSystem from 'expo-file-system';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 /**
  * SnapMealScreen component allows users to take photos of their meals
  * for AI analysis of nutritional content
  */
+type RootStackParamList = {
+    Dashboard: undefined;
+    Stats: undefined;
+    AddMeal: { barcodeData: string; analyzedData?: any };
+    AddMealScreen: { barcodeData?: string; analyzedData?: any };
+    MealList: undefined;
+    Profile: undefined;
+};
+
+type NavigationProp = StackNavigationProp<RootStackParamList>;
+
 const SnapMealScreen = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
 
     const [permission, requestPermission] = useCameraPermissions();
 
@@ -83,8 +95,17 @@ const SnapMealScreen = () => {
 
             if (data && data.items && data.items.length > 0) {
                 navigation.navigate('AddMealScreen', {
-                    analyzedData: data.items[0],
-                    mealImage: photo.uri,
+                    analyzedData: {
+                        name: data.items[0].name,
+                        calories: data.items[0].calories,
+                        protein: data.items[0].protein,
+                        carbs: data.items[0].carbs,
+                        fat: data.items[0].fat,
+                        amount: data.items[0].amount,
+                        serving_unit: data.items[0].serving_unit,
+                        logging_mode: 'scanned',
+                        photo: photo.uri,
+                    }
                 });
             } else {
                 setScanError(true);

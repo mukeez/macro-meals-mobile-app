@@ -90,6 +90,8 @@ const BarcodeScanScreen = () => {
             const product = response.data.items[0];
             if (product) {
                 setScanError(false);
+                console.log("product", product);
+
                 handleSuccessfulScan(scanningResult.data, product);
             }
         } catch (error) {
@@ -120,8 +122,9 @@ const BarcodeScanScreen = () => {
                 protein: product.protein,
                 carbs: product.carbs,
                 fat: product.fat,
-                quantity: product.quantity,
-                logging_mode: '',
+                amount: product.amount,
+                serving_unit: product.serving_unit,
+                logging_mode: 'barcode',
             }
         });
     };
@@ -149,7 +152,9 @@ const BarcodeScanScreen = () => {
                             protein: product.protein,
                             carbs: product.carbs,
                             fat: product.fat,
-                            quantity: product.quantity
+                            amount: product.amount,
+                            serving_unit: product.serving_unit,
+                            logging_mode: 'barcode',
                         }
                     });
                 } else {
@@ -219,7 +224,9 @@ const BarcodeScanScreen = () => {
                                 protein: product.protein,
                                 carbs: product.carbs,
                                 fat: product.fat,
-                                quantity: product.quantity
+                                amount: product.amount,
+                                serving_unit: product.serving_unit,
+                                logging_mode: 'barcode',
                             }
                         });
                     } else {

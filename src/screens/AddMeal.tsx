@@ -8,6 +8,8 @@ import useStore from "../store/useStore";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types/navigation";
+import { Image as ExpoImage } from "expo-image";
+import { appConstants } from "constants/appConstants";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -218,7 +220,7 @@ const AddMeal: React.FC = () => {
       >
         {loading ? (
           <View className="flex-1 justify-center items-center py-20">
-            <ActivityIndicator size="large" color="#7E54D9" />
+            <ActivityIndicator size="large" color="#19a28f" />
             <Text className="text-textMediumGrey mt-4">Loading meals...</Text>
           </View>
         ) : (
@@ -244,10 +246,23 @@ const AddMeal: React.FC = () => {
                     )}
                     {section.meals.map((meal, index) => (
                       <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
-                        <Image
-                          source={meal.photo_url ? { uri: meal.photo_url } : IMAGE_CONSTANTS.sampleFood}
-                          className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
-                        />
+                       <ExpoImage
+                        placeholder={appConstants.blurhash}
+                        cachePolicy="disk"
+                        contentFit="cover"
+                        transition={300}
+                        source={{ uri: meal.photo_url }}
+                        style={{ width: 90, height: 90, borderRadius: 8, marginRight: 8 }}
+                        onLoad={() => {
+                          console.log('✅ ExpoImage loaded successfully for meal:', meal.name, meal.photo_url);
+                        }}
+                        onError={(error) => {
+                          console.log('❌ ExpoImage failed to load for meal:', meal.name, meal.photo_url, error);
+                        }}
+                        onLoadStart={() => {
+                          console.log('🔄 ExpoImage started loading for meal:', meal.name, meal.photo_url);
+                        }}
+                      />
                         <View className="flex-1 flex-col">
                           <View className="flex-row items-center justify-between mb-2">
                             <Text
@@ -304,13 +319,14 @@ const AddMeal: React.FC = () => {
                             </Text>
                             <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
                             <Image
+                              tintColor="#000000"
                               source={
                                 meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
                                 meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
-                                meal.logging_mode === 'scan' ? IMAGE_CONSTANTS.scanMealIcon :
+                                meal.logging_mode === 'scanned' ? IMAGE_CONSTANTS.scanMealIcon :
                                 IMAGE_CONSTANTS.fireIcon // default to fire icon
                               }
-                              className="w-[16px] h-[16px] object-fill mr-1"
+                              className="w-[12px] h-[12px] object-fill mr-1"
                             />
                             <Text className="text-sm text-textMediumGrey text-center font-medium">
                               {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}

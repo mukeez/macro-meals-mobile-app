@@ -7,6 +7,7 @@ import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import useStore from '../store/useStore';
 import { CircularProgress } from 'src/components/CircularProgress';
 import { mealService } from '../services/mealService';
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 type RootStackParamList = {
   AddMeal: { analyzedData?: any };
@@ -42,6 +43,28 @@ const AiMealSuggestionsScreen: React.FC = () => {
   const macrosPreferences = useStore((state) => state.macrosPreferences);
   const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const [macroData, setMacroData] = useState<MacroData[]>(defaultMacroData);
+  const mixpanel = useMixpanel();
+
+  const trackAIMealSuggestedViewed = async () => {
+    if (!mixpanel) return;
+    
+    const signupTime = mixpanel.getSuperProperty('signup_time');
+    const properties: Record<string, any> = {};
+
+    const firstAISuggestionViewed = mixpanel.getSuperProperty('first_ai_meal_suggested_viewed');
+    if (!firstAISuggestionViewed) {
+      const now = new Date();
+      const timeToFirstSuggestion = signupTime ? 
+        (now.getTime() - new Date(signupTime).getTime()) / 1000 : 0;
+      properties.time_to_first_ai_meal_suggestion_seconds = timeToFirstSuggestion;
+      mixpanel.register({ first_ai_meal_suggested_viewed: true });
+    }
+
+    mixpanel.track({
+      name: 'ai_meal_suggested_viewed',
+      properties
+    });
+  };
 
   const handleMealSelect = (meal: any) => {
     navigation.navigate('AISuggestedMealsDetailsScreen', { meal });
@@ -67,6 +90,11 @@ const AiMealSuggestionsScreen: React.FC = () => {
         const result = await mealService.getAiMealSuggestions();
         setMeals(result.meals);
         setPreferences(result.preferences);
+        
+        // Track AI meal suggestions viewed
+        if (result.meals && result.meals.length > 0) {
+          await trackAIMealSuggestedViewed();
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch meal suggestions');
       } finally {

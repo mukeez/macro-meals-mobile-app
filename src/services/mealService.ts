@@ -15,7 +15,9 @@ const API_ENDPOINTS = {
     DELETE_MEAL: `${API_BASE_URL}/meals/`,
     MEAL_PROGRESS: `${API_BASE_URL}/meals/progress`,
     MEALS: `${API_BASE_URL}/meals/logs`,
-    EDIT_MEAL: `${API_BASE_URL}/meals/{id}`
+    EDIT_MEAL: `${API_BASE_URL}/meals/{id}`,
+    SEARCH_MEAL: `${API_BASE_URL}/meals/search?query={query}`,
+    SEARCH_MEALS_API: `${API_BASE_URL}/products/search-meals-format?query={query}`
 };
 
 /**
@@ -386,6 +388,75 @@ export const mealService = {
             console.error('Error fetching today\'s meals:', error);
             throw error;
         }
+    },
+
+
+    /**
+     * Search for meals by name
+     * @param query - The query to search for
+     * @returns Promise with suggested meals
+     * @throws Error if the request fails
+     */
+    searchMeal: async (query: string): Promise<Meal[]> => {
+        const token = useStore.getState().token;
+        const url = API_ENDPOINTS.SEARCH_MEAL.replace('{query}', query);
+        console.log('🔍 Search URL:', url);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+
+        console.log('🔍 Response status:', response.status);
+        console.log('🔍 Response ok:', response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();    
+            throw new Error(`Failed to search meals: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('🔍 Parsed response data:', data);
+        return data;
+    },
+
+    /**
+     * Search for meals by name
+     * @param query - The query to search for
+     * @returns Promise with suggested meals
+     * @throws Error if the request fails
+     */
+
+    searchMealsApi: async (query: string): Promise<any> => {
+        const token = useStore.getState().token;
+        const url = API_ENDPOINTS.SEARCH_MEALS_API.replace('{query}', query);
+        console.log('🔍 Global search service - URL:', url);
+        console.log('🔍 Global search service - Token available:', !!token);
+        console.log('🔍 Global search service - Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+
+        console.log('🔍 Global search service - Response status:', response.status);
+        console.log('🔍 Global search service - Response ok:', response.ok);
+        console.log('🔍 Global search service - Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.log('🔍 Global search service - Error response:', errorText);
+            throw new Error(`Failed to search meals: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('🔍 Global search service - Parsed data:', data);
+        return data;
     },
 
     /**

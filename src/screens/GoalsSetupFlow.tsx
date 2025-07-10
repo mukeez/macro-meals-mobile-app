@@ -231,7 +231,8 @@ export const GoalsSetupFlow =  () => {
 
       const activityLevelMap: Record<string, string> = {
         "Not very active": "sedentary",
-        "Moderately active": "moderate",
+        "Lightly active": "sedentary",
+        "Active": "moderate",
         "Very active": "active"
       };
       const activityLevelApi = activityLevelMap[dailyActivityLevel] || "sedentary";
@@ -603,6 +604,7 @@ export const GoalsSetupFlow =  () => {
         {/* Pager */}
           <CustomPagerView
             page={subSteps[majorStep]}
+            scrollEnabled={false}
             showIndicator={false}
           >
             {substepComponents[majorStep]}

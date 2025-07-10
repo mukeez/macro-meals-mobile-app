@@ -24,6 +24,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import * as ImagePicker from 'expo-image-picker';
 import FavoritesService from '../services/favoritesService';
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 interface RouteParams {
     barcodeData: any;
@@ -70,6 +71,30 @@ export const AddMealScreen: React.FC = () => {
     const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
     const params = route.params || {};
     const { barcodeData, analyzedData } = params;
+    const mixpanel = useMixpanel();
+
+    const trackRestaurantMealFinderUsed = async (location: string) => {
+        if (!mixpanel) return;
+        
+        const signupTime = mixpanel.getSuperProperty('signup_time');
+        const properties: Record<string, any> = {
+            search_location: location,
+        };
+
+        const firstRestaurantSearchDone = mixpanel.getSuperProperty('first_restaurant_search_done');
+        if (!firstRestaurantSearchDone) {
+            const now = new Date();
+            const timeToFirstSearch = signupTime ? 
+                (now.getTime() - new Date(signupTime).getTime()) / 1000 : 0;
+            properties.time_to_first_restaurant_search_seconds = timeToFirstSearch;
+            mixpanel.register({ first_restaurant_search_done: true });
+        }
+
+        mixpanel.track({
+            name: 'restaurant_meal_finder_used',
+            properties
+        });
+    };
 
     const [mealName, setMealName] = useState<string>('');
     const [calories, setCalories] = useState<string>('0');
@@ -234,6 +259,10 @@ export const AddMealScreen: React.FC = () => {
           },
           image: mealImage || IMAGE_CONSTANTS.mealsIcon,
           restaurant: { name: 'custom', location: '' },
+          serving_size: 1,
+          no_of_servings: 1,
+          meal_type: selectedMealType,
+          meal_time: time.toISOString(),
         };
         const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
         setIsFavorite(newFavoriteStatus);

@@ -11,7 +11,7 @@ export type RootStackParamList = {
     OnboardingScreen: undefined;
     Auth: { initialAuthScreen: string };
     Dashboard: undefined;
-    Welcome: undefined;
+    WelcomeScreen: undefined;
     AccountSettings: undefined;
     Login: undefined;
     SignUp: undefined;
@@ -85,4 +85,21 @@ export type RootStackParamList = {
       };
     };
     EmailVerificationScreen: { email: string, password: string};
+    AddSearchedLoggedMeal: {
+        searchedMeal: {
+            id: string;
+            name: string;
+            description: string | null;
+            calories: number;
+            protein: number;
+            carbs: number;
+            fat: number;
+            amount: number;
+            serving_unit: string;
+            read_only: boolean;
+            barcode?: string;
+            notes?: string;
+            photo_url?: string | null;
+        };
+    };
 };
