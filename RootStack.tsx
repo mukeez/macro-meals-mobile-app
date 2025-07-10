@@ -42,6 +42,7 @@ import AccountSettingsScreen from "src/screens/AccountSettingsScreen";
 import EditMealScreen from "src/screens/EditMealScreen";
 import AISuggestedMealsDetailsScreen from "src/screens/AISuggestedMealsDetails";
 import { EmailVerificationScreen } from "src/screens/EmailVerificationScreen";
+import AddSearchedLoggedMealScreen from "src/screens/AddSearchedLoggedMealScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -175,6 +176,10 @@ const DashboardNavigator = () => {
       <Stack.Screen
         name="TermsOfServiceScreen"
         component={TermsOfServiceScreen}
+      />
+      <Stack.Screen
+        name="AddSearchedLoggedMeal"
+        component={AddSearchedLoggedMealScreen}
       />
     </Stack.Navigator>
   );
