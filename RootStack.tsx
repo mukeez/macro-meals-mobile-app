@@ -41,6 +41,7 @@ import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
 import AccountSettingsScreen from "src/screens/AccountSettingsScreen";
 import EditMealScreen from "src/screens/EditMealScreen";
 import AISuggestedMealsDetailsScreen from "src/screens/AISuggestedMealsDetails";
+import { EmailVerificationScreen } from "src/screens/EmailVerificationScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -98,6 +99,10 @@ const AuthNavigator = ({
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen
+        name="EmailVerificationScreen"
+        component={EmailVerificationScreen}
+      />
     </Stack.Navigator>
   );
 };

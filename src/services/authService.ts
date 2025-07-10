@@ -194,6 +194,27 @@ export const authService = {
             throw error;
         }
     },
+    verifyEmail: async (params: { email: string, otp: string }) => {
+        try {
+            const response = await fetch(`${API_URL}/auth/verify-email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+
+                throw new Error(responseData.message || 'Verification failed');
+            }
+            console.log('responseData', responseData);
+            return responseData;
+        } catch (error) {
+            console.error('Verification error:', error);
+            throw error;
+        }
+    },
 
     resetPassword: async (resetPasswordData: { email: string, session_token: string, new_password: string }) => {
         try {
@@ -250,6 +271,25 @@ export const authService = {
     resendVerificationCode: async (params: { email: string }) => {
         try {
             const response = await fetch(`${API_URL}/auth/resend-otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+            const responseData = await response.json();
+            if (!response.ok) {
+                throw new Error(responseData.message || 'Failed to resend verification code');
+            }
+            return responseData;
+        } catch (error) {
+            console.error('Resend verification code error:', error);
+            throw error;
+        }
+    },
+       resendEmailVerification: async (params: { email: string }) => {
+        try {
+            const response = await fetch(`${API_URL}/auth/resend-verification`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

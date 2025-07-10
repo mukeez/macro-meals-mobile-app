@@ -84,4 +84,5 @@ export type RootStackParamList = {
         read_only?: boolean;
       };
     };
+    EmailVerificationScreen: { email: string, password: string};
 };
