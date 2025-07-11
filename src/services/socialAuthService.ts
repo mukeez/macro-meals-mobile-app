@@ -1,6 +1,7 @@
 // src/services/socialAuthService.ts
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { authService } from './authService';
+import axiosInstance from './axios';
 
 import appleAuth, {
     AppleAuthRequestOperation,
@@ -17,29 +18,17 @@ export const initGoogleSignIn = () => {
     });
 };
 
-
-
-
 export const socialAuthService = {
     signInWithGoogle: async () => {
         try {
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
 
-            const response = await fetch('https://api.macromate.com/auth/google', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ idToken: userInfo.idToken }),
+            const response = await axiosInstance.post('/auth/google', { 
+                idToken: userInfo.idToken 
             });
 
-            if (!response.ok) {
-                throw new Error('Google authentication failed on server');
-            }
-
-            const authData = await response.json();
-            return authData;
+            return response.data;
         } catch (error) {
             if (error.code === statusCodes.SIGN_IN_CANCELLED) {
                 console.log('Google sign in cancelled');
@@ -53,6 +42,7 @@ export const socialAuthService = {
             throw error;
         }
     },
+    
     signInWithApple: async () => {
         if (!appleAuth.isSupported) {
             throw new Error('Apple Sign In is not supported on this device');
@@ -68,30 +58,20 @@ export const socialAuthService = {
                 throw new Error('Apple Sign In failed - no identity token returned');
             }
 
-            const response = await fetch('https://api.macromate.com/auth/apple', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    identityToken: appleAuthRequestResponse.identityToken,
-                    user: appleAuthRequestResponse.user,
-                    fullName: appleAuthRequestResponse.fullName,
-                    email: appleAuthRequestResponse.email,
-                }),
+            const response = await axiosInstance.post('/auth/apple', {
+                identityToken: appleAuthRequestResponse.identityToken,
+                user: appleAuthRequestResponse.user,
+                fullName: appleAuthRequestResponse.fullName,
+                email: appleAuthRequestResponse.email,
             });
 
-            if (!response.ok) {
-                throw new Error('Apple authentication failed on server');
-            }
-
-            const authData = await response.json();
-            return authData;
+            return response.data;
         } catch (error) {
             console.error('Apple sign in error:', error);
             throw error;
         }
     },
+    
     signInWithFacebook: async () => {
         try {
             const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
@@ -107,20 +87,11 @@ export const socialAuthService = {
                 throw new Error('Failed to get Facebook access token');
             }
 
-            const response = await fetch('https://api.macromate.com/auth/facebook', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ accessToken: data.accessToken.toString() }),
+            const response = await axiosInstance.post('/auth/facebook', { 
+                accessToken: data.accessToken.toString() 
             });
 
-            if (!response.ok) {
-                throw new Error('Facebook authentication failed on server');
-            }
-
-            const authData = await response.json();
-            return authData;
+            return response.data;
         } catch (error) {
             console.error('Facebook sign in error:', error);
             throw error;

@@ -1,5 +1,6 @@
 import useStore from "../store/useStore";
 import { authTokenService } from "./authTokenService";
+import axiosInstance from "./axios";
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 
@@ -23,17 +24,13 @@ export const userService = {
    * @throws Error if the request fails
    */
   getProfile: async (): Promise<any> => {
-    const token = useStore.getState().token;
-    if (!token) throw new Error("Authentication required");
-    const response = await fetch(`${API_BASE_URL}/user/me`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
-    if (!response.ok) throw new Error(await response.text());
-    return await response.json();
+    try {
+      const response = await axiosInstance.get('/user/me');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      throw error;
+    }
   },
 
   /**
@@ -55,28 +52,16 @@ export const userService = {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/user/preferences`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.status === 404) {
+      const response = await axiosInstance.get('/user/preferences');
+      const preferences = response.data;
+      console.log('\n\nPREFERENCES\n\n', preferences)
+      return preferences;
+    } catch (err: any) {
+      console.error('Error fetching preferences:', err);
+      if (err.response?.status === 404) {
         console.log('404 NO PREFERENCES FOUND')
         return defaultPreferences;
       }
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch preferences: ${response.status}`);
-      }
-      
-      const preferences = await response.json();
-      console.log('\n\nPREFERENCES\n\n', preferences)
-      return preferences;
-    } catch (err) {
-      console.error('Error fetching preferences:', err);
       return defaultPreferences;
     }
   },
@@ -88,25 +73,16 @@ export const userService = {
    * @throws Error if the request fails
    */
   updatePreferences: async (prefs: Record<string, any>): Promise<any> => {
-    const token = useStore.getState().token;
-    if (!token) throw new Error("Authentication required");
-    const response = await fetch(`${API_BASE_URL}/user/preferences`, {
-      method: "PATCH",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(prefs)
-    });
-    if (!response.ok) throw new Error(await response.text());
-    return await response.json();
+    try {
+      const response = await axiosInstance.patch('/user/preferences', prefs);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      throw error;
+    }
   },
 
   updateProfile: async (fields: Record<string, any>): Promise<any> => {
-    const token = useStore.getState().token;
-    console.log('updateProfile called with fields:', fields);
-    if (!token) throw new Error("Authentication required");
-
     console.log('updateProfile called with fields:', fields);
 
     // Always use FormData to match Postman behavior
@@ -151,92 +127,55 @@ export const userService = {
       }
     });
 
-    let headers: Record<string, string> = {
-      "Authorization": `Bearer ${token}`,
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      "Pragma": "no-cache",
-      "Expires": "0"
-      // IMPORTANT: Don't set Content-Type manually for FormData - React Native needs to set the boundary
-    };
-
-    const fullUrl = `${API_BASE_URL}/user/me`;
     console.log('=== FULL REQUEST DEBUG ===');
-    console.log('API_BASE_URL:', API_BASE_URL);
-    console.log('Full URL:', fullUrl);
     console.log('Method: PATCH');
-    console.log('Headers:', headers);
     console.log('Using FormData body (multipart/form-data)');
     console.log('FormData fields being sent:', Object.keys(fields));
     console.log('Original field values:', fields);
     console.log('=== SENDING REQUEST ===');
 
-    const response = await fetch(fullUrl, {
-      method: "PATCH",
-      headers,
-      body: formData
-    });
-
-    console.log('=== RESPONSE RECEIVED ===');
-    
-    console.log('Response received:');
-    console.log('- Status:', response.status);
-    console.log('- Status Text:', response.statusText);
-    console.log('- Response Headers:', Object.fromEntries(response.headers.entries()));
-    
-    const responseText = await response.text();
-    console.log('- Response Body:', responseText);
-    
-    if (!response.ok) {
-      console.error('[PATCH ERROR] /user/me', response.status, responseText);
-      throw new Error(responseText);
-    }
-    
     try {
-      const parsedResponse = JSON.parse(responseText);
-      console.log('- Parsed Response last_name:', parsedResponse.last_name);
-      console.log('- Response updated_at:', parsedResponse.updated_at);
-      return parsedResponse;
-    } catch (parseError) {
-      console.error('Failed to parse response as JSON:', parseError);
-      throw new Error('Invalid JSON response');
+      const response = await axiosInstance.patch('/user/me', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+
+      console.log('=== RESPONSE RECEIVED ===');
+      console.log('- Parsed Response last_name:', response.data.last_name);
+      console.log('- Response updated_at:', response.data.updated_at);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
     }
   },
-updateUserProfile: async (data: any): Promise<any> => {
-  const token = useStore.getState().token;
-  if (!token) throw new Error("Authentication required");
-  const response = await fetch(`${API_BASE_URL}/user/me`, {
-    method: "PATCH",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  });
-  if (!response.ok) throw new Error(await response.text());
-  return await response.json();
-},
+
+  updateUserProfile: async (data: any): Promise<any> => {
+    try {
+      const response = await axiosInstance.patch('/user/me', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  },
+
   /**
    * Fetches user data with detailed profile information
    * @returns User data with profile information
    * @throws Error if the request fails
    */
   fetchUserData: async (): Promise<any> => {
-    const token = useStore.getState().token;
-    if (!token) throw new Error("Authentication required");
-    
-    const response = await fetch(`${API_BASE_URL}/user/me`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch user profile");
+    try {
+      const response = await axiosInstance.get('/user/me');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      throw error;
     }
-
-    const userData = await response.json();
-    return userData;
   },
 }

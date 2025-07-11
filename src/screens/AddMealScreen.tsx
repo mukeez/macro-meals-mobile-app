@@ -42,6 +42,7 @@ interface RouteParams {
         meal_time?: string;
         amount?: number;
         logging_mode?: string;
+        hideImage?: boolean;
     };
 }
 
@@ -383,24 +384,26 @@ export const AddMealScreen: React.FC = () => {
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{ paddingBottom: 40 }}
                 >
-                    <TouchableOpacity
-                        className="h-[11.3rem] rounded-xl my-4 justify-center items-center bg-[#f3f3f3]"
-                        onPress={handleAddPhoto}
-                        activeOpacity={0.8}
-                    >
-                        {mealImage ? (
-                            <Image
-                                source={{ uri: mealImage }}
-                                className="w-full h-full rounded-xl"
-                                resizeMode="cover"
-                            />
-                        ) : (
-                            <>
-                                <Image source={IMAGE_CONSTANTS.galleryIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
-                                <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
+                    {!analyzedData?.hideImage && (
+                        <TouchableOpacity
+                            className="h-[11.3rem] rounded-xl my-4 justify-center items-center bg-[#f3f3f3]"
+                            onPress={handleAddPhoto}
+                            activeOpacity={0.8}
+                        >
+                            {mealImage ? (
+                                <Image
+                                    source={{ uri: mealImage }}
+                                    className="w-full h-full rounded-xl"
+                                    resizeMode="cover"
+                                />
+                            ) : (
+                                <>
+                                    <Image source={IMAGE_CONSTANTS.galleryIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
+                                    <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    )}
 
                     <View className="mb-4">
                         <Text className="text-base font-medium mb-2">Meal Name</Text>

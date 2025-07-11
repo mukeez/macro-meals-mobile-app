@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import useStore from '../store/useStore';
 import * as FileSystem from 'expo-file-system';
+import { scanService } from '../services/scanService';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 /**
@@ -72,25 +73,8 @@ const SnapMealScreen = () => {
             const fileName = fileUri.split('/').pop() || 'meal.jpg';
             const fileType = 'image/jpeg';
 
-            // Prepare form data
-            const formData = new FormData();
-            formData.append('image', {
-                uri: fileUri,
-                name: fileName,
-                type: fileType,
-            } as any);
-
             // Send to API
-            const response = await fetch('https://api.macromealsapp.com/api/v1/scan/image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: formData,
-            });
-
-            const data = await response.json();
+            const data = await scanService.scanImage(fileUri);
             console.log('AI Scan Response:', data);
 
             if (data && data.items && data.items.length > 0) {

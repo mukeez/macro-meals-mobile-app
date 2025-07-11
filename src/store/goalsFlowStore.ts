@@ -87,13 +87,34 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
     heightCm: null,
     weightLb: null,
     weightKg: null,
-    setHeightUnitPreference: (unit) => set({ height_unit_preference: unit }),
-    setWeightUnitPreference: (unit) => set({ weight_unit_preference: unit }),
-    setHeightFt: (ft) => set({ heightFt: ft }),
-    setHeightIn: (inch) => set({ heightIn: inch }),
-    setHeightCm: (cm) => set({ heightCm: cm }),
-    setWeightLb: (lb) => set({ weightLb: lb }),
-    setWeightKg: (kg) => set({ weightKg: kg }),
+    setHeightUnitPreference: (unit) => {
+        console.log('[GoalsFlow] Height unit preference changed:', unit);
+        set({ height_unit_preference: unit });
+    },
+    setWeightUnitPreference: (unit) => {
+        console.log('[GoalsFlow] Weight unit preference changed:', unit);
+        set({ weight_unit_preference: unit });
+    },
+    setHeightFt: (ft) => {
+        console.log('[GoalsFlow] Height (feet) selected:', ft);
+        set({ heightFt: ft });
+    },
+    setHeightIn: (inch) => {
+        console.log('[GoalsFlow] Height (inches) selected:', inch);
+        set({ heightIn: inch });
+    },
+    setHeightCm: (cm) => {
+        console.log('[GoalsFlow] Height (cm) selected:', cm);
+        set({ heightCm: cm });
+    },
+    setWeightLb: (lb) => {
+        console.log('[GoalsFlow] Weight (lb) selected:', lb);
+        set({ weightLb: lb });
+    },
+    setWeightKg: (kg) => {
+        console.log('[GoalsFlow] Weight (kg) selected:', kg);
+        set({ weightKg: kg });
+    },
     dailyActivityLevel: null,
     setDailyActivityLevel: (level) => {
         console.log('[GoalsFlow] Daily activity level selected:', level);

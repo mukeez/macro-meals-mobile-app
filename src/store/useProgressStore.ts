@@ -1,4 +1,4 @@
-import { getMealProgress } from "src/services/mealService";
+import { getMealProgress, getMealByPeriod } from "src/services/mealService";
 import { create } from "zustand";
 
 type MacroDay = {
@@ -22,6 +22,7 @@ type ProgressState = {
   loading: boolean;
   selectedRange: string;
   fetchData: (range: string) => Promise<void>;
+  fetchDataByPeriod: (period: string) => Promise<void>;
   setSelectedRange: (range: string) => void;
 };
 
@@ -74,6 +75,26 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       }
       
       const data = await getMealProgress(format(startDate), format(endDate));
+      set({ data, loading: false });
+    } catch (e) {
+      set({ data: null, loading: false });
+    }
+  },
+  fetchDataByPeriod: async (period) => {
+    set({ loading: true });
+    try {
+      // Convert range to period format
+      const periodMap: { [key: string]: string } = {
+        "1w": "1W",
+        "1m": "1M", 
+        "3m": "3M",
+        "6m": "6M",
+        "1y": "1Y",
+        "all": "All"
+      };
+      
+      const mappedPeriod = periodMap[period] || period;
+      const data = await getMealByPeriod(mappedPeriod);
       set({ data, loading: false });
     } catch (e) {
       set({ data: null, loading: false });

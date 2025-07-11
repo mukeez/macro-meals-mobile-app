@@ -2,6 +2,7 @@ import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal, Logge
 import { authTokenService } from './authTokenService';
 import { userService } from './userService';
 import useStore from 'src/store/useStore';
+import axiosInstance from './axios';
 
 /**
  * API configuration.
@@ -100,9 +101,6 @@ interface MealProgressResponse {
     total_days: number;
 }
 
-
-
-
 /**
  * Interface for AI meal suggestions request
  */
@@ -140,22 +138,11 @@ export const mealService = {
         }, 60000); // 1 minute timeout
 
         try {
-            const response = await fetch(API_ENDPOINTS.SUGGEST_MEALS, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify(requestBody),
+            const response = await axiosInstance.post('/meals/suggest-meals', requestBody, {
                 signal: controller.signal,
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            return data.meals || [];
+            return response.data.meals || [];
         } catch (err: any) {
             if (err.name === 'AbortError') {
                 throw new Error('Request timed out after 1 minute. Please try again.');
@@ -207,24 +194,9 @@ export const mealService = {
      * @returns Promise with suggested meals
      */
     suggestMeals: async (macroAndLocation: any): Promise<Meal[]> => {
-        const token = useStore.getState().token;
         try {
-            const response = await fetch(API_ENDPOINTS.SUGGEST_MEALS, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(macroAndLocation),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to fetch meal suggestions: ${errorText}`);
-            }
-
-            const data: SuggestMealsResponse = await response.json();
-            return data.meals;
+            const response = await axiosInstance.post('/meals/suggest-meals', macroAndLocation);
+            return response.data.meals;
         } catch (error) {
             console.error('Error suggesting meals:', error);
             throw error;
@@ -269,21 +241,13 @@ export const mealService = {
                 } as any);
             }
 
-            const response = await fetch(API_ENDPOINTS.LOG_MEAL, {
-                method: 'POST',
+            const response = await axiosInstance.post('/meals/add', formData, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
                 },
-                body: formData,
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Failed to log meal:', errorText);
-                throw new Error(`Failed to log meal: ${errorText}`);
-            }
-
-            return await response.json();
+            return response.data;
         } catch (error) {
             console.error('Error logging meal:', error);
             throw error;
@@ -318,22 +282,13 @@ export const mealService = {
                 } as any);
             }
 
-            const updateUrl = API_ENDPOINTS.EDIT_MEAL.replace('{id}', mealId);
-            const response = await fetch(updateUrl, {
-                method: 'PUT',
+            const response = await axiosInstance.put(`/meals/${mealId}`, formData, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    // Don't set Content-Type header, let the browser set it with the boundary
+                    'Content-Type': 'multipart/form-data',
                 },
-                body: formData,
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to update meal: ${errorText}`);
-            }
-
-            return await response.json();
+            return response.data;
         } catch (error) {
             console.error('Error updating meal:', error);
             throw error;
@@ -353,27 +308,9 @@ export const mealService = {
         }
 
         try {
-            const response = await fetch(API_ENDPOINTS.TODAY_MEALS, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-            });
+            const response = await axiosInstance.get('/meals/today');
 
-            if (!response.ok) {
-                let errorMessage = 'Failed to fetch today\'s meals';
-                try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
-                } catch (e) {
-                }
-                throw new Error(errorMessage);
-            }
-
-            const meals = await response.json();
+            const meals = response.data;
             return meals.map((meal: any) => ({
                 id: meal.id,
                 name: meal.name,
@@ -383,13 +320,18 @@ export const mealService = {
                 fat: meal.fat,
                 calories: meal.calories,
                 mealType: meal.meal_type,
+                photo_url: meal.photo_url,
+                logging_mode: meal.logging_mode,
+                amount: meal.amount,
+                serving_unit: meal.serving_unit,
+                read_only: meal.read_only,
+                meal_time: meal.meal_time,
             }));
         } catch (error) {
             console.error('Error fetching today\'s meals:', error);
             throw error;
         }
     },
-
 
     /**
      * Search for meals by name
@@ -398,28 +340,17 @@ export const mealService = {
      * @throws Error if the request fails
      */
     searchMeal: async (query: string): Promise<Meal[]> => {
-        const token = useStore.getState().token;
-        const url = API_ENDPOINTS.SEARCH_MEAL.replace('{query}', query);
+        const url = `/meals/search?query=${encodeURIComponent(query)}`;
         console.log('🔍 Search URL:', url);
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-        });
-
-        console.log('🔍 Response status:', response.status);
-        console.log('🔍 Response ok:', response.ok);
-
-        if (!response.ok) {
-            const errorText = await response.text();    
-            throw new Error(`Failed to search meals: ${errorText}`);
+        
+        try {
+            const response = await axiosInstance.get(url);
+            console.log('🔍 Parsed response data:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error searching meals:', error);
+            throw error;
         }
-
-        const data = await response.json();
-        console.log('🔍 Parsed response data:', data);
-        return data;
     },
 
     /**
@@ -428,35 +359,18 @@ export const mealService = {
      * @returns Promise with suggested meals
      * @throws Error if the request fails
      */
-
     searchMealsApi: async (query: string): Promise<any> => {
-        const token = useStore.getState().token;
-        const url = API_ENDPOINTS.SEARCH_MEALS_API.replace('{query}', query);
+        const url = `/products/search-meals-format?query=${encodeURIComponent(query)}`;
         console.log('🔍 Global search service - URL:', url);
-        console.log('🔍 Global search service - Token available:', !!token);
-        console.log('🔍 Global search service - Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
         
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-        });
-
-        console.log('🔍 Global search service - Response status:', response.status);
-        console.log('🔍 Global search service - Response ok:', response.ok);
-        console.log('🔍 Global search service - Response headers:', Object.fromEntries(response.headers.entries()));
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.log('🔍 Global search service - Error response:', errorText);
-            throw new Error(`Failed to search meals: ${errorText}`);
+        try {
+            const response = await axiosInstance.get(url);
+            console.log('🔍 Global search service - Parsed data:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error searching meals API:', error);
+            throw error;
         }
-
-        const data = await response.json();
-        console.log('🔍 Global search service - Parsed data:', data);
-        return data;
     },
 
     /**
@@ -472,27 +386,8 @@ export const mealService = {
         }
 
         try {
-            const response = await fetch(API_ENDPOINTS.DAILY_PROGRESS, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-            });
-
-            if (!response.ok) {
-                let errorMessage = 'Failed to fetch daily progress';
-                try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
-                } catch (e) {
-                }
-                throw new Error(errorMessage);
-            }
-
-            return await response.json();
+            const response = await axiosInstance.get('/meals/progress/today');
+            return response.data;
         } catch (error) {
             console.error('Error fetching daily progress:', error);
             throw error;
@@ -513,26 +408,7 @@ export const mealService = {
         console.log('Deleting meal:', mealId);
 
         try {
-            const response = await fetch(`${API_ENDPOINTS.DELETE_MEAL}/${mealId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-            });
-
-            if (!response.ok) {
-                let errorMessage = 'Failed to delete meal';
-                try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
-                } catch (e) {
-                    // If parsing fails, use the default error message
-                }
-                throw new Error(errorMessage);
-            }
+            await axiosInstance.delete(`/meals/${mealId}`);
         } catch (error) {
             console.error('Error deleting meal:', error);
             throw error;
@@ -541,50 +417,43 @@ export const mealService = {
 };
 
 export async function getMealProgress(startDate: string, endDate: string) {
-    const token = useStore.getState().token;
-    const url = `${API_ENDPOINTS.MEAL_PROGRESS}?start_date=${startDate}&end_date=${endDate}`;
+    const url = `/meals/progress?start_date=${startDate}&end_date=${endDate}`;
     console.log('getMealProgress URL:', url);
     
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error('getMealProgress error:', response.status, errorText);
-        throw new Error(`Failed to fetch meal progress: ${response.status}`);
+    try {
+        const response = await axiosInstance.get(url);
+        console.log('Get Meal Progress Response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('getMealProgress error:', error);
+        throw error;
     }
-    
-    const json: MealProgressResponse = await response.json();
-    console.log('Get Meal Progress Response:', json);
-    return json;
 }
 
+export async function getMealByPeriod(period: string) {
+    const url = `/meals/progress?period=${period}`;
+    console.log('getMealByPeriod URL:', url);
+    
+    try {
+        const response = await axiosInstance.get(url);
+        console.log('Get Meal By Period Response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('getMealByPeriod error:', error);
+        throw error;
+    }
+}
 
 export async function getMeals(startDate: string, endDate: string) {
-    const token = useStore.getState().token;
-    const url = `${API_ENDPOINTS.MEALS}?start_date=${startDate}&end_date=${endDate}`;
+    const url = `/meals/logs?start_date=${startDate}&end_date=${endDate}`;
     console.log('getMeals URL:', url);
     
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error('getMeals error:', response.status, errorText);
-        throw new Error(`Failed to fetch meals: ${response.status}`);
+    try {
+        const response = await axiosInstance.get(url);
+        console.log('Get Meals Response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('getMeals error:', error);
+        throw error;
     }
-    
-    const meals = await response.json();
-    console.log('Get Meals Response:', meals);
-    return meals;
 }

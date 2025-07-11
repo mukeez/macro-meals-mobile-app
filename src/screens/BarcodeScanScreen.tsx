@@ -125,6 +125,8 @@ const BarcodeScanScreen = () => {
                 amount: product.amount,
                 serving_unit: product.serving_unit,
                 logging_mode: 'barcode',
+                read_only: product.read_only,
+                hideImage: true, // Flag to hide the image section
             }
         });
     };
@@ -144,19 +146,21 @@ const BarcodeScanScreen = () => {
 
                 if (response.items && response.items.length > 0) {
                     const product = response.items[0];
-                    navigation.navigate('AddMealScreen', {
-                        barcodeData: '',
-                        analyzedData: {
-                            name: product.name,
-                            calories: product.calories,
-                            protein: product.protein,
-                            carbs: product.carbs,
-                            fat: product.fat,
-                            amount: product.amount,
-                            serving_unit: product.serving_unit,
-                            logging_mode: 'barcode',
-                        }
-                    });
+                                    navigation.navigate('AddMealScreen', {
+                    barcodeData: '',
+                    analyzedData: {
+                        name: product.name,
+                        calories: product.calories,
+                        protein: product.protein,
+                        carbs: product.carbs,
+                        fat: product.fat,
+                        amount: product.amount,
+                        serving_unit: product.serving_unit,
+                        logging_mode: 'barcode',
+                        read_only: product.read_only,
+                        hideImage: true, // Flag to hide the image section
+                    }
+                });
                 } else {
                     Alert.alert(
                         "No Barcode Detected",
@@ -227,6 +231,8 @@ const BarcodeScanScreen = () => {
                                 amount: product.amount,
                                 serving_unit: product.serving_unit,
                                 logging_mode: 'barcode',
+                                read_only: product.read_only,
+                                hideImage: true, // Flag to hide the image section
                             }
                         });
                     } else {

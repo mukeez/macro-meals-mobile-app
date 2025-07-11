@@ -57,6 +57,7 @@ const AddMeal: React.FC = () => {
   const preferences = useStore((state) => state.preferences);
   const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const token = useStore((state) => state.token);
+  const deleteLoggedMeal = useStore((state) => state.deleteLoggedMeal);
   
   // State for consumed calories (same as DashboardScreen)
   const [consumed, setConsumed] = useState({
@@ -108,26 +109,13 @@ const AddMeal: React.FC = () => {
       if (!token) return;
       
       try {
-        const progressResponse = await fetch(
-          "https://api.macromealsapp.com/api/v1/meals/progress/today",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (progressResponse.ok) {
-          const progressData = await progressResponse.json();
-          setConsumed({
-            protein: progressData.logged_macros.protein,
-            carbs: progressData.logged_macros.carbs,
-            fat: progressData.logged_macros.fat,
-            calories: progressData.logged_macros.calories,
-          });
-        }
+        const progressData = await mealService.getDailyProgress();
+        setConsumed({
+          protein: progressData.logged_macros.protein,
+          carbs: progressData.logged_macros.carbs,
+          fat: progressData.logged_macros.fat,
+          calories: progressData.logged_macros.calories,
+        });
       } catch (error) {
         console.error('Error fetching consumed data:', error);
       }
@@ -158,6 +146,8 @@ const AddMeal: React.FC = () => {
             try {
               setLoading(true);
               await mealService.deleteMeal(mealId);
+              // Remove meal from store immediately
+              deleteLoggedMeal(mealId);
               // Refresh the meals list
               fetchMeals();
             } catch (error) {

@@ -51,6 +51,12 @@ export interface Meal {
     distance?: number; //
     date: string;
     mealType: string;
+    photo_url?: string;
+    logging_mode?: string;
+    amount?: number;
+    serving_unit?: string;
+    read_only?: boolean;
+    meal_time?: string;
 }
 
 /**
@@ -65,6 +71,12 @@ export interface LoggedMeal {
     fat: number;
     calories: number;
     mealType?: string;
+    photo_url?: string;
+    logging_mode?: string;
+    amount?: number;
+    serving_unit?: string;
+    read_only?: boolean;
+    meal_time?: string;
 }
 
 /**

@@ -159,22 +159,7 @@ const MealFinderScreen: React.FC = () => {
           throw new Error("Authentication token not available");
         }
 
-        const progressResponse = await fetch(
-          "https://api.macromealsapp.com/api/v1/meals/progress/today",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!progressResponse.ok) {
-          throw new Error("Failed to fetch daily progress");
-        }
-
-        const progressData = await progressResponse.json();
+        const progressData = await mealService.getDailyProgress();
         console.log('MEAL FINDER - Progress Data:', progressData);
 
         const consumedValues = {

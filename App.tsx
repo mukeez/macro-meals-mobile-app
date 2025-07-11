@@ -17,6 +17,7 @@ import {macroMealsCrashlytics} from '@macro-meals/crashlytics';
 import { OnboardingContext } from './src/contexts/OnboardingContext';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import Constants from 'expo-constants';
+import { userService } from './src/services/userService';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -49,7 +50,7 @@ export default function App() {
     const { setAuthenticated, isAuthenticated } = useStore();
     
     const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
-    const [initialAuthScreen, setInitialAuthScreen] = useState('GoalSetupNavigator');
+    const [initialAuthScreen, setInitialAuthScreen] = useState('LoginScreen');
     const [hasMacros, setHasMacros] = useState(false);
     const [readyForDashboard, setReadyForDashboard] = useState(false);
     console.log('MIXPANEL_TOKEN', MIXPANEL_TOKEN);
@@ -126,12 +127,6 @@ export default function App() {
             await initializeFirebase();
             
             try {
-                // Clear auth state but preserve onboarding flag
-                await Promise.all([
-                    AsyncStorage.removeItem('my_token'),
-                    AsyncStorage.removeItem('user_id')
-                ]);
-
                 // Check onboarding status first
                 const onboardingCompleted = await AsyncStorage.getItem('isOnboardingCompleted');
                 setIsOnboardingCompleted(onboardingCompleted === 'true');
@@ -167,33 +162,18 @@ export default function App() {
                     console.log('Found stored credentials, validating token...');
                     try {
                         // Fetch user profile to validate token
-                        const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
-                            method: "GET",
-                            headers: {
-                                "Authorization": `Bearer ${token}`,
-                                "Content-Type": "application/json"
-                            }
-                        });
-                        
-                        if (profileResponse.ok) {
-                            const profile = await profileResponse.json();
-                            console.log('Token valid, setting authenticated state with profile:', profile);
-                            // Set states in correct order
-                            setHasMacros(profile.has_macros);
-                            setReadyForDashboard(profile.has_macros);
-                            setAuthenticated(true, token, userId);
-                        } else {
-                            console.log('Token validation failed, clearing credentials');
-                            await Promise.all([
-                                AsyncStorage.removeItem('my_token'),
-                                AsyncStorage.removeItem('user_id')
-                            ]);
-                        }
+                        const profile = await userService.getProfile();
+                        console.log('Token valid, setting authenticated state with profile:', profile);
+                        // Set states in correct order
+                        setHasMacros(profile.has_macros);
+                        setReadyForDashboard(profile.has_macros);
+                        setAuthenticated(true, token, userId);
                     } catch (error) {
                         console.error('Error validating token:', error);
                         // Clear stored credentials on error
                         await Promise.all([
                             AsyncStorage.removeItem('my_token'),
+                            AsyncStorage.removeItem('refresh_token'),
                             AsyncStorage.removeItem('user_id')
                         ]);
                     }

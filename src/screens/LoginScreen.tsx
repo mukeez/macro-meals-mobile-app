@@ -82,44 +82,22 @@ export const LoginScreen: React.FC = () => {
             const token = loginData.access_token;
             const userId = loginData.user.id;
             
-            // Then get profile using the token directly
-            const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
-            });
-            
-            if (!profileResponse.ok) {
-                if (profileResponse.status === 403) {
-                    const errorText = await profileResponse.text();
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        if (errorData.detail && errorData.detail.includes('Email verification required')) {
-                            await authService.resendEmailVerification({ email });
-                            (navigation as any).navigate('EmailVerificationScreen', { email, password });
-                            return;
-                        }
-                    } catch (parseError) {
-                        // If JSON parsing fails, check the raw text
-                        if (errorText.includes('Email verification required')) {
-                            (navigation as any).navigate('EmailVerificationScreen', { email, password });
-                            return;
-                        }
-                    }
-                }
-                throw new Error(await profileResponse.text());
-            }
-            
-            const profile = await profileResponse.json();
-            
-            // Update storage
+            // Store tokens first so axios interceptor can use them
             await Promise.all([
                 AsyncStorage.setItem('my_token', token),
+                AsyncStorage.setItem('refresh_token', loginData.refresh_token),
                 AsyncStorage.setItem('user_id', userId),
                 AsyncStorage.setItem('isOnboardingCompleted', 'true')
             ]);
+            
+            console.log('Tokens stored successfully:', {
+                hasAccessToken: !!token,
+                hasRefreshToken: !!loginData.refresh_token,
+                userId: userId
+            });
+            
+            // Then get profile using the stored token
+            const profile = await userService.getProfile();
 
             // Reset steps before setting other states
             resetSteps();

@@ -111,24 +111,9 @@ export const SettingsScreen: React.FC = () => {
     });
 
     try {
-      const token = useStore.getState().token;
-      const response = await fetch(
-        "https://api.macromealsapp.com/api/v1/user/preferences",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            unitSystem: newUnitSystem,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update preferences");
-      }
+      await userService.updatePreferences({
+        unitSystem: newUnitSystem,
+      });
     } catch (error) {
       console.error("Error updating preferences:", error);
       // You could add error handling UI here if needed

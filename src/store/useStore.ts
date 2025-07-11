@@ -101,6 +101,7 @@ interface AppState {
     // Logged meals state and actions
     loggedMeals: Meal[];
     addLoggedMeal: (meal: Meal) => void;
+    deleteLoggedMeal: (mealId: string) => void;
     setLoggedMeals: (meals: Meal[]) => void;
     refreshMeals: () => Promise<void>;
     shouldRefreshMeals: boolean;
@@ -143,6 +144,12 @@ const convertToMeal = (loggedMeal: LoggedMeal): Meal | null => {
         description: '',  // Default value if not provided by API
         date: loggedMeal.timestamp || new Date().toISOString(),
         mealType: loggedMeal.mealType || 'lunch',  // Default value if not provided by API
+        photo_url: loggedMeal.photo_url, // Include photo_url from API
+        logging_mode: loggedMeal.logging_mode,
+        amount: loggedMeal.amount,
+        serving_unit: loggedMeal.serving_unit,
+        read_only: loggedMeal.read_only,
+        meal_time: loggedMeal.meal_time,
     };
 };
 
@@ -197,6 +204,12 @@ const useStore = create<AppState>()(
                 if (!meal) return;
                 set((state) => ({
                     loggedMeals: [...(state.loggedMeals || []), meal]
+                }));
+            },
+
+            deleteLoggedMeal: (mealId) => {
+                set((state) => ({
+                    loggedMeals: state.loggedMeals.filter(meal => meal.id !== mealId)
                 }));
             },
 
@@ -275,8 +288,9 @@ const useStore = create<AppState>()(
                     });
 
                     // Clear stored authentication data
-                    await AsyncStorage.removeItem('token');
-                    await AsyncStorage.removeItem('userId');
+                    await AsyncStorage.removeItem('my_token');
+                    await AsyncStorage.removeItem('refresh_token');
+                    await AsyncStorage.removeItem('user_id');
                 }
             },
 
