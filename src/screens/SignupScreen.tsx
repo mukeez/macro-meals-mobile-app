@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -238,13 +239,20 @@ export const SignupScreen: React.FC = () => {
                 }}
                 secureTextEntry={!showPassword}
               />
-              <MaterialIcons
-                className="absolute right-4 top-1/2 -translate-y-1/2"
-                name={isPasswordVisible ? "visibility" : "visibility-off"}
-                size={24}
-                color="#000"
-                onPress={togglePasswordVisibility}
-              />
+              <TouchableOpacity
+                            onPress={() => setShowPassword((v) => !v)}
+                            className="absolute right-4 bottom-[30%]"
+                          >
+                            <Image
+                              source={
+                                showPassword
+                                  ? require("../../assets/visibility-on-icon.png")
+                                  : require("../../assets/visibility-off-icon.png")
+                              }
+                              className="w-6 h-6 ml-2"
+                              resizeMode="contain"
+                            />
+                          </TouchableOpacity>
             </View>
             {errors.password ? (
               <Text className="text-red-500 text-sm mt-2 mb-2">
