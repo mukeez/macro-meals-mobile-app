@@ -38,9 +38,13 @@ export const authService = {
             });
             const responseData = await response.json();
             if (!response.ok) {
-                throw new Error(responseData.message || 'Login failed');
-            }
-            return responseData;
+            throw new Error(
+                responseData.message ||
+                responseData.detail ||
+                'Login failed'
+            );
+        }
+        return responseData;
         } catch (error) {
             console.error('Login error:', error);
             throw error;
@@ -62,8 +66,12 @@ export const authService = {
             const responseData = await response.json();
 
             if (!response.ok) {
-                throw new Error(responseData.message || 'Signup failed');
-            }
+            throw new Error(
+                responseData.message ||
+                responseData.detail ||
+                'Signup failed'
+            );
+        }
 
             return responseData.user.id;
         } catch (error) {

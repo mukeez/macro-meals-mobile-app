@@ -16,7 +16,7 @@ export type RootStackParamList = {
     Login: undefined;
     SignUp: undefined;
     MacroInput: undefined;
-     ForgotPasswordScreen: { source: string };
+    ForgotPasswordScreen: { source: string };
     VerificationScreen: { email: string; source: string };
     ResetPassword: { email: string; session_token: string; source: string }; 
     MealList: undefined;
@@ -51,4 +51,6 @@ export type RootStackParamList = {
     AISuggestedMealsDetailsScreen: { meal: any };
     GoalSetupNav: undefined;
     EmailVerificationScreen: { email: string, password: string};
+    NotificationsScreen: undefined;
+
 };

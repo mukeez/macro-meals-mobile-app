@@ -28,7 +28,7 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
 
 // Add Profile interface
 interface Profile {
-    id: string;
+    id?: string;
     display_name?: string;
     email?: string;
     avatar_url?: string;

@@ -1,12 +1,22 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, ScrollView, Alert, TouchableOpacity, ActivityIndicator, TextInput, Modal, Platform } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+  Modal,
+  Platform,
+} from "react-native";
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";
 import useStore from "../store/useStore";
 import { useNavigation } from "@react-navigation/native";
 import CustomSafeAreaView from "src/components/CustomSafeAreaView";
-import DateTimePicker from '@react-native-community/datetimepicker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function debounce(func: (...args: any[]) => void, wait: number) {
   let timeout: NodeJS.Timeout;
@@ -17,15 +27,17 @@ function debounce(func: (...args: any[]) => void, wait: number) {
 }
 
 const GENDER_OPTIONS = [
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
 ];
 
 function formatDate(dateStr: string) {
-  if (!dateStr) return '-';
+  if (!dateStr) return "-";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '-';
-  return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+  if (isNaN(d.getTime())) return "-";
+  return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${d.getFullYear()}`;
 }
 
 export default function AccountSettingsScreen() {
@@ -35,7 +47,9 @@ export default function AccountSettingsScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const navigation = useNavigation();
-  const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>({});
+  const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>(
+    {}
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -60,25 +74,25 @@ export default function AccountSettingsScreen() {
           const patch: any = {};
           patch[field] = value;
           const updated = await userService.updateProfile(patch);
-          
+
           setTimeout(async () => {
             try {
               const freshUserData = await userService.getProfile();
               setUser(freshUserData);
             } catch (e) {
               // Fallback to the update response
-          setUser((prev: any) => ({ ...prev, ...updated }));
+              setUser((prev: any) => ({ ...prev, ...updated }));
             }
           }, 500);
         } catch (e) {
-          Alert.alert('Error', 'Failed to update profile',);
+          Alert.alert("Error", "Failed to update profile");
           // Optionally show error
         } finally {
           setUpdating((prev) => ({ ...prev, [field]: false }));
         }
       }, 2000);
     } else {
-      Alert.alert('Error', 'Failed to update profile',);
+      Alert.alert("Error", "Failed to update profile");
     }
     return debouncedPatch.current[field];
   };
@@ -102,7 +116,7 @@ export default function AccountSettingsScreen() {
               await authService.deleteAccount();
               // The app will automatically redirect to LoginScreen when isAuthenticated becomes false
             } catch (error) {
-              console.error('Error during account deletion:', error);
+              console.error("Error during account deletion:", error);
               // The logout should still happen even if there's an error
             }
           },
@@ -121,26 +135,33 @@ export default function AccountSettingsScreen() {
 
   return (
     <CustomSafeAreaView className="flex-1 bg-white" edges={["left", "right"]}>
-      <ScrollView contentContainerStyle={{ backgroundColor: "#f8f8f8", flexGrow: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ backgroundColor: "#f8f8f8", flexGrow: 1 }}
+      >
         <View className="flex-row bg-white items-center justify-between px-5 pt-4 pb-5 mb-5">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]"
+          >
             <Text className="text-[22px]">‹</Text>
           </TouchableOpacity>
-          <Text className="text-[20px] font-semibold text-[#222] text-center">Account Settings</Text>
+          <Text className="text-[20px] font-semibold text-[#222] text-center">
+            Account Settings
+          </Text>
           <View className="w-8" />
         </View>
         <View className="bg-white rounded-2xl mx-3 px-0 py-0 shadow-sm">
           {/* Email */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">Email</Text>
-            <Text className="text-base text-[#888]">{user?.email || '-'}</Text>
+            <Text className="text-base text-[#888]">{user?.email || "-"}</Text>
           </View>
           {/* First name */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">First name</Text>
             <TextInput
-              value={user?.first_name || ''}
-              onChangeText={v => handleFieldChange('first_name', v)}
+              value={user?.first_name || ""}
+              onChangeText={(v) => handleFieldChange("first_name", v)}
               className="text-base text-[#222] text-right flex-1 min-w-[80px]"
               placeholder="First name"
               editable={!updating.first_name}
@@ -151,8 +172,8 @@ export default function AccountSettingsScreen() {
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">Last name</Text>
             <TextInput
-              value={user?.last_name || ''}
-              onChangeText={v => handleFieldChange('last_name', v)}
+              value={user?.last_name || ""}
+              onChangeText={(v) => handleFieldChange("last_name", v)}
               className="text-base text-[#222] text-right flex-1 min-w-[80px]"
               placeholder="Last name"
               editable={!updating.last_name}
@@ -169,30 +190,41 @@ export default function AccountSettingsScreen() {
             activeOpacity={0.7}
           >
             <Text className="flex-1 text-base text-[#222]">Birthday</Text>
-            <Text className="text-base text-[#222]">{formatDate(user?.dob)}</Text>
+            <Text className="text-base text-[#222]">
+              {formatDate(user?.dob)}
+            </Text>
           </TouchableOpacity>
           {/* Gender */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">Gender</Text>
             <View className="flex-1 items-end">
               <TextInput
-                value={user?.sex === 'male' ? 'Male' : user?.sex === 'female' ? 'Female' : ''}
+                value={
+                  user?.sex === "male"
+                    ? "Male"
+                    : user?.sex === "female"
+                    ? "Female"
+                    : ""
+                }
                 onFocus={() => {}}
                 className="text-base text-[#222] text-right min-w-[60px]"
                 placeholder="Gender"
                 editable={false}
                 pointerEvents="none"
               />
-              <View className="absolute right-0 top-0 bottom-0 w-full" pointerEvents="box-none">
+              <View
+                className="absolute right-0 top-0 bottom-0 w-full"
+                pointerEvents="box-none"
+              >
                 <TouchableOpacity
                   className="flex-1 w-full h-full"
                   onPress={() => {
                     Alert.alert(
-                      'Select Gender',
+                      "Select Gender",
                       undefined,
-                      GENDER_OPTIONS.map(opt => ({
+                      GENDER_OPTIONS.map((opt) => ({
                         text: opt.label,
-                        onPress: () => handleFieldChange('sex', opt.value),
+                        onPress: () => handleFieldChange("sex", opt.value),
                       }))
                     );
                   }}
@@ -204,11 +236,28 @@ export default function AccountSettingsScreen() {
           <View className="flex-row items-center min-h-[56px] px-4">
             <Text className="flex-1 text-base text-[#222]">Height</Text>
             <TextInput
-              value={user?.height ? user.height.toString() : ''}
-              onChangeText={v => handleFieldChange('height', v.replace(/[^0-9]/g, ''))}
+              value={user?.height ? user.height.toString() : ""}
+              onChangeText={(v) =>
+                handleFieldChange("height", v.replace(/[^0-9]/g, ""))
+              }
               className="text-base text-[#222] text-right flex-1 min-w-[60px]"
               placeholder="Height (cm)"
               editable={!updating.height}
+              underlineColorAndroid="transparent"
+              keyboardType="numeric"
+            />
+          </View>
+          {/* Weight */}
+          <View className="flex-row items-center min-h-[56px] px-4">
+            <Text className="flex-1 text-base text-[#222]">Weight</Text>
+            <TextInput
+              value={user?.weight ? user.weight.toString() : ""}
+              onChangeText={(v) =>
+                handleFieldChange("height", v.replace(/[^0-9]/g, ""))
+              }
+              className="text-base text-[#222] text-right flex-1 min-w-[60px]"
+              placeholder="Weight (kg)"
+              editable={!updating.weight}
               underlineColorAndroid="transparent"
               keyboardType="numeric"
             />
@@ -223,26 +272,37 @@ export default function AccountSettingsScreen() {
         >
           <View className="flex-1 justify-end bg-black/40">
             <View className="bg-white rounded-t-xl p-4">
-              <Text className="text-center text-base font-semibold mb-2">Select Birthday</Text>
+              <Text className="text-center text-base font-semibold mb-2">
+                Select Birthday
+              </Text>
               <DateTimePicker
                 value={tempDate || new Date()}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                display={Platform.OS === "ios" ? "spinner" : "default"}
                 onChange={(event, selectedDate) => {
                   if (selectedDate) setTempDate(selectedDate);
                 }}
                 maximumDate={new Date()}
               />
               <View className="flex-row justify-between mt-4">
-                <TouchableOpacity onPress={() => setShowDatePicker(false)} className="flex-1 items-center py-2">
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(false)}
+                  className="flex-1 items-center py-2"
+                >
                   <Text className="text-lg text-blue-500">Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => {
-                  if (tempDate) {
-                    handleFieldChange('dob', tempDate.toISOString().split('T')[0]);
-                  }
-                  setShowDatePicker(false);
-                }} className="flex-1 items-center py-2">
+                <TouchableOpacity
+                  onPress={() => {
+                    if (tempDate) {
+                      handleFieldChange(
+                        "dob",
+                        tempDate.toISOString().split("T")[0]
+                      );
+                    }
+                    setShowDatePicker(false);
+                  }}
+                  className="flex-1 items-center py-2"
+                >
                   <Text className="text-lg text-blue-500">Done</Text>
                 </TouchableOpacity>
               </View>
@@ -254,7 +314,9 @@ export default function AccountSettingsScreen() {
             className=" pl-4 flex-row justify-start bg-white rounded-xl py-6"
             onPress={handleDeleteAccount}
           >
-            <Text className="text-punchRed text-left font-semibold text-base">Delete account</Text>
+            <Text className="text-punchRed text-left font-semibold text-base">
+              Delete account
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

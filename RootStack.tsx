@@ -173,6 +173,10 @@ const DashboardNavigator = () => {
         name="TermsOfServiceScreen"
         component={TermsOfServiceScreen}
       />
+      <Stack.Screen
+        name="NotificationsScreen"
+        component={NotificationsScreen}
+      />
     </Stack.Navigator>
   );
 };
