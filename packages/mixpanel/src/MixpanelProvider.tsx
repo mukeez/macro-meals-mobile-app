@@ -1,6 +1,7 @@
 import { Mixpanel } from 'mixpanel-react-native';
 import React, { createContext, useEffect, useState } from 'react';
 import { MixpanelConfig, MixpanelInstance } from './types';
+import { EVENTS } from './constants';
 
 console.log('[DEBUG] MixpanelProvider loaded');
 
@@ -23,7 +24,7 @@ export const MixpanelProvider: React.FC<{
             const instance = new Mixpanel(config.token, config.debug || false);
             instance.init(config.trackAutomaticEvents || false).then(() => {
                 // Test event to verify tracking
-                instance.track('test_event', { test: true });
+                instance.track(EVENTS.APP_OPENED);
                 setMixpanel(instance);
             }).catch((error) => {
                 console.error('[MIXPANEL] ❌ Initialization failed:', error);

@@ -28,6 +28,7 @@ import ProfileSection from "src/components/ProfileSection";
 import SectionItem from "src/components/SectionItem";
 import { userService } from "../services/userService";
 import ContactSupportDrawer from "./ContactSupportDrawer";
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -43,6 +44,7 @@ export const SettingsScreen: React.FC = () => {
   const logout = useStore((state) => state.logout);
   const setAuthenticated = useStore((state) => state.setAuthenticated);
   const [showDrawer, setShowDrawer] = useState(false);
+  const mixpanel = useMixpanel();
   // Local state for settings
   const [units, setUnits] = useState<string>("g/kcal");
   // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -142,6 +144,21 @@ export const SettingsScreen: React.FC = () => {
         unit_preference: value,
       });
       setUserData((prev) => ({ ...prev, ...updated }));
+      
+      // Update Mixpanel user properties
+      mixpanel?.setUserProperties({
+        unit_preference: value
+      });
+      
+      // Track unit preference change
+      mixpanel?.track({
+        name: 'unit_preference_changed',
+        properties: {
+          new_unit_preference: value,
+          previous_unit_preference: userData.unit_preference
+        }
+      });
+      
       setShowUnitsModal(false);
     } catch (error) {
       console.error("Error updating unit preference:", error);
@@ -182,6 +199,17 @@ export const SettingsScreen: React.FC = () => {
         style: "destructive", 
         onPress: async () => {
           try {
+            // Track logout in Mixpanel
+            mixpanel?.track({
+              name: 'user_logged_out',
+              properties: {
+                user_id: userData.id,
+                email: userData.email,
+                session_duration_minutes: userData.created_at ? 
+                  Math.floor((Date.now() - new Date(userData.created_at).getTime()) / (1000 * 60)) : 0
+              }
+            });
+            
             await authService.logout();
             setAuthenticated(false, "", "");
             navigation.reset({
@@ -362,7 +390,7 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => {}}
+            onPress={() => { navigation.navigate('PaymentScreen') }}
           />
         </ProfileSection>
 

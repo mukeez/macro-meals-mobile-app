@@ -14,6 +14,7 @@ import {
     Platform,
     Alert,
     KeyboardAvoidingView,
+    Image as RNImage,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
@@ -26,10 +27,13 @@ import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import * as ImagePicker from 'expo-image-picker';
 import FavoritesService from '../services/favoritesService';
 import { useMixpanel } from '@macro-meals/mixpanel';
+import { Image as ExpoImage } from "expo-image";
+import { appConstants } from "constants/appConstants";
 
 interface RouteParams {
     barcodeData: any;
     analyzedData?: {
+        id: string;
         name: string;
         calories: number;
         protein: number;
@@ -40,8 +44,9 @@ interface RouteParams {
         no_of_servings?: number;
         meal_type?: string;
         meal_time?: string;
-        amount?: number;
-        logging_mode?: string;
+        photo_url?: string;
+        serving_unit?: string;
+        read_only?: boolean;
     };
 }
 
@@ -49,16 +54,13 @@ import { FavoriteMeal } from '../services/favoritesService';
 import { FavouriteIcon } from 'src/components/FavouriteIcon';
 
 const SERVING_UNITS = [
-    'grams',
+    'g',
     'ml',
     'oz',
     'cup',
     'tbsp',
     'tsp',
     'slice',
-    'scoop',
-    'plate',
-    'bowl',
     'piece',
     'serving'
 ];
@@ -66,7 +68,7 @@ const SERVING_UNITS = [
 /**
  * Screen for adding a new meal to the log
  */
-export const AddMealScreen: React.FC = () => {
+export const EditMealScreen: React.FC = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'AddMeal'>>();
     const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
     const params = route.params || {};
@@ -78,7 +80,6 @@ export const AddMealScreen: React.FC = () => {
     const [protein, setProtein] = useState<string>('0');
     const [carbs, setCarbs] = useState<string>('0');
     const [fats, setFats] = useState<string>('0');
-    const [amount, setAmount] = useState<string>('1');
     const userId = useStore((state) => state.userId);
     const token = useStore((state) => state.token);
     const [loading, setLoading] = useState<boolean>(false);
@@ -86,19 +87,21 @@ export const AddMealScreen: React.FC = () => {
     const [showTimeModal, setShowTimeModal] = useState(false);
     const [tempTime, setTempTime] = useState<Date | null>(null);
     const [mealImage, setMealImage] = useState<string | null>(null);
-    const [servingUnit, setServingUnit] = useState<string>('grams');
-    const [noOfServings, setNoOfServings] = useState<string>('1');  // Default to '1'
-    const [showServingUnitModal, setShowServingUnitModal] = useState(false);
-    const [tempServingUnit, setTempServingUnit] = useState('grams');
     const [isFavorite, setIsFavorite] = useState(false);
     const [mealDescription, setMealDescription] = useState('');
     const [showMealTypeModal, setShowMealTypeModal] = useState(false);
     const [tempMealType, setTempMealType] = useState('breakfast');
+    const [servingSize, setServingSize] = useState<string>('0');
+    const [noOfServings, setNoOfServings] = useState<string>('0');
+    const [mealId, setMealId] = useState<string>('');
     const [mealType, setMealType] = useState('breakfast');
-    const [logging_mode, setLoggingMode] = useState('manual');
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
     const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
+    const [isReadOnly, setIsReadOnly] = useState(false);
     const mixpanel = useMixpanel();
+    const [servingUnit, setServingUnit] = useState<string>('g');
+    const [showServingUnitModal, setShowServingUnitModal] = useState(false);
+    const [tempServingUnit, setTempServingUnit] = useState('g');
 
     // Initialize form with analyzed data if available
     React.useEffect(() => {
@@ -107,12 +110,21 @@ export const AddMealScreen: React.FC = () => {
             setCalories(analyzedData.calories?.toString() || '0');
             setProtein(analyzedData.protein?.toString() || '0');
             setCarbs(analyzedData.carbs?.toString() || '0');
-            setNoOfServings(analyzedData.no_of_servings?.toString() || '0');
             setFats(analyzedData.fat?.toString() || '0');
+            setServingSize(analyzedData.serving_size?.toString() || '0');
+            setNoOfServings(analyzedData.no_of_servings?.toString() || '1');
             setMealType(analyzedData.meal_type || 'breakfast');
-            setAmount(analyzedData.amount?.toString() || '1');
-            setLoggingMode(analyzedData.logging_mode || 'manual');
-
+            setMealId(analyzedData.id || '');
+            setServingUnit(analyzedData.serving_unit || 'g');
+            setIsReadOnly(analyzedData.read_only || false);
+            if (analyzedData.photo_url) {
+                
+                setMealImage(analyzedData.photo_url);
+                console.log('🔄 ExpoImage started loading FOR Meal:', mealImage);
+            }
+            if (analyzedData.meal_time) {
+                setTime(new Date(analyzedData.meal_time));
+            }
         }
     }, [analyzedData]);
 
@@ -166,16 +178,13 @@ export const AddMealScreen: React.FC = () => {
         setCalories(meal.macros.calories.toString());
         setProtein(meal.macros.protein.toString());
         setCarbs(meal.macros.carbs.toString());
-        setNoOfServings(meal.no_of_servings.toString());
         setFats(meal.macros.fat.toString());
-        setLoggingMode('favorite');
-        setMealType(meal.meal_type);
     };
 
     /**
-     * Adds the current meal to the log
+     * Edits the current meal in the log
      */
-    const handleAddMealLog = async (): Promise<void> => {
+    const handleEditMealLog = async (): Promise<void> => {
         setLoading(true);
         try {
             if (!mealName.trim()) {
@@ -183,19 +192,20 @@ export const AddMealScreen: React.FC = () => {
                 return;
             }
 
-            // Ensure amount is at least 1 and is an integer
-            const amount = Math.max(1, parseInt(noOfServings) || 1);
+            console.log('Editing meal with ID:', mealId);
+            console.log('Current meal type:', tempMealType);
+            console.log('Current time:', time.toISOString());
 
             // Calculate adjusted macros based on amount
+            const servingsMultiplier = parseFloat(noOfServings) || 1;
             const adjustedMacros = {
-                calories: Math.round((parseInt(calories, 10) || 0) * amount),
-                protein: Math.round((parseInt(protein, 10) || 0) * amount),
-                carbs: Math.round((parseInt(carbs, 10) || 0) * amount),
-                fat: Math.round((parseInt(fats, 10) || 0) * amount),
+                calories: Math.round((parseInt(calories, 10) || 0) * servingsMultiplier),
+                protein: Math.round((parseInt(protein, 10) || 0) * servingsMultiplier),
+                carbs: Math.round((parseInt(carbs, 10) || 0) * servingsMultiplier),
+                fat: Math.round((parseInt(fats, 10) || 0) * servingsMultiplier),
             };
 
-            // Create the meal request object that matches LogMealRequest interface
-            const mealRequest = {
+            const newMeal = {
                 name: mealName,
                 calories: adjustedMacros.calories,
                 protein: adjustedMacros.protein,
@@ -203,10 +213,12 @@ export const AddMealScreen: React.FC = () => {
                 fat: adjustedMacros.fat,
                 meal_type: tempMealType,
                 meal_time: time.toISOString(),
-                amount: amount,
-                serving_size: servingUnit,
+                amount: parseFloat(noOfServings) || 1,
+                serving_unit: servingUnit,
                 description: mealDescription || undefined,
-                logging_mode: logging_mode,
+                favorite: isFavorite,
+                logging_mode: 'manual',
+                notes: undefined,
                 photo: mealImage ? {
                     uri: mealImage,
                     type: 'image/jpeg',
@@ -214,29 +226,28 @@ export const AddMealScreen: React.FC = () => {
                 } : undefined
             };
 
-            // Log the request data for debugging
-            console.log('Meal request data:', JSON.stringify(mealRequest, null, 2));
+            console.log('Meal request JSON:', JSON.stringify(newMeal));
+            const response = await mealService.updateMeal(newMeal, mealId);
+            console.log('Meal log response:', JSON.stringify(response));
 
-            // Send the request
-            await mealService.logMeal(mealRequest);
-
-            // Track meal logging
-            mixpanel?.track({
-                name: 'meal_logged',
-                properties: {
-                    logging_mode: logging_mode,
-                    meal_type: tempMealType,
-                    meal_time: time.toISOString(),
-                    amount: amount,
-                    serving_size: servingUnit,
-                    ...adjustedMacros
-                }
-            });
+            // Track meal edit in mixpanel
+            if (mixpanel) {
+                mixpanel?.track({
+                    name: 'meal_edited',
+                    properties: {
+                        meal_id: mealId,
+                        meal_type: tempMealType,
+                        amount: parseFloat(noOfServings) || 1,
+                        serving_unit: servingUnit,
+                        ...adjustedMacros
+                    }
+                });
+            }
 
             navigation.navigate('MainTabs');
         } catch (error) {
-            console.error('Error adding meal:', error);
-            Alert.alert('Error', 'Failed to add meal');
+            console.error('Error editing meal:', error);
+            Alert.alert('Error', 'Failed to edit meal');
         } finally {
             setLoading(false);
         }
@@ -310,12 +321,9 @@ export const AddMealScreen: React.FC = () => {
             fat: parseInt(fats, 10) || 0,
             protein: parseInt(protein, 10) || 0,
           },
-          serving_size: parseInt(noOfServings, 10) || 0,
+          serving_size: parseInt(servingSize, 10) || 0,
           no_of_servings: parseInt(noOfServings, 10) || 0,
           meal_type: mealType,
-          logging_mode: logging_mode,
-          amount: parseInt(amount, 10) || 0,
-          serving_unit: servingUnit,
           meal_time: time.toISOString(),
           image: mealImage || IMAGE_CONSTANTS.mealIcon,
           restaurant: { name: 'custom', location: '' },
@@ -350,6 +358,15 @@ export const AddMealScreen: React.FC = () => {
 
     const [selectedMealType, setSelectedMealType] = useState(tempMealType);
 
+    const handleUnitCancel = () => {
+        setShowServingUnitModal(false);
+    };
+
+    const handleUnitDone = () => {
+        setServingUnit(tempServingUnit);
+        setShowServingUnitModal(false);
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-white">
             <StatusBar barStyle="dark-content" />
@@ -358,7 +375,7 @@ export const AddMealScreen: React.FC = () => {
                 <TouchableOpacity onPress={handleGoBack} className="p-1">
                     <Text className="text-2xl text-[#1a1a1a]">←</Text>
                 </TouchableOpacity>
-                <Text className="text-lg font-semibold text-[#1a1a1a]">Add Meal</Text>
+                <Text className="text-lg font-semibold text-[#1a1a1a]">Edit Meal</Text>
                 <FavouriteIcon isFavourite={isFavorite} onPress={toggleFavorite} />
                 {/* <TouchableOpacity
                   onPress={toggleFavorite}
@@ -388,11 +405,23 @@ export const AddMealScreen: React.FC = () => {
                         onPress={handleAddPhoto}
                         activeOpacity={0.8}
                     >
-                        {mealImage ? (
-                            <Image
-                                source={{ uri: mealImage }}
-                                className="w-full h-full rounded-xl"
-                                resizeMode="cover"
+                        {analyzedData?.photo_url ? (
+                            <ExpoImage
+                                source={{ uri: analyzedData.photo_url }}
+                                placeholder={appConstants.blurhash}
+                                cachePolicy="disk"
+                                contentFit="cover"
+                                transition={300}
+                                style={{ width: '100%', height: '100%', borderRadius: 16 }}
+                                onLoad={() => {
+                                    console.log('✅ ExpoImage loaded successfully for meal:', analyzedData.photo_url);
+                                }}
+                                onError={(error) => {
+                                    console.log('❌ ExpoImage failed to load for meal:', analyzedData.photo_url, error);
+                                }}
+                                onLoadStart={() => {
+                                    console.log('🔄 ExpoImage started loading for meal:', analyzedData.photo_url);
+                                }}
                             />
                         ) : (
                             <>
@@ -516,27 +545,27 @@ export const AddMealScreen: React.FC = () => {
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="number-pad"
-                                    value={amount}
+                                    value={noOfServings}
                                     onChangeText={(text) => {
                                         // Remove any non-numeric characters
                                         const cleanText = text.replace(/[^0-9]/g, '');
-                                        // Allow empty string or valid numbers
+                                        // Allow empty string but set to '1' if parsed number is less than 1
                                         if (cleanText === '') {
-                                            setAmount('');
+                                            setNoOfServings('');
                                         } else {
                                             const num = parseInt(cleanText);
                                             if (isNaN(num)) {
-                                                setAmount('1');
+                                                setNoOfServings('1');
                                             } else {
-                                                setAmount(cleanText);
+                                                setNoOfServings(cleanText);
                                             }
                                         }
                                     }}
                                     onBlur={() => {
                                         // Ensure value is at least 1 when input loses focus
-                                        const num = parseInt(amount);
-                                        if (amount === '' || isNaN(num) || num < 1) {
-                                            setAmount('1');
+                                        const num = parseInt(noOfServings);
+                                        if (noOfServings === '' || isNaN(num) || num < 1) {
+                                            setNoOfServings('1');
                                         }
                                     }}
                                     placeholder="1"
@@ -548,17 +577,22 @@ export const AddMealScreen: React.FC = () => {
                             <Text className="text-base font-medium text-black mb-2">Serving Size</Text>
                             <TouchableOpacity
                                 onPress={() => {
-                                    setTempServingUnit(servingUnit);
-                                    setShowServingUnitModal(true);
+                                    if (!isReadOnly) {
+                                        setTempServingUnit(servingUnit);
+                                        setShowServingUnitModal(true);
+                                    }
                                 }}
-                                className="flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white"
+                                className={`flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white ${isReadOnly ? 'opacity-50' : ''}`}
+                                disabled={isReadOnly}
                             >
                                 <Text className="flex-1 text-base text-[#222]">{servingUnit}</Text>
-                                <Image 
-                                    source={IMAGE_CONSTANTS.chevronRightIcon} 
-                                    className="w-4 h-4" 
-                                    style={{ transform: [{ rotate: '90deg' }] }}
-                                />
+                                {!isReadOnly && (
+                                    <Image 
+                                        source={IMAGE_CONSTANTS.chevronRightIcon} 
+                                        className="w-4 h-4" 
+                                        style={{ transform: [{ rotate: '90deg' }] }}
+                                    />
+                                )}
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -600,13 +634,13 @@ export const AddMealScreen: React.FC = () => {
                 <View className="mx-5 border-t border-gray">
                     <TouchableOpacity
                         className={`bg-primaryLight mt-1 mb-1 rounded-full py-5 items-center ${!mealName.trim() ? 'opacity-50' : ''}`}
-                        onPress={handleAddMealLog}
+                        onPress={handleEditMealLog}
                         disabled={loading || !mealName.trim()}
                     >
                         {loading ? (
                             <ActivityIndicator size="small" color="#fff" />
                         ) : (
-                            <Text className="text-white text-base font-semibold">Add to log</Text>
+                            <Text className="text-white text-base font-semibold">Update log</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -684,35 +718,37 @@ export const AddMealScreen: React.FC = () => {
                 visible={showServingUnitModal}
                 transparent
                 animationType="slide"
-                onRequestClose={() => setShowServingUnitModal(false)}
+                onRequestClose={handleUnitCancel}
             >
                 <View className="flex-1 justify-end bg-black/40">
                     <View className="bg-white rounded-t-xl p-4">
-                        <Text className="text-center text-base font-semibold mb-2">Select Serving Unit</Text>
-                        <Picker
-                            selectedValue={tempServingUnit}
-                            onValueChange={setTempServingUnit}
-                            style={{ width: '100%' }}
-                            itemStyle={{ fontSize: 18, height: 180 }}
-                        >
-                            {SERVING_UNITS.map((unit) => (
-                                <Picker.Item key={unit} label={unit} value={unit} />
-                            ))}
-                        </Picker>
-                        <View className="flex-row justify-between mt-4">
-                            <TouchableOpacity 
-                                onPress={() => setShowServingUnitModal(false)} 
-                                className="flex-1 items-center py-2"
+                        <Text className="text-center text-base font-semibold mb-2">Select Unit</Text>
+                        {Platform.OS === 'ios' ? (
+                            <Picker
+                                selectedValue={tempServingUnit}
+                                onValueChange={setTempServingUnit}
+                                itemStyle={{ height: 120, fontSize: 20 }}
                             >
+                                {SERVING_UNITS.map((unit) => (
+                                    <Picker.Item key={unit} label={unit} value={unit} />
+                                ))}
+                            </Picker>
+                        ) : (
+                            <Picker
+                                selectedValue={tempServingUnit}
+                                onValueChange={setTempServingUnit}
+                                style={{ alignSelf: 'center' }}
+                            >
+                                {SERVING_UNITS.map((unit) => (
+                                    <Picker.Item key={unit} label={unit} value={unit} />
+                                ))}
+                            </Picker>
+                        )}
+                        <View className="flex-row justify-between mt-4">
+                            <TouchableOpacity onPress={handleUnitCancel} className="flex-1 items-center py-2">
                                 <Text className="text-lg text-blue-500">Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => {
-                                    setServingUnit(tempServingUnit);
-                                    setShowServingUnitModal(false);
-                                }}
-                                className="flex-1 items-center py-2"
-                            >
+                            <TouchableOpacity onPress={handleUnitDone} className="flex-1 items-center py-2">
                                 <Text className="text-lg text-blue-500">Done</Text>
                             </TouchableOpacity>
                         </View>
@@ -723,4 +759,4 @@ export const AddMealScreen: React.FC = () => {
     );
 };
 
-export default AddMealScreen;
+export default EditMealScreen;

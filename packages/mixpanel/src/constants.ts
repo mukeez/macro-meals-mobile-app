@@ -11,6 +11,7 @@ export const EVENTS = {
     SEARCH_SUBMIT: 'search_submit',
     FORM_SUBMIT: 'form_submit',
     TIMED_EVENT_START: 'timed_event_start',
+    MEAL_ADDED: 'meal_added',
 } as const;
 
 export const COMMON_PROPERTIES = {
