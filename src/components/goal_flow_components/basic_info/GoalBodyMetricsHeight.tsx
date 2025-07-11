@@ -25,8 +25,29 @@ export const GoalBodyMetricsHeight = () => {
   useEffect(() => {
     if (height_unit_preference === 'imperial') {
       setIsValid(heightFt !== null && heightIn !== null);
+      
+      // Log calculated height when both feet and inches are selected
+      if (heightFt !== null && heightIn !== null) {
+        const calculatedHeight = heightFt + (heightIn / 12);
+        const calculatedHeightRounded = parseFloat(calculatedHeight.toFixed(2));
+        console.log('[GoalsFlow] Height calculation:', {
+          feet: heightFt,
+          inches: heightIn,
+          calculatedHeightValue: calculatedHeightRounded,
+          calculation: `${heightFt} + (${heightIn} / 12) = ${calculatedHeightRounded}`
+        });
+      }
     } else {
       setIsValid(heightCm !== null);
+      
+      // Log metric height when selected
+      if (heightCm !== null) {
+        console.log('[GoalsFlow] Height calculation (metric):', {
+          heightCm: heightCm,
+          calculatedHeightValue: heightCm,
+          calculation: `Using heightCm directly: ${heightCm}`
+        });
+      }
     }
   }, [height_unit_preference, heightFt, heightIn, heightCm]);
 
