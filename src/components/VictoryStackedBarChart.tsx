@@ -159,6 +159,15 @@ const groupDataByPeriod = (data: MacroData[], timePeriod: TimePeriod) => {
       startDate = new Date(0); // All data
   }
 
+  // Initialize all expected periods for 1m view
+  if (timePeriod === '1m') {
+    // Initialize all 4-5 weeks of the month
+    for (let week = 1; week <= 5; week++) {
+      const periodKey = `W${week}`;
+      groups[periodKey] = { protein: 0, carbs: 0, fat: 0, calories: 0, period: periodKey };
+    }
+  }
+
   data.forEach(item => {
     const date = new Date(item.date);
     
@@ -171,7 +180,7 @@ const groupDataByPeriod = (data: MacroData[], timePeriod: TimePeriod) => {
 
     switch (timePeriod) {
       case '1m':
-        // Group by week (W1, W2, W3, W4)
+        // Group by week (W1, W2, W3, W4, W5)
         const weekOfMonth = Math.ceil(date.getDate() / 7);
         periodKey = `W${weekOfMonth}`;
         break;
