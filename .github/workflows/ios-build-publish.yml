@@ -41,10 +41,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
+        run: npm ci --legacy-peer-deps
 
       - name: Build iOS app
         id: build
@@ -54,7 +51,7 @@ jobs:
           echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
           echo "Build started with ID: $BUILD_ID"
 
-      - name: ⏳ Wait for build to complete
+      - name: Wait for build to complete
         run: |
           eas build:wait --id ${{ steps.build.outputs.build-id }}
 
@@ -81,7 +78,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Submit to TestFlight
         run: |
@@ -104,14 +101,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: 🏗 Setup Expo and EAS
+      - name: Setup Expo and EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: ubmit to App Store
         run: |

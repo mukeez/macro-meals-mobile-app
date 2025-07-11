@@ -19,16 +19,19 @@ import useStore from "../store/useStore";
 import { authService } from "../services/authService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // Import the mock service instead of the real one
-import { mockSocialAuth } from "../services/authMock";
-import { OnboardingContext } from "../contexts/OnboardingContext";
-import CustomSafeAreaView from "../components/CustomSafeAreaView";
-import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
-import BackButton from "../components/BackButton";
-import { RootStackParamList } from "../types/navigation";
-import { MaterialIcons } from "@expo/vector-icons";
-import { userService } from "../services/userService";
-import { HasMacrosContext } from "src/contexts/HasMacrosContext";
-import { useGoalsFlowStore } from "../store/goalsFlowStore";
+import { mockSocialAuth } from '../services/authMock';
+import { OnboardingContext } from '../contexts/OnboardingContext';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
+import BackButton from '../components/BackButton';
+import { RootStackParamList } from '../types/navigation';
+import { MaterialIcons } from '@expo/vector-icons';
+import { userService } from '../services/userService';
+import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
+import { useGoalsFlowStore } from '../store/goalsFlowStore';
+import { useMixpanel } from '@macro-meals/mixpanel';
+// import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
+
 
 // type RootStackParamList = {
 //     Welcome: undefined;
@@ -44,17 +47,17 @@ type LoginScreenNavigationProp = StackNavigationProp<
 >;
 
 export const LoginScreen: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
-  const { hasMacros, setHasMacros, setReadyForDashboard } =
-    React.useContext(HasMacrosContext);
-  const navigation = useNavigation<LoginScreenNavigationProp>();
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
+    const { hasMacros, setHasMacros, setReadyForDashboard } = React.useContext(HasMacrosContext);
+    const navigation = useNavigation<LoginScreenNavigationProp>();
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+    const mixpanel = useMixpanel();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -76,13 +79,99 @@ export const LoginScreen: React.FC = () => {
 
     setIsLoading(true);
 
-    try {
-      // First get login data
-      const loginData = await authService.login({ email, password });
+        try {
+            // First get login data
+            const loginData = await authService.login({ email, password });
+            
+            // Store token temporarily for profile fetch
+            const token = loginData.access_token;
+            const userId = loginData.user.id;
+            
+            // Then get profile using the token directly
+            const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (!profileResponse.ok) {
+                if (profileResponse.status === 403) {
+                    const errorText = await profileResponse.text();
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        if (errorData.detail && errorData.detail.includes('Email verification required')) {
+                            await authService.resendEmailVerification({ email });
+                            (navigation as any).navigate('EmailVerificationScreen', { email, password });
+                            return;
+                        }
+                    } catch (parseError) {
+                        // If JSON parsing fails, check the raw text
+                        if (errorText.includes('Email verification required')) {
+                            (navigation as any).navigate('EmailVerificationScreen', { email, password });
+                            return;
+                        }
+                    }
+                }
+                throw new Error(await profileResponse.text());
+            }
+            
+            const profile = await profileResponse.json();
+            
+            // Update storage
+            await Promise.all([
+                AsyncStorage.setItem('my_token', token),
+                AsyncStorage.setItem('user_id', userId),
+                AsyncStorage.setItem('isOnboardingCompleted', 'true')
+            ]);
 
-      // Store token temporarily for profile fetch
-      const token = loginData.access_token;
-      const userId = loginData.user.id;
+            // Reset steps before setting other states
+            resetSteps();
+            
+            // Set all state in the correct order
+            setIsOnboardingCompleted(true);
+            // If user has macros, they should be ready for dashboard
+            setHasMacros(profile.has_macros);
+            setReadyForDashboard(profile.has_macros);
+            
+            // Identify user in Mixpanel
+            mixpanel?.identify(userId);
+            mixpanel?.setUserProperties({
+                email: profile.email || email,
+                name: profile.display_name || profile.first_name,
+                signup_date: profile.created_at || new Date().toISOString(),
+                has_macros: profile.has_macros,
+                is_pro: profile.is_pro || false,
+                meal_reminder_preferences_set: profile.meal_reminder_preferences_set || false
+            });
+            
+            // Track successful login
+            mixpanel?.track({
+                name: 'user_logged_in',
+                properties: {
+                    login_method: 'email',
+                    has_macros: profile.has_macros,
+                    is_pro: profile.is_pro || false
+                }
+            });
+            
+            // Set authenticated last to trigger navigation
+            setAuthenticated(true, token, userId);
+            
+        } catch (error) {
+            setAuthenticated(false, '', '');
+            setHasMacros(false);
+            setReadyForDashboard(false);
+            Alert.alert(
+                'Login Failed',
+                error instanceof Error ? error.message : 'Invalid email or password. Please try again.',
+                [{ text: 'OK' }]
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
       // Then get profile using the token directly
       const profileResponse = await fetch(
@@ -237,52 +326,67 @@ export const LoginScreen: React.FC = () => {
               <Text className="text-red-500 text-sm mt-2">{errors.email}</Text>
             ) : null}
 
-            <View
-              className={`relative mt-6 mb-4 ${
-                errors.password ? "border border-red-500 rounded-md" : ""
-              }`}
-            >
-              <TextInput
-                className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-                placeholder="Enter password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (errors.password) {
-                    setErrors((prev) => ({ ...prev, password: "" }));
-                  }
-                }}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword((v) => !v)}
-                className="absolute right-4 bottom-[30%]"
-              >
-                <Image
-                  source={
-                    showPassword
-                      ? require("../../assets/visibility-on-icon.png")
-                      : require("../../assets/visibility-off-icon.png")
-                  }
-                  className="w-6 h-6 ml-2"
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </View>
-            {errors.password ? (
-              <Text className="text-red-500 text-sm mt-2 mb-2">
-                {errors.password}
-              </Text>
-            ) : null}
-            <TouchableOpacity
-              className="mb-4"
-              onPress={() => navigation.navigate("ForgotPasswordScreen")}
-            >
-              <Text className="text-[14px] text-primary font-medium">
-                Forgot Password?
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <View className="w-full">
+                    <View className={`${errors.email ? 'border border-red-500 rounded-md' : ''}`}>  
+                        <TextInput
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChangeText={(text) => {
+                                setEmail(text);
+                                // Validate email on change
+                                if (!text) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is required' }));
+                                } else if (!/\S+@\S+\.\S+/.test(text)) {
+                                    setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+                                } else {
+                                    setErrors(prev => ({ ...prev, email: '' }));
+                                }
+                            }}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            textContentType="emailAddress"
+                            spellCheck={false}
+                            autoComplete="email"
+                        />
+                        
+                    </View>
+                    {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
+                    
+                    <View className={`relative mt-6 mb-4 ${errors.password ? 'border border-red-500 rounded-md' : ''}`}>    
+                        <TextInput
+                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                            placeholder="Enter password"
+                            value={password}
+                            onChangeText={(text) => {
+                                setPassword(text);
+                                if (errors.password) {
+                                    setErrors(prev => ({ ...prev, password: '' }));
+                                }
+                            }}
+                            secureTextEntry={!showPassword}
+                        />
+                        <TouchableOpacity
+  onPress={() => setShowPassword((v) => !v)}
+  className="absolute right-4 bottom-[30%]"
+>
+  <Image
+    source={
+      showPassword
+        ? require("../../assets/visibility-on-icon.png")
+        : require("../../assets/visibility-off-icon.png")
+    }
+    className="w-6 h-6 ml-2"
+    resizeMode="contain"
+  />
+</TouchableOpacity>
+                    </View>
+                    {errors.password ? <Text className='text-red-500 text-sm mt-2 mb-2'>{errors.password}</Text> : null}
+                    <TouchableOpacity className="mb-4" onPress={() => (navigation as any).navigate('ForgotPasswordScreen')}>
+                        <Text className="text-[14px] text-primary font-medium">Forgot Password?</Text>
+                    </TouchableOpacity>
+                </View>
 
           <View className="absolute bottom-0 w-full">
             <View className="w-full items-center">

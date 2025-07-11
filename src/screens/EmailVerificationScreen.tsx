@@ -95,10 +95,14 @@ const { email: routeEmail, password: routePassword } = route.params;
     };
      try {
         const data = await authService.verifyEmail(params);
-        if (data?.session_token || data?.success) {
+
+        if (data.verified) {
+
             const loginData = await authService.login({ email: routeEmail, password: routePassword });
+
             const token = loginData.access_token;
             const loginUserId = loginData.user.id;
+
             const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
                 method: "GET",
                 headers: {
@@ -107,9 +111,11 @@ const { email: routeEmail, password: routePassword } = route.params;
                 }
             });
             if (!profileResponse.ok) {
-                throw new Error(await profileResponse.text());
+                const errorText = await profileResponse.text();
+                throw new Error(errorText);
             }
             const profile = await profileResponse.json();
+
             await Promise.all([
                 AsyncStorage.setItem('my_token', token),
                 AsyncStorage.setItem('user_id', loginUserId),
@@ -120,7 +126,6 @@ const { email: routeEmail, password: routePassword } = route.params;
             setHasMacros(profile.has_macros);
             setReadyForDashboard(profile.has_macros);
             setAuthenticated(true, token, loginUserId);
-            navigation.navigate("GoalSetupScreen");
         } else {
             setError("Invalid verification code. Please try again.");
             Alert.alert("Error", "Invalid verification code");
@@ -141,7 +146,7 @@ const { email: routeEmail, password: routePassword } = route.params;
 
     setIsLoading(true);
     try {
-      await authService.resendEmailVerification({ email: routeEmail });
+      const data = await authService.resendEmailVerification({ email: routeEmail });
       setCountdown(60);
       setCanResend(false);
       Alert.alert(

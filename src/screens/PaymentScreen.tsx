@@ -1,14 +1,16 @@
 // src/screens/WelcomeScreen.tsx
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
+import { MERCHANT_IDENTIFIER } from '@env';
+import { Platform } from 'react-native';
 
 const API_URL = 'https://api.macromealsapp.com/api/v1';
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StripeProvider, useStripe } from '@stripe/stripe-react-native';
+import { StripeProvider, useStripe, PlatformPayButton, isPlatformPaySupported, PlatformPay, confirmPlatformPayPayment } from '@stripe/stripe-react-native';
 import {
   ActivityIndicator,
   Alert,
@@ -135,9 +137,34 @@ const PaymentScreen = () => {
   const [publishableKey, setPublishableKey] = useState('');
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const { setReadyForDashboard } = useContext(HasMacrosContext);
+  const [isApplePaySupported, setIsApplePaySupported] = useState(false);
+  const [amount, setAmount] = useState(9.99);
+  const isProcessing = useRef(false);
+  const requestCounts = useRef({
+    publishableKey: 0,
+    profile: 0,
+    paymentIntent: 0,
+    paymentSheet: 0,
+    platformPay: 0
+  });
+
+  const logRequestCount = (requestType: keyof typeof requestCounts.current) => {
+    requestCounts.current[requestType]++;
+    console.log(`Request count for ${requestType}:`, requestCounts.current[requestType]);
+  };
+
+  console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
+
+  useEffect(() => {
+    (async function () {
+      setIsApplePaySupported(await isPlatformPaySupported());
+    })();
+  }, [isPlatformPaySupported]);
+
 
   const fetchPublishableKey = async () => {
     try {
+      logRequestCount('publishableKey');
       const response = await paymentService.getStripeConfig();
       setPublishableKey(response.publishable_key);
       return response.publishable_key;
@@ -151,6 +178,7 @@ const PaymentScreen = () => {
     try {
       // Clear existing profile and fetch fresh data
       clearProfile();
+      logRequestCount('profile');
       const fetchedProfile = await userService.getProfile();
       
       if (!fetchedProfile?.id || !fetchedProfile?.email) {
@@ -160,6 +188,7 @@ const PaymentScreen = () => {
       const currentProfile = fetchedProfile as Profile;
       setStoreProfile(currentProfile);
 
+      logRequestCount('paymentIntent');
       const response = await paymentService.createPaymentIntent(
         currentProfile.email,
         currentProfile.id,
@@ -170,6 +199,7 @@ const PaymentScreen = () => {
         throw new Error('Invalid response from payment service');
       }
 
+      logRequestCount('paymentSheet');
       const { error } = await initPaymentSheet({
         merchantDisplayName: "Macro meals",
         customerId: response.customer_id,
@@ -190,18 +220,23 @@ const PaymentScreen = () => {
   };
 
   const handlePaymentPress = async () => {
+    // Prevent multiple simultaneous requests
+    if (isProcessing.current || isLoading) {
+      console.log('Payment already in progress, request blocked');
+      return;
+    }
+
     try {
+      console.log('Starting new payment flow');
+      isProcessing.current = true;
       setIsLoading(true);
       
-      // Get publishable key if not already set
       if (!publishableKey) {
         await fetchPublishableKey();
       }
 
-      // Initialize payment sheet (this will now fetch profile if needed)
       await initializePaymentSheet();
 
-      // Present payment sheet
       const { error: presentError } = await presentPaymentSheet();
 
       if (presentError) {
@@ -210,7 +245,6 @@ const PaymentScreen = () => {
         Alert.alert('Success', 'Your order is confirmed!');
         setHasBeenPromptedForGoals(false);
         setReadyForDashboard(true);
-       //navigation.navigate('MainTabs');
       }
     } catch (error) {
       console.error('Error processing payment:', error);
@@ -224,12 +258,125 @@ const PaymentScreen = () => {
         Alert.alert('Error', 'Failed to process payment. Please try again.');
       }
     } finally {
+      console.log('Payment flow completed. Final request counts:', requestCounts.current);
+      isProcessing.current = false;
       setIsLoading(false);
     }
   };
 
+  const handlePlatformPayPress = async () => {
+    if (isProcessing.current || isLoading) {
+      console.log('Platform Pay already in progress, request blocked');
+      return;
+    }
+
+    try {
+      console.log('Starting new Platform Pay flow');
+      isProcessing.current = true;
+      const isSupported = await isPlatformPaySupported();
+      if (!isSupported) {
+        Alert.alert(
+          'Not Available',
+          'Apple Pay / Google Pay is not available on this device.'
+        );
+        return;
+      }
+  
+      if (!publishableKey) {
+        await fetchPublishableKey();
+      }
+  
+      clearProfile();
+      logRequestCount('profile');
+      const fetchedProfile = await userService.getProfile();
+  
+      if (!fetchedProfile?.id || !fetchedProfile?.email) {
+        throw new Error('Invalid profile data received');
+      }
+  
+      const currentProfile = fetchedProfile as Profile;
+      setStoreProfile(currentProfile);
+  
+      logRequestCount('paymentIntent');
+      const response = await paymentService.createPaymentIntent(
+        currentProfile.email,
+        currentProfile.id,
+        selectedPlan
+      );
+  
+      const amountStr = amount.toString();
+      const isSubscription = true;
+  
+      const paymentConfig =
+        Platform.OS === 'ios'
+          ? {
+              applePay: {
+                cartItems: [
+                  {
+                    label: `Macro Meals ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'}`,
+                    amount: amountStr,
+                    paymentType: PlatformPay.PaymentType.Recurring,
+                    intervalUnit: selectedPlan === 'monthly' ? 'month' : 'year',
+                    intervalCount: 1,
+                  },
+                  {
+                    label: 'Total',
+                    amount: amountStr,
+                    paymentType: PlatformPay.PaymentType.Recurring,
+                    intervalUnit: selectedPlan === 'monthly' ? 'month' : 'year',
+                    intervalCount: 1,
+                  },
+                ],
+                merchantCountryCode: 'US',
+                currencyCode: 'USD',
+                requiredShippingAddressFields: [
+                  PlatformPay.ContactField.PostalAddress,
+                ],
+                requiredBillingContactFields: [
+                  PlatformPay.ContactField.PhoneNumber,
+                ],
+              },
+            }
+          : {
+              googlePay: {
+                testEnv: true,
+                merchantName: 'Macro Meals',
+                merchantCountryCode: 'US',
+                currencyCode: 'USD',
+                billingAddressConfig: {
+                  format: PlatformPay.BillingAddressFormat.Full,
+                  isPhoneNumberRequired: true,
+                  isRequired: true,
+                },
+              },
+            };
+  
+      logRequestCount('platformPay');
+      const { error } = await confirmPlatformPayPayment(
+        response.client_secret,
+        paymentConfig as any
+      );
+  
+      if (error) {
+        console.error('Platform Pay error:', error);
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Success', 'Your order is confirmed!');
+        setHasBeenPromptedForGoals(false);
+        setReadyForDashboard(true);
+      }
+    } catch (error: any) {
+      console.error('Platform Pay processing error:', error);
+      Alert.alert('Error', 'Failed to process payment. Please try again.');
+    } finally {
+      console.log('Platform Pay flow completed. Final request counts:', requestCounts.current);
+      isProcessing.current = false;
+    }
+  };
+
   return (
-    <StripeProvider publishableKey={publishableKey}>
+    <StripeProvider publishableKey={publishableKey}
+    merchantIdentifier={MERCHANT_IDENTIFIER}>
       <View className='relative h-screen bg-[##F2F2F2]'>
         <Pager />
         <View className="flex px-[20px] mt-8 justify-center items-center w-full">
@@ -241,6 +388,7 @@ const PaymentScreen = () => {
             <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
               e.preventDefault();
               setSelectedPlan('monthly');
+              setAmount(9.99);
             }}>
               
               <View className='w-full pl-3 pt-8 pb-3'>
@@ -249,7 +397,7 @@ const PaymentScreen = () => {
                 {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
               </View>
               <View className='mt-4'>
-                <Text className='font-medium text-[15px]'>$9.99/mo</Text>
+                <Text className='font-medium text-[15px]'>£9.99/mo</Text>
                 <Text className='font-medium text-[15px]'></Text>
               </View>
               <Text className='mt-4 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
@@ -262,6 +410,7 @@ const PaymentScreen = () => {
             <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
              e.preventDefault();
              setSelectedPlan('yearly');
+             setAmount(69.99);
             }}>
               <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
               <Text className="text-white text-xs font-medium justify-center items-center">50% savings</Text>
@@ -272,29 +421,49 @@ const PaymentScreen = () => {
                 {selectedPlan === 'yearly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
               </View>
               <View className='mt-4'>
-                <Text className='font-medium text-[15px]'>$70.00/yr</Text>
-                <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>$170.80/yr</Text>
+                <Text className='font-medium text-[15px]'>£69.99/yr</Text>
+                <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>£99.99/yr</Text>
               </View>
               <Text className='mt-4 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
               </View>
             </TouchableOpacity>
           </View>
           <Text className='mt-4 text-[12px] text-[#4F4F4F]'>You can change plans or cancel anytime</Text>
+          
           <View className="w-full mt-[30px]">
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              onPress={handlePaymentPress}
-              disabled={isLoading}
-              className={isLoading ? 'opacity-70' : ''}
-            >
-              <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
-                )}
-              </View>
-            </TouchableOpacity>
+              {/* {isApplePaySupported ? (
+                isLoading ? <ActivityIndicator size="small" color="#FFFFFF" /> : (
+                  <TouchableOpacity 
+                  activeOpacity={0.8}
+                  onPress={handlePlatformPayPress}
+                  disabled={isLoading}
+                  className={isLoading ? 'opacity-70' : ''}
+                >
+                  <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text className="text-white font-semibold text-[17px]">Start 7-day Free Trial</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+                )
+                ) : ( */}
+                <TouchableOpacity 
+                  activeOpacity={0.8}
+                  onPress={handlePaymentPress}
+                  disabled={isLoading}
+                  className={isLoading ? 'opacity-70' : ''}
+                >
+                  <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text className="text-white font-semibold text-[17px]">Start 7-day Free Trial</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+               {/* )} */}
           </View>
         </View>
       </View>

@@ -11,7 +11,7 @@ export type RootStackParamList = {
     OnboardingScreen: undefined;
     Auth: { initialAuthScreen: string };
     Dashboard: undefined;
-    Welcome: undefined;
+    WelcomeScreen: undefined;
     AccountSettings: undefined;
     Login: undefined;
     SignUp: undefined;
@@ -27,6 +27,22 @@ export type RootStackParamList = {
     GoalSetupScreen: undefined;
     GoalsBasicInfo: undefined;
     AddMeal: undefined;
+    AddMealScreen: {
+      analyzedData?: {
+        name: string;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        quantity: number;
+        amount?: number;
+        serving_unit?: string;
+        is_favourite?: boolean;
+        meal_type?: string;
+        meal_time?: string;
+        logging_mode?: string;
+      };
+    };
     SnapMeal: undefined;
     MealLog: undefined;
     NearbyMeals: undefined;
@@ -50,7 +66,41 @@ export type RootStackParamList = {
     AccountSettingsScreen: undefined;
     AISuggestedMealsDetailsScreen: { meal: any };
     GoalSetupNav: undefined;
-    EmailVerificationScreen: { email: string, password: string};
     NotificationsScreen: undefined;
-
+    EditMealScreen: {
+      analyzedData?: {
+        id: string;
+        name: string;
+        calories: number;
+        protein: number;
+        carbs: number;
+        fat: number;
+        meal_type?: string;
+        serving_unit?: string;
+        amount?: number;
+        logging_mode?: string;
+        meal_time?: string;
+        photo_url?: string;
+        read_only?: boolean;
+      };
+    };
+    EmailVerificationScreen: { email: string, password: string};
+    AddSearchedLoggedMeal: {
+        searchedMeal: {
+            id: string;
+            name: string;
+            description: string | null;
+            calories: number;
+            protein: number;
+            carbs: number;
+            fat: number;
+            amount: number;
+            serving_unit: string;
+            read_only: boolean;
+            barcode?: string;
+            notes?: string;
+            photo_url?: string | null;
+        };
+    };
+    NotificationsScreen: undefined;
 };

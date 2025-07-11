@@ -1,22 +1,13 @@
-import React, { useEffect, useState, useRef } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-  Modal,
-  Platform,
-} from "react-native";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { View, Text, ScrollView, Alert, TouchableOpacity, ActivityIndicator, TextInput, Modal, Platform, Keyboard } from "react-native";
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";
 import useStore from "../store/useStore";
 import { useNavigation } from "@react-navigation/native";
 import CustomSafeAreaView from "src/components/CustomSafeAreaView";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useMixpanel } from '@macro-meals/mixpanel';
 
 function debounce(func: (...args: any[]) => void, wait: number) {
   let timeout: NodeJS.Timeout;
@@ -46,18 +37,29 @@ export default function AccountSettingsScreen() {
   const [updating, setUpdating] = useState<{ [key: string]: boolean }>({});
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
+  const [localValues, setLocalValues] = useState<{ [key: string]: string }>({});
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const inputRefs = useRef<{ [key: string]: TextInput | null }>({});
+  const userRef = useRef<any>(null);
   const navigation = useNavigation();
-  const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>(
-    {}
-  );
+  const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>({});
+  const mixpanel = useMixpanel();
+
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await userService.getProfile();
         setUser(data);
+        userRef.current = data;
+        setLocalValues({
+          first_name: data?.first_name || '',
+          last_name: data?.last_name || '',
+          height: data?.height?.toString() || '',
+        });
       } catch (e) {
         setUser(null);
+        userRef.current = null;
       } finally {
         setLoading(false);
       }
@@ -65,41 +67,91 @@ export default function AccountSettingsScreen() {
     fetchUser();
   }, []);
 
-  // Debounced PATCH for each field
+  const updateUserSilently = useCallback((newData: any) => {
+    userRef.current = newData;
+    // Only update user state if the field being updated is not currently focused
+    if (!focusedField) {
+      setUser(newData);
+    }
+  }, [focusedField]);
+
+  // Update Mixpanel user properties when user data changes
+  const updateMixpanelUserProperties = useCallback((updatedFields: any) => {
+    if (!mixpanel) return;
+
+    const propertiesToUpdate: any = {};
+    
+    // Map backend field names to Mixpanel property names
+    if (updatedFields.first_name !== undefined) {
+      propertiesToUpdate.first_name = updatedFields.first_name;
+    }
+    if (updatedFields.last_name !== undefined) {
+      propertiesToUpdate.last_name = updatedFields.last_name;
+    }
+    if (updatedFields.sex !== undefined) {
+      propertiesToUpdate.gender = updatedFields.sex;
+    }
+    if (updatedFields.dob !== undefined) {
+      propertiesToUpdate.birthday = updatedFields.dob;
+    }
+    if (updatedFields.height !== undefined) {
+      propertiesToUpdate.height = updatedFields.height;
+    }
+
+    // Only update if there are properties to update
+    if (Object.keys(propertiesToUpdate).length > 0) {
+      mixpanel.setUserProperties(propertiesToUpdate);
+      console.log('[MIXPANEL] 📝 Updated user properties:', propertiesToUpdate);
+    }
+  }, [mixpanel]);
+
   const getDebouncedPatch = (field: string) => {
     if (!debouncedPatch.current[field]) {
       debouncedPatch.current[field] = debounce(async (value: any) => {
+        if (!value || value === userRef.current[field]) return;
+
         setUpdating((prev) => ({ ...prev, [field]: true }));
         try {
           const patch: any = {};
           patch[field] = value;
-          const updated = await userService.updateProfile(patch);
-
+          await userService.updateProfile(patch);
+          
+          // Update Mixpanel user properties
+          updateMixpanelUserProperties(patch);
+          
+          // Update user data in background without affecting the UI
           setTimeout(async () => {
             try {
               const freshUserData = await userService.getProfile();
-              setUser(freshUserData);
+              updateUserSilently(freshUserData);
             } catch (e) {
-              // Fallback to the update response
-              setUser((prev: any) => ({ ...prev, ...updated }));
+              console.error('Failed to refresh user data:', e);
             }
-          }, 500);
+          }, 1000);
         } catch (e) {
-          Alert.alert("Error", "Failed to update profile");
-          // Optionally show error
+          Alert.alert('Error', 'Failed to update profile');
+          setLocalValues(prev => ({
+            ...prev,
+            [field]: userRef.current[field]?.toString() || ''
+          }));
         } finally {
           setUpdating((prev) => ({ ...prev, [field]: false }));
         }
-      }, 2000);
-    } else {
-      Alert.alert("Error", "Failed to update profile");
+      }, 1500);
     }
     return debouncedPatch.current[field];
   };
 
   const handleFieldChange = (field: string, value: any) => {
-    setUser((prev: any) => ({ ...prev, [field]: value }));
+    setLocalValues(prev => ({ ...prev, [field]: value }));
     getDebouncedPatch(field)(value);
+  };
+
+  // When field loses focus, update the user state
+  const handleFieldBlur = (field: string) => {
+    setFocusedField(null);
+    // Update the user state with the latest data
+    setUser(userRef.current);
   };
 
   const handleDeleteAccount = () => {
@@ -113,11 +165,20 @@ export default function AccountSettingsScreen() {
           style: "destructive",
           onPress: async () => {
             try {
+              // Track account deletion in Mixpanel
+              mixpanel?.track({
+                name: 'account_deleted',
+                properties: {
+                  user_id: userRef.current?.id,
+                  email: userRef.current?.email,
+                  account_age_days: userRef.current?.created_at ? 
+                    Math.floor((Date.now() - new Date(userRef.current.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0
+                }
+              });
+              
               await authService.deleteAccount();
-              // The app will automatically redirect to LoginScreen when isAuthenticated becomes false
             } catch (error) {
-              console.error("Error during account deletion:", error);
-              // The logout should still happen even if there's an error
+              console.error('Error during account deletion:', error);
             }
           },
         },
@@ -154,58 +215,71 @@ export default function AccountSettingsScreen() {
           {/* Email */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">Email</Text>
-            <Text className="text-base text-[#888]">{user?.email || "-"}</Text>
+            <Text className="text-base text-[#888]">{userRef.current?.email || '-'}</Text>
           </View>
           {/* First name */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">First name</Text>
             <TextInput
-              value={user?.first_name || ""}
-              onChangeText={(v) => handleFieldChange("first_name", v)}
+              ref={(ref) => {
+                if (ref) {
+                  inputRefs.current.first_name = ref;
+                }
+              }}
+              value={localValues.first_name}
+              onChangeText={v => handleFieldChange('first_name', v)}
+              onFocus={() => setFocusedField('first_name')}
+              onBlur={() => handleFieldBlur('first_name')}
               className="text-base text-[#222] text-right flex-1 min-w-[80px]"
               placeholder="First name"
               editable={!updating.first_name}
               underlineColorAndroid="transparent"
             />
+            {updating.first_name && (
+              <ActivityIndicator size="small" color="#19a28f" style={{ marginLeft: 8 }} />
+            )}
           </View>
           {/* Last name */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">Last name</Text>
             <TextInput
-              value={user?.last_name || ""}
-              onChangeText={(v) => handleFieldChange("last_name", v)}
+              ref={(ref) => {
+                if (ref) {
+                  inputRefs.current.last_name = ref;
+                }
+              }}
+              value={localValues.last_name}
+              onChangeText={v => handleFieldChange('last_name', v)}
+              onFocus={() => setFocusedField('last_name')}
+              onBlur={() => handleFieldBlur('last_name')}
               className="text-base text-[#222] text-right flex-1 min-w-[80px]"
               placeholder="Last name"
               editable={!updating.last_name}
               underlineColorAndroid="transparent"
             />
+            {updating.last_name && (
+              <ActivityIndicator size="small" color="#19a28f" style={{ marginLeft: 8 }} />
+            )}
           </View>
           {/* Birthday */}
           <TouchableOpacity
             className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4"
             onPress={() => {
-              setTempDate(user?.dob ? new Date(user.dob) : new Date());
+              Keyboard.dismiss();
+              setTempDate(userRef.current?.dob ? new Date(userRef.current.dob) : new Date());
               setShowDatePicker(true);
             }}
             activeOpacity={0.7}
           >
             <Text className="flex-1 text-base text-[#222]">Birthday</Text>
-            <Text className="text-base text-[#222]">
-              {formatDate(user?.dob)}
-            </Text>
+            <Text className="text-base text-[#222]">{formatDate(userRef.current?.dob)}</Text>
           </TouchableOpacity>
           {/* Gender */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
             <Text className="flex-1 text-base text-[#222]">Gender</Text>
             <View className="flex-1 items-end">
               <TextInput
-                value={
-                  user?.sex === "male"
-                    ? "Male"
-                    : user?.sex === "female"
-                    ? "Female"
-                    : ""
-                }
+                value={userRef.current?.sex === 'male' ? 'Male' : userRef.current?.sex === 'female' ? 'Female' : ''}
                 onFocus={() => {}}
                 className="text-base text-[#222] text-right min-w-[60px]"
                 placeholder="Gender"
@@ -219,6 +293,7 @@ export default function AccountSettingsScreen() {
                 <TouchableOpacity
                   className="flex-1 w-full h-full"
                   onPress={() => {
+                    Keyboard.dismiss();
                     Alert.alert(
                       "Select Gender",
                       undefined,
@@ -231,21 +306,32 @@ export default function AccountSettingsScreen() {
                 />
               </View>
             </View>
+            {updating.sex && (
+              <ActivityIndicator size="small" color="#19a28f" style={{ marginLeft: 8 }} />
+            )}
           </View>
           {/* Height */}
           <View className="flex-row items-center min-h-[56px] px-4">
             <Text className="flex-1 text-base text-[#222]">Height</Text>
             <TextInput
-              value={user?.height ? user.height.toString() : ""}
-              onChangeText={(v) =>
-                handleFieldChange("height", v.replace(/[^0-9]/g, ""))
-              }
+              ref={(ref) => {
+                if (ref) {
+                  inputRefs.current.height = ref;
+                }
+              }}
+              value={localValues.height}
+              onChangeText={v => handleFieldChange('height', v.replace(/[^0-9]/g, ''))}
+              onFocus={() => setFocusedField('height')}
+              onBlur={() => handleFieldBlur('height')}
               className="text-base text-[#222] text-right flex-1 min-w-[60px]"
               placeholder="Height (cm)"
               editable={!updating.height}
               underlineColorAndroid="transparent"
               keyboardType="numeric"
             />
+            {updating.height && (
+              <ActivityIndicator size="small" color="#19a28f" style={{ marginLeft: 8 }} />
+            )}
           </View>
           {/* Weight */}
           <View className="flex-row items-center min-h-[56px] px-4">
@@ -311,7 +397,7 @@ export default function AccountSettingsScreen() {
         </Modal>
         <View className="mt-8 mx-4">
           <TouchableOpacity
-            className=" pl-4 flex-row justify-start bg-white rounded-xl py-6"
+            className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
             onPress={handleDeleteAccount}
           >
             <Text className="text-punchRed text-left font-semibold text-base">

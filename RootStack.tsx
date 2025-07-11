@@ -39,8 +39,10 @@ import ChangePasswordScreen from "./src/screens/ChangePasswordScreen";
 import AdjustTargetsScreen from "./src/screens/AdjustTargetsScreen";
 import { GoalsSetupFlow } from "src/screens/GoalsSetupFlow";
 import AccountSettingsScreen from "src/screens/AccountSettingsScreen";
+import EditMealScreen from "src/screens/EditMealScreen";
 import AISuggestedMealsDetailsScreen from "src/screens/AISuggestedMealsDetails";
 import { EmailVerificationScreen } from "src/screens/EmailVerificationScreen";
+import AddSearchedLoggedMealScreen from "src/screens/AddSearchedLoggedMealScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -89,7 +91,7 @@ const AuthNavigator = ({
       screenOptions={{ headerShown: false }}
       initialRouteName={initialScreen as any}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen
         name="ForgotPasswordScreen"
@@ -137,8 +139,10 @@ const DashboardNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={CustomBottomTabs} />
       <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
-      <Stack.Screen name="AddMeal" component={AddMealScreen} />
+      <Stack.Screen name="AddMealScreen" component={AddMealScreen} />
+      <Stack.Screen name="EditMealScreen" component={EditMealScreen} />
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
+      <Stack.Screen name="NotificationsScreen" component={NotificationsScreen} />
       <Stack.Screen
         name="AccountSettingsScreen"
         component={AccountSettingsScreen}
@@ -174,32 +178,10 @@ const DashboardNavigator = () => {
         component={TermsOfServiceScreen}
       />
       <Stack.Screen
-        name="NotificationsScreen"
-        component={NotificationsScreen}
+        name="AddSearchedLoggedMeal"
+        component={AddSearchedLoggedMealScreen}
       />
+  <Stack.Screen name="NotificationsScreen" component={NotificationsScreen} />
     </Stack.Navigator>
   );
 };
-
-// export function RootStack() {
-//     return <Stack.Navigator
-//         initialRouteName="Welcome"
-//         screenOptions={{headerShown: false}}
-//     >
-//         <Stack.Screen name="Welcome" component={WelcomeScreen}/>
-//         <Stack.Screen name="SettingsScreen" component={SettingsScreen}/>
-//         <Stack.Screen name="ScanScreenType" component={ScanScreenType}/>
-//         <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen}/>
-//         <Stack.Screen name="AddMeal" component={AddMealScreen}/>
-//         <Stack.Screen name="SnapMeal" component={SnapMealScreen}/>
-//         <Stack.Screen name="MealLog" component={MealLogScreen}/>
-//         <Stack.Screen name="NearbyMeals" component={NearbyMealsScreen}/>
-//         <Stack.Screen name="DashboardScreen" component={DashboardScreen}/>
-//         <Stack.Screen name="LoginScreen" component={LoginScreen}/>
-//         <Stack.Screen name="SignupScreen" component={SignupScreen}/>
-//         <Stack.Screen name="MacroInput" component={MacroInputScreen}/>
-//         <Stack.Screen name="MacroGoals" component={MacroGoalsScreen}/>
-//         <Stack.Screen name="MealList" component={MealListScreen}/>
-//         <Stack.Screen name="PaymentScreen" component={PaymentScreen}/>
-//     </Stack.Navigator>;
-// }

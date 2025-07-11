@@ -14,4 +14,7 @@ config.resolver.nodeModulesPaths = [
   path.resolve(__dirname, 'packages'),
 ];
 
+// Fix for victory-native module resolution
+config.resolver.platforms = ['ios', 'android', 'native', 'web'];
+
 module.exports = withNativeWind(config, { input: './src/globals.css' });

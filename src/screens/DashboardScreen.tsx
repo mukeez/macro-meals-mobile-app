@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -24,6 +25,9 @@ import { CircularProgress } from "../components/CircularProgress";
 import { LinearProgress } from "../components/LinearProgress";
 import { RootStackParamList } from "../types/navigation";
 import { userService } from "../services/userService";
+// import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
+import { appConstants } from "constants/appConstants";
+import { Image as ExpoImage } from 'expo-image';
 
 // type RootStackParamList = {
 //     MacroInput: undefined;
@@ -60,6 +64,12 @@ interface TodayMeal {
   meal_time: string;
   created_at: string;
   user_id: string;
+  photo_url?: string;
+  logging_mode?: string;
+  amount?: number;
+  serving_unit?: string;
+  read_only?: boolean;
+  meal_type?: string;
 }
 
 export const DashboardScreen: React.FC = () => {
@@ -102,12 +112,9 @@ export const DashboardScreen: React.FC = () => {
   const token = useStore((state) => state.token);
   const preferences = useStore((state) => state.preferences);
   const setStoreProfile = useStore((state) => state.setProfile);
-  const hasBeenPromptedForGoals = useStore(
-    (state) => state.hasBeenPromptedForGoals
-  );
-  const setHasBeenPromptedForGoals = useStore(
-    (state) => state.setHasBeenPromptedForGoals
-  );
+  const hasBeenPromptedForGoals = useStore((state) => state.hasBeenPromptedForGoals);
+  const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
+  const setMacrosPreferences = useStore((state) => state.setMacrosPreferences);
 
   // useEffect(() => {
   //     if (preferences.calories === 0 && preferences.protein === 0) {
@@ -129,17 +136,33 @@ export const DashboardScreen: React.FC = () => {
         const profileResponse = await userService.getProfile();
         setStoreProfile(profileResponse);
         setProfile(profileResponse);
+        // macroMealsCrashlytics.setUserAttributes({
+        //   userId: profileResponse.id,
+        //   email: profileResponse.email,
+        //   userType: profileResponse.is_pro ? 'pro' : 'free',
+        // });
+        console.log('PROFILE RESPONSE', profileResponse)
         setUsername(profileResponse.display_name || undefined);
 
         const prefsResponse = await userService.getPreferences();
         console.log("PREFS RESPONSE", prefsResponse);
 
+        const macrosPreferences = {
+          protein_target: prefsResponse.protein_target,
+          carbs_target: prefsResponse.carbs_target,
+          fat_target: prefsResponse.fat_target,
+          calorie_target: prefsResponse.calorie_target,
+        };
+        
         setMacros({
           protein: prefsResponse.protein_target,
           carbs: prefsResponse.carbs_target,
           fat: prefsResponse.fat_target,
           calories: prefsResponse.calorie_target,
         });
+        setMacrosPreferences(macrosPreferences);
+
+        // macroMealsCrashlytics.triggerCrash();
 
         const progressResponse = await fetch(
           "https://api.macromealsapp.com/api/v1/meals/progress/today",
@@ -187,6 +210,7 @@ export const DashboardScreen: React.FC = () => {
           throw new Error("Failed to fetch today's meals");
         }
         const todayMealsData = await todayMealsResponse.json();
+        console.log('TODAY MEALS DATA', JSON.stringify(todayMealsData, null, 2))
         setTodayMeals(todayMealsData);
         setIsLoading(false);
       } catch (error) {
@@ -360,13 +384,11 @@ export const DashboardScreen: React.FC = () => {
                   {getGreeting(profile?.first_name)}
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("NotificationsScreen")}
-              >
-                <Image
-                  source={IMAGE_CONSTANTS.notificationIcon}
-                  className="w-[24px] h-[24px] object-fill"
-                />
+              <TouchableOpacity onPress={() => navigation.navigate('NotificationsScreen')}>
+              <Image
+                source={IMAGE_CONSTANTS.notificationIcon}
+                className="w-[24px] h-[24px] object-fill"
+              />
               </TouchableOpacity>
             </View>
             {profile.has_macros === false ||
@@ -514,11 +536,32 @@ export const DashboardScreen: React.FC = () => {
                 </View>
               ) : (
                 todayMeals.map((meal, index) => (
-                  <View key={index} className="flex-row items-start mt-3">
-                    <Image
-                      source={IMAGE_CONSTANTS.sampleFood}
-                      className="w-[90px] h-[90px] object-fill mr-2"
-                    />
+                  <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
+                    {meal.photo_url ? (
+                      <ExpoImage
+                        placeholder={appConstants.blurhash}
+                        cachePolicy="disk"
+                        contentFit="cover"
+                        transition={300}
+                        source={{ uri: meal.photo_url }}
+                        style={{ width: 90, height: 90, borderRadius: 8, marginRight: 8 }}
+                        onLoad={() => {
+                          console.log('✅ ExpoImage loaded successfully for meal:', meal.name, meal.photo_url);
+                        }}
+                        onError={(error: any) => {
+                          console.log('❌ ExpoImage failed to load for meal:', meal.name, meal.photo_url, error);
+                        }}
+                        onLoadStart={() => {
+                          console.log('🔄 ExpoImage started loading for meal:', meal.name, meal.photo_url);
+                        }}
+                      />
+                    ) : (
+                      <Image
+                        source={IMAGE_CONSTANTS.mealIcon}
+                        className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
+                        resizeMode="cover"
+                      />
+                    )}
                     <View className="flex-1 flex-col">
                       <View className="flex-row items-center justify-between mb-2">
                         <Text
@@ -528,8 +571,26 @@ export const DashboardScreen: React.FC = () => {
                         >
                           {meal.name}
                         </Text>
-                        <TouchableOpacity>
-                          <View className="w-[24px] h-[24px] rounded-full justify-center items-center bg-gray-100">
+                        <TouchableOpacity onPress={() => {
+                                  navigation.navigate('EditMealScreen', {
+                                    analyzedData: {
+                                      id: meal.id,
+                                      name: meal.name,
+                                      calories: meal.calories,
+                                      protein: meal.protein,
+                                      carbs: meal.carbs,
+                                      fat: meal.fat,
+                                      meal_type: meal.meal_type,
+                                      serving_unit: meal.serving_unit || 'serving',
+                                      amount: meal.amount,
+                                      logging_mode: meal.logging_mode,
+                                      meal_time: meal.meal_time,
+                                      photo_url: meal.photo_url,
+                                      read_only: meal.read_only
+                                    }
+                                  });
+                                }}>
+                          <View className="w-[24px] h-[24px] rounded-full justify-center items-center bg-grey">
                             <Image
                               source={IMAGE_CONSTANTS.editIcon}
                               className="w-[13px] h-[13px]"
@@ -544,11 +605,17 @@ export const DashboardScreen: React.FC = () => {
                         </Text>
                         <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
                         <Image
-                          source={IMAGE_CONSTANTS.mealScan}
-                          className="w-[16px] h-[16px] object-fill mr-1"
+                          tintColor="#000000"
+                          source={
+                            meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
+                            meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
+                            meal.logging_mode === 'scanned' ? IMAGE_CONSTANTS.scanMealIcon :
+                            IMAGE_CONSTANTS.fireIcon // default to fire icon
+                          }
+                          className="w-[12px] h-[12px] object-fill mr-1"
                         />
                         <Text className="text-sm text-textMediumGrey text-center font-medium">
-                          Meal Scan
+                          {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}
                         </Text>
                       </View>
 
