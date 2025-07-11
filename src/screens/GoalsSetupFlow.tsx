@@ -104,13 +104,13 @@ export const GoalsSetupFlow =  () => {
           throw new Error('Missing required fields');
         }
 
-        // Calculate height (do not convert, just pass as is)
+        // Calculate height (convert feet + inches to decimal feet for imperial)
         let heightValue = 0;
         if (unit === 'imperial') {
-          if (heightFt === null) {
+          if (heightFt === null || heightIn === null) {
             throw new Error('Missing height measurement');
           }
-          heightValue = heightFt;
+          heightValue = heightFt + (heightIn / 12); // Convert to decimal feet
         } else {
           if (heightCm === null) {
             throw new Error('Missing height measurement');

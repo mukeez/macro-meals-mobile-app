@@ -44,7 +44,10 @@ type GoalsFlowState = {
 
 export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
     gender: null,
-    setGender: (gender) => set({ gender }),
+    setGender: (gender) => {
+        console.log('[GoalsFlow] Gender selected:', gender);
+        set({ gender });
+    },
     majorStep: 0,
     subSteps: { 0: 0, 1: 0, 2: 0},
     completed: {0: Array(5).fill(false), 1: Array(3).fill(false), 2: [false]},
@@ -58,57 +61,108 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set)=> ({
             subSteps: { ...state.subSteps, [major]: sub }
         }));
     },
-    markSubStepComplete: (major, sub) => set((state)=> {
-        const updated = [ ...state.completed[major]];
-        updated[sub] = true;
-        return{ completed: { ...state.completed, [major]: updated}};
-    }),
+    markSubStepComplete: (major, sub) => {
+        console.log('[GoalsFlow] Marking substep complete:', { major, sub });
+        set((state)=> {
+            const updated = [ ...state.completed[major]];
+            updated[sub] = true;
+            return{ completed: { ...state.completed, [major]: updated}};
+        });
+    },
     dateOfBirth: null,
-    setDateOfBirth: (date) => set({ dateOfBirth: date }),
+    setDateOfBirth: (date) => {
+        console.log('[GoalsFlow] Date of birth selected:', date);
+        set({ dateOfBirth: date });
+    },
     location: null,
-    setLocation: (location) => set({ location}),
+    setLocation: (location) => {
+        console.log('[GoalsFlow] Location selected:', location);
+        set({ location});
+    },
     unit: 'imperial',
     heightFt: null,
     heightIn: null,
     heightCm: null,
     weightLb: null,
     weightKg: null,
-    setUnit: (unit) => set({ unit }),
-    setHeightFt: (ft) => set({ heightFt: ft }),
-    setHeightIn: (inch) => set({ heightIn: inch }),
-    setHeightCm: (cm) => set({ heightCm: cm }),
-    setWeightLb: (lb) => set({ weightLb: lb }),
-    setWeightKg: (kg) => set({ weightKg: kg }),
+    setUnit: (unit) => {
+        console.log('[GoalsFlow] Unit system changed:', unit);
+        set({ unit });
+    },
+    setHeightFt: (ft) => {
+        console.log('[GoalsFlow] Height (feet) selected:', ft);
+        set({ heightFt: ft });
+    },
+    setHeightIn: (inch) => {
+        console.log('[GoalsFlow] Height (inches) selected:', inch);
+        set({ heightIn: inch });
+    },
+    setHeightCm: (cm) => {
+        console.log('[GoalsFlow] Height (cm) selected:', cm);
+        set({ heightCm: cm });
+    },
+    setWeightLb: (lb) => {
+        console.log('[GoalsFlow] Weight (lb) selected:', lb);
+        set({ weightLb: lb });
+    },
+    setWeightKg: (kg) => {
+        console.log('[GoalsFlow] Weight (kg) selected:', kg);
+        set({ weightKg: kg });
+    },
     dailyActivityLevel: null,
-    setDailyActivityLevel: (level) => set({ dailyActivityLevel: level }),
+    setDailyActivityLevel: (level) => {
+        console.log('[GoalsFlow] Daily activity level selected:', level);
+        set({ dailyActivityLevel: level });
+    },
     dietryPreference: null,
-    setDietryPreference: (preference) => set({ dietryPreference: preference }),
-    resetSteps: () => set({
-        majorStep: 0,
-        subSteps: { 0: 0, 1: 0, 2: 0 },
-        completed: { 0: Array(5).fill(false), 1: Array(3).fill(false), 2: [false] },
-        gender: null,
-        dateOfBirth: null,
-        location: null,
-        heightFt: null,
-        heightIn: null,
-        heightCm: null,
-        weightLb: null,
-        weightKg: null,
-        unit: 'imperial',
-        dailyActivityLevel: null,
-        dietryPreference: null,
-        fitnessGoal: null,
-        targetWeight: null,
-    }),
+    setDietryPreference: (preference) => {
+        console.log('[GoalsFlow] Dietary preference selected:', preference);
+        set({ dietryPreference: preference });
+    },
+    resetSteps: () => {
+        console.log('[GoalsFlow] Resetting all steps and data');
+        set({
+            majorStep: 0,
+            subSteps: { 0: 0, 1: 0, 2: 0 },
+            completed: { 0: Array(5).fill(false), 1: Array(3).fill(false), 2: [false] },
+            gender: null,
+            dateOfBirth: null,
+            location: null,
+            heightFt: null,
+            heightIn: null,
+            heightCm: null,
+            weightLb: null,
+            weightKg: null,
+            unit: 'imperial',
+            dailyActivityLevel: null,
+            dietryPreference: null,
+            fitnessGoal: null,
+            targetWeight: null,
+        });
+    },
     fitnessGoal: null,
-    setFitnessGoal: (goal) => set({ fitnessGoal: goal }),
+    setFitnessGoal: (goal) => {
+        console.log('[GoalsFlow] Fitness goal selected:', goal);
+        set({ fitnessGoal: goal });
+    },
     targetWeight: null,
-    setTargetWeight: (weight) => set({ targetWeight: weight }),
+    setTargetWeight: (weight) => {
+        console.log('[GoalsFlow] Target weight selected:', weight);
+        set({ targetWeight: weight });
+    },
     progressRate: null,
-    setProgressRate: (rate) => set({ progressRate: rate }),
+    setProgressRate: (rate) => {
+        console.log('[GoalsFlow] Progress rate selected:', rate);
+        set({ progressRate: rate });
+    },
     preferences: null,
-    setPreferences: (prefs) => set({ preferences: prefs }),
+    setPreferences: (prefs) => {
+        console.log('[GoalsFlow] Preferences set:', prefs);
+        set({ preferences: prefs });
+    },
     macroTargets: null,
-    setMacroTargets: (macros) => set({ macroTargets: macros }),
+    setMacroTargets: (macros) => {
+        console.log('[GoalsFlow] Macro targets set:', macros);
+        set({ macroTargets: macros });
+    },
 }));

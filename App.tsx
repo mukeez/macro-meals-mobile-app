@@ -24,7 +24,7 @@ export default function App() {
     const { setAuthenticated, isAuthenticated } = useStore();
     
     const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
-    const [initialAuthScreen, setInitialAuthScreen] = useState('LoginScreen');
+    const [initialAuthScreen, setInitialAuthScreen] = useState('GoalSetupNavigator');
     const [hasMacros, setHasMacros] = useState(false);
     const [readyForDashboard, setReadyForDashboard] = useState(false);
 

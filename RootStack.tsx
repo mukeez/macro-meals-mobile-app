@@ -90,7 +90,7 @@ const AuthNavigator = ({
       initialRouteName={initialScreen as any}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="GoalSetupNavigator" component={GoalSetupNavigator} />
       <Stack.Screen
         name="ForgotPasswordScreen"
         component={ForgotPasswordScreen}

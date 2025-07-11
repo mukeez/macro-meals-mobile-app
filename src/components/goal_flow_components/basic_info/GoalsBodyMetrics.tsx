@@ -21,7 +21,7 @@ export const GoalBodyMetrics = () => {
 
   return (
     <View className="flex-1 bg-white px-4">
-      <Text className="text-3xl font-bold mt-4">Body metrics</Text>
+      <Text className="text-3xl font-bold mt-4">Height metrics</Text>
       <Text className="text-base text-gray-500 mb-6">This will be used to calibrate your custom plan</Text>
       {/* Unit Switch */}
       <View className="flex-row items-center justify-center mb-6">
