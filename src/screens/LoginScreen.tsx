@@ -28,6 +28,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { userService } from '../services/userService';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import { useGoalsFlowStore } from '../store/goalsFlowStore';
+import { useMixpanel } from '@macro-meals/mixpanel';
+// import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 
 // type RootStackParamList = {
 //     Welcome: undefined;
@@ -50,6 +52,7 @@ export const LoginScreen: React.FC = () => {
     const navigation = useNavigation<LoginScreenNavigationProp>();
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+    const mixpanel = useMixpanel();
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
@@ -89,6 +92,23 @@ export const LoginScreen: React.FC = () => {
             });
             
             if (!profileResponse.ok) {
+                if (profileResponse.status === 403) {
+                    const errorText = await profileResponse.text();
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        if (errorData.detail && errorData.detail.includes('Email verification required')) {
+                            await authService.resendEmailVerification({ email });
+                            (navigation as any).navigate('EmailVerificationScreen', { email, password });
+                            return;
+                        }
+                    } catch (parseError) {
+                        // If JSON parsing fails, check the raw text
+                        if (errorText.includes('Email verification required')) {
+                            (navigation as any).navigate('EmailVerificationScreen', { email, password });
+                            return;
+                        }
+                    }
+                }
                 throw new Error(await profileResponse.text());
             }
             
@@ -109,6 +129,28 @@ export const LoginScreen: React.FC = () => {
             // If user has macros, they should be ready for dashboard
             setHasMacros(profile.has_macros);
             setReadyForDashboard(profile.has_macros);
+            
+            // Identify user in Mixpanel
+            mixpanel?.identify(userId);
+            mixpanel?.setUserProperties({
+                email: profile.email || email,
+                name: profile.display_name || profile.first_name,
+                signup_date: profile.created_at || new Date().toISOString(),
+                has_macros: profile.has_macros,
+                is_pro: profile.is_pro || false,
+                meal_reminder_preferences_set: profile.meal_reminder_preferences_set || false
+            });
+            
+            // Track successful login
+            mixpanel?.track({
+                name: 'user_logged_in',
+                properties: {
+                    login_method: 'email',
+                    has_macros: profile.has_macros,
+                    is_pro: profile.is_pro || false
+                }
+            });
+            
             // Set authenticated last to trigger navigation
             setAuthenticated(true, token, userId);
             
@@ -227,7 +269,7 @@ export const LoginScreen: React.FC = () => {
                        
                     </View>
                     {errors.password ? <Text className='text-red-500 text-sm mt-2 mb-2'>{errors.password}</Text> : null}
-                    <TouchableOpacity className="mb-4" onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+                    <TouchableOpacity className="mb-4" onPress={() => (navigation as any).navigate('ForgotPasswordScreen')}>
                         <Text className="text-[14px] text-primary font-medium">Forgot Password?</Text>
                     </TouchableOpacity>
                 </View>

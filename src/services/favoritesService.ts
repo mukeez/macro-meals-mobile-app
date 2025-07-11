@@ -15,6 +15,10 @@ export interface FavoriteMeal {
     location: string;
   };
   addedAt: string;
+  serving_size: number;
+  no_of_servings: number;
+  meal_type: string;
+  meal_time: string;
 }
 
 const FAVORITES_STORAGE_KEY = '@macro_meals_favorites';

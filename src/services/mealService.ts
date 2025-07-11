@@ -12,9 +12,12 @@ const API_ENDPOINTS = {
     LOG_MEAL: `${API_BASE_URL}/meals/add`,
     TODAY_MEALS: `${API_BASE_URL}/meals/today`,
     DAILY_PROGRESS: `${API_BASE_URL}/meals/progress/today`,
-    DELETE_MEAL: `${API_BASE_URL}/meals/delete`,
+    DELETE_MEAL: `${API_BASE_URL}/meals/`,
     MEAL_PROGRESS: `${API_BASE_URL}/meals/progress`,
-    MEALS: `${API_BASE_URL}/meals/logs`
+    MEALS: `${API_BASE_URL}/meals/logs`,
+    EDIT_MEAL: `${API_BASE_URL}/meals/{id}`,
+    SEARCH_MEAL: `${API_BASE_URL}/meals/search?query={query}`,
+    SEARCH_MEALS_API: `${API_BASE_URL}/products/search-meals-format?query={query}`
 };
 
 /**
@@ -27,6 +30,16 @@ interface LogMealRequest {
     fat: number;
     calories: number;
     meal_type?: string;
+    meal_time?: string;
+    description?: string;
+    serving_size?: string;
+    serving_unit?: string;
+    number_of_servings?: string;
+    photo?: {
+        uri: string;
+        type?: string;
+        name?: string;
+    };
 }
 
 /**
@@ -175,6 +188,8 @@ export const mealService = {
                 longitude: 0,
             };
 
+            console.log('requestBody', JSON.stringify(requestBody, null, 2));
+
             // Fetch AI meal suggestions
             const meals = await mealService.suggestAiMeals(requestBody);
             
@@ -224,48 +239,103 @@ export const mealService = {
      */
     logMeal: async (mealData: LogMealRequest): Promise<LoggedMeal> => {
         const token = useStore.getState().token;
-
         if (!token) {
-            throw new Error('Authentication required');
+            throw new Error('No authentication token found');
         }
 
         try {
+            const formData = new FormData();
+            
+            // Handle photo separately to avoid stringification
+            const { photo, ...mealDataWithoutPhoto } = mealData;
+
+            // Add all meal data to FormData
+            Object.entries(mealDataWithoutPhoto).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value.toString());
+                }
+            });
+
+            // Add photo to FormData if it exists
+            if (photo?.uri) {
+                // Get the file extension from the URI
+                const uriParts = photo.uri.split('.');
+                const fileType = uriParts[uriParts.length - 1];
+
+                formData.append('photo', {
+                    uri: photo.uri,
+                    type: `image/${fileType}`,
+                    name: `photo.${fileType}`
+                } as any);
+            }
+
             const response = await fetch(API_ENDPOINTS.LOG_MEAL, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(mealData),
+                body: formData,
             });
 
-            const statusCode = response.status;
-            const responseText = await response.text();
-            let parsedError = null;
-            try {
-                parsedError = JSON.parse(responseText);
-            } catch {}
-
             if (!response.ok) {
-                if (parsedError && parsedError.detail) {
-                    console.error('Validation error detail:', JSON.stringify(parsedError.detail));
-                }
-                throw new Error(responseText);
+                const errorText = await response.text();
+                console.error('Failed to log meal:', errorText);
+                throw new Error(`Failed to log meal: ${errorText}`);
             }
 
-            const loggedMeal = parsedError || {};
-            return {
-                id: loggedMeal.id,
-                name: loggedMeal.name,
-                timestamp: loggedMeal.meal_time,
-                protein: loggedMeal.protein,
-                carbs: loggedMeal.carbs,
-                fat: loggedMeal.fat,
-                calories: loggedMeal.calories,
-                mealType: loggedMeal.meal_type,
-            };
+            return await response.json();
         } catch (error) {
             console.error('Error logging meal:', error);
+            throw error;
+        }
+    },
+
+    updateMeal: async (mealData: LogMealRequest, mealId: string): Promise<LoggedMeal> => {
+        const token = useStore.getState().token;
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
+        try {
+            const formData = new FormData();
+            
+            // Handle photo separately to avoid stringification
+            const { photo, ...mealDataWithoutPhoto } = mealData;
+
+            // Add all meal data to FormData
+            Object.entries(mealDataWithoutPhoto).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value.toString());
+                }
+            });
+
+            // Add photo to FormData if it exists - using same format as logMeal
+            if (photo && photo.uri) {
+                formData.append('photo', {
+                    uri: photo.uri,
+                    type: 'image/jpeg',
+                    name: 'meal_photo.jpg'
+                } as any);
+            }
+
+            const updateUrl = API_ENDPOINTS.EDIT_MEAL.replace('{id}', mealId);
+            const response = await fetch(updateUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    // Don't set Content-Type header, let the browser set it with the boundary
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to update meal: ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating meal:', error);
             throw error;
         }
     },
@@ -320,6 +390,75 @@ export const mealService = {
         }
     },
 
+
+    /**
+     * Search for meals by name
+     * @param query - The query to search for
+     * @returns Promise with suggested meals
+     * @throws Error if the request fails
+     */
+    searchMeal: async (query: string): Promise<Meal[]> => {
+        const token = useStore.getState().token;
+        const url = API_ENDPOINTS.SEARCH_MEAL.replace('{query}', query);
+        console.log('🔍 Search URL:', url);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+
+        console.log('🔍 Response status:', response.status);
+        console.log('🔍 Response ok:', response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();    
+            throw new Error(`Failed to search meals: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('🔍 Parsed response data:', data);
+        return data;
+    },
+
+    /**
+     * Search for meals by name
+     * @param query - The query to search for
+     * @returns Promise with suggested meals
+     * @throws Error if the request fails
+     */
+
+    searchMealsApi: async (query: string): Promise<any> => {
+        const token = useStore.getState().token;
+        const url = API_ENDPOINTS.SEARCH_MEALS_API.replace('{query}', query);
+        console.log('🔍 Global search service - URL:', url);
+        console.log('🔍 Global search service - Token available:', !!token);
+        console.log('🔍 Global search service - Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+
+        console.log('🔍 Global search service - Response status:', response.status);
+        console.log('🔍 Global search service - Response ok:', response.ok);
+        console.log('🔍 Global search service - Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.log('🔍 Global search service - Error response:', errorText);
+            throw new Error(`Failed to search meals: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('🔍 Global search service - Parsed data:', data);
+        return data;
+    },
+
     /**
      * Get daily macro progress
      * @returns Daily progress with consumed and target macros
@@ -371,6 +510,7 @@ export const mealService = {
         if (!token) {
             throw new Error('Authentication required');
         }
+        console.log('Deleting meal:', mealId);
 
         try {
             const response = await fetch(`${API_ENDPOINTS.DELETE_MEAL}/${mealId}`, {

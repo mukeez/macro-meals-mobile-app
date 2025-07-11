@@ -55,6 +55,12 @@ type TodayProgress = {
     calories: number;
 };
 
+type TodayMealsSum = {
+    protein: number;
+    carbs: number;
+    fat: number;
+};
+
 /**
  * Interface for the application state store.
  */
@@ -108,6 +114,11 @@ interface AppState {
     todayProgress: TodayProgress;
     setTodayProgress: (progress: TodayProgress) => void;
     fetchTodayProgress: () => Promise<void>;
+
+    // Today's meals sum
+    todayMealsSum: TodayMealsSum;
+    setTodayMealsSum: (sum: TodayMealsSum) => void;
+    calculateTodayMealsSum: () => void;
 }
 
 /**
@@ -256,6 +267,11 @@ const useStore = create<AppState>()(
                             fat: 0,
                             calories: 0,
                         },
+                        todayMealsSum: {
+                            protein: 0,
+                            carbs: 0,
+                            fat: 0,
+                        },
                     });
 
                     // Clear stored authentication data
@@ -342,6 +358,26 @@ const useStore = create<AppState>()(
                     console.error('Error fetching today\'s progress:', error);
                 }
             },
+
+            // Today's meals sum
+            todayMealsSum: {
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+            },
+            setTodayMealsSum: (sum) => set({ todayMealsSum: sum }),
+            calculateTodayMealsSum: () => {
+                const state = get();
+                const sum = state.loggedMeals.reduce(
+                    (acc, meal) => ({
+                        carbs: acc.carbs + (meal.macros?.carbs || 0),
+                        fat: acc.fat + (meal.macros?.fat || 0),
+                        protein: acc.protein + (meal.macros?.protein || 0),
+                    }),
+                    { carbs: 0, fat: 0, protein: 0 }
+                );
+                set({ todayMealsSum: sum });
+            },
         }),
         {
             name: 'macromate-storage',
@@ -358,6 +394,7 @@ const useStore = create<AppState>()(
                 hasBeenPromptedForGoals: state.hasBeenPromptedForGoals,
                 macrosPreferences: state.macrosPreferences,
                 todayProgress: state.todayProgress,
+                todayMealsSum: state.todayMealsSum,
             }),
         }
     )

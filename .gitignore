@@ -129,3 +129,7 @@ web-build/
 .cursorrules
 .cursor/
 credentials.json
+
+# Android signing config
+android/app/signing.properties
+android/app/upload-key.keystore
