@@ -16,7 +16,6 @@ export default function CustomTouchableOpacityButton({
     textClassName?: string;
     isLoading?: boolean;
 }){
-    console.log('disabled', disabled);
     return (
         <TouchableOpacity 
             onPress={onPress} 

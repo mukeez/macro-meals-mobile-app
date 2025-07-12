@@ -197,10 +197,10 @@ export const SettingsScreen: React.FC = () => {
             
             await authService.logout();
             setAuthenticated(false, "", "");
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Login" }],
-            });
+            // navigation.reset({
+            //   index: 0,
+            //   routes: [{ name: "Login" }],
+            // });
           } catch (error) {
             console.error("Logout error:", error);
           }
