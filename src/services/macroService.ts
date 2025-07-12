@@ -17,7 +17,8 @@ export interface MacroSetupRequest {
   progress_rate: string | number;
   sex: string;
   target_weight: number;
-  unit_preference: string;
+  height_unit_preference: string;
+  weight_unit_preference: string;
   weight: number;
 }
 
