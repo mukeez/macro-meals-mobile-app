@@ -145,7 +145,7 @@ export const DashboardScreen: React.FC = () => {
         setUsername(profileResponse.display_name || undefined);
 
         const prefsResponse = await userService.getPreferences();
-        console.log('PREFS RESPONSE', prefsResponse)
+        console.log("PREFS RESPONSE", prefsResponse);
 
         const macrosPreferences = {
           protein_target: prefsResponse.protein_target,
@@ -180,7 +180,7 @@ export const DashboardScreen: React.FC = () => {
         }
 
         const progressData = await progressResponse.json();
-        console.log('PROGRESS DATA', progressData)
+        console.log("PROGRESS DATA", progressData);
 
         setConsumed({
           protein: progressData.logged_macros.protein,
@@ -194,7 +194,9 @@ export const DashboardScreen: React.FC = () => {
           totalCalories > 0 ? (consumed.calories / totalCalories) * 100 : 0;
         setProgress(Math.min(100, progressPercentage));
         const todayMealsResponse = await fetch(
-          `https://api.macromealsapp.com/api/v1/meals/logs?start_date=${new Date().toISOString().split('T')[0]}&end_date=${new Date().toISOString().split('T')[0]}`,
+          `https://api.macromealsapp.com/api/v1/meals/logs?start_date=${
+            new Date().toISOString().split("T")[0]
+          }&end_date=${new Date().toISOString().split("T")[0]}`,
           {
             method: "GET",
             headers: {
@@ -234,9 +236,8 @@ export const DashboardScreen: React.FC = () => {
 
   const handleMacroInput = () => {
     // Do NOT call setMajorStep or setSubStep here. State should only be advanced when user completes a major step.
-    navigation.navigate('GoalSetupScreen', undefined);
+    navigation.navigate("GoalSetupScreen", undefined);
   };
-
 
   const handleMealLog = () => {
     navigation.navigate("MealFinderScreen");
@@ -245,8 +246,6 @@ export const DashboardScreen: React.FC = () => {
   const handleRefresh = () => {
     setIsLoading(true);
   };
-
-
 
   const animatedStyle = useAnimatedStyle(() => {
     const animatedProgress = withTiming(progress, { duration: 1000 });
@@ -342,14 +341,14 @@ export const DashboardScreen: React.FC = () => {
     return `${dayOfWeek}, ${day} ${month}`;
   }
 
-  function getGreeting(username: string) {
-    if (username === undefined) {
+  function getGreeting(first_name?: string) {
+    if (!first_name) {
       return "Hello there 👋";
     }
     const hour = new Date().getHours();
-    if (hour < 12) return `Good morning, ${username} 👋`;
-    if (hour < 18) return `Good afternoon, ${username} 👋`;
-    return `Good evening, ${username} 👋`;
+    if (hour < 12) return `Good morning, ${first_name} 👋`;
+    if (hour < 18) return `Good afternoon, ${first_name} 👋`;
+    return `Good evening, ${first_name} 👋`;
   }
 
   function getTimeOfDayEmoji() {
@@ -382,7 +381,7 @@ export const DashboardScreen: React.FC = () => {
                   {formatDate(new Date())} {getTimeOfDayEmoji()}
                 </Text>
                 <Text className="text-[18px] font-medium text-black">
-                  {getGreeting(username)}
+                  {getGreeting(profile?.first_name)}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => navigation.navigate('NotificationsScreen')}>
@@ -393,32 +392,34 @@ export const DashboardScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
             {profile.has_macros === false ||
-              profile.has_macros === undefined ? (
-                <View className="flex-col bg-paleCyan px-5 py-5">
-                  <Image
-                    tintColor={"#8BAAA3"}
-                    source={IMAGE_CONSTANTS.trophy}
-                    className="absolute bottom-4 tint right-4 w-[74px] h-[74px] object-fill"
-                  />
-                  <View className="relative">
-                    <Text className="text-base font-semibold mb-2">
-                      Set up your Macro goals
+            profile.has_macros === undefined ? (
+              <View className="flex-col bg-paleCyan px-5 py-5">
+                <Image
+                  tintColor={"#8BAAA3"}
+                  source={IMAGE_CONSTANTS.trophy}
+                  className="absolute bottom-4 tint right-4 w-[74px] h-[74px] object-fill"
+                />
+                <View className="relative">
+                  <Text className="text-base font-semibold mb-2">
+                    Set up your Macro goals
+                  </Text>
+                  <Text className="tracking-wide text-[13px] font-normal mb-3 mr-10">
+                    Set your macro goals to get personalized tracking and
+                    tailored recommendations.
+                  </Text>
+                  <TouchableOpacity
+                    className="bg-primary w-[105px] h-[32px] rounded-[100px] justify-center items-center"
+                    onPress={handleMacroInput}
+                  >
+                    <Text className="text-white text-sm font-semibold">
+                      Set up now
                     </Text>
-                    <Text className="tracking-wide text-[13px] font-normal mb-3 mr-10">
-                      Set your macro goals to get personalized tracking and
-                      tailored recommendations.
-                    </Text>
-                    <TouchableOpacity
-                      className="bg-primary w-[105px] h-[32px] rounded-[100px] justify-center items-center"
-                      onPress={handleMacroInput}
-                    >
-                      <Text className="text-white text-sm font-semibold">
-                        Set up now
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                 </View>
-              ): <></>}
+              </View>
+            ) : (
+              <></>
+            )}
             <View className="mb-6 bg-white px-5 py-6">
               <View className="flex-row items-center justify-between mb-6">
                 <View className="flex-col">

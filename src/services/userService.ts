@@ -239,4 +239,36 @@ updateUserProfile: async (data: any): Promise<any> => {
     const userData = await response.json();
     return userData;
   },
+uploadProfileImage: async (imageUri: string, authToken: string) => {
+  const formData = new FormData();
+  const filename = imageUri.split('/').pop() || 'avatar.jpg';
+  const match = /\.(\w+)$/.exec(filename);
+  const type = match ? `image/${match[1]}` : `image`;
+
+  formData.append('profile_image', {
+    uri: imageUri,
+    name: filename,
+    type: type,
+  } as any);
+
+  const response = await fetch(`${API_BASE_URL}/user/me`,
+    {
+    
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${authToken}`,
+    },
+    body: formData,
+  });
+  console.log('Status:', response.status);
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    console.error('Upload failed:', response.status, responseText);
+    throw new Error(responseText || 'Upload failed');
+  }
+  const responseData = JSON.parse(responseText);
+  console.log('Parsed JSON response:', responseData);
+  return responseData;
+},
 }
