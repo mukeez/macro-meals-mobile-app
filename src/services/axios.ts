@@ -6,11 +6,11 @@ import useStore from '../store/useStore';
 // Define non-authenticated endpoints
 const nonAuthEndpoints = [
   '/auth/login',
-  '/auth/register',
+  '/auth/signup',
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/verify-code',
-  '/auth/refresh-token',
+  '/auth/verify-email',
   '/auth/refresh',
   '/auth/google',
   '/auth/apple',
@@ -32,11 +32,13 @@ axiosInstance.interceptors.request.use(
     try {
       const token = await AsyncStorage.getItem('my_token');
       
-      // Only add token if endpoint requires auth
+      // Only add token if endpoint requires auth and we have a token
       if (token && !nonAuthEndpoints.some(endpoint => config.url?.includes(endpoint))) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
         console.log('Adding auth token to request:', config.url);
+      } else if (!token && !nonAuthEndpoints.some(endpoint => config.url?.includes(endpoint))) {
+        console.log('No auth token available for protected endpoint:', config.url);
       }
     } catch (error) {
       console.error('Error getting token from storage:', error);
@@ -110,7 +112,12 @@ axiosInstance.interceptors.response.use(
         } else {
           // No refresh token, logout
           console.log('No refresh token available, logging out');
-          console.log('Available storage keys:', await AsyncStorage.getAllKeys());
+          try {
+            const keys = await AsyncStorage.getAllKeys();
+            console.log('Available storage keys:', keys);
+          } catch (keysError) {
+            console.log('Could not get storage keys:', keysError);
+          }
           await handleLogout();
           return Promise.reject(error);
         }
