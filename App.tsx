@@ -18,6 +18,7 @@ import { OnboardingContext } from './src/contexts/OnboardingContext';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import Constants from 'expo-constants';
 import { userService } from './src/services/userService';
+import { authService } from './src/services/authService';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -107,10 +108,24 @@ export default function App() {
                         const token = await messaging().getToken();
                         await pushNotifications.intializeMessaging();
                         
+                        // Check for initial notification (app opened from notification)
+                        await pushNotifications.getInitialNotification();
+                        
                         // Store the FCM token for later use
                         if (token) {
                             await AsyncStorage.setItem('fcm_token', token);
                             console.log('FCM token stored during app initialization:', token);
+                            
+                            // Try to update FCM token on backend if user is authenticated
+                            try {
+                                const storedToken = await AsyncStorage.getItem('my_token');
+                                if (storedToken) {
+                                    await userService.updateFCMToken(token);
+                                    console.log('FCM token sent to backend successfully');
+                                }
+                            } catch (error) {
+                                console.log('Could not update FCM token on backend (user may not be logged in):', error);
+                            }
                         }
                         
                         return token;
@@ -202,6 +217,21 @@ export default function App() {
             isOnboardingCompleted
         });
     }, [isAuthenticated, hasMacros, readyForDashboard, isOnboardingCompleted]);
+
+    // Periodic FCM token refresh
+    useEffect(() => {
+        if (isAuthenticated) {
+            const refreshInterval = setInterval(async () => {
+                try {
+                    await authService.refreshAndUpdateFCMToken();
+                } catch (error) {
+                    console.log('Error during periodic FCM token refresh:', error);
+                }
+            }, 24 * 60 * 60 * 1000); // Refresh every 24 hours
+
+            return () => clearInterval(refreshInterval);
+        }
+    }, [isAuthenticated]);
 
     if (isLoading) {
         return (

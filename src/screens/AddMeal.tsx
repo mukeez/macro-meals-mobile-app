@@ -299,6 +299,7 @@ const AddMeal: React.FC = () => {
                     )}
                     {section.meals.map((meal, index) => (
                       <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
+                     { meal.photo_url ?
                        <ExpoImage
                         placeholder={appConstants.blurhash}
                         cachePolicy="disk"
@@ -315,7 +316,11 @@ const AddMeal: React.FC = () => {
                         onLoadStart={() => {
                           console.log('🔄 ExpoImage started loading for meal:', meal.name, meal.photo_url);
                         }}
-                      />
+                      />:  <Image
+                      source={IMAGE_CONSTANTS.mealIcon}
+                      className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
+                      resizeMode="cover"
+                    />}
                         <View className="flex-1 flex-col">
                           <View className="flex-row items-center justify-between mb-2">
                             <Text
