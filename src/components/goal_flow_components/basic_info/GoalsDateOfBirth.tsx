@@ -17,17 +17,32 @@ export const GoalsDateOfBirth: React.FC = () => {
 
   // Date picker modal handlers
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (selectedDate) setTempDate(selectedDate);
+    if (Platform.OS === 'android') {
+      // On Android, immediately save the date when selected
+      if (selectedDate) {
+        const formatted = selectedDate.toLocaleDateString('en-GB');
+        setDateOfBirth(formatted);
+      }
+      // Always close the modal on Android after any interaction
+      setShowDateModal(false);
+    } else {
+      // On iOS, use temp state for spinner mode
+      if (selectedDate) setTempDate(selectedDate);
+    }
   };
+  
   const handleDateCancel = () => {
     setShowDateModal(false);
+    setTempDate(null);
   };
+  
   const handleDateDone = () => {
     if (tempDate) {
       const formatted = tempDate.toLocaleDateString('en-GB');
       setDateOfBirth(formatted);
     }
     setShowDateModal(false);
+    setTempDate(null);
   };
 
   return (
@@ -43,34 +58,48 @@ export const GoalsDateOfBirth: React.FC = () => {
         </Text>
         <Image source={IMAGE_CONSTANTS.calendarIcon} className='w-[24px] h-[24px]' />
       </TouchableOpacity>
-      <Modal
-            visible={showDateModal}
-            transparent
-            animationType="slide"
-            onRequestClose={handleDateCancel}
-          >
-            <View className="flex-1 justify-end bg-black/40">
-              <View className="bg-white rounded-t-xl p-4 ">
-                <Text className="text-center text-base font-semibold mb-2">Select Birthday</Text>
-                <DateTimePicker
-                  value={tempDate || new Date()}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={handleDateChange}
-                  maximumDate={maxDate}
-                  style={{ alignSelf: 'center' }}
-                />
-                <View className="flex-row justify-between mt-4">
-                  <TouchableOpacity onPress={handleDateCancel} className="flex-1 items-center py-2">
-                    <Text className="text-lg text-blue-500">Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleDateDone} className="flex-1 items-center py-2">
-                    <Text className="text-lg text-blue-500">Done</Text>
-                  </TouchableOpacity>
-                </View>
+      
+      {Platform.OS === 'ios' ? (
+        <Modal
+          visible={showDateModal}
+          transparent
+          animationType="slide"
+          onRequestClose={handleDateCancel}
+        >
+          <View className="flex-1 justify-end bg-black/40">
+            <View className="bg-white rounded-t-xl p-4 ">
+              <Text className="text-center text-base font-semibold mb-2">Select Birthday</Text>
+              <DateTimePicker
+                value={tempDate || new Date()}
+                mode="date"
+                display="spinner"
+                onChange={handleDateChange}
+                maximumDate={maxDate}
+                style={{ alignSelf: 'center' }}
+              />
+              <View className="flex-row justify-between mt-4">
+                <TouchableOpacity onPress={handleDateCancel} className="flex-1 items-center py-2">
+                  <Text className="text-lg text-blue-500">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleDateDone} className="flex-1 items-center py-2">
+                  <Text className="text-lg text-blue-500">Done</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          </Modal>
+          </View>
+        </Modal>
+      ) : (
+        // Android: Show native date picker without custom modal
+        showDateModal && (
+          <DateTimePicker
+            value={tempDate || new Date()}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+            maximumDate={maxDate}
+          />
+        )
+      )}
     </View>
   );
 };
