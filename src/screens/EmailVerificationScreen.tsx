@@ -120,6 +120,17 @@ const { email: routeEmail, password: routePassword } = route.params;
 
             // Then get profile using the stored token
             const profile = await userService.getProfile();
+            // Update FCM token on backend after successful verification
+            try {
+                const fcmToken = await AsyncStorage.getItem('fcm_token');
+                if (fcmToken) {
+                    await userService.updateFCMToken(fcmToken);
+                    console.log('FCM token updated on backend after email verification');
+                }
+            } catch (error) {
+                console.log('Could not update FCM token on backend:', error);
+            }
+            
             resetSteps();
             setIsOnboardingCompleted(true);
             setHasMacros(profile.has_macros);

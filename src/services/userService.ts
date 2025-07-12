@@ -178,4 +178,24 @@ export const userService = {
       throw error;
     }
   },
+
+  /**
+   * Updates the FCM token on the backend
+   * @param fcmToken - The FCM token to update
+   * @returns Response from the backend
+   * @throws Error if the request fails
+   */
+  updateFCMToken: async (fcmToken: string): Promise<any> => {
+    console.log('Sending FCM token to backend:', fcmToken);
+    try {
+      const response = await axiosInstance.patch('/user/me', {
+        fcm_token: fcmToken
+      });
+      console.log('FCM token updated on backend successfully');
+      return response.data;
+    } catch (error) {
+      console.error('Error updating FCM token on backend:', error);
+      throw error;
+    }
+  },
 }

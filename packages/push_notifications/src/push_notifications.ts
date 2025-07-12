@@ -8,8 +8,23 @@ import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 class PushNotifications {
 
   async intializeMessaging(){
+    console.log('🔔 Initializing push notification handlers...');
+    
     // Set up foreground message handler
     messaging().onMessage(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+      // console.log('📱 FOREGROUND NOTIFICATION RECEIVED:');
+      // console.log('  Title:', remoteMessage.notification?.title);
+      // console.log('  Body:', remoteMessage.notification?.body);
+      // console.log('  Data:', remoteMessage.data);
+      // console.log('  Message ID:', remoteMessage.messageId);
+      // console.log('  From:', remoteMessage.from);
+      // console.log('  Sent Time:', remoteMessage.sentTime);
+      // console.log('  TTL:', remoteMessage.ttl);
+      // console.log('  Collapse Key:', remoteMessage.collapseKey);
+      // console.log('  Category:', remoteMessage.category);
+      // console.log('  Thread ID:', remoteMessage.threadId);
+      // console.log('  Complete message object:', JSON.stringify(remoteMessage, null, 2));
+      
       notifee.displayNotification({
         title: remoteMessage.notification?.title,
         body: remoteMessage.notification?.body,
@@ -18,11 +33,24 @@ class PushNotifications {
           importance: AndroidImportance.HIGH,
         },
       })
-      // Handle foreground message here
+      console.log('✅ Foreground notification displayed via Notifee');
     });
 
     // Set up background message handler
     messaging().setBackgroundMessageHandler(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+      console.log('🔄 BACKGROUND NOTIFICATION RECEIVED:');
+      console.log('  Title:', remoteMessage.notification?.title);
+      console.log('  Body:', remoteMessage.notification?.body);
+      console.log('  Data:', remoteMessage.data);
+      console.log('  Message ID:', remoteMessage.messageId);
+      console.log('  From:', remoteMessage.from);
+      console.log('  Sent Time:', remoteMessage.sentTime);
+      console.log('  TTL:', remoteMessage.ttl);
+      console.log('  Collapse Key:', remoteMessage.collapseKey);
+      console.log('  Category:', remoteMessage.category);
+      console.log('  Thread ID:', remoteMessage.threadId);
+      console.log('  Complete message object:', JSON.stringify(remoteMessage, null, 2));
+      
       notifee.displayNotification({
         title: remoteMessage.notification?.title,
         body: remoteMessage.notification?.body,
@@ -31,10 +59,24 @@ class PushNotifications {
           importance: AndroidImportance.HIGH,
         },
       })
-      // Handle background message here
+      console.log('✅ Background notification displayed via Notifee');
     });
     
+    // Set up notification opened app handler
     messaging().onNotificationOpenedApp(async (remoteMessage: FirebaseMessagingTypes.RemoteMessage) => {
+      console.log('👆 NOTIFICATION OPENED (APP WAS IN BACKGROUND):');
+      console.log('  Title:', remoteMessage.notification?.title);
+      console.log('  Body:', remoteMessage.notification?.body);
+      console.log('  Data:', remoteMessage.data);
+      console.log('  Message ID:', remoteMessage.messageId);
+      console.log('  From:', remoteMessage.from);
+      console.log('  Sent Time:', remoteMessage.sentTime);
+      console.log('  TTL:', remoteMessage.ttl);
+      console.log('  Collapse Key:', remoteMessage.collapseKey);
+      console.log('  Category:', remoteMessage.category);
+      console.log('  Thread ID:', remoteMessage.threadId);
+      console.log('  Complete message object:', JSON.stringify(remoteMessage, null, 2));
+      
       notifee.displayNotification({
         title: remoteMessage.notification?.title,
         body: remoteMessage.notification?.body,
@@ -43,7 +85,10 @@ class PushNotifications {
           importance: AndroidImportance.HIGH,
         },
       })
-    })
+      console.log('✅ Notification opened handler completed');
+    });
+    
+    console.log('✅ Push notification handlers initialized successfully');
   }
 
   async requestPermissions() {
@@ -62,14 +107,17 @@ class PushNotifications {
 
   async getFCMToken() {
     try {
+      console.log('Getting FCM token...');
       // For iOS, ensure we have proper initialization
       if (Platform.OS === 'ios') {
         // Check if we have authorization
         const authStatus = await messaging().hasPermission();
+        console.log('iOS authorization status:', authStatus);
         if (authStatus !== AuthorizationStatus.AUTHORIZED && 
             authStatus !== AuthorizationStatus.PROVISIONAL) {
           console.log('No push notification permission, requesting...');
           const newAuthStatus = await messaging().requestPermission();
+          console.log('New authorization status after request:', newAuthStatus);
           if (newAuthStatus !== AuthorizationStatus.AUTHORIZED && 
               newAuthStatus !== AuthorizationStatus.PROVISIONAL) {
             console.log('Push notification permission denied');
@@ -87,6 +135,7 @@ class PushNotifications {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
       const fcmToken = await messaging().getToken();
+      console.log('FCM token obtained:', fcmToken ? `${fcmToken.substring(0, 20)}...` : 'null');
       return fcmToken;
     } catch (error) {
       console.error('Failed to get FCM token:', error);
@@ -126,12 +175,71 @@ class PushNotifications {
 
   async getInitialNotification() {
     try {
+      console.log('🔍 Checking for initial notification...');
       const messaging = getMessaging();
       const remoteMessage = await getInitialNotification(messaging);
+      
+      if (remoteMessage) {
+        console.log('🚀 INITIAL NOTIFICATION FOUND (APP OPENED FROM NOTIFICATION):');
+        console.log('  Title:', remoteMessage.notification?.title);
+        console.log('  Body:', remoteMessage.notification?.body);
+        console.log('  Data:', remoteMessage.data);
+        console.log('  Message ID:', remoteMessage.messageId);
+        console.log('  From:', remoteMessage.from);
+        console.log('  Sent Time:', remoteMessage.sentTime);
+        console.log('  TTL:', remoteMessage.ttl);
+        console.log('  Collapse Key:', remoteMessage.collapseKey);
+        console.log('  Category:', remoteMessage.category);
+        console.log('  Thread ID:', remoteMessage.threadId);
+        console.log('  Complete message object:', JSON.stringify(remoteMessage, null, 2));
+      } else {
+        console.log('📭 No initial notification found');
+      }
+      
       return remoteMessage;
     } catch (error) {
-      console.error('Failed to get initial notification:', error);
+      console.error('❌ Failed to get initial notification:', error);
       return null;
+    }
+  }
+
+  async testPushNotificationSetup() {
+    try {
+      console.log('=== PUSH NOTIFICATION SETUP TEST ===');
+      
+      // Test 1: Check Firebase initialization
+      console.log('1. Checking Firebase initialization...');
+      if (!firebase.apps.length) {
+        console.log('❌ Firebase not initialized');
+        return false;
+      }
+      console.log('✅ Firebase initialized');
+      
+      // Test 2: Check permissions
+      console.log('2. Checking permissions...');
+      const permission = await this.requestPermissions();
+      console.log('Permission result:', permission);
+      
+      // Test 3: Get FCM token
+      console.log('3. Getting FCM token...');
+      const token = await this.getFCMToken();
+      if (token) {
+        console.log('✅ FCM token obtained:', token.substring(0, 20) + '...');
+      } else {
+        console.log('❌ Failed to get FCM token');
+        return false;
+      }
+      
+      // Test 4: Check if messaging is initialized
+      console.log('4. Initializing messaging...');
+      await this.intializeMessaging();
+      console.log('✅ Messaging initialized');
+      
+      console.log('=== PUSH NOTIFICATION SETUP TEST COMPLETE ===');
+      return true;
+    } catch (error) {
+      console.error('❌ Push notification setup test failed:', error);
+      return false;
     }
   }
 }

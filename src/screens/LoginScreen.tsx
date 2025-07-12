@@ -129,6 +129,20 @@ export const LoginScreen: React.FC = () => {
                 }
             });
             
+            // Update FCM token on backend after successful login
+            try {
+                const fcmToken = await AsyncStorage.getItem('fcm_token');
+                console.log('FCM token from AsyncStorage:', fcmToken);
+                if (fcmToken) {
+                    await userService.updateFCMToken(fcmToken);
+                    console.log('FCM token updated on backend after login');
+                } else {
+                    console.log('No FCM token found in AsyncStorage');
+                }
+            } catch (error) {
+                console.log('Could not update FCM token on backend:', error);
+            }
+            
             // Set authenticated last to trigger navigation
             setAuthenticated(true, token, userId);
             

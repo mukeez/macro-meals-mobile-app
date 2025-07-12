@@ -135,6 +135,36 @@ export const authService = {
         }
     },
 
+    // Function to refresh FCM token and update on backend
+    refreshAndUpdateFCMToken: async () => {
+        try {
+            console.log('Refreshing FCM token...');
+            const newToken = await pushNotifications.getFCMToken();
+            
+            if (newToken) {
+                await AsyncStorage.setItem('fcm_token', newToken);
+                console.log('FCM token refreshed and stored successfully');
+                
+                // Try to update on backend if user is authenticated
+                try {
+                    const { userService } = await import('./userService');
+                    await userService.updateFCMToken(newToken);
+                    console.log('FCM token updated on backend after refresh');
+                } catch (backendError) {
+                    console.log('Could not update FCM token on backend (user may not be logged in):', backendError);
+                }
+                
+                return newToken;
+            } else {
+                console.log('Failed to refresh FCM token');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error refreshing FCM token:', error);
+            return null;
+        }
+    },
+
     forgotPassword: async(email: string) => {
         try {
             const response = await axiosInstance.post('/auth/forgot-password', { email });
