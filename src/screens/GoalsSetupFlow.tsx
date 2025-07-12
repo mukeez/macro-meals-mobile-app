@@ -251,7 +251,8 @@ export const GoalsSetupFlow =  () => {
         progress_rate: progressRate,
         sex: sexApi,
         target_weight: targetWeight,
-        unit_preference: height_unit_preference, // Use height_unit_preference
+        height_unit_preference: height_unit_preference, // Use height_unit_preference
+        weight_unit_preference: weight_unit_preference, // Use weight_unit_preference
         weight: weightValue
       };
 

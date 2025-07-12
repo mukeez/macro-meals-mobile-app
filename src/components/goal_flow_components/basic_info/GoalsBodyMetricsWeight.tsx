@@ -21,7 +21,7 @@ export const GoalBodyMetricsWeight = () => {
 
   return (
     <View className="flex-1 bg-white px-4">
-      <Text className="text-3xl font-bold mt-4">Height metrics</Text>
+      <Text className="text-3xl font-bold mt-4">Weight metrics</Text>
       <Text className="text-base text-gray-500 mb-6">This will be used to calibrate your custom plan</Text>
       {/* Unit Switch */}
       <View className="flex-row items-center justify-center mb-6">
@@ -66,9 +66,10 @@ export const GoalBodyMetricsWeight = () => {
           </View> */}
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Weight</Text>
+            <View className="border-b-2 border-blue-500 mx-2">
             <Picker
               selectedValue={weightLb}
-              style={{ width: 120, height: 200 }}
+              style={{ width: 120, height: 50 }}
               itemStyle={{ fontSize: 18 }}
               onValueChange={setWeightLb}
             >
@@ -77,6 +78,7 @@ export const GoalBodyMetricsWeight = () => {
                 <Picker.Item key={lb} label={`${lb} lb`} value={lb} />
               ))}
             </Picker>
+            </View>
           </View>
         </View>
       ) : (
@@ -97,9 +99,10 @@ export const GoalBodyMetricsWeight = () => {
           </View> */}
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Weight</Text>
+            <View className="border-b-2 border-blue-500 mx-2 pb-2">
             <Picker
               selectedValue={weightKg}
-              style={{ width: 120, height: 200 }}
+              style={{ width: 120, height: 50 }}
               itemStyle={{ fontSize: 18 }}
               onValueChange={setWeightKg}
             >
@@ -108,6 +111,7 @@ export const GoalBodyMetricsWeight = () => {
                 <Picker.Item key={kg} label={`${kg} kg`} value={kg} />
               ))}
             </Picker>
+            </View>
           </View>
         </View>
       )}

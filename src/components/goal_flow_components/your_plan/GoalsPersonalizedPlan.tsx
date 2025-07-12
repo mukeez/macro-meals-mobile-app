@@ -67,7 +67,8 @@ export const GoalsPersonalizedPlan: React.FC<{
           : heightCm);
         const age = macroCalculationResponse.age ?? calculateAge(dateOfBirth ?? undefined);
         const genderValue = macroCalculationResponse.sex?.toLowerCase() ?? gender?.toLowerCase();
-        const unitPreference = macroCalculationResponse.unit_preference ?? height_unit_preference;
+        const heightUnitPreference = macroCalculationResponse.height_unit_preference ?? height_unit_preference;
+        const weightUnitPreference = macroCalculationResponse.weight_unit_preference ?? weight_unit_preference;
         const targetWeightValue = macroCalculationResponse.target_weight ?? targetWeight;
 
         mixpanel.setUserProperties({
@@ -77,7 +78,8 @@ export const GoalsPersonalizedPlan: React.FC<{
           carbs_target: macroCalculationResponse.carbs,
           fat_target: macroCalculationResponse.fat,
           goal_type: macroCalculationResponse.goal_type,
-          unit_preference: unitPreference,
+          height_unit_preference: heightUnitPreference,
+          weight_unit_preference: weightUnitPreference,
           estimated_goal_date: macroCalculationResponse.time_to_goal?.estimated_date,
           time_to_goal_weeks: macroCalculationResponse.time_to_goal?.weeks
         });
@@ -102,7 +104,8 @@ export const GoalsPersonalizedPlan: React.FC<{
                 protein_target: macroCalculationResponse.protein,
                 carbs_target: macroCalculationResponse.carbs,
                 fat_target: macroCalculationResponse.fat,
-                unit_preference: unitPreference,
+                height_unit_preference: height_unit_preference,
+                weight_unit_preference: weight_unit_preference,
                 estimated_goal_date: macroCalculationResponse.time_to_goal?.estimated_date,
                 time_to_goal_weeks: macroCalculationResponse.time_to_goal?.weeks,
                 target_weight: targetWeightValue,
@@ -151,13 +154,13 @@ export const GoalsPersonalizedPlan: React.FC<{
       return 'maintain your current weight';
     }
     // Get current and target weight
-    const unit = macroCalculationResponse.unit_preference || weight_unit_preference || 'kg';
-    const currentWeight = macroCalculationResponse.weight ?? (unit === 'imperial' ? weightLb : weightKg);
+    const weightUnitPreference = macroCalculationResponse.weight_unit_preference || weight_unit_preference || 'kg';
+    const currentWeight = macroCalculationResponse.weight ?? (weightUnitPreference === 'imperial' ? weightLb : weightKg);
     const target = macroCalculationResponse.target_weight ?? targetWeight;
     if (!currentWeight || !target) return '';
     const diff = Math.abs(target - currentWeight);
     const formattedDiff = Number(diff).toFixed(2);
-    const unitLabel = unit === 'imperial' ? 'lbs' : 'kg';
+    const unitLabel = weightUnitPreference === 'imperial' ? 'lbs' : 'kg';
     if (macroCalculationResponse.goal_type === 'lose') {
       return `lose ${formattedDiff} ${unitLabel}`;
     } else if (macroCalculationResponse.goal_type === 'gain') {
