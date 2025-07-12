@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import {
     View,
     Text,
+    Image,
     StyleSheet,
     TextInput,
     TouchableOpacity,
@@ -257,7 +258,20 @@ export const LoginScreen: React.FC = () => {
                             }}
                             secureTextEntry={!showPassword}
                         />
-                        <MaterialIcons style={{ position: 'absolute', right: 16, top: 34 }} name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
+                       <TouchableOpacity
+                        onPress={() => setShowPassword((v) => !v)}
+                        className="absolute right-4 bottom-[30%]"
+                    >
+                        <Image
+                        source={
+                            showPassword
+                            ? require("../../assets/visibility-on-icon.png")
+                            : require("../../assets/visibility-off-icon.png")
+                        }
+                        className="w-6 h-6 ml-2"
+                        resizeMode="contain"
+                        />
+                    </TouchableOpacity>
                        
                     </View>
                     {errors.password ? <Text className='text-red-500 text-sm mt-2 mb-2'>{errors.password}</Text> : null}

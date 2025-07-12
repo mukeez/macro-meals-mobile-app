@@ -7,91 +7,87 @@ import {
   Modal,
   TextInput,
   Pressable,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import Header from "../components/Header";
-import { CircularProgress } from "../components/CircularProgress";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
-import {
-  fetchMacros,
-  MacroResponse,
-  updateMacros,
-} from "../services/macroService";
+import { CircularProgress } from "../components/CircularProgress";
+import { userService } from "src/services/userService";
+
+// Backend key to UI label mapping
+const macroConfig = [
+  { label: "Protein", key: "protein_target", suffix: "g" },
+  { label: "Fat", key: "fat_target", suffix: "g" },
+  { label: "Carbs", key: "carbs_target", suffix: "g" },
+];
 
 const AdjustTargetsScreen: React.FC = () => {
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [selectedMacro, setSelectedMacro] = useState<{
-    label: string;
-    value: number;
-  } | null>(null);
+  const [preferences, setPreferences] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMacro, setSelectedMacro] = useState<any>(null);
   const [inputValue, setInputValue] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [userCalories, setUserCalories] = useState(0);
-  const [caloriesGoal, setCaloriesGoal] = useState(0);
-  const [macros, setMacros] = useState([
-    { label: "Protein", value: 0 },
-    { label: "Fat", value: 0 },
-    { label: "Carbs", value: 0 },
-  ]);
+  const [inputError, setInputError] = useState<string | null>(null);
 
-
+  // Fetch preferences on mount
   useEffect(() => {
-    setLoading(true);
-    fetchMacros()
-      .then((data) => {
-        setUserCalories(data.calories);
-        setCaloriesGoal(data.calories);
-        setMacros([
-          { label: "Protein", value: data.protein },
-          { label: "Fat", value: data.fat },
-          { label: "Carbs", value: data.carbs },
-        ]);
-      })
-      .finally(() => setLoading(false));
+    loadPreferences();
   }, []);
 
-
-  const saveChanges = async () => {
-    if (!selectedMacro) return;
+  const loadPreferences = async () => {
     setLoading(true);
-
-    const updated: MacroResponse = {
-      calories: caloriesGoal,
-      protein: macros.find((m) => m.label === "Protein")?.value ?? 0,
-      fat: macros.find((m) => m.label === "Fat")?.value ?? 0,
-      carbs: macros.find((m) => m.label === "Carbs")?.value ?? 0,
-    };
-
-    if (selectedMacro) {
-      updated[selectedMacro.label.toLowerCase() as keyof MacroResponse] =
-        parseInt(inputValue, 10);
-    }
-
     try {
-      await updateMacros(updated);
-      setMacros((macros) =>
-        macros.map((m) =>
-          m.label === selectedMacro.label
-            ? { ...m, value: parseInt(inputValue, 10) }
-            : m
-        )
-      );
-      closeDialog();
-    } finally {
-      setLoading(false);
+      const data = await userService.getPreferences();
+      setPreferences(data);
+    } catch (err) {
+      Alert.alert("Error", "Could not load preferences.");
     }
+    setLoading(false);
   };
 
-  const handleMacroPress = (macro: { label: string; value: number }) => {
+  const openModal = (macro: any) => {
     setSelectedMacro(macro);
-    setInputValue(macro.value.toString());
-    setDialogVisible(true);
+    setInputValue(preferences[macro.key]?.toString() ?? "");
+    setInputError(null);
+    setModalVisible(true);
   };
 
-  const closeDialog = () => {
-    setDialogVisible(false);
+  const closeModal = () => {
+    setModalVisible(false);
     setSelectedMacro(null);
     setInputValue("");
+    setInputError(null);
   };
+
+  const handleSave = async () => {
+    const num = Number(inputValue);
+    if (!inputValue || isNaN(num) || num <= 0 || num > 100000) {
+      setInputError("Enter a valid positive number.");
+      return;
+    }
+    setInputError(null);
+    setLoading(true);
+    try {
+      const updated = { ...preferences, [selectedMacro.key]: num };
+      await userService.updatePreferences(updated);
+      setPreferences(updated);
+      closeModal();
+    } catch (err) {
+      Alert.alert("Error", "Could not update macro target.");
+    }
+    setLoading(false);
+  };
+
+  if (loading && !preferences) {
+    return (
+      <CustomSafeAreaView>
+        <View className="flex-1 justify-center items-center bg-[#f6f6f6]">
+          <ActivityIndicator size="large" color="#009688" />
+        </View>
+      </CustomSafeAreaView>
+    );
+  }
 
   return (
     <CustomSafeAreaView>
@@ -105,8 +101,8 @@ const AdjustTargetsScreen: React.FC = () => {
           <CircularProgress
             size={120}
             strokeWidth={8}
-            consumed={userCalories}
-            total={caloriesGoal}
+            consumed={preferences?.calorie_target || 0}
+            total={preferences?.calorie_target || 0}
             color="#fff"
             backgroundColor="rgba(255,255,255,0.2)"
             label="calories/day"
@@ -118,37 +114,33 @@ const AdjustTargetsScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
         >
           <Text className="text-black text-base font-medium my-3 py-2 px-4">
-            Tap on any of the values to set your preferred macro targets.
+            Tap on any value to set your preferred macro targets.
           </Text>
-          {macros.map((macro) => (
+          {macroConfig.map((macro) => (
             <TouchableOpacity
-              key={macro.label}
-              onPress={() => handleMacroPress(macro)}
-              activeOpacity={0.7}
+              key={macro.key}
+              onPress={() => openModal(macro)}
               className="w-full"
+              activeOpacity={0.7}
             >
               <View className="flex-row items-center justify-between py-4 bg-white border-b border-b-[#f0f0f0]">
                 <Text className="text-black text-base font-semibold pl-6">
                   {macro.label}
                 </Text>
                 <Text className="text-[#009688] text-lg font-bold pr-6">
-                  {macro.value}g
+                  {preferences?.[macro.key]}
+                  {macro.suffix}
                 </Text>
               </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        <Modal
-          visible={dialogVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={closeDialog}
-        >
+        <Modal visible={modalVisible} transparent animationType="fade">
           <View className="flex-1 justify-center items-center bg-black/40">
             <View className="bg-white rounded-2xl px-6 pt-6 pb-4 w-11/12 max-w-md shadow-lg relative">
               <Pressable
-                onPress={closeDialog}
+                onPress={closeModal}
                 className="absolute top-4 right-4 z-10"
                 accessibilityLabel="Close dialog"
               >
@@ -158,31 +150,29 @@ const AdjustTargetsScreen: React.FC = () => {
                 {selectedMacro?.label}/Day
               </Text>
               <TextInput
-                className="border-b border-gray-300 rounded-lg px-4 py-2 mb-6 text-lg text-left"
+                className="border-b border-gray-300 rounded-lg px-4 py-2 mb-2 text-lg text-left"
                 keyboardType="numeric"
                 value={inputValue}
                 onChangeText={setInputValue}
                 placeholder="Enter value"
                 autoFocus
               />
+              {inputError ? (
+                <Text className="text-red-500 text-sm mb-3 text-center">
+                  {inputError}
+                </Text>
+              ) : null}
               <View className="my-4">
                 <TouchableOpacity
-                  className={`bg-[#009688] rounded-full py-3 mb-3 self-center w-1/2 ${
-                    inputValue === (selectedMacro?.value.toString() ?? "")
-                      ? "opacity-50"
-                      : "opacity-100"
-                  }`}
-                  onPress={saveChanges}
-                  disabled={
-                    inputValue === (selectedMacro?.value.toString() ?? "")
-                  }
+                  className={`bg-[#009688] rounded-full py-3 mb-3 self-center w-1/2`}
+                  onPress={handleSave}
                 >
                   <Text className="text-white text-center text-base font-semibold">
                     Save changes
                   </Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity className="py-2" onPress={closeDialog}>
+              <TouchableOpacity className="py-2" onPress={closeModal}>
                 <Text className="text-center text-[#333333] text-base font-semibold opacity-80">
                   Cancel
                 </Text>
