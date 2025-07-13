@@ -92,6 +92,7 @@ export const VerificationScreen: React.FC = () => {
         navigation.navigate("ResetPassword", {
           email: routeEmail,
           session_token: session_token,
+          otp: value, // Pass the OTP code
           source,
         });
       } else {

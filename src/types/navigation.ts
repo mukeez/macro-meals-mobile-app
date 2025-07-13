@@ -18,7 +18,7 @@ export type RootStackParamList = {
     MacroInput: undefined;
      ForgotPasswordScreen: { source: string };
     VerificationScreen: { email: string; source: string };
-    ResetPassword: { email: string; session_token: string; source: string }; 
+    ResetPassword: { email: string; session_token: string; otp: string; source: string }; 
     MealList: undefined;
     SettingsScreen: undefined;
     ScanScreenType: undefined;
