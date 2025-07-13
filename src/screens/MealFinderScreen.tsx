@@ -159,22 +159,7 @@ const MealFinderScreen: React.FC = () => {
           throw new Error("Authentication token not available");
         }
 
-        const progressResponse = await fetch(
-          "https://api.macromealsapp.com/api/v1/meals/progress/today",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!progressResponse.ok) {
-          throw new Error("Failed to fetch daily progress");
-        }
-
-        const progressData = await progressResponse.json();
+        const progressData = await mealService.getDailyProgress();
         console.log('MEAL FINDER - Progress Data:', progressData);
 
         const consumedValues = {
@@ -192,7 +177,18 @@ const MealFinderScreen: React.FC = () => {
         ]);
       } catch (error) {
         console.error('Error fetching progress:', error);
-        setError('Failed to fetch progress data');
+        // Don't set error for progress data - just use default values
+        setConsumed({
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+          calories: 0,
+        });
+        setMacroData([
+          { label: 'Protein', value: 0, color: '#6C5CE7' },
+          { label: 'Carbs', value: 0, color: '#FFC107' },
+          { label: 'Fat', value: 0, color: '#FF69B4' },
+        ]);
       }
     };
 
@@ -390,13 +386,7 @@ const MealFinderScreen: React.FC = () => {
     }
   };
 
-  if (initializing || locationLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color="#19a28f" />
-      </View>
-    );
-  }
+
 
   return (
     <CustomSafeAreaView edges={['left', 'right']} paddingOverride={{bottom: -100}}  className="flex-1">
@@ -409,10 +399,7 @@ const MealFinderScreen: React.FC = () => {
           <Text className="text-[20px] font-semibold text-[#222] text-center">Meal Finder</Text>
           <View style={{ width: 32 }} />
         </View>
-        {loading ? (
-          <ActivityIndicator size="large" color="#19a28f" className="flex items-center justify-center h-full" />
-        ) : (
-            <View className="flex-1">
+        <View className="flex-1">
 
             <ScrollView className="pb-8">
                 <View className="flex-row items-center mt-4 mb-5 px-5 gap-2">
@@ -433,11 +420,13 @@ const MealFinderScreen: React.FC = () => {
                     {macroData.map((macro) => {
                       const target = macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 0;
                       const consumed = macro.value;
-                      const progress = target > 0 ? (consumed / target) * 100 : 0;
+                      const remaining = Math.max(0, target - consumed);
+                      const progress = target > 0 ? ((target - remaining) / target) * 100 : 0;
                       
                       console.log(`${macro.label}:`, {
                         target,
                         consumed,
+                        remaining,
                         progress,
                         macrosPreferences,
                         macroTypeToPreferenceKey: macroTypeToPreferenceKey[macro.label]
@@ -450,7 +439,7 @@ const MealFinderScreen: React.FC = () => {
                               size={100}
                               strokeWidth={12}
                               textSize={16}
-                              consumed={`${consumed}g`}
+                              consumed={`${remaining}g`}
                               total={target}
                               color={macro.color}
                               backgroundColor="#d0e8d1"
@@ -466,36 +455,49 @@ const MealFinderScreen: React.FC = () => {
                 </View>
 
                 <Text className="text-base font-medium text-[#222] mx-5 my-5">Nearby Suggestions</Text>
-                {error && <Text className="text-red-500 text-center mt-6">{error}</Text>}
-                {!loading && !error && meals.length === 0 && (
-                <Text className="text-center text-[#888] mt-6">No nearby meal suggestions found.</Text>
-                )}
-                {!loading && !error && meals.map((meal, idx) => (
+                {locationLoading ? (
+                  <View className="flex items-center justify-center py-8">
+                    <ActivityIndicator size="large" color="#19a28f" />
+                    <Text className="text-[#888] mt-2">Finding nearby meals...</Text>
+                  </View>
+                ) : (
+                  <>
+                    {error ? (
+                      <View className="flex items-center justify-center py-8">
+                        <Image source={IMAGE_CONSTANTS.warningIcon} className="w-[48px] h-[48px] mb-3 opacity-50" />
+                        <Text className="text-[#888] text-center text-base">Unable to load meal suggestions</Text>
+                        <Text className="text-[#888] text-center text-sm mt-1">Please check your connection and try again</Text>
+                        <TouchableOpacity 
+                          onPress={() => window.location.reload()} 
+                          className="mt-4 px-6 py-2 bg-primaryLight rounded-full"
+                        >
+                          <Text className="text-white font-medium">Retry</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <>
+                        {meals.length === 0 && (
+                          <Text className="text-center text-[#888] mt-6">No nearby meal suggestions found.</Text>
+                        )}
+                        {meals.map((meal, idx) => (
                 <TouchableOpacity 
                     key={idx} 
                     onPress={() => navigation.navigate('MealFinderBreakdownScreen', { meal })}
-                    className="flex-row bg-white rounded-xl mx-5 mb-4 px-3 py-5 shadow-sm"
+                    className="flex-row bg-white rounded-xl mx-5 mb-4 px-4 py-4 shadow-sm"
                 >
-                    <View className="flex-row items-center justify-center bg-cornflowerBlue h-[48px] w-[48px] rounded-full mr-2.5">
+                    <View className="flex-row items-center justify-center bg-cornflowerBlue h-[48px] w-[48px] rounded-full mr-3 flex-shrink-0">
                         <Image source={meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon} className="w-[20px] h-[20px] rounded-full" />
                     </View>
                     
-                    <View className="flex-1 gap-1">
-                        {/* <View className="flex-row items-start justify-between">
-                            <Text className="text-sm font-medium text-[#222] flex-1 mr-2" numberOfLines={2}>{meal.name}</Text>
-                            <View className="flex items-center justify-center py-1 px-1.5 rounded-[100px] bg-primary flex-shrink-0">
-                                <Text className="text-xs text-white text-center font-medium">90% match</Text>
-                            </View>
-                        </View> */}
-
-                        <View className="flex-col justify-start flex-wrap">
-                            <Text className="text-sm font-medium text-[#222] flex-shrink flex-wrap mb-1" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.name}</Text>
-                            {/* <View className="w-[4px] h-[4px] rounded-full bg-[#253238]"></View> */}
-                            <Text className="text-sm font-normal text-[#222] flex-shrink flex-wrap mb-1" style={{ flexWrap: 'wrap', flexShrink: 1 }}>{meal.restaurant.name}</Text>
+                    <View className="flex-1 gap-1 pr-2">
+                        <View className="flex-col justify-start">
+                            <Text className="text-sm font-medium text-[#222] mb-1" numberOfLines={2} style={{ flexWrap: 'wrap' }}>{meal.name}</Text>
+                            <Text className="text-sm font-normal text-[#222] mb-1" numberOfLines={1} style={{ flexWrap: 'wrap' }}>{meal.restaurant.name}</Text>
                             {meal.restaurant?.location ? (
                               <Text 
-                                  className="text-sm font-normal text-[#222] flex-shrink flex-wrap mb-1" 
-                                  style={{ flexWrap: 'wrap', flexShrink: 1 }}
+                                  className="text-sm font-normal text-[#222] mb-1" 
+                                  numberOfLines={1}
+                                  style={{ flexWrap: 'wrap' }}
                               >
                                   {meal.restaurant.location.split(',').slice(0, -1).join(',') ?? ''}
                               </Text>
@@ -539,6 +541,10 @@ const MealFinderScreen: React.FC = () => {
                     </View>
                 </TouchableOpacity>
                 ))}
+                        </>
+                      )}
+                  </>
+                )}
              
             </ScrollView>
             <Modalize
@@ -587,7 +593,6 @@ const MealFinderScreen: React.FC = () => {
                 </View>
                 </Modalize>
           </View>
-        )}
       </View>
     </CustomSafeAreaView>
   );

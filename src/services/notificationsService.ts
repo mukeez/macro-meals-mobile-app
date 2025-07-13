@@ -1,33 +1,26 @@
 import useStore from "../store/useStore";
+import axiosInstance from "./axios";
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 
 export const notificationService = {
   async getNotifications() {
-    const token = useStore.getState().token;
-    if (!token) throw new Error("Authentication required");
-    const response = await fetch(`${API_BASE_URL}/notifications`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
-    if (!response.ok) throw new Error(await response.text());
-    return await response.json();
+    try {
+      const response = await axiosInstance.get('/notifications');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
   },
 
   async markAsRead(id: string) {
-    const token = useStore.getState().token;
-    if (!token) throw new Error("Authentication required");
-    const response = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
-      method: "PATCH",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
-    if (!response.ok) throw new Error(await response.text());
-    return await response.json();
+    try {
+      const response = await axiosInstance.patch(`/notifications/${id}/read`);
+      return response.data;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
   }
 };

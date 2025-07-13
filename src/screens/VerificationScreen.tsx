@@ -92,6 +92,7 @@ export const VerificationScreen: React.FC = () => {
         navigation.navigate("ResetPassword", {
           email: routeEmail,
           session_token: session_token,
+          otp: value, // Pass the OTP code
           source,
         });
       } else {
@@ -196,8 +197,7 @@ export const VerificationScreen: React.FC = () => {
               isLoading={isLoading}
             />
           </View>
-        </View>
-        <View className="mt-2 items-center">
+          <View className="mt-2 items-center">
           {!canResend ? (
             <Text className="text-textMediumGrey">
               Resend code in {countdown}s
@@ -208,6 +208,8 @@ export const VerificationScreen: React.FC = () => {
             </TouchableOpacity>
           )}
         </View>
+        </View>
+        
       </KeyboardAvoidingView>
     </CustomSafeAreaView>
   );

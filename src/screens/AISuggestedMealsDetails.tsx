@@ -152,6 +152,12 @@ const AISuggestedMealsDetailsScreen: React.FC = () => {
       // Use the mealService to log the meal
       const loggedMeal = await mealService.logMeal(mealData);
       
+      // Set first meal status for this user
+      const userEmail = useStore.getState().profile?.email;
+      if (userEmail) {
+          useStore.getState().setUserFirstMealStatus(userEmail, true);
+      }
+      
       console.log('Meal logged successfully:', loggedMeal);
       
       Alert.alert(

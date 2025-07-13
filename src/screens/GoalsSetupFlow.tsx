@@ -23,6 +23,8 @@ import { GoalsProgressRate } from 'src/components/goal_flow_components/your_goal
 import { GoalsPersonalizedPlan } from 'src/components/goal_flow_components/your_plan/GoalsPersonalizedPlan'
 import { HasMacrosContext } from '../contexts/HasMacrosContext'
 import { API_CONSTANTS } from 'src/constants/api_constants';
+import { userService } from 'src/services/userService';
+import { setupMacros } from 'src/services/macroService';
 
 const API_URL = API_CONSTANTS.API_URL;
 
@@ -85,35 +87,8 @@ export const GoalsSetupFlow =  () => {
           console.log('Starting preferences fetch with token:', token.substring(0, 10) + '...');
 
           // Fetch preferences first
-          const prefsResponse = await fetch(`${API_URL}/user/preferences`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-          });
-
-          console.log('Preferences response status:', prefsResponse.status);
-          const responseText = await prefsResponse.text();
-          console.log('Raw response:', responseText);
-
-          if (!prefsResponse.ok) {
-            if (prefsResponse.status === 401) {
-              console.error('Token expired or invalid');
-              Alert.alert('Session Expired', 'Please log in again');
-              return;
-            }
-            console.error('Failed to fetch preferences. Status:', prefsResponse.status, 'Response:', responseText);
-            throw new Error('Failed to fetch preferences');
-          }
-
-          let data;
-          try {
-            data = JSON.parse(responseText);
-            console.log('Preferences fetched successfully:', data);
-          } catch (e) {
-            console.error('Failed to parse preferences response:', e);
-            throw new Error('Failed to parse preferences response');
-          }
+          const data = await userService.getPreferences();
+          console.log('Preferences fetched successfully:', data);
           
           if (data.detail === "Not Found") {
             console.error('Preferences not found');
@@ -187,23 +162,35 @@ export const GoalsSetupFlow =  () => {
         throw new Error('Missing required fields');
       }
 
-      // Calculate height (do not convert, just pass as is)
+      // Calculate height (convert feet + inches to decimal feet for imperial)
       let heightValue = 0;
       if (height_unit_preference === 'imperial') {
-        if (heightFt === null) {
-          console.error('Missing imperial height measurement');
+        if (heightFt === null || heightIn === null) {
+          console.error('Missing imperial height measurement - need both feet and inches');
           throw new Error('Missing height measurement');
         }
-        heightValue = heightFt;
+        heightValue = heightFt + (heightIn / 12); // Convert to decimal feet
+        heightValue = parseFloat(heightValue.toFixed(2)); // Round to 2 decimal places
+        console.log('[GoalsFlow] Height calculation (imperial):', { 
+          heightFt, 
+          heightIn, 
+          calculatedHeightValue: heightValue,
+          calculation: `${heightFt} + (${heightIn} / 12) = ${heightValue}`
+        });
       } else {
         if (heightCm === null) {
           console.error('Missing metric height measurement');
           throw new Error('Missing height measurement');
         }
         heightValue = heightCm;
+        console.log('[GoalsFlow] Height calculation (metric):', { 
+          heightCm, 
+          calculatedHeightValue: heightValue,
+          calculation: `Using heightCm directly: ${heightCm}`
+        });
       }
 
-      // Calculate weight (do not convert, just pass as is)
+      // Calculate weight (pass as is for both units)
       let weightValue = 0;
       if (weight_unit_preference === 'imperial') {
         if (weightLb === null) {
@@ -211,12 +198,22 @@ export const GoalsSetupFlow =  () => {
           throw new Error('Missing weight measurement');
         }
         weightValue = weightLb;
+        console.log('[GoalsFlow] Weight calculation (imperial):', { 
+          weightLb, 
+          calculatedWeightValue: weightValue,
+          calculation: `Using weightLb directly: ${weightLb}`
+        });
       } else {
         if (weightKg === null) {
           console.error('Missing metric weight measurement');
           throw new Error('Missing weight measurement');
         }
         weightValue = weightKg;
+        console.log('[GoalsFlow] Weight calculation (metric):', { 
+          weightKg, 
+          calculatedWeightValue: weightValue,
+          calculation: `Using weightKg directly: ${weightKg}`
+        });
       }
 
       // Map and format API fields
@@ -254,35 +251,14 @@ export const GoalsSetupFlow =  () => {
         progress_rate: progressRate,
         sex: sexApi,
         target_weight: targetWeight,
-        unit_preference: height_unit_preference, // Use height_unit_preference
+        height_unit_preference: height_unit_preference, // Use height_unit_preference
+        weight_unit_preference: weight_unit_preference, // Use weight_unit_preference
         weight: weightValue
       };
 
       console.log('Making macro calculation API request with data:', requestData);
 
-      const response = await fetch(`${API_URL}/macros/macros-setup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(requestData)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Macro calculation API error:', errorText);
-        
-        if (response.status === 401) {
-          Alert.alert('Session Expired', 'Please log in again');
-          return;
-        }
-        
-        Alert.alert('Error', 'Failed to calculate your macros');
-        throw new Error('Failed to calculate macros');
-      }
-
-      const responseData = await response.json();
+      const responseData = await setupMacros(requestData);
       console.log('Macro calculation successful, response:', responseData);
       setMacroCalculationResponse(responseData);
       

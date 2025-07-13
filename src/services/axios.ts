@@ -6,11 +6,13 @@ import useStore from '../store/useStore';
 // Define non-authenticated endpoints
 const nonAuthEndpoints = [
   '/auth/login',
-  '/auth/register',
+  '/auth/signup',
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/verify-code',
-  '/auth/refresh-token',
+  '/auth/verify-email',
+  '/auth/reset-password',
+  '/auth/refresh',
   '/auth/google',
   '/auth/apple',
   '/auth/facebook',
@@ -31,10 +33,13 @@ axiosInstance.interceptors.request.use(
     try {
       const token = await AsyncStorage.getItem('my_token');
       
-      // Only add token if endpoint requires auth
+      // Only add token if endpoint requires auth and we have a token
       if (token && !nonAuthEndpoints.some(endpoint => config.url?.includes(endpoint))) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Adding auth token to request:', config.url);
+      } else if (!token && !nonAuthEndpoints.some(endpoint => config.url?.includes(endpoint))) {
+        console.log('No auth token available for protected endpoint:', config.url);
       }
     } catch (error) {
       console.error('Error getting token from storage:', error);
@@ -70,11 +75,18 @@ axiosInstance.interceptors.response.use(
         // If we have a refresh token, try to refresh
         if (refreshToken) {
           try {
-            const response = await axiosInstance.post('/auth/refresh-token', {
+            console.log('Attempting token refresh with token:', refreshToken.substring(0, 10) + '...');
+            const response = await axiosInstance.post('/auth/refresh', {
               refresh_token: refreshToken
             });
 
-            const { access_token, refresh_token: newRefreshToken } = response.data;
+            const { access_token, refresh_token: newRefreshToken, user } = response.data;
+            
+            console.log('Token refresh successful:', {
+              hasAccessToken: !!access_token,
+              hasNewRefreshToken: !!newRefreshToken,
+              userId: user?.id
+            });
             
             // Update tokens in storage
             await AsyncStorage.setItem('my_token', access_token);
@@ -82,9 +94,9 @@ axiosInstance.interceptors.response.use(
               await AsyncStorage.setItem('refresh_token', newRefreshToken);
             }
             
-            // Update store
+            // Update store with new authentication state
             const store = useStore.getState();
-            store.setAuthenticated(true, access_token, store.userId || '');
+            store.setAuthenticated(true, access_token, user?.id || store.userId || '');
             
             // Retry original request
             if (originalRequest) {
@@ -100,6 +112,13 @@ axiosInstance.interceptors.response.use(
           }
         } else {
           // No refresh token, logout
+          console.log('No refresh token available, logging out');
+          try {
+            const keys = await AsyncStorage.getAllKeys();
+            console.log('Available storage keys:', keys);
+          } catch (keysError) {
+            console.log('Could not get storage keys:', keysError);
+          }
           await handleLogout();
           return Promise.reject(error);
         }

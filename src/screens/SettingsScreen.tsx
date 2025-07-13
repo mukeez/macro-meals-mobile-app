@@ -117,24 +117,9 @@ export const SettingsScreen: React.FC = () => {
     });
 
     try {
-      const token = useStore.getState().token;
-      const response = await fetch(
-        "https://api.macromealsapp.com/api/v1/user/preferences",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            unitSystem: newUnitSystem,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update preferences");
-      }
+      await userService.updatePreferences({
+        unitSystem: newUnitSystem,
+      });
     } catch (error) {
       console.error("Error updating preferences:", error);
       // You could add error handling UI here if needed
@@ -218,10 +203,10 @@ export const SettingsScreen: React.FC = () => {
             
             await authService.logout();
             setAuthenticated(false, "", "");
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Login" }],
-            });
+            // navigation.reset({
+            //   index: 0,
+            //   routes: [{ name: "Login" }],
+            // });
           } catch (error) {
             console.error("Logout error:", error);
           }
@@ -278,10 +263,6 @@ export const SettingsScreen: React.FC = () => {
             try {
               await authService.logout();
               setAuthenticated(false, "", "");
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "Welcome" }],
-              });
             } catch (error) {
               console.error("Delete account error:", error);
             }

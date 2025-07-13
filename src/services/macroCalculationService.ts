@@ -1,8 +1,7 @@
 // src/services/macroCalculationService.ts
 
 import { UserPreferences } from '../types';
-
-const API_BASE_URL = 'https://api.macromealsapp.com/api/v1';
+import axiosInstance from './axios';
 
 /**
  * Service for handling macro calculations via the backend API.
@@ -35,28 +34,9 @@ export const macroCalculationService = {
             };
 
             // Make the API request
-            const response = await fetch(`${API_BASE_URL}/macros/calculate-macros`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData),
-            });
+            const response = await axiosInstance.post('/macros/calculate-macros', requestData);
 
-            if (!response.ok) {
-                let errorMessage = 'Failed to calculate macros';
-                try {
-                    const errorData = await response.json();
-                    if (errorData.detail) {
-                        errorMessage = errorData.detail;
-                    }
-                } catch (e) {
-                    errorMessage = response.statusText || errorMessage;
-                }
-                throw new Error(errorMessage);
-            }
-
-            const data = await response.json();
+            const data = response.data;
 
             return {
                 calories: data.calories,

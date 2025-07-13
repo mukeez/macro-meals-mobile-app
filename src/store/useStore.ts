@@ -85,6 +85,11 @@ interface AppState {
     hasBeenPromptedForGoals: boolean;
     setHasBeenPromptedForGoals: (prompted: boolean) => void;
 
+    // Has logged first meal state (per user)
+    userFirstMealStatus: { [email: string]: boolean };
+    setUserFirstMealStatus: (email: string, hasLogged: boolean) => void;
+    hasLoggedFirstMeal: (email: string) => boolean;
+
     // User preferences state
     preferences: UserPreferences;
     updatePreferences: (newPreferences: Partial<UserPreferences>) => void;
@@ -101,6 +106,7 @@ interface AppState {
     // Logged meals state and actions
     loggedMeals: Meal[];
     addLoggedMeal: (meal: Meal) => void;
+    deleteLoggedMeal: (mealId: string) => void;
     setLoggedMeals: (meals: Meal[]) => void;
     refreshMeals: () => Promise<void>;
     shouldRefreshMeals: boolean;
@@ -143,6 +149,12 @@ const convertToMeal = (loggedMeal: LoggedMeal): Meal | null => {
         description: '',  // Default value if not provided by API
         date: loggedMeal.timestamp || new Date().toISOString(),
         mealType: loggedMeal.mealType || 'lunch',  // Default value if not provided by API
+        photo_url: loggedMeal.photo_url, // Include photo_url from API
+        logging_mode: loggedMeal.logging_mode,
+        amount: loggedMeal.amount,
+        serving_unit: loggedMeal.serving_unit,
+        read_only: loggedMeal.read_only,
+        meal_time: loggedMeal.meal_time,
     };
 };
 
@@ -197,6 +209,12 @@ const useStore = create<AppState>()(
                 if (!meal) return;
                 set((state) => ({
                     loggedMeals: [...(state.loggedMeals || []), meal]
+                }));
+            },
+
+            deleteLoggedMeal: (mealId) => {
+                set((state) => ({
+                    loggedMeals: state.loggedMeals.filter(meal => meal.id !== mealId)
                 }));
             },
 
@@ -255,6 +273,7 @@ const useStore = create<AppState>()(
                         shouldRefreshMeals: false,
                         profile: null,
                         hasBeenPromptedForGoals: false,
+                        userFirstMealStatus: {}, // Clear first meal status on logout
                         macrosPreferences: {
                             protein_target: 0,
                             carbs_target: 0,
@@ -275,8 +294,9 @@ const useStore = create<AppState>()(
                     });
 
                     // Clear stored authentication data
-                    await AsyncStorage.removeItem('token');
-                    await AsyncStorage.removeItem('userId');
+                    await AsyncStorage.removeItem('my_token');
+                    await AsyncStorage.removeItem('refresh_token');
+                    await AsyncStorage.removeItem('user_id');
                 }
             },
 
@@ -325,6 +345,20 @@ const useStore = create<AppState>()(
             // Goal setup state
             hasBeenPromptedForGoals: false,
             setHasBeenPromptedForGoals: (prompted) => set({ hasBeenPromptedForGoals: prompted }),
+
+            // Has logged first meal (per user)
+            userFirstMealStatus: {},
+            setUserFirstMealStatus: (email: string, hasLogged: boolean) => 
+                set((state) => ({
+                    userFirstMealStatus: {
+                        ...state.userFirstMealStatus,
+                        [email]: hasLogged
+                    }
+                })),
+            hasLoggedFirstMeal: (email: string) => {
+                const state = get();
+                return state.userFirstMealStatus[email] || false;
+            },
 
             // Macros preferences
             macrosPreferences: {
@@ -392,6 +426,7 @@ const useStore = create<AppState>()(
                 loggedMeals: state.loggedMeals,
                 profile: state.profile,
                 hasBeenPromptedForGoals: state.hasBeenPromptedForGoals,
+                userFirstMealStatus: state.userFirstMealStatus,
                 macrosPreferences: state.macrosPreferences,
                 todayProgress: state.todayProgress,
                 todayMealsSum: state.todayMealsSum,

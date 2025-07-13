@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Image,
 
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Animated, {
   useAnimatedStyle,
@@ -25,6 +25,7 @@ import { CircularProgress } from "../components/CircularProgress";
 import { LinearProgress } from "../components/LinearProgress";
 import { RootStackParamList } from "../types/navigation";
 import { userService } from "../services/userService";
+import { mealService } from "../services/mealService";
 // import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 import { appConstants } from "constants/appConstants";
 import { Image as ExpoImage } from 'expo-image';
@@ -104,7 +105,6 @@ export const DashboardScreen: React.FC = () => {
     has_macros: undefined,
   });
 
-  const [todayMeals, setTodayMeals] = useState<TodayMeal[]>([]);
   const [username, setUsername] = useState("User");
   const [progress, setProgress] = useState(0);
 
@@ -115,6 +115,10 @@ export const DashboardScreen: React.FC = () => {
   const hasBeenPromptedForGoals = useStore((state) => state.hasBeenPromptedForGoals);
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const setMacrosPreferences = useStore((state) => state.setMacrosPreferences);
+  const loggedMeals = useStore((state) => state.loggedMeals);
+  const refreshMeals = useStore((state) => state.refreshMeals);
+  const hasLoggedFirstMeal = useStore((state) => state.hasLoggedFirstMeal);
+  const setUserFirstMealStatus = useStore((state) => state.setUserFirstMealStatus);
 
   // useEffect(() => {
   //     if (preferences.calories === 0 && preferences.protein === 0) {
@@ -122,117 +126,89 @@ export const DashboardScreen: React.FC = () => {
   //     }
   // }, [preferences]);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      setError(null);
+  const fetchUserData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        if (!token) {
-          throw new Error("Authentication token not available");
-        }
-
-        // 1. Fetch user profile info
-        const profileResponse = await userService.getProfile();
-        setStoreProfile(profileResponse);
-        setProfile(profileResponse);
-        // macroMealsCrashlytics.setUserAttributes({
-        //   userId: profileResponse.id,
-        //   email: profileResponse.email,
-        //   userType: profileResponse.is_pro ? 'pro' : 'free',
-        // });
-        console.log('PROFILE RESPONSE', profileResponse)
-        setUsername(profileResponse.display_name || undefined);
-
-        const prefsResponse = await userService.getPreferences();
-        console.log("PREFS RESPONSE", prefsResponse);
-
-        const macrosPreferences = {
-          protein_target: prefsResponse.protein_target,
-          carbs_target: prefsResponse.carbs_target,
-          fat_target: prefsResponse.fat_target,
-          calorie_target: prefsResponse.calorie_target,
-        };
-        
-        setMacros({
-          protein: prefsResponse.protein_target,
-          carbs: prefsResponse.carbs_target,
-          fat: prefsResponse.fat_target,
-          calories: prefsResponse.calorie_target,
-        });
-        setMacrosPreferences(macrosPreferences);
-
-        // macroMealsCrashlytics.triggerCrash();
-
-        const progressResponse = await fetch(
-          "https://api.macromealsapp.com/api/v1/meals/progress/today",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!progressResponse.ok) {
-          throw new Error("Failed to fetch daily progress");
-        }
-
-        const progressData = await progressResponse.json();
-        console.log("PROGRESS DATA", progressData);
-
-        setConsumed({
-          protein: progressData.logged_macros.protein,
-          carbs: progressData.logged_macros.carbs,
-          fat: progressData.logged_macros.fat,
-          calories: progressData.logged_macros.calories,
-        });
-
-        const totalCalories = macros.calories;
-        const progressPercentage =
-          totalCalories > 0 ? (consumed.calories / totalCalories) * 100 : 0;
-        setProgress(Math.min(100, progressPercentage));
-        const todayMealsResponse = await fetch(
-          `https://api.macromealsapp.com/api/v1/meals/logs?start_date=${
-            new Date().toISOString().split("T")[0]
-          }&end_date=${new Date().toISOString().split("T")[0]}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!todayMealsResponse.ok) {
-          throw new Error("Failed to fetch today's meals");
-        }
-        const todayMealsData = await todayMealsResponse.json();
-        console.log('TODAY MEALS DATA', JSON.stringify(todayMealsData, null, 2))
-        setTodayMeals(todayMealsData);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setError("Failed to load your data. Please try again.");
-        setIsLoading(false);
-
-        // Fallback to existing preferences from the store
-        // in case the API calls fail
-        if (preferences) {
-          setMacros({
-            protein: preferences.protein || 0,
-            carbs: preferences.carbs || 0,
-            fat: preferences.fat || 0,
-            calories: preferences.calories || 0,
-          });
-        }
+    try {
+      if (!token) {
+        throw new Error("Authentication token not available");
       }
-    };
 
+      // 1. Fetch user profile info
+      const profileResponse = await userService.getProfile();
+      setStoreProfile(profileResponse);
+      setProfile(profileResponse);
+      // macroMealsCrashlytics.setUserAttributes({
+      //   userId: profileResponse.id,
+      //   email: profileResponse.email,
+      //   userType: profileResponse.is_pro ? 'pro' : 'free',
+      // });
+      console.log('PROFILE RESPONSE', profileResponse)
+      setUsername(profileResponse.display_name || undefined);
+
+      const prefsResponse = await userService.getPreferences();
+      console.log('PREFS RESPONSE', prefsResponse)
+
+      const macrosPreferences = {
+        protein_target: prefsResponse.protein_target,
+        carbs_target: prefsResponse.carbs_target,
+        fat_target: prefsResponse.fat_target,
+        calorie_target: prefsResponse.calorie_target,
+      };
+      
+      setMacros({
+        protein: prefsResponse.protein_target,
+        carbs: prefsResponse.carbs_target,
+        fat: prefsResponse.fat_target,
+        calories: prefsResponse.calorie_target,
+      });
+      setMacrosPreferences(macrosPreferences);
+
+      // macroMealsCrashlytics.triggerCrash();
+
+      const progressData = await mealService.getDailyProgress();
+      console.log('PROGRESS DATA', progressData)
+
+      setConsumed({
+        protein: progressData.logged_macros.protein,
+        carbs: progressData.logged_macros.carbs,
+        fat: progressData.logged_macros.fat,
+        calories: progressData.logged_macros.calories,
+      });
+
+      const totalCalories = macros.calories;
+      const progressPercentage =
+        totalCalories > 0 ? (consumed.calories / totalCalories) * 100 : 0;
+      setProgress(Math.min(100, progressPercentage));
+      
+      // Refresh meals from store
+      await refreshMeals();
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setError("Failed to load your data. Please try again.");
+      setIsLoading(false);
+
+      // Fallback to existing preferences from the store
+      // in case the API calls fail
+      if (preferences) {
+        setMacros({
+          protein: preferences.protein || 0,
+          carbs: preferences.carbs || 0,
+          fat: preferences.fat || 0,
+          calories: preferences.calories || 0,
+        });
+      }
+    }
+  }, [userId, token, macros.calories, consumed.calories, preferences, setStoreProfile, setMacrosPreferences]);
+
+  // Initial load
+  useEffect(() => {
     fetchUserData();
-  }, [userId, token]);
+  }, [fetchUserData]);
+
+  // No longer need useFocusEffect since we're using state management
 
   const handleMacroInput = () => {
     // Do NOT call setMajorStep or setSubStep here. State should only be advanced when user completes a major step.
@@ -241,6 +217,10 @@ export const DashboardScreen: React.FC = () => {
 
   const handleMealLog = () => {
     navigation.navigate("MealFinderScreen");
+  };
+
+  const handleAddMeal = () => {
+    navigation.navigate("ScanScreenType");
   };
 
   const handleRefresh = () => {
@@ -317,12 +297,12 @@ export const DashboardScreen: React.FC = () => {
     Math.round((consumed.fat / macros.fat) * 100) || 0
   );
 
-  // Calculate today's total macros from todayMeals
-  const todayMealsSum = todayMeals.reduce(
-    (acc, meal) => ({
-      carbs: acc.carbs + (meal.carbs || 0),
-      fat: acc.fat + (meal.fat || 0),
-      protein: acc.protein + (meal.protein || 0),
+  // Calculate today's total macros from loggedMeals
+  const todayMealsSum = loggedMeals.reduce(
+    (acc: any, meal: any) => ({
+      carbs: acc.carbs + (meal.macros?.carbs || 0),
+      fat: acc.fat + (meal.macros?.fat || 0),
+      protein: acc.protein + (meal.macros?.protein || 0),
     }),
     { carbs: 0, fat: 0, protein: 0 }
   );
@@ -528,18 +508,28 @@ export const DashboardScreen: React.FC = () => {
               <Text className="text-[18px] font-semibold">
                 Recently uploaded
               </Text>
-              {todayMeals.length === 0 ? (
+              {loggedMeals.length === 0 ? (
                 <View className="flex-col items-center justify-center h-[150px] mx-20">
                   <Text className="tracking-normal leading-5 text-[14px] font-medium text-center">
                     Your recently logged meals for the day will show up here
                   </Text>
+                  {!hasLoggedFirstMeal(profile.email || '') && (
+                    <TouchableOpacity
+                      className="bg-primary w-[144px] h-[40px] rounded-[200px] justify-center items-center mt-4"
+                      onPress={handleAddMeal}
+                    >
+                      <Text className="text-white text-sm font-semibold">
+                        Log your first meal
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ) : (
-                todayMeals.map((meal, index) => (
+                loggedMeals.map((meal: any, index: number) => (
                   <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
                     {meal.photo_url ? (
                       <ExpoImage
-                        placeholder={appConstants.blurhash}
+                        placeholder={IMAGE_CONSTANTS.blurhash} 
                         cachePolicy="disk"
                         contentFit="cover"
                         transition={300}
@@ -576,15 +566,15 @@ export const DashboardScreen: React.FC = () => {
                                     analyzedData: {
                                       id: meal.id,
                                       name: meal.name,
-                                      calories: meal.calories,
-                                      protein: meal.protein,
-                                      carbs: meal.carbs,
-                                      fat: meal.fat,
-                                      meal_type: meal.meal_type,
+                                      calories: meal.macros?.calories || 0,
+                                      protein: meal.macros?.protein || 0,
+                                      carbs: meal.macros?.carbs || 0,
+                                      fat: meal.macros?.fat || 0,
+                                      meal_type: meal.mealType || 'lunch',
                                       serving_unit: meal.serving_unit || 'serving',
                                       amount: meal.amount,
                                       logging_mode: meal.logging_mode,
-                                      meal_time: meal.meal_time,
+                                      meal_time: meal.meal_time || meal.date,
                                       photo_url: meal.photo_url,
                                       read_only: meal.read_only
                                     }
@@ -601,7 +591,7 @@ export const DashboardScreen: React.FC = () => {
                       </View>
                       <View className="flex-row items-center mb-2">
                         <Text className="text-sm text-textMediumGrey text-center font-medium mr-2">
-                          {formatTime(meal.meal_time)}
+                          {formatTime(meal.meal_time || meal.date)}
                         </Text>
                         <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
                         <Image
@@ -627,9 +617,9 @@ export const DashboardScreen: React.FC = () => {
                               className="w-[10px] h-[10px] object-fill"
                             />
                           </View>
-                          <Text className="text-xsm text-black text-center font-medium">
-                            {meal.calories} cal
-                          </Text>
+                                                  <Text className="text-xsm text-black text-center font-medium">
+                          {meal.macros?.calories || 0} cal
+                        </Text>
                         </View>
                         <View className="flex-row items-center gap-1">
                           <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
@@ -638,7 +628,7 @@ export const DashboardScreen: React.FC = () => {
                             </Text>
                           </View>
                           <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                            {meal.carbs}g
+                            {meal.macros?.carbs || 0}g
                           </Text>
                         </View>
 
@@ -649,7 +639,7 @@ export const DashboardScreen: React.FC = () => {
                             </Text>
                           </View>
                           <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                            {meal.fat}g
+                            {meal.macros?.fat || 0}g
                           </Text>
                         </View>
 
@@ -660,7 +650,7 @@ export const DashboardScreen: React.FC = () => {
                             </Text>
                           </View>
                           <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                            {meal.protein}g
+                            {meal.macros?.protein || 0}g
                           </Text>
                         </View>
                       </View>

@@ -39,6 +39,7 @@ export const ResetPasswordScreen: React.FC = () => {
   const {
     email: routeEmail,
     session_token: routeSessionToken,
+    otp: routeOtp,
     source,
   } = route.params;
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -86,9 +87,18 @@ export const ResetPasswordScreen: React.FC = () => {
     setIsLoading(true);
     const resetPasswordData = {
       email: routeEmail,
+      otp: routeOtp,
       session_token: routeSessionToken,
       password: password,
     };
+    
+    console.log("Sending reset password data:", {
+      email: resetPasswordData.email,
+      otp: resetPasswordData.otp ? `${resetPasswordData.otp.substring(0, 2)}****` : 'undefined',
+      session_token: resetPasswordData.session_token ? `${resetPasswordData.session_token.substring(0, 10)}...` : 'undefined',
+      password: resetPasswordData.password ? `${resetPasswordData.password.substring(0, 3)}...` : 'undefined',
+    });
+    
     try {
       const response = await authService.resetPassword(resetPasswordData);
       console.log("response", response);
@@ -99,7 +109,65 @@ export const ResetPasswordScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Password reset error:", error);
-      Alert.alert("Error", "Failed to reset password: " + error);
+      
+      // Log the full error response for debugging
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        console.log("Full error response:", {
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText,
+          data: axiosError.response?.data,
+          headers: axiosError.response?.headers
+        });
+        
+        // Log the detail structure specifically
+        if (axiosError.response?.data?.detail) {
+          console.log("Detail structure:", {
+            type: typeof axiosError.response.data.detail,
+            isArray: Array.isArray(axiosError.response.data.detail),
+            value: axiosError.response.data.detail,
+            firstElement: Array.isArray(axiosError.response.data.detail) ? axiosError.response.data.detail[0] : null
+          });
+        }
+      }
+      
+      // Extract error message from Axios error response
+      let errorMessage = "Failed to reset password. Please try again.";
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        
+        // Handle nested detail structure (array of objects)
+        if (axiosError.response?.data?.detail) {
+          const detail = axiosError.response.data.detail;
+          if (Array.isArray(detail) && detail.length > 0) {
+            // If detail is an array, extract the first error message
+            const firstError = detail[0];
+            if (typeof firstError === 'object' && firstError.msg) {
+              errorMessage = firstError.msg;
+            } else if (typeof firstError === 'string') {
+              errorMessage = firstError;
+            } else if (firstError && typeof firstError === 'object') {
+              // Try to find any string value in the object
+              const values = Object.values(firstError);
+              const stringValue = values.find(val => typeof val === 'string');
+              if (stringValue) {
+                errorMessage = stringValue as string;
+              }
+            }
+          } else if (typeof detail === 'string') {
+            errorMessage = detail;
+          }
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }

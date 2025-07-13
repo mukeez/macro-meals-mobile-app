@@ -2,6 +2,7 @@ import { API_CONFIG } from '../../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useStore from '../store/useStore';
 import {pushNotifications} from '@macro-meals/push-notifications';
+import axiosInstance from './axios';
 
 const API_URL = `${API_CONFIG.BASE_URL}/api/v1`;
 
@@ -59,72 +60,42 @@ export const authService = {
                 ...(fcmToken && { fcm_token: fcmToken })
             };
 
-
-
             console.log('Login payload being sent:', {
                 email: loginPayload.email,
                 hasFcmToken: !!loginPayload.fcm_token,
                 fcmTokenLength: loginPayload.fcm_token?.length
             });
 
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(loginPayload),
-            });
-            const responseData = await response.json();
+            const response = await axiosInstance.post('/auth/login', loginPayload);
             
             console.log('Login response status:', response.status);
-            console.log('Login response data:', responseData);
+            console.log('Login response data:', response.data);
             
-            if (!response.ok) {
-            throw new Error(
-                responseData.message ||
-                responseData.detail ||
-                'Login failed'
-            );
-        }
-        return responseData;
+            return response.data;
         } catch (error) {
             console.error('Login error:', error);
             throw error;
         }
     },
+    
     signup: async (data: SignupData) => {
         try {
-            const response = await fetch(`${API_URL}/auth/signup`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email: data.email,
-                    password: data.password,
-                }),
+            const response = await axiosInstance.post('/auth/signup', {
+                email: data.email,
+                password: data.password,
             });
 
-            const responseData = await response.json();
-
-            if (!response.ok) {
-            throw new Error(
-                responseData.message ||
-                responseData.detail ||
-                'Signup failed'
-            );
-        }
-
-            return responseData.user.id;
+            return response.data.user.id;
         } catch (error) {
             console.error('Signup service error:', error);
             throw error;
         }
     },
+    
     logout: async () => {
         try {
             // Remove tokens from AsyncStorage
-            await AsyncStorage.removeItem('access_token');
+            await AsyncStorage.removeItem('my_token');
             await AsyncStorage.removeItem('refresh_token');
             await AsyncStorage.removeItem('user_id');
             await AsyncStorage.removeItem('fcm_token'); // Clear FCM token on logout
@@ -164,63 +135,62 @@ export const authService = {
         }
     },
 
-    forgotPassword: async(email: string) => {
-        try{
-            const response = await fetch(`${API_URL}/auth/forgot-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-            const responseData = await response.json();
+    // Function to refresh FCM token and update on backend
+    refreshAndUpdateFCMToken: async () => {
+        try {
+            console.log('Refreshing FCM token...');
+            const newToken = await pushNotifications.getFCMToken();
             
-            if (!response.ok) {
-                throw new Error(responseData.message || 'Forgot password failed');
+            if (newToken) {
+                await AsyncStorage.setItem('fcm_token', newToken);
+                console.log('FCM token refreshed and stored successfully');
+                
+                // Try to update on backend if user is authenticated
+                try {
+                    const { userService } = await import('./userService');
+                    await userService.updateFCMToken(newToken);
+                    console.log('FCM token updated on backend after refresh');
+                } catch (backendError) {
+                    console.log('Could not update FCM token on backend (user may not be logged in):', backendError);
+                }
+                
+                return newToken;
+            } else {
+                console.log('Failed to refresh FCM token');
+                return null;
             }
-
-            return responseData;
-        }catch (error){
-            console.error('Forgot password error:', error);
+        } catch (error) {
+            console.error('Error refreshing FCM token:', error);
+            return null;
         }
     },
+
+    forgotPassword: async(email: string) => {
+        try {
+            const response = await axiosInstance.post('/auth/forgot-password', { email });
+            return response.data;
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            throw error;
+        }
+    },
+    
     verifyCode: async (params: { email: string, otp: string }) => {
         try {
-            const response = await fetch(`${API_URL}/auth/verify-otp`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
-            });
-            const responseData = await response.json();
-            if (!response.ok) {
-
-                throw new Error(responseData.message || 'Verification failed');
-            }
-            console.log('responseData', responseData);
-            return responseData;
+            const response = await axiosInstance.post('/auth/verify-otp', params);
+            console.log('responseData', response.data);
+            return response.data;
         } catch (error) {
             console.error('Verification error:', error);
             throw error;
         }
     },
+    
     verifyEmail: async (params: { email: string, otp: string }) => {
         try {
-            const response = await fetch(`${API_URL}/auth/verify-email`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
-            });
-            const responseData = await response.json();
-            if (!response.ok) {
-
-                throw new Error(responseData.message || 'Verification failed');
-            }
-            console.log('responseData', responseData);
-            return responseData;
+            const response = await axiosInstance.post('/auth/verify-email', params);
+            console.log('responseData', response.data);
+            return response.data;
         } catch (error) {
             console.error('Verification error:', error);
             throw error;
@@ -228,29 +198,27 @@ export const authService = {
     },
     
 
-    resetPassword: async (resetPasswordData: { email: string, session_token: string, new_password: string }) => {
+    resetPassword: async (resetPasswordData: { email: string, session_token: string, password: string }) => {
         try {
-            const response = await fetch(`${API_URL}/auth/reset-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(resetPasswordData),
+            console.log('AuthService: Sending reset password request with data:', {
+                email: resetPasswordData.email,
+                session_token: resetPasswordData.session_token ? `${resetPasswordData.session_token.substring(0, 10)}...` : 'undefined',
+                password: resetPasswordData.password ? `${resetPasswordData.password.substring(0, 3)}...` : 'undefined',
+                password_length: resetPasswordData.password?.length
             });
-            const responseData = await response.json();
-            if (!response.ok) {
-                throw new Error(responseData.message || 'Password reset failed');
-            }   
-
-            return responseData;
+            
+            const response = await axiosInstance.post('/auth/reset-password', resetPasswordData);
+            console.log('AuthService: Reset password response:', response.data);
+            return response.data;
         } catch (error) {
             console.error('Password reset error:', error);
             throw error;
         }
     },
+    
     getCurrentToken: async () => {
         try {
-            return await AsyncStorage.getItem('access_token');
+            return await AsyncStorage.getItem('my_token');
         } catch (error) {
             console.error('Get token error:', error);
             return null;
@@ -259,21 +227,8 @@ export const authService = {
 
     requestPasswordReset: async (email: string) => {
         try {
-            const response = await fetch(`${API_URL}/auth/reset-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                throw new Error(responseData.detail || 'Password reset request failed');
-            }
-
-            return responseData;
+            const response = await axiosInstance.post('/auth/reset-password', { email });
+            return response.data;
         } catch (error) {
             console.error('Password reset error:', error);
             throw error;
@@ -282,37 +237,18 @@ export const authService = {
 
     resendVerificationCode: async (params: { email: string }) => {
         try {
-            const response = await fetch(`${API_URL}/auth/resend-otp`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
-            });
-            const responseData = await response.json();
-            if (!response.ok) {
-                throw new Error(responseData.message || 'Failed to resend verification code');
-            }
-            return responseData;
+            const response = await axiosInstance.post('/auth/resend-otp', params);
+            return response.data;
         } catch (error) {
             console.error('Resend verification code error:', error);
             throw error;
         }
     },
-       resendEmailVerification: async (params: { email: string }) => {
+    
+    resendEmailVerification: async (params: { email: string }) => {
         try {
-            const response = await fetch(`${API_URL}/auth/resend-verification`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
-            });
-            const responseData = await response.json();
-            if (!response.ok) {
-                throw new Error(responseData.message || 'Failed to resend verification code');
-            }
-            return responseData;
+            const response = await axiosInstance.post('/auth/resend-verification', params);
+            return response.data;
         } catch (error) {
             console.error('Resend verification code error:', error);
             throw error;
@@ -323,11 +259,9 @@ export const authService = {
         try {
             // Clear all authentication data from AsyncStorage
             await AsyncStorage.removeItem('my_token');
-            await AsyncStorage.removeItem('user_id');
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('userId');
-            await AsyncStorage.removeItem('access_token');
             await AsyncStorage.removeItem('refresh_token');
+            await AsyncStorage.removeItem('user_id');
+            await AsyncStorage.removeItem('fcm_token');
             
             // Call the store logout to clear state
             useStore.getState().logout();

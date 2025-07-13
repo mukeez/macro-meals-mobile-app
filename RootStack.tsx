@@ -181,7 +181,6 @@ const DashboardNavigator = () => {
         name="AddSearchedLoggedMeal"
         component={AddSearchedLoggedMealScreen}
       />
-  <Stack.Screen name="NotificationsScreen" component={NotificationsScreen} />
     </Stack.Navigator>
   );
 };

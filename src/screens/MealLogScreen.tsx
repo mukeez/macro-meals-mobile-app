@@ -191,6 +191,12 @@ export const AddMealScreen: React.FC = () => {
             const response = await mealService.logMeal(newMeal);
             console.log('Meal log response:', JSON.stringify(response));
 
+            // Set first meal status for this user
+            const userEmail = useStore.getState().profile?.email;
+            if (userEmail) {
+                useStore.getState().setUserFirstMealStatus(userEmail, true);
+            }
+
             // Navigate back to meal log screen
             navigation.navigate('MainTabs');
         } catch (error) {

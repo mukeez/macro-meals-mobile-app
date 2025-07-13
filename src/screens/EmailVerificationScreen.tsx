@@ -21,6 +21,7 @@ import BackButton from "src/components/BackButton";
 import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "src/components/CustomTouchableOpacityButton";
 import { authService } from "src/services/authService";
+import { userService } from "src/services/userService";
 import { RootStackParamList } from "src/types/navigation";
 import useStore from "../store/useStore";
 import { OnboardingContext } from "src/contexts/OnboardingContext";
@@ -103,24 +104,33 @@ const { email: routeEmail, password: routePassword } = route.params;
             const token = loginData.access_token;
             const loginUserId = loginData.user.id;
 
-            const profileResponse = await fetch('https://api.macromealsapp.com/api/v1/user/me', {
-                method: "GET",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
-            });
-            if (!profileResponse.ok) {
-                const errorText = await profileResponse.text();
-                throw new Error(errorText);
-            }
-            const profile = await profileResponse.json();
-
+            // Store tokens first so axios interceptor can use them
             await Promise.all([
                 AsyncStorage.setItem('my_token', token),
+                AsyncStorage.setItem('refresh_token', loginData.refresh_token),
                 AsyncStorage.setItem('user_id', loginUserId),
                 AsyncStorage.setItem('isOnboardingCompleted', 'true')
             ]);
+
+            console.log('Tokens stored successfully:', {
+                hasAccessToken: !!token,
+                hasRefreshToken: !!loginData.refresh_token,
+                userId: loginUserId
+            });
+
+            // Then get profile using the stored token
+            const profile = await userService.getProfile();
+            // Update FCM token on backend after successful verification
+            try {
+                const fcmToken = await AsyncStorage.getItem('fcm_token');
+                if (fcmToken) {
+                    await userService.updateFCMToken(fcmToken);
+                    console.log('FCM token updated on backend after email verification');
+                }
+            } catch (error) {
+                console.log('Could not update FCM token on backend:', error);
+            }
+            
             resetSteps();
             setIsOnboardingCompleted(true);
             setHasMacros(profile.has_macros);

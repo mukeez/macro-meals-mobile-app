@@ -74,29 +74,43 @@ const BarcodeScanScreen = () => {
             console.log('BARCODE ALREADY SCANNED', scanningResult.data);
             return;
         }
+        
+        // Validate barcode format
+        const barcode = scanningResult.data.trim();
+        if (!barcode || barcode.length < 8) {
+            console.log('Invalid barcode format:', barcode);
+            return;
+        }
+        
         processingRef.current = true;
-        console.log('BARCODE SCANNED', scanningResult.data);
-        lastBarcodeRef.current = scanningResult.data;
+        console.log('BARCODE SCANNED', barcode);
+        lastBarcodeRef.current = barcode;
         lastScanTimeRef.current = currentTime;
-        console.log('BARCODE SCANNED', scanningResult.data);
         setIsProcessing(true);
+        
         try {
-            const response = await scanService.scanBarcode(scanningResult.data);
+            const response = await scanService.scanBarcode(barcode);
             if (!response.success) {
                 setScanError(true);
-                handleScanError(scanningResult.data);
+                handleScanError(barcode);
                 return;
             }
+            
             const product = response.data.items[0];
             if (product) {
                 setScanError(false);
                 console.log("product", product);
-
-                handleSuccessfulScan(scanningResult.data, product);
+                handleSuccessfulScan(barcode, product);
+            } else {
+                setScanError(true);
+                handleScanError(barcode);
             }
         } catch (error) {
+            console.error('Barcode scan error:', error);
             setScanError(true);
-            handleScanError(scanningResult.data);
+            handleScanError(barcode);
+        } finally {
+            processingRef.current = false;
         }
     };
 
@@ -125,6 +139,8 @@ const BarcodeScanScreen = () => {
                 amount: product.amount,
                 serving_unit: product.serving_unit,
                 logging_mode: 'barcode',
+                read_only: true,
+                hideImage: true, // Flag to hide the image section
             }
         });
     };
@@ -135,8 +151,12 @@ const BarcodeScanScreen = () => {
         setIsProcessing(true);
 
         try {
-            // Take a picture
-            const photo = await cameraRef.current.takePictureAsync();
+            // Take a picture with better quality settings
+            const photo = await cameraRef.current.takePictureAsync({
+                quality: 0.9,
+                base64: false,
+                skipProcessing: false
+            });
 
             // Process the image for barcode
             try {
@@ -155,6 +175,8 @@ const BarcodeScanScreen = () => {
                             amount: product.amount,
                             serving_unit: product.serving_unit,
                             logging_mode: 'barcode',
+                            read_only: product.read_only,
+                            hideImage: true, // Flag to hide the image section
                         }
                     });
                 } else {
@@ -168,7 +190,7 @@ const BarcodeScanScreen = () => {
                             },
                             {
                                 text: "Add Manually",
-                                onPress: () => navigation.navigate('AddMeal' as never)
+                                onPress: () => navigation.navigate('AddMealScreen', {})
                             }
                         ]
                     );
@@ -227,6 +249,8 @@ const BarcodeScanScreen = () => {
                                 amount: product.amount,
                                 serving_unit: product.serving_unit,
                                 logging_mode: 'barcode',
+                                read_only: product.read_only,
+                                hideImage: true, // Flag to hide the image section
                             }
                         });
                     } else {
@@ -292,8 +316,9 @@ const BarcodeScanScreen = () => {
                         enableTorch={flashMode === 'torch'}
                         barcodeScannerSettings={{
                             barcodeTypes: [
-                                'ean13', 'ean8', 'upc_e',
-                                'code39', 'code128', 'itf14'
+                                'ean13', 'ean8', 'upc_e', 'upc_a',
+                                'code39', 'code128', 'itf14', 'codabar',
+                                'qr', 'pdf417', 'aztec', 'datamatrix'
                             ]
                         }}
                         onBarcodeScanned={isProcessing ? undefined : handleBarCodeScanned}
@@ -310,6 +335,21 @@ const BarcodeScanScreen = () => {
                             <View className={`absolute bottom-0 left-0 w-16 h-16 border-b-[12px] border-l-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-bl-lg`} />
                             <View className={`absolute bottom-0 right-0 w-16 h-16 border-b-[12px] border-r-[12px] ${scanError ? 'border-[#DB2F2C]' : 'border-[#10bfae]'} rounded-tr-lg rounded-br-lg`} />
                         </View>
+                        
+                        {/* Processing Indicator */}
+                        {isProcessing && (
+                            <View className="absolute inset-0 bg-black/70 justify-center items-center z-10">
+                                <View className="bg-transparent rounded-2xl p-6 items-center">
+                                    <ActivityIndicator size="large" color="#10bfae" />
+                                    <Text className="text-primary font-semibold mt-3 text-center">
+                                        Reading barcode...
+                                    </Text>
+                                    <Text className="text-primaryLight text-sm mt-1 text-center">
+                                        Please wait
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
                     </View>
                 </View>
             </View>

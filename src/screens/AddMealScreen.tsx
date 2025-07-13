@@ -41,7 +41,10 @@ interface RouteParams {
         meal_type?: string;
         meal_time?: string;
         amount?: number;
+        read_only?: boolean;
         logging_mode?: string;
+        hideImage?: boolean;
+        photo?: string;
     };
 }
 
@@ -98,6 +101,17 @@ export const AddMealScreen: React.FC = () => {
     const [logging_mode, setLoggingMode] = useState('manual');
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
     const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
+    const [validationErrors, setValidationErrors] = useState<{
+        calories: string;
+        protein: string;
+        carbs: string;
+        fats: string;
+    }>({
+        calories: '',
+        protein: '',
+        carbs: '',
+        fats: ''
+    });
     const mixpanel = useMixpanel();
 
     // Initialize form with analyzed data if available
@@ -112,7 +126,11 @@ export const AddMealScreen: React.FC = () => {
             setMealType(analyzedData.meal_type || 'breakfast');
             setAmount(analyzedData.amount?.toString() || '1');
             setLoggingMode(analyzedData.logging_mode || 'manual');
-
+            
+            // Set the photo if available from SnapMealScreen
+            if (analyzedData.photo) {
+                setMealImage(analyzedData.photo);
+            }
         }
     }, [analyzedData]);
 
@@ -173,13 +191,63 @@ export const AddMealScreen: React.FC = () => {
     };
 
     /**
+     * Validates macro inputs
+     */
+    const validateMacros = (): boolean => {
+        const errors = {
+            calories: '',
+            protein: '',
+            carbs: '',
+            fats: ''
+        };
+        
+        let isValid = true;
+        
+        const caloriesValue = parseInt(calories, 10) || 0;
+        const proteinValue = parseInt(protein, 10) || 0;
+        const carbsValue = parseInt(carbs, 10) || 0;
+        const fatsValue = parseInt(fats, 10) || 0;
+        
+        if (caloriesValue <= 0) {
+            errors.calories = 'Calories must be greater than 0';
+            isValid = false;
+        }
+        
+        if (proteinValue <= 0) {
+            errors.protein = 'Protein must be greater than 0';
+            isValid = false;
+        }
+        
+        if (carbsValue <= 0) {
+            errors.carbs = 'Carbs must be greater than 0';
+            isValid = false;
+        }
+        
+        if (fatsValue <= 0) {
+            errors.fats = 'Fats must be greater than 0';
+            isValid = false;
+        }
+        
+        setValidationErrors(errors);
+        return isValid;
+    };
+
+    /**
      * Adds the current meal to the log
      */
     const handleAddMealLog = async (): Promise<void> => {
         setLoading(true);
         try {
             if (!mealName.trim()) {
-                console.error('Please enter a meal name');
+                Alert.alert('Error', 'Please enter a meal name');
+                setLoading(false);
+                return;
+            }
+
+            // Validate macros
+            if (!validateMacros()) {
+                Alert.alert('Validation Error', 'Please ensure all macro values are greater than 0');
+                setLoading(false);
                 return;
             }
 
@@ -219,6 +287,12 @@ export const AddMealScreen: React.FC = () => {
 
             // Send the request
             await mealService.logMeal(mealRequest);
+
+            // Set first meal status for this user
+            const userEmail = useStore.getState().profile?.email;
+            if (userEmail) {
+                useStore.getState().setUserFirstMealStatus(userEmail, true);
+            }
 
             // Track meal logging
             mixpanel?.track({
@@ -383,24 +457,26 @@ export const AddMealScreen: React.FC = () => {
                     keyboardShouldPersistTaps="handled"
                     contentContainerStyle={{ paddingBottom: 40 }}
                 >
-                    <TouchableOpacity
-                        className="h-[11.3rem] rounded-xl my-4 justify-center items-center bg-[#f3f3f3]"
-                        onPress={handleAddPhoto}
-                        activeOpacity={0.8}
-                    >
-                        {mealImage ? (
-                            <Image
-                                source={{ uri: mealImage }}
-                                className="w-full h-full rounded-xl"
-                                resizeMode="cover"
-                            />
-                        ) : (
-                            <>
-                                <Image source={IMAGE_CONSTANTS.galleryIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
-                                <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
+                    {!analyzedData?.hideImage && (
+                        <TouchableOpacity
+                            className="h-[11.3rem] rounded-xl my-4 justify-center items-center bg-[#f3f3f3]"
+                            onPress={handleAddPhoto}
+                            activeOpacity={0.8}
+                        >
+                            {mealImage ? (
+                                <Image
+                                    source={{ uri: mealImage }}
+                                    className="w-full h-full rounded-xl"
+                                    resizeMode="cover"
+                                />
+                            ) : (
+                                <>
+                                    <Image source={IMAGE_CONSTANTS.galleryIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
+                                    <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    )}
 
                     <View className="mb-4">
                         <Text className="text-base font-medium mb-2">Meal Name</Text>
@@ -448,64 +524,96 @@ export const AddMealScreen: React.FC = () => {
                     <View className="flex-row justify-between mb-4">
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Calories</Text>
-                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <View className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.calories ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={calories}
-                                    onChangeText={setCalories}
+                                    onChangeText={(text) => {
+                                        setCalories(text);
+                                        if (validationErrors.calories) {
+                                            setValidationErrors(prev => ({ ...prev, calories: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (calories === '0') setCalories(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">kcal</Text>
                             </View>
+                            {validationErrors.calories ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.calories}</Text>
+                            ) : null}
                         </View>
 
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Protein</Text>
-                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <View className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.protein ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={protein}
-                                    onChangeText={setProtein}
+                                    onChangeText={(text) => {
+                                        setProtein(text);
+                                        if (validationErrors.protein) {
+                                            setValidationErrors(prev => ({ ...prev, protein: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (protein === '0') setProtein(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
                             </View>
+                            {validationErrors.protein ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.protein}</Text>
+                            ) : null}
                         </View>
                     </View>
 
                     <View className="flex-row justify-between mb-4">
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Carbs</Text>
-                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <View className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.carbs ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={carbs}
-                                    onChangeText={setCarbs}
+                                    onChangeText={(text) => {
+                                        setCarbs(text);
+                                        if (validationErrors.carbs) {
+                                            setValidationErrors(prev => ({ ...prev, carbs: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (carbs === '0') setCarbs(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
                             </View>
+                            {validationErrors.carbs ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.carbs}</Text>
+                            ) : null}
                         </View>
 
                         <View className="w-[48%]">
                             <Text className="text-base text-black mb-2">Fats</Text>
-                              <View className="flex-row items-center placeholder:text-lightGrey text-base border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                              <View className={`flex-row items-center placeholder:text-lightGrey text-base border rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.fats ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={fats}
-                                    onChangeText={setFats}
+                                    onChangeText={(text) => {
+                                        setFats(text);
+                                        if (validationErrors.fats) {
+                                            setValidationErrors(prev => ({ ...prev, fats: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (fats === '0') setFats(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
                             </View>
+                            {validationErrors.fats ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.fats}</Text>
+                            ) : null}
                         </View>
                     </View>
 
@@ -547,13 +655,14 @@ export const AddMealScreen: React.FC = () => {
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Serving Size</Text>
                             <TouchableOpacity
+                                disabled={analyzedData?.read_only}
                                 onPress={() => {
                                     setTempServingUnit(servingUnit);
                                     setShowServingUnitModal(true);
                                 }}
                                 className="flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white"
                             >
-                                <Text className="flex-1 text-base text-[#222]">{servingUnit}</Text>
+                                <Text className={`flex-1 text-base ${analyzedData?.read_only ? 'text-[#8e929a]' : 'text-[#222]'}`}>{servingUnit}</Text>
                                 <Image 
                                     source={IMAGE_CONSTANTS.chevronRightIcon} 
                                     className="w-4 h-4" 

@@ -7,7 +7,6 @@ import { validateEvent } from './utils/validation';
 
 export const useMixpanel = ()=> {
     const mixpanel = useContext(MixpanelContext);
-    console.log('[DEBUG] useMixpanel called, mixpanel:', !!mixpanel);
     
     if (!mixpanel){
         console.warn('[MIXPANEL] ⚠️  useMixpanel called but mixpanel is not available');

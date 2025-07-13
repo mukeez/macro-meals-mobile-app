@@ -1,3 +1,5 @@
+import axiosInstance from "./axios";
+
 export type MacroResponse = {
   calories: number;
   protein: number;
@@ -5,20 +7,46 @@ export type MacroResponse = {
   carbs: number;
 };
 
-const API_BASE_URL = 'https://api.macromealsapp.com/api/v1';
-
+export interface MacroSetupRequest {
+  activity_level: string;
+  age: number;
+  dietary_preference: string;
+  dob: string;
+  goal_type: string;
+  height: number;
+  progress_rate: string | number;
+  sex: string;
+  target_weight: number;
+  height_unit_preference: string;
+  weight_unit_preference: string;
+  weight: number;
+}
 
 export async function fetchMacros(): Promise<MacroResponse> {
-  const res = await fetch(`${API_BASE_URL}/macros/adjust-macros`);
-  if (!res.ok) throw new Error("Failed to fetch macros");
-  return res.json();
+  try {
+    const response = await axiosInstance.get('/macros/adjust-macros');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching macros:', error);
+    throw error;
+  }
 }
 
 export async function updateMacros(updated: MacroResponse): Promise<void> {
-  const res = await fetch(API_BASE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updated),
-  });
-  if (!res.ok) throw new Error("Failed to update macros");
+  try {
+    await axiosInstance.post('/macros/adjust-macros', updated);
+  } catch (error) {
+    console.error('Error updating macros:', error);
+    throw error;
+  }
+}
+
+export async function setupMacros(requestData: MacroSetupRequest): Promise<MacroResponse> {
+  try {
+    const response = await axiosInstance.post('/macros/macros-setup', requestData);
+    return response.data;
+  } catch (error) {
+    console.error('Error setting up macros:', error);
+    throw error;
+  }
 }

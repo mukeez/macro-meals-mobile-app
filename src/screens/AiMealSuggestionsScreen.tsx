@@ -105,6 +105,23 @@ const AiMealSuggestionsScreen: React.FC = () => {
     fetchMeals();
   }, []);
 
+  useEffect(() => {
+    // Fetch latest daily macro progress from API on mount
+    const fetchProgress = async () => {
+      try {
+        const progressData = await mealService.getDailyProgress();
+        setMacroData([
+          { label: 'Protein', value: progressData.logged_macros.protein || 0, color: '#6C5CE7' },
+          { label: 'Carbs', value: progressData.logged_macros.carbs || 0, color: '#FFC107' },
+          { label: 'Fat', value: progressData.logged_macros.fat || 0, color: '#FF69B4' },
+        ]);
+      } catch (error) {
+        setMacroData(defaultMacroData);
+      }
+    };
+    fetchProgress();
+  }, []);
+
   return (
     <CustomSafeAreaView edges={['left', 'right']} className="flex-1">
       <View className="flex-1 bg-gray">
@@ -116,32 +133,35 @@ const AiMealSuggestionsScreen: React.FC = () => {
           <Text className="text-[20px] font-semibold text-[#222] text-center">Suggested meals</Text>
           <View style={{ width: 32 }} />
         </View>
-        {loading ? (
-          <ActivityIndicator size="large" color="#19a28f" className="flex items-center justify-center h-full" />
-        ) : (
-          <ScrollView className="pb-8">
+        <ScrollView className="pb-8">
             {/* Macros Donut Row */}
             <View className="flex-col bg-white items-start mt-3 px-5 pt-3 pb-10 mb-4">
               <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
               <View className="flex-row w-full justify-between items-center">
-                {macroData.map((macro, index) => (
-                  <View key={`${macro.label}-${index}`}>
-                    <View className="h-[100px] w-[100px] relative">
-                      <CircularProgress
-                        size={100}
-                        strokeWidth={12}
-                        textSize={16}
-                        consumed={macro.value + 'g'}
-                        total={macrosPreferences?.[macroTypeToPreferenceKey[macro.label]] || 100}
-                        color={macro.color}
-                        backgroundColor="#d0e8d1"
-                        label={macro.label}
-                        showLabel={false}
-                      />
-                      <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
+                {macroData.map((macro, index) => {
+                  const target = macrosPreferences?.[macroTypeToPreferenceKey[macro.label]] || 0;
+                  const consumed = macro.value;
+                  const remaining = Math.max(0, target - consumed);
+                  // Match MealFinderScreen: donut shows remaining, empties as you consume
+                  return (
+                    <View key={`${macro.label}-${index}`}>
+                      <View className="h-[100px] w-[100px] relative">
+                        <CircularProgress
+                          size={100}
+                          strokeWidth={12}
+                          textSize={16}
+                          consumed={`${remaining}g`}
+                          total={target}
+                          color={macro.color}
+                          backgroundColor="#d0e8d1"
+                          label={macro.label}
+                          showLabel={false}
+                        />
+                        <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             </View>
            
@@ -153,11 +173,31 @@ const AiMealSuggestionsScreen: React.FC = () => {
               </Text>
             </View>
             <Text className="text-base font-bold text-[#222] mx-5 mb-2.5">✨ Suggested meals</Text>
-            {error && <Text className="text-red-500 text-center mt-6">{error}</Text>}
-            {!loading && !error && meals.length === 0 && (
-              <Text className="text-center text-[#888] mt-6">No meal suggestions found.</Text>
-            )}
-            {!loading && !error && meals.map((meal, idx) => (
+            {loading ? (
+              <View className="flex items-center justify-center py-8">
+                <ActivityIndicator size="large" color="#19a28f" />
+                <Text className="text-[#888] mt-2">Finding meal suggestions...</Text>
+              </View>
+            ) : (
+              <>
+                {error ? (
+                  <View className="flex items-center justify-center py-8">
+                    <Image source={IMAGE_CONSTANTS.warningIcon} className="w-[48px] h-[48px] mb-3 opacity-50" />
+                    <Text className="text-[#888] text-center text-base">Unable to load meal suggestions</Text>
+                    <Text className="text-[#888] text-center text-sm mt-1">Please check your connection and try again</Text>
+                    <TouchableOpacity 
+                      onPress={() => window.location.reload()} 
+                      className="mt-4 px-6 py-2 bg-primaryLight rounded-full"
+                    >
+                      <Text className="text-white font-medium">Retry</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <>
+                    {meals.length === 0 && (
+                      <Text className="text-center text-[#888] mt-6">No meal suggestions found.</Text>
+                    )}
+                    {meals.map((meal, idx) => (
               <TouchableOpacity 
                 key={idx} 
                 className="flex-row bg-white rounded-xl mx-5 mb-4 p-2.5 shadow-sm"
@@ -234,9 +274,12 @@ const AiMealSuggestionsScreen: React.FC = () => {
                   )} */}
                 </View>
               </TouchableOpacity>
-            ))}
+                ))}
+                    </>
+                  )}
+                  </>
+                )}
           </ScrollView>
-        )}
       </View>
     </CustomSafeAreaView>
   );

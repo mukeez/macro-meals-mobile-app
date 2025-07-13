@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Switch } from 'react-native';
+import { View, Text, Switch, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 
@@ -25,8 +25,29 @@ export const GoalBodyMetricsHeight = () => {
   useEffect(() => {
     if (height_unit_preference === 'imperial') {
       setIsValid(heightFt !== null && heightIn !== null);
+      
+      // Log calculated height when both feet and inches are selected
+      if (heightFt !== null && heightIn !== null) {
+        const calculatedHeight = heightFt + (heightIn / 12);
+        const calculatedHeightRounded = parseFloat(calculatedHeight.toFixed(2));
+        console.log('[GoalsFlow] Height calculation:', {
+          feet: heightFt,
+          inches: heightIn,
+          calculatedHeightValue: calculatedHeightRounded,
+          calculation: `${heightFt} + (${heightIn} / 12) = ${calculatedHeightRounded}`
+        });
+      }
     } else {
       setIsValid(heightCm !== null);
+      
+      // Log metric height when selected
+      if (heightCm !== null) {
+        console.log('[GoalsFlow] Height calculation (metric):', {
+          heightCm: heightCm,
+          calculatedHeightValue: heightCm,
+          calculation: `Using heightCm directly: ${heightCm}`
+        });
+      }
     }
   }, [height_unit_preference, heightFt, heightIn, heightCm]);
 
@@ -39,7 +60,7 @@ export const GoalBodyMetricsHeight = () => {
 
   return (
     <View className="flex-1 bg-white px-4">
-      <Text className="text-3xl font-bold mt-4">Body metrics</Text>
+      <Text className="text-3xl font-bold mt-4">Height metrics</Text>
       <Text className="text-base text-gray-500 mb-6">This will be used to calibrate your custom plan</Text>
       {/* Unit Switch */}
       <View className="flex-row items-center justify-center mb-6">
@@ -59,28 +80,32 @@ export const GoalBodyMetricsHeight = () => {
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>
             <View className="flex-row">
-              <Picker
-                selectedValue={heightFt}
-                style={{ width: 100, height: 200 }}
-                itemStyle={{ fontSize: 18 }}
-                onValueChange={setHeightFt}
-              >
-                <Picker.Item label="ft" value={null} />
-                {heightsFt.map(ft => (
-                  <Picker.Item key={ft} label={`${ft} ft`} value={ft} />
-                ))}
-              </Picker>
-              <Picker
-                selectedValue={heightIn}
-                style={{ width: 100, height: 200 }}
-                itemStyle={{ fontSize: 18 }}
-                onValueChange={setHeightIn}
-              >
-                <Picker.Item label="in" value={null} />
-                {heightsIn.map(inc => (
-                  <Picker.Item key={inc} label={`${inc} in`} value={inc} />
-                ))}
-              </Picker>
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
+                <Picker
+                  selectedValue={heightFt}
+                  style={{ width: 100, height: 50 }}
+                  itemStyle={{ fontSize: 18 }}
+                  onValueChange={setHeightFt}
+                >
+                  <Picker.Item label="ft" value={null} />
+                  {heightsFt.map(ft => (
+                    <Picker.Item key={ft} label={`${ft} ft`} value={ft} />
+                  ))}
+                </Picker>
+              </View>
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
+                <Picker
+                  selectedValue={heightIn}
+                  style={{ width: 100, height: 50 }}
+                  itemStyle={{ fontSize: 18 }}
+                  onValueChange={setHeightIn}
+                >
+                  <Picker.Item label="in" value={null} />
+                  {heightsIn.map(inc => (
+                    <Picker.Item key={inc} label={`${inc} in`} value={inc} />
+                  ))}
+                </Picker>
+              </View>
             </View>
           </View>
         </View>
@@ -88,17 +113,19 @@ export const GoalBodyMetricsHeight = () => {
         <View className="flex-row justify-between">
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>
-            <Picker
-              selectedValue={heightCm}
-              style={{ width: 140, height: 200 }}
-              itemStyle={{ fontSize: 18 }}
-              onValueChange={setHeightCm}
-            >
-              <Picker.Item label="cm" value={null} />
-              {heightsCm.map(cm => (
-                <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
-              ))}
-            </Picker>
+            <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'}`}>
+              <Picker
+                selectedValue={heightCm}
+                style={{ width: 140, height: 50 }}
+                itemStyle={{ fontSize: 18 }}
+                onValueChange={setHeightCm}
+              >
+                <Picker.Item label="cm" value={null} />
+                {heightsCm.map(cm => (
+                  <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
+                ))}
+              </Picker>
+            </View>
           </View>
         </View>
       )}

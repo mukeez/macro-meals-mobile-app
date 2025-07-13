@@ -27,7 +27,7 @@ const dateRanges = [
   { label: "3m", value: "3m" },
   { label: "6m", value: "6m" },
   { label: "1y", value: "1y" },
-  { label: "All", value: "all" },
+
 ];
 
 interface MacroBarData {
@@ -40,19 +40,21 @@ interface MacroBarData {
 }
 
 const ProgressScreen = () => {
-  const { data, loading, selectedRange, setSelectedRange, fetchData } =
+  const { data, loading, selectedRange, setSelectedRange, fetchDataByPeriod } =
     useProgressStore();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchData(selectedRange);
-  }, [selectedRange, fetchData]);
+    console.log(`ProgressScreen: Fetching data for period: ${selectedRange}`);
+    fetchDataByPeriod(selectedRange);
+  }, [selectedRange, fetchDataByPeriod]);
 
   const onRefresh = useCallback(async () => {
+    console.log(`ProgressScreen: Refreshing data for period: ${selectedRange}`);
     setRefreshing(true);
-    await fetchData(selectedRange);
+    await fetchDataByPeriod(selectedRange);
     setRefreshing(false);
-  }, [fetchData, selectedRange]);
+  }, [fetchDataByPeriod, selectedRange]);
 
   // Process real API data only - no dummy data fallback
   let macroBarData: MacroBarData[] = [];

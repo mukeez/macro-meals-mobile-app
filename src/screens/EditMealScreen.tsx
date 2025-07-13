@@ -98,6 +98,17 @@ export const EditMealScreen: React.FC = () => {
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
     const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
+    const [validationErrors, setValidationErrors] = useState<{
+        calories: string;
+        protein: string;
+        carbs: string;
+        fats: string;
+    }>({
+        calories: '',
+        protein: '',
+        carbs: '',
+        fats: ''
+    });
     const mixpanel = useMixpanel();
     const [servingUnit, setServingUnit] = useState<string>('g');
     const [showServingUnitModal, setShowServingUnitModal] = useState(false);
@@ -182,13 +193,63 @@ export const EditMealScreen: React.FC = () => {
     };
 
     /**
+     * Validates macro inputs
+     */
+    const validateMacros = (): boolean => {
+        const errors = {
+            calories: '',
+            protein: '',
+            carbs: '',
+            fats: ''
+        };
+        
+        let isValid = true;
+        
+        const caloriesValue = parseInt(calories, 10) || 0;
+        const proteinValue = parseInt(protein, 10) || 0;
+        const carbsValue = parseInt(carbs, 10) || 0;
+        const fatsValue = parseInt(fats, 10) || 0;
+        
+        if (caloriesValue <= 0) {
+            errors.calories = 'Calories must be greater than 0';
+            isValid = false;
+        }
+        
+        if (proteinValue <= 0) {
+            errors.protein = 'Protein must be greater than 0';
+            isValid = false;
+        }
+        
+        if (carbsValue <= 0) {
+            errors.carbs = 'Carbs must be greater than 0';
+            isValid = false;
+        }
+        
+        if (fatsValue <= 0) {
+            errors.fats = 'Fats must be greater than 0';
+            isValid = false;
+        }
+        
+        setValidationErrors(errors);
+        return isValid;
+    };
+
+    /**
      * Edits the current meal in the log
      */
     const handleEditMealLog = async (): Promise<void> => {
         setLoading(true);
         try {
             if (!mealName.trim()) {
-                console.error('Please enter a meal name');
+                Alert.alert('Error', 'Please enter a meal name');
+                setLoading(false);
+                return;
+            }
+
+            // Validate macros
+            if (!validateMacros()) {
+                Alert.alert('Validation Error', 'Please ensure all macro values are greater than 0');
+                setLoading(false);
                 return;
             }
 
@@ -324,6 +385,9 @@ export const EditMealScreen: React.FC = () => {
           serving_size: parseInt(servingSize, 10) || 0,
           no_of_servings: parseInt(noOfServings, 10) || 0,
           meal_type: mealType,
+          favorite: isFavorite,
+          amount: parseFloat(noOfServings) || 1,
+          serving_unit: servingUnit,
           meal_time: time.toISOString(),
           image: mealImage || IMAGE_CONSTANTS.mealIcon,
           restaurant: { name: 'custom', location: '' },
@@ -408,7 +472,7 @@ export const EditMealScreen: React.FC = () => {
                         {analyzedData?.photo_url ? (
                             <ExpoImage
                                 source={{ uri: analyzedData.photo_url }}
-                                placeholder={appConstants.blurhash}
+                                placeholder={IMAGE_CONSTANTS.blurhash}
                                 cachePolicy="disk"
                                 contentFit="cover"
                                 transition={300}
@@ -477,64 +541,96 @@ export const EditMealScreen: React.FC = () => {
                     <View className="flex-row justify-between mb-4">
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Calories</Text>
-                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <View className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.calories ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={calories}
-                                    onChangeText={setCalories}
+                                    onChangeText={(text) => {
+                                        setCalories(text);
+                                        if (validationErrors.calories) {
+                                            setValidationErrors(prev => ({ ...prev, calories: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (calories === '0') setCalories(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">kcal</Text>
                             </View>
+                            {validationErrors.calories ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.calories}</Text>
+                            ) : null}
                         </View>
 
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Protein</Text>
-                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <View className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.protein ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={protein}
-                                    onChangeText={setProtein}
+                                    onChangeText={(text) => {
+                                        setProtein(text);
+                                        if (validationErrors.protein) {
+                                            setValidationErrors(prev => ({ ...prev, protein: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (protein === '0') setProtein(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
                             </View>
+                            {validationErrors.protein ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.protein}</Text>
+                            ) : null}
                         </View>
                     </View>
 
                     <View className="flex-row justify-between mb-4">
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Carbs</Text>
-                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                            <View className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.carbs ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={carbs}
-                                    onChangeText={setCarbs}
+                                    onChangeText={(text) => {
+                                        setCarbs(text);
+                                        if (validationErrors.carbs) {
+                                            setValidationErrors(prev => ({ ...prev, carbs: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (carbs === '0') setCarbs(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
                             </View>
+                            {validationErrors.carbs ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.carbs}</Text>
+                            ) : null}
                         </View>
 
                         <View className="w-[48%]">
                             <Text className="text-base text-black mb-2">Fats</Text>
-                              <View className="flex-row items-center placeholder:text-lightGrey text-base border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                              <View className={`flex-row items-center placeholder:text-lightGrey text-base border rounded-sm px-3 h-[4.25rem] bg-white ${validationErrors.fats ? 'border-red-500' : 'border-[#e0e0e0]'}`}>
                                 <TextInput
                                     className="flex-1 text-base"
                                     keyboardType="numeric"
                                     value={fats}
-                                    onChangeText={setFats}
+                                    onChangeText={(text) => {
+                                        setFats(text);
+                                        if (validationErrors.fats) {
+                                            setValidationErrors(prev => ({ ...prev, fats: '' }));
+                                        }
+                                    }}
                                     placeholder="0"
                                     onFocus={() => { if (fats === '0') setFats(''); }}
                                 />
                                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
                             </View>
+                            {validationErrors.fats ? (
+                                <Text className="text-red-500 text-xs mt-1">{validationErrors.fats}</Text>
+                            ) : null}
                         </View>
                     </View>
 

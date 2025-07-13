@@ -1,8 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, Image, TextInput, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, Image, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
-import CustomRuler from 'src/components/goal_flow_components/your_goal/CustomRuler';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
+
+// Weight arrays for picker
+const weightsLb = Array.from({ length: 321 }, (_, i) => i + 80); // 80-400 lbs
+const weightsKg = Array.from({ length: 146 }, (_, i) => i + 35); // 35-180 kg
 
 export const GoalsTargetWeight: React.FC = () => {
   const targetWeight = useGoalsFlowStore((s) => s.targetWeight);
@@ -30,24 +34,12 @@ export const GoalsTargetWeight: React.FC = () => {
     return Math.round(previousWeight) || (weight_unit_preference === 'imperial' ? 150 : 70);
   }, [targetWeight, previousWeight, weight_unit_preference]);
 
-  // Weight ranges based on unit
-  const weightRange = useMemo(() => {
-    if (weight_unit_preference === 'imperial') {
-      return { min: 80, max: 400 };
-    } else {
-      return { min: 35, max: 180 }; // kg range
-    }
-  }, [weight_unit_preference]);
-
-  // State for weight and input value
+  // State for weight
   const [weight, setWeight] = useState(initialWeight);
-  const [inputValue, setInputValue] = useState(initialWeight.toString());
 
   // Keep store in sync
   useEffect(() => {
-    if (weight >= weightRange.min) {
-      setTargetWeight(weight);
-    }
+    setTargetWeight(weight);
   }, [weight, setTargetWeight]);
 
   // Determine if the weight text should be red
@@ -64,25 +56,10 @@ export const GoalsTargetWeight: React.FC = () => {
   // Display unit
   const weightUnit = weight_unit_preference === 'imperial' ? 'lbs' : 'kg';
 
-  // Handle input change
-  const handleInputChange = (text: string) => {
-    setInputValue(text);
-    const numValue = parseInt(text, 10);
-    if (!isNaN(numValue) && numValue >= weightRange.min && numValue <= weightRange.max) {
-      setWeight(numValue);
-    }
+  // Handle weight change
+  const handleWeightChange = (newWeight: number) => {
+    setWeight(newWeight);
   };
-
-  // Handle input blur (reset to valid weight if invalid)
-  const handleInputBlur = () => {
-    const numValue = parseInt(inputValue, 10);
-    if (isNaN(numValue) || numValue < weightRange.min || numValue > weightRange.max) {
-      setInputValue(weight.toString());
-    }
-  };
-
-  // Disabled ruler handler
-  const handleRulerChange = () => {};
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -92,25 +69,40 @@ export const GoalsTargetWeight: React.FC = () => {
         <View className="items-center mt-8">
           <Text className="text-base text-center mb-4">{fitnessGoal || 'Set your goal'}</Text>
           <View className="flex-row items-center justify-center">
-            <TextInput
-              className={`text-4xl font-semibold mb-4 text-center ${isRed ? 'text-cinnabarRed' : 'text-black'}`}
-              value={inputValue}
-              onChangeText={handleInputChange}
-              onBlur={handleInputBlur}
-              keyboardType="numeric"
-              maxLength={3}
-              style={{ minWidth: 80 }}
-            />
-            <Text className="text-2xl font-semibold mb-4 ml-0">{weightUnit}</Text>
+            <Text className={`text-4xl font-semibold mb-4 text-center ${isRed ? 'text-cinnabarRed' : 'text-black'}`}>
+              {weight}
+            </Text>
+            <Text className="text-2xl font-semibold mb-4 ml-2">{weightUnit}</Text>
           </View>
-          <View className="w-full mt-4" style={{ pointerEvents: 'none' }}>
-            {weight >= weightRange.min && (
-              <CustomRuler
-                min={weightRange.min}
-                max={weightRange.max}
-                initialValue={weight}
-                onValueChange={handleRulerChange}
-              />
+          <View className="items-center">
+            {weight_unit_preference === 'imperial' ? (
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
+                <Picker
+                  selectedValue={weight}
+                  style={{ width: 120, height: 50 }}
+                  itemStyle={{ fontSize: 18 }}
+                  onValueChange={handleWeightChange}
+                >
+                  <Picker.Item label="Select weight" value={null} />
+                  {weightsLb.map(lb => (
+                    <Picker.Item key={lb} label={`${lb} lb`} value={lb} />
+                  ))}
+                </Picker>
+              </View>
+            ) : (
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
+                <Picker
+                  selectedValue={weight}
+                  style={{ width: 120, height: 50 }}
+                  itemStyle={{ fontSize: 18 }}
+                  onValueChange={handleWeightChange}
+                >
+                  <Picker.Item label="Select weight" value={null} />
+                  {weightsKg.map(kg => (
+                    <Picker.Item key={kg} label={`${kg} kg`} value={kg} />
+                  ))}
+                </Picker>
+              </View>
             )}
           </View>
           {isRed && (

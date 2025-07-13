@@ -222,6 +222,7 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
                 protein: adjustedMacros.protein,
                 carbs: adjustedMacros.carbs,
                 fat: adjustedMacros.fat,
+                amount: amount,
                 meal_type: tempMealType,
                 meal_time: time.toISOString(),
                 serving_size: servingUnit,
@@ -234,10 +235,16 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
             };
 
             // Log the request data for debugging
-            console.log('Searched meal request data:', JSON.stringify(mealRequest, null, 2));
+            console.log('Add Searched Meal request data:', JSON.stringify(mealRequest, null, 2));
 
             // Send the request
             await mealService.logMeal(mealRequest);
+
+            // Set first meal status for this user
+            const userEmail = useStore.getState().profile?.email;
+            if (userEmail) {
+                useStore.getState().setUserFirstMealStatus(userEmail, true);
+            }
 
             // Track meal logging
             mixpanel?.track({
