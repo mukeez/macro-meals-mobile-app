@@ -117,6 +117,8 @@ export const DashboardScreen: React.FC = () => {
   const setMacrosPreferences = useStore((state) => state.setMacrosPreferences);
   const loggedMeals = useStore((state) => state.loggedMeals);
   const refreshMeals = useStore((state) => state.refreshMeals);
+  const hasLoggedFirstMeal = useStore((state) => state.hasLoggedFirstMeal);
+  const setUserFirstMealStatus = useStore((state) => state.setUserFirstMealStatus);
 
   // useEffect(() => {
   //     if (preferences.calories === 0 && preferences.protein === 0) {
@@ -216,6 +218,10 @@ export const DashboardScreen: React.FC = () => {
 
   const handleMealLog = () => {
     navigation.navigate("MealFinderScreen");
+  };
+
+  const handleAddMeal = () => {
+    navigation.navigate("ScanScreenType");
   };
 
   const handleRefresh = () => {
@@ -508,6 +514,16 @@ export const DashboardScreen: React.FC = () => {
                   <Text className="tracking-normal leading-5 text-[14px] font-medium text-center">
                     Your recently logged meals for the day will show up here
                   </Text>
+                  {!hasLoggedFirstMeal(profile.email || '') && (
+                    <TouchableOpacity
+                      className="bg-primary w-[144px] h-[40px] rounded-[200px] justify-center items-center mt-4"
+                      onPress={handleAddMeal}
+                    >
+                      <Text className="text-white text-sm font-semibold">
+                        Log your first meal
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ) : (
                 loggedMeals.map((meal: any, index: number) => (

@@ -85,6 +85,11 @@ interface AppState {
     hasBeenPromptedForGoals: boolean;
     setHasBeenPromptedForGoals: (prompted: boolean) => void;
 
+    // Has logged first meal state (per user)
+    userFirstMealStatus: { [email: string]: boolean };
+    setUserFirstMealStatus: (email: string, hasLogged: boolean) => void;
+    hasLoggedFirstMeal: (email: string) => boolean;
+
     // User preferences state
     preferences: UserPreferences;
     updatePreferences: (newPreferences: Partial<UserPreferences>) => void;
@@ -268,6 +273,7 @@ const useStore = create<AppState>()(
                         shouldRefreshMeals: false,
                         profile: null,
                         hasBeenPromptedForGoals: false,
+                        userFirstMealStatus: {}, // Clear first meal status on logout
                         macrosPreferences: {
                             protein_target: 0,
                             carbs_target: 0,
@@ -340,6 +346,20 @@ const useStore = create<AppState>()(
             hasBeenPromptedForGoals: false,
             setHasBeenPromptedForGoals: (prompted) => set({ hasBeenPromptedForGoals: prompted }),
 
+            // Has logged first meal (per user)
+            userFirstMealStatus: {},
+            setUserFirstMealStatus: (email: string, hasLogged: boolean) => 
+                set((state) => ({
+                    userFirstMealStatus: {
+                        ...state.userFirstMealStatus,
+                        [email]: hasLogged
+                    }
+                })),
+            hasLoggedFirstMeal: (email: string) => {
+                const state = get();
+                return state.userFirstMealStatus[email] || false;
+            },
+
             // Macros preferences
             macrosPreferences: {
                 protein_target: 0,
@@ -406,6 +426,7 @@ const useStore = create<AppState>()(
                 loggedMeals: state.loggedMeals,
                 profile: state.profile,
                 hasBeenPromptedForGoals: state.hasBeenPromptedForGoals,
+                userFirstMealStatus: state.userFirstMealStatus,
                 macrosPreferences: state.macrosPreferences,
                 todayProgress: state.todayProgress,
                 todayMealsSum: state.todayMealsSum,
