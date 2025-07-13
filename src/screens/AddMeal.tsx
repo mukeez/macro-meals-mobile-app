@@ -301,7 +301,7 @@ const AddMeal: React.FC = () => {
                       <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
                      { meal.photo_url ?
                        <ExpoImage
-                        placeholder={appConstants.blurhash}
+                        placeholder={IMAGE_CONSTANTS.blurhash}
                         cachePolicy="disk"
                         contentFit="cover"
                         transition={300}

@@ -16,7 +16,7 @@ export type RootStackParamList = {
     Login: undefined;
     SignUp: undefined;
     MacroInput: undefined;
-     ForgotPasswordScreen: { source: string };
+    ForgotPasswordScreen: { source: string };
     VerificationScreen: { email: string; source: string };
     ResetPassword: { email: string; session_token: string; otp: string; source: string }; 
     MealList: undefined;
@@ -102,4 +102,5 @@ export type RootStackParamList = {
             photo_url?: string | null;
         };
     };
+    NotificationsScreen: undefined;
 };

@@ -28,6 +28,9 @@ import ProfileSection from "src/components/ProfileSection";
 import SectionItem from "src/components/SectionItem";
 import { userService } from "../services/userService";
 import ContactSupportDrawer from "./ContactSupportDrawer";
+import EditableAvatar from "src/components/EditableAvatar";
+import * as ImagePicker from "expo-image-picker";
+import handleEditAvatar from "src/services/handleEditAvatar";
 import { useMixpanel } from '@macro-meals/mixpanel';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -44,7 +47,10 @@ export const SettingsScreen: React.FC = () => {
   const logout = useStore((state) => state.logout);
   const setAuthenticated = useStore((state) => state.setAuthenticated);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const mixpanel = useMixpanel();
+
   // Local state for settings
   const [units, setUnits] = useState<string>("g/kcal");
   // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -219,14 +225,12 @@ export const SettingsScreen: React.FC = () => {
   const handleModalSheet = () => {
     navigation.navigate("PaymentScreen" as never);
   };
-
   const openEmail = () => {
-    let url = `mailto:${appConstants.email.to}`;
+    const { email } = appConstants();
 
-    const subject = `?subject=${encodeURIComponent(
-      appConstants.email.subject
-    )}`;
-    const body = `&body=${encodeURIComponent(appConstants.email.body)}`;
+    let url = `mailto:${email.to}`;
+   const subject = `?subject=${encodeURIComponent(email.subject)}`;
+    const body = `&body=${encodeURIComponent(email.body)}`;
     url += subject + body;
     Linking.openURL(url).catch((err) =>
       console.error("Error opening email", err)
@@ -259,10 +263,6 @@ export const SettingsScreen: React.FC = () => {
             try {
               await authService.logout();
               setAuthenticated(false, "", "");
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "Welcome" }],
-              });
             } catch (error) {
               console.error("Delete account error:", error);
             }
@@ -292,12 +292,10 @@ export const SettingsScreen: React.FC = () => {
             Profile
           </Text>
           <View className="bg-white flex-row items-center mb-1">
-            <View className="w-[70px] h-[70px] rounded-full bg-[#5B37B7] justify-center items-center mr-4">
-              <Text className="text-2xl">👤</Text>
-            </View>
+            <EditableAvatar size={70} style={{ marginRight: 16 }} />
             <View className="flex-1 justify-center">
               <Text className="text-lg font-medium text-[#333] mb-1">
-                {userData?.email}
+                {userData?.first_name || userData?.email}
               </Text>
               <Text className="text-base text-[#666]">
                 {userData?.age} years old

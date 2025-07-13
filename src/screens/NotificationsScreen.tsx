@@ -77,7 +77,7 @@ const NotificationsScreen: React.FC = () => {
       try {
         setLoading(true);
         const data = await notificationService.getNotifications();
-        // Assume API returns [{ id, text, timestamp, read }, ...]
+        console.log("Fetched notifications:", data);
         const formatted = (data ?? []).map((n: any) => ({
           ...n,
           timestamp: n.timestamp ? new Date(n.timestamp) : new Date(),
@@ -154,6 +154,17 @@ const NotificationsScreen: React.FC = () => {
         <Header title="Notifications" />
         <View className="flex-1 items-center justify-center">
           <Text className="text-red-600">{error}</Text>
+        </View>
+      </CustomSafeAreaView>
+    );
+  }
+  // Empty state handling
+  if (notifications.length === 0) {
+    return (
+      <CustomSafeAreaView>
+        <Header title="Notifications" />
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-gray-400 text-base">No notifications yet</Text>
         </View>
       </CustomSafeAreaView>
     );

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -211,19 +212,20 @@ export const ResetPasswordScreen: React.FC = () => {
                 }}
                 secureTextEntry={!showPassword}
               />
-              <MaterialIcons
-                style={{
-                  position: "absolute",
-                  right: 16,
-                  top: "50%",
-                  marginTop: -12,
-                  zIndex: 10,
-                }}
-                name={isPasswordVisible ? "visibility" : "visibility-off"}
-                size={24}
-                color="#000"
-                onPress={togglePasswordVisibility}
-              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((v) => !v)}
+                className="absolute right-4 bottom-[30%]"
+              >
+                <Image
+                  source={
+                    showPassword
+                      ? require("../../assets/visibility-on-icon.png")
+                      : require("../../assets/visibility-off-icon.png")
+                  }
+                  className="w-6 h-6 ml-2"
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
             {touched.password && errors.password ? (
               <Text className="text-[#ff6b6b] text-sm mb-3">
@@ -250,19 +252,20 @@ export const ResetPasswordScreen: React.FC = () => {
               }}
               secureTextEntry={!showConfirmPassword}
             />
-            <MaterialIcons
-              style={{
-                position: "absolute",
-                right: 16,
-                top: "50%",
-                marginTop: -12,
-                zIndex: 10,
-              }}
-              name={isPasswordVisible ? "visibility" : "visibility-off"}
-              size={24}
-              color="#000"
-              onPress={toggleConfirmPasswordVisibility}
-            />
+            <TouchableOpacity
+              onPress={() => setShowConfirmPassword((v) => !v)}
+              className="absolute right-4 bottom-[30%]"
+            >
+              <Image
+                source={
+                  showConfirmPassword
+                    ? require("../../assets/visibility-on-icon.png")
+                    : require("../../assets/visibility-off-icon.png")
+                }
+                className="w-6 h-6 ml-2"
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
           </View>
           {touched.confirmPassword && errors.confirmPassword ? (
             <Text className="text-[#ff6b6b] text-sm mb-3">

@@ -472,7 +472,7 @@ export const EditMealScreen: React.FC = () => {
                         {analyzedData?.photo_url ? (
                             <ExpoImage
                                 source={{ uri: analyzedData.photo_url }}
-                                placeholder={appConstants.blurhash}
+                                placeholder={IMAGE_CONSTANTS.blurhash}
                                 cachePolicy="disk"
                                 contentFit="cover"
                                 transition={300}
