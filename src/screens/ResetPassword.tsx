@@ -88,6 +88,14 @@ export const ResetPasswordScreen: React.FC = () => {
       session_token: routeSessionToken,
       password: password,
     };
+    
+    console.log("Sending reset password data:", {
+      email: resetPasswordData.email,
+      session_token: resetPasswordData.session_token ? `${resetPasswordData.session_token.substring(0, 10)}...` : 'undefined',
+      password: resetPasswordData.password ? `${resetPasswordData.password.substring(0, 3)}...` : 'undefined',
+      password_length: resetPasswordData.password?.length
+    });
+    
     try {
       const response = await authService.resetPassword(resetPasswordData);
       console.log("response", response);
@@ -98,7 +106,35 @@ export const ResetPasswordScreen: React.FC = () => {
       }
     } catch (error) {
       console.error("Password reset error:", error);
-      Alert.alert("Error", "Failed to reset password: " + error);
+      
+      // Log the full error response for debugging
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        console.log("Full error response:", {
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText,
+          data: axiosError.response?.data,
+          headers: axiosError.response?.headers
+        });
+      }
+      
+      // Extract error message from Axios error response
+      let errorMessage = "Failed to reset password. Please try again.";
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail;
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
