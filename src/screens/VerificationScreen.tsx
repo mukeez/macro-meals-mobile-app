@@ -196,8 +196,7 @@ export const VerificationScreen: React.FC = () => {
               isLoading={isLoading}
             />
           </View>
-        </View>
-        <View className="mt-2 items-center">
+          <View className="mt-2 items-center">
           {!canResend ? (
             <Text className="text-textMediumGrey">
               Resend code in {countdown}s
@@ -208,6 +207,8 @@ export const VerificationScreen: React.FC = () => {
             </TouchableOpacity>
           )}
         </View>
+        </View>
+        
       </KeyboardAvoidingView>
     </CustomSafeAreaView>
   );
