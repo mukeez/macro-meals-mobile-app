@@ -198,9 +198,17 @@ export const authService = {
     },
     
 
-    resetPassword: async (resetPasswordData: { email: string, session_token: string, new_password: string }) => {
+    resetPassword: async (resetPasswordData: { email: string, session_token: string, password: string }) => {
         try {
+            console.log('AuthService: Sending reset password request with data:', {
+                email: resetPasswordData.email,
+                session_token: resetPasswordData.session_token ? `${resetPasswordData.session_token.substring(0, 10)}...` : 'undefined',
+                password: resetPasswordData.password ? `${resetPasswordData.password.substring(0, 3)}...` : 'undefined',
+                password_length: resetPasswordData.password?.length
+            });
+            
             const response = await axiosInstance.post('/auth/reset-password', resetPasswordData);
+            console.log('AuthService: Reset password response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Password reset error:', error);
