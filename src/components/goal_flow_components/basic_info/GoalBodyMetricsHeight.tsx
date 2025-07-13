@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Switch } from 'react-native';
+import { View, Text, Switch, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 
@@ -80,7 +80,7 @@ export const GoalBodyMetricsHeight = () => {
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>
             <View className="flex-row">
-              <View className="border-b-2 border-blue-500 mx-2">
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
                 <Picker
                   selectedValue={heightFt}
                   style={{ width: 100, height: 50 }}
@@ -93,7 +93,7 @@ export const GoalBodyMetricsHeight = () => {
                   ))}
                 </Picker>
               </View>
-              <View className="border-b-2 border-blue-500 mx-2">
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
                 <Picker
                   selectedValue={heightIn}
                   style={{ width: 100, height: 50 }}
@@ -113,7 +113,7 @@ export const GoalBodyMetricsHeight = () => {
         <View className="flex-row justify-between">
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>
-            <View className="border-b-2 border-blue-500">
+            <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'}`}>
               <Picker
                 selectedValue={heightCm}
                 style={{ width: 140, height: 50 }}

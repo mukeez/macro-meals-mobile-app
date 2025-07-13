@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Switch } from 'react-native';
+import { View, Text, Switch, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 
@@ -66,7 +66,7 @@ export const GoalBodyMetricsWeight = () => {
           </View> */}
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Weight</Text>
-            <View className="border-b-2 border-blue-500 mx-2">
+            <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
             <Picker
               selectedValue={weightLb}
               style={{ width: 120, height: 50 }}
@@ -99,7 +99,7 @@ export const GoalBodyMetricsWeight = () => {
           </View> */}
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Weight</Text>
-            <View className="border-b-2 border-blue-500 mx-2 pb-2">
+            <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2 pb-2`}>
             <Picker
               selectedValue={weightKg}
               style={{ width: 120, height: 50 }}

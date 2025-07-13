@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, Image, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, Image, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
@@ -76,7 +76,7 @@ export const GoalsTargetWeight: React.FC = () => {
           </View>
           <View className="items-center">
             {weight_unit_preference === 'imperial' ? (
-              <View className="border-b-2 border-blue-500 mx-2">
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
                 <Picker
                   selectedValue={weight}
                   style={{ width: 120, height: 50 }}
@@ -90,7 +90,7 @@ export const GoalsTargetWeight: React.FC = () => {
                 </Picker>
               </View>
             ) : (
-              <View className="border-b-2 border-blue-500 mx-2">
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
                 <Picker
                   selectedValue={weight}
                   style={{ width: 120, height: 50 }}
