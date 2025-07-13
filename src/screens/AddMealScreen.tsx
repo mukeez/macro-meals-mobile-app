@@ -41,8 +41,10 @@ interface RouteParams {
         meal_type?: string;
         meal_time?: string;
         amount?: number;
+        read_only?: boolean;
         logging_mode?: string;
         hideImage?: boolean;
+        photo?: string;
     };
 }
 
@@ -124,7 +126,11 @@ export const AddMealScreen: React.FC = () => {
             setMealType(analyzedData.meal_type || 'breakfast');
             setAmount(analyzedData.amount?.toString() || '1');
             setLoggingMode(analyzedData.logging_mode || 'manual');
-
+            
+            // Set the photo if available from SnapMealScreen
+            if (analyzedData.photo) {
+                setMealImage(analyzedData.photo);
+            }
         }
     }, [analyzedData]);
 
@@ -649,13 +655,14 @@ export const AddMealScreen: React.FC = () => {
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Serving Size</Text>
                             <TouchableOpacity
+                                disabled={analyzedData?.read_only}
                                 onPress={() => {
                                     setTempServingUnit(servingUnit);
                                     setShowServingUnitModal(true);
                                 }}
                                 className="flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white"
                             >
-                                <Text className="flex-1 text-base text-[#222]">{servingUnit}</Text>
+                                <Text className={`flex-1 text-base ${analyzedData?.read_only ? 'text-[#8e929a]' : 'text-[#222]'}`}>{servingUnit}</Text>
                                 <Image 
                                     source={IMAGE_CONSTANTS.chevronRightIcon} 
                                     className="w-4 h-4" 

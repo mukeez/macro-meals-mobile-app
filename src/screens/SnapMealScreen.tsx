@@ -87,6 +87,7 @@ const SnapMealScreen = () => {
                         fat: data.items[0].fat,
                         amount: data.items[0].amount,
                         serving_unit: data.items[0].serving_unit,
+                        read_only: true,
                         logging_mode: 'scanned',
                         photo: photo.uri,
                     }
