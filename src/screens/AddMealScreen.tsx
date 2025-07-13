@@ -282,6 +282,12 @@ export const AddMealScreen: React.FC = () => {
             // Send the request
             await mealService.logMeal(mealRequest);
 
+            // Set first meal status for this user
+            const userEmail = useStore.getState().profile?.email;
+            if (userEmail) {
+                useStore.getState().setUserFirstMealStatus(userEmail, true);
+            }
+
             // Track meal logging
             mixpanel?.track({
                 name: 'meal_logged',
