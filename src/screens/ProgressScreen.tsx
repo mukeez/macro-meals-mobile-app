@@ -27,7 +27,7 @@ const dateRanges = [
   { label: "3m", value: "3m" },
   { label: "6m", value: "6m" },
   { label: "1y", value: "1y" },
-  { label: "All", value: "all" },
+
 ];
 
 interface MacroBarData {
