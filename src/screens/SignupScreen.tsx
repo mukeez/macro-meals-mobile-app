@@ -148,7 +148,17 @@ export const SignupScreen: React.FC = () => {
   } catch (error) {
     let errorMessage = "Failed to create account";
 
-    if (error instanceof Error) {
+    // Extract error message from Axios error response
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as any;
+      if (axiosError.response?.data?.detail) {
+        errorMessage = axiosError.response.data.detail;
+      } else if (axiosError.response?.data?.message) {
+        errorMessage = axiosError.response.data.message;
+      } else if (axiosError.message) {
+        errorMessage = axiosError.message;
+      }
+    } else if (error instanceof Error) {
       if (error.message.includes("email")) {
         errorMessage =
           "This email is already registered. Please use a different email or log in.";

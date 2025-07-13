@@ -150,9 +150,27 @@ export const LoginScreen: React.FC = () => {
             setAuthenticated(false, '', '');
             setHasMacros(false);
             setReadyForDashboard(false);
+            console.log('Login failed:', error);
+            
+            // Extract error message from Axios error response
+            let errorMessage = 'Invalid email or password. Please try again.';
+            
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as any;
+                if (axiosError.response?.data?.detail) {
+                    errorMessage = axiosError.response.data.detail;
+                } else if (axiosError.response?.data?.message) {
+                    errorMessage = axiosError.response.data.message;
+                } else if (axiosError.message) {
+                    errorMessage = axiosError.message;
+                }
+            } else if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            
             Alert.alert(
                 'Login Failed',
-                error instanceof Error ? error.message : 'Invalid email or password. Please try again.',
+                errorMessage,
                 [{ text: 'OK' }]
             );
         } finally {
