@@ -11,6 +11,7 @@ const nonAuthEndpoints = [
   '/auth/reset-password',
   '/auth/verify-code',
   '/auth/verify-email',
+  '/auth/reset-password',
   '/auth/refresh',
   '/auth/google',
   '/auth/apple',
