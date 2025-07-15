@@ -14,6 +14,7 @@ import Header from "../components/Header";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { CircularProgress } from "../components/CircularProgress";
 import { userService } from "src/services/userService";
+import { updateMacros } from "src/services/macroService";
 
 // Backend key to UI label mapping
 const macroConfig = [
@@ -70,7 +71,7 @@ const AdjustTargetsScreen: React.FC = () => {
     setLoading(true);
     try {
       const updated = { ...preferences, [selectedMacro.key]: num };
-      await userService.updatePreferences(updated);
+      await updateMacros(updated);
       setPreferences(updated);
       closeModal();
     } catch (err) {

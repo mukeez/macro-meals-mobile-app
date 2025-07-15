@@ -245,7 +245,7 @@ uploadProfileImage: async (imageUri: string, authToken: string) => {
   const match = /\.(\w+)$/.exec(filename);
   const type = match ? `image/${match[1]}` : `image`;
 
-  formData.append('profile_image', {
+  formData.append('avatar', {
     uri: imageUri,
     name: filename,
     type: type,
