@@ -41,11 +41,11 @@ export const authService = {
             } else {
                 console.log('No stored FCM token, attempting to get a new one...');
                 try {
-                fcmToken = await pushNotifications.getFCMToken();
-                if (fcmToken) {
-                    await AsyncStorage.setItem('fcm_token', fcmToken);
+                    fcmToken = await pushNotifications.getFCMToken();
+                    if (fcmToken) {
+                        await AsyncStorage.setItem('fcm_token', fcmToken);
                         console.log('New FCM token obtained and stored:', fcmToken);
-                } else {
+                    } else {
                         console.log('Failed to get new FCM token, continuing without push notifications');
                     }
                 } catch (error) {
@@ -81,8 +81,8 @@ export const authService = {
     signup: async (data: SignupData) => {
         try {
             const response = await axiosInstance.post('/auth/signup', {
-                    email: data.email,
-                    password: data.password,
+                email: data.email,
+                password: data.password,
             });
 
             return response.data.user.id;
@@ -255,7 +255,7 @@ export const authService = {
         }
     },
     
-       resendEmailVerification: async (params: { email: string }) => {
+    resendEmailVerification: async (params: { email: string }) => {
         try {
             const response = await axiosInstance.post('/auth/resend-verification', params);
             return response.data;
