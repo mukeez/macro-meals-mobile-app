@@ -228,87 +228,95 @@ export const LoginScreen: React.FC = () => {
         <CustomSafeAreaView className="flex-1 bg-white" edges={['left', 'right']}>
             <KeyboardAvoidingView
                 className="flex-1"
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-            <ScrollView className="flex-1 relative p-6" contentContainerStyle={{ flexGrow: 1 }}>
-                <Text className="text-3xl font-medium text-black mb-2">Access your account</Text>
-                <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Sign in to track your macros and view personalized meal suggestions.</Text>
+                <ScrollView 
+                    className="flex-1 p-6" 
+                    contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View className="flex-1">
+                        <Text className="text-3xl font-medium text-black mb-2">Access your account</Text>
+                        <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">Sign in to track your macros and view personalized meal suggestions.</Text>
 
-                <View className="w-full">
-                    <View className={`${errors.email ? 'border border-red-500 rounded-md' : ''}`}>  
-                        <TextInput
-                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChangeText={(text) => {
-                                setEmail(text);
-                                // Validate email on change
-                                if (!text) {
-                                    setErrors(prev => ({ ...prev, email: 'Email is required' }));
-                                } else if (!/\S+@\S+\.\S+/.test(text)) {
-                                    setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
-                                } else {
-                                    setErrors(prev => ({ ...prev, email: '' }));
-                                }
-                            }}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                            textContentType="emailAddress"
-                            spellCheck={false}
-                            autoComplete="email"
-                        />
-                        
+                        <View className="w-full">
+                            <View className={`${errors.email ? 'border border-red-500 rounded-md' : ''}`}>  
+                                <TextInput
+                                    className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                                    placeholder="Enter your email"
+                                    placeholderTextColor="#9CA3AF"
+                                    value={email}
+                                    onChangeText={(text) => {
+                                        setEmail(text);
+                                        // Validate email on change
+                                        if (!text) {
+                                            setErrors(prev => ({ ...prev, email: 'Email is required' }));
+                                        } else if (!/\S+@\S+\.\S+/.test(text)) {
+                                            setErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+                                        } else {
+                                            setErrors(prev => ({ ...prev, email: '' }));
+                                        }
+                                    }}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    textContentType="emailAddress"
+                                    spellCheck={false}
+                                    autoComplete="email"
+                                />
+                            </View>
+                            {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
+                            
+                            <View className={`relative mt-6 mb-4 ${errors.password ? 'border border-red-500 rounded-md' : ''}`}>    
+                                <TextInput
+                                    className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                                    placeholder="Enter password"
+                                    placeholderTextColor="#9CA3AF"
+                                    value={password}
+                                    onChangeText={(text) => {
+                                        setPassword(text);
+                                        if (errors.password) {
+                                            setErrors(prev => ({ ...prev, password: '' }));
+                                        }
+                                    }}
+                                    secureTextEntry={!showPassword}
+                                />
+                                <MaterialIcons style={{ position: 'absolute', right: 16, top: 34 }} name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
+                            </View>
+                            {errors.password ? <Text className='text-red-500 text-sm mt-2 mb-2'>{errors.password}</Text> : null}
+                            <TouchableOpacity className="mb-4" onPress={() => (navigation as any).navigate('ForgotPasswordScreen')}>
+                                <Text className="text-[14px] text-primary font-medium">Forgot Password?</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                    {errors.email ? <Text className='text-red-500 text-sm mt-2'>{errors.email}</Text> : null}
-                    
-                    <View className={`relative mt-6 mb-4 ${errors.password ? 'border border-red-500 rounded-md' : ''}`}>    
-                        <TextInput
-                            className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-                            placeholder="Enter password"
-                            value={password}
-                            onChangeText={(text) => {
-                                setPassword(text);
-                                if (errors.password) {
-                                    setErrors(prev => ({ ...prev, password: '' }));
-                                }
-                            }}
-                            secureTextEntry={!showPassword}
-                        />
-                        <MaterialIcons style={{ position: 'absolute', right: 16, top: 34 }} name={isPasswordVisible ? 'visibility' : 'visibility-off'} size={24} color='#000' onPress={togglePasswordVisibility} />
-                       
-                    </View>
-                    {errors.password ? <Text className='text-red-500 text-sm mt-2 mb-2'>{errors.password}</Text> : null}
-                    <TouchableOpacity className="mb-4" onPress={() => (navigation as any).navigate('ForgotPasswordScreen')}>
-                        <Text className="text-[14px] text-primary font-medium">Forgot Password?</Text>
-                    </TouchableOpacity>
-                </View>
 
-                <View className="absolute bottom-0 w-full">
-                    <View className="w-full items-center">
-                        <CustomTouchableOpacityButton 
-                            className={`h-[54px] w-full items-center justify-center bg-primary rounded-[100px] ${isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email) ? 'opacity-50' : ''}`} 
-                            title="Sign in"
-                            textClassName="text-white text-[17px] font-semibold"
-                            disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
-                            onPress={handleLogin}
-                            isLoading={isLoading}
-                        />
-                    </View>
-                    <View className="items-center justify-center px-6 mt-2">
-                        <Text className="text-[17px] text-center text-gray-600 flex-wrap">
-                            Don't have an account?{' '}
-                            <Text 
-                                className="text-base text-primary font-medium"
-                                onPress={() => navigation.navigate('SignupScreen')}
-                            >
-                                Sign up
+                    <View className="w-full mt-8">
+                        <View className="w-full items-center">
+                            <CustomTouchableOpacityButton 
+                                className={`h-[54px] w-full items-center justify-center bg-primary rounded-[100px] ${isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email) ? 'opacity-50' : ''}`} 
+                                title="Sign in"
+                                textClassName="text-white text-[17px] font-semibold"
+                                disabled={isLoading || !email || !password || password.length < 8 || !/\S+@\S+\.\S+/.test(email)} 
+                                onPress={handleLogin}
+                                isLoading={isLoading}
+                            />
+                        </View>
+                        <View className="items-center justify-center px-6 mt-2">
+                            <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+                                Don't have an account?{' '}
+                                <Text 
+                                    className="text-base text-primary font-medium"
+                                    onPress={() => navigation.navigate('SignupScreen')}
+                                >
+                                    Sign up
+                                </Text>
                             </Text>
-                        </Text>
+                        </View>
                     </View>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </CustomSafeAreaView>
     );
 };
