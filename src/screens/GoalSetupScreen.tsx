@@ -15,6 +15,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 import useStore from 'src/store/useStore';
+import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
+import { HasMacrosContext } from '../contexts/HasMacrosContext';
+import { useContext } from 'react';
 
 
 
@@ -26,6 +29,27 @@ export const GoalSetupScreen: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
     const { completed, majorStep, setMajorStep, setSubStep, navigateToMajorStep } = useGoalsFlowStore();
     const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
+    const { getValue, debugLogAllValues } = useRemoteConfigContext();
+    const { setReadyForDashboard } = useContext(HasMacrosContext);
+    const devMode = getValue('dev_mode').asBoolean();
+    
+    // Debug: Test force_update variable
+    React.useEffect(() => {
+        try {
+            const forceUpdateValue = getValue('force_update');
+            console.log('[GOAL SETUP] 🔧 force_update value:', {
+                stringValue: forceUpdateValue.asString(),
+                booleanValue: forceUpdateValue.asBoolean(),
+                numberValue: forceUpdateValue.asNumber(),
+                source: forceUpdateValue.getSource()
+            });
+        } catch (error) {
+            console.error('[GOAL SETUP] ❌ Error getting force_update:', error);
+        }
+        
+        // Also log all available values
+        debugLogAllValues();
+    }, [getValue, debugLogAllValues]);
     return (
         <CustomSafeAreaView className="flex-1 bg-white" edges={['left', 'right']}>
             <ScrollView className="relative flex-1 mx-4" contentContainerStyle={{ flexGrow: 1 }}>
@@ -99,9 +123,16 @@ export const GoalSetupScreen: React.FC = () => {
                 onPress={() => {
                     const allCompleted = completed[0]?.every(Boolean) && completed[1]?.every(Boolean) && completed[2]?.every(Boolean);
                     if (allCompleted) {
-                        navigation.navigate('PaymentScreen');
-                        setHasBeenPromptedForGoals(false);
-                        return;
+                        if (devMode) {
+                            // In dev mode, bypass PaymentScreen and go directly to dashboard
+                            setHasBeenPromptedForGoals(false);
+                            setReadyForDashboard(true);
+                            return;
+                        } else {
+                            navigation.navigate('PaymentScreen');
+                            setHasBeenPromptedForGoals(false);
+                            return;
+                        }
                     }
                     if (completed[majorStep]?.every(Boolean) && majorStep < 2) {
                         setMajorStep(majorStep + 1);

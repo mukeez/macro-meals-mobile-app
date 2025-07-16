@@ -24,6 +24,8 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
     goal: undefined,
     unitSystem: 'Metric',
     has_macros: false,
+    dietary_preference: '',
+    dietary_restrictions: [],
 };
 
 // Add Profile interface

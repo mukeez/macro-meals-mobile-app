@@ -14,6 +14,7 @@ import { appConstants } from "constants/appConstants";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const FILTER_OPTIONS = [
+  { label: "Yesterday", value: "yesterday" },
   { label: "Today", value: "today" },
   { label: "1 week", value: "1w" },
   { label: "1 month", value: "1m" },
@@ -23,8 +24,14 @@ const FILTER_OPTIONS = [
 function getStartEndDates(range: string): { startDate: string; endDate: string } {
   const today = new Date();
   let startDate = new Date(today);
+  let endDate = new Date(today);
+  
   switch (range) {
     case "today":
+      break;
+    case "yesterday":
+      startDate.setDate(today.getDate() - 1);
+      endDate.setDate(today.getDate() - 1);
       break;
     case "1w":
       startDate.setDate(today.getDate() - 6);
@@ -36,7 +43,7 @@ function getStartEndDates(range: string): { startDate: string; endDate: string }
       break;
   }
   const format = (date: Date) => date.toISOString().split("T")[0];
-  return { startDate: format(startDate), endDate: format(today) };
+  return { startDate: format(startDate), endDate: format(endDate) };
 }
 
 const macroData = [
@@ -75,8 +82,8 @@ const AddMeal: React.FC = () => {
     calories: macrosPreferences?.calorie_target || 0,
   };
 
-  // Calculate today's total macros from meals (same as DashboardScreen)
-  const todayMealsSum = meals.reduce(
+  // Calculate total macros from meals for the selected period
+  const periodMealsSum = meals.reduce(
     (acc, meal) => ({
       carbs: acc.carbs + (meal.carbs || 0),
       fat: acc.fat + (meal.fat || 0),
@@ -85,6 +92,15 @@ const AddMeal: React.FC = () => {
     }),
     { carbs: 0, fat: 0, protein: 0, calories: 0 }
   );
+
+  // Calculate the difference between target and consumed calories for the selected period
+  const getCaloriesDifference = () => {
+    const targetCalories = macros.calories;
+    const consumedCalories = periodMealsSum.calories;
+    const difference = Math.max(0, targetCalories - consumedCalories);
+    
+    return difference;
+  };
 
   const fetchMeals = async () => {
     const { startDate, endDate } = getStartEndDates(selectedRange);
@@ -230,7 +246,7 @@ const AddMeal: React.FC = () => {
         <View className="bg-white/20 rounded-2xl mt-3 px-4 py-4">
           <View className="flex-row items-center justify-start mb-3">
             <Text className="text-white text-base font-medium">
-              Calories remaining ({Math.max(0, macros.calories - consumed.calories)})
+              Calories remaining ({getCaloriesDifference()})
             </Text>
           </View>
           <View className="flex-row items-center justify-between w-full">
@@ -238,16 +254,16 @@ const AddMeal: React.FC = () => {
               <View key={macro.label} className="flex-col items-center justify-center">
                 <Text className="text-white text-[11px] font-medium mb-1">
                   {macro.key === 'calories' 
-                    ? `${todayMealsSum.calories}/${macros.calories}`
-                    : `${todayMealsSum[macro.key]}/${macros[macro.key]}`
+                    ? `${periodMealsSum.calories}/${macros.calories}`
+                    : `${periodMealsSum[macro.key]}/${macros[macro.key]}`
                   }
                 </Text>
                 <LinearProgress
                   width={78}
                   progress={
                     macro.key === 'calories' 
-                      ? (todayMealsSum.calories / (macros.calories || 1)) * 100
-                      : (todayMealsSum[macro.key] / (macros[macro.key] || 1)) * 100
+                      ? (periodMealsSum.calories / (macros.calories || 1)) * 100
+                      : (periodMealsSum[macro.key] / (macros[macro.key] || 1)) * 100
                   }
                   color={macro.color}
                   backgroundColor="#E5E5E5"
