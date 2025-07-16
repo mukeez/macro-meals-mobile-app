@@ -20,7 +20,7 @@ const nonAuthEndpoints = [
 
 const axiosInstance = axios.create({
   baseURL: API_CONFIG.BASE_URL,
-  timeout: 15000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
