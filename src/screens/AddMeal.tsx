@@ -191,15 +191,16 @@ const AddMeal: React.FC = () => {
         {
           title: "Filter your meals",
           message: "Select a time frame to view your meals over time.",
-          options: ["Today", "1 week", "1 month", "Custom", "Cancel"],
+          options: ["Today", "Yesterday", "1 week", "1 month", "Custom", "Cancel"],
           cancelButtonIndex: 4,
           destructiveButtonIndex: undefined,
         },
         (buttonIndex) => {
           if (buttonIndex === 0) setSelectedRange("today");
-          else if (buttonIndex === 1) setSelectedRange("1w");
-          else if (buttonIndex === 2) setSelectedRange("1m");
-          else if (buttonIndex === 3) setSelectedRange("custom");
+          else if (buttonIndex === 1) setSelectedRange("yesterday");
+          else if (buttonIndex === 2) setSelectedRange("1w");
+          else if (buttonIndex === 3) setSelectedRange("1m");
+          else if (buttonIndex === 4) setSelectedRange("custom");
           // Cancel does nothing
         }
       );
@@ -389,7 +390,22 @@ const AddMeal: React.FC = () => {
                           </View>
                           <View className="flex-row items-center mb-2">
                             <Text className="text-sm text-textMediumGrey text-center font-medium mr-2">
-                              {meal.meal_time ? new Date(meal.meal_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                              {meal.meal_time ? (() => {
+                                const date = new Date(meal.meal_time);
+                                if (selectedRange === '1w' || selectedRange === '1m') {
+                                  return date.toLocaleDateString([], { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  });
+                                } else {
+                                  return date.toLocaleTimeString([], { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  });
+                                }
+                              })() : 'N/A'}
                             </Text>
                             <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
                             <Image
