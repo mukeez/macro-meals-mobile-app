@@ -126,7 +126,7 @@ export const AddMealScreen: React.FC = () => {
             setMealType(analyzedData.meal_type || 'breakfast');
             setAmount(analyzedData.amount?.toString() || '1');
             setLoggingMode(analyzedData.logging_mode || 'manual');
-            
+
             // Set the photo if available from SnapMealScreen
             if (analyzedData.photo) {
                 setMealImage(analyzedData.photo);
@@ -458,24 +458,24 @@ export const AddMealScreen: React.FC = () => {
                     contentContainerStyle={{ paddingBottom: 40 }}
                 >
                     {!analyzedData?.hideImage && (
-                        <TouchableOpacity
-                            className="h-[11.3rem] rounded-xl my-4 justify-center items-center bg-[#f3f3f3]"
-                            onPress={handleAddPhoto}
-                            activeOpacity={0.8}
-                        >
-                            {mealImage ? (
-                                <Image
-                                    source={{ uri: mealImage }}
-                                    className="w-full h-full rounded-xl"
-                                    resizeMode="cover"
-                                />
-                            ) : (
-                                <>
-                                    <Image source={IMAGE_CONSTANTS.galleryIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
-                                    <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
+                    <TouchableOpacity
+                        className="h-[11.3rem] rounded-xl my-4 justify-center items-center bg-[#f3f3f3]"
+                        onPress={handleAddPhoto}
+                        activeOpacity={0.8}
+                    >
+                        {mealImage ? (
+                            <Image
+                                source={{ uri: mealImage }}
+                                className="w-full h-full rounded-xl"
+                                resizeMode="cover"
+                            />
+                        ) : (
+                            <>
+                                <Image source={IMAGE_CONSTANTS.galleryIcon} className="w-12 h-12 mb-2 opacity-60" resizeMode="contain" />
+                                <Text className="text-base text-[#8e929a]">Add meal photo (optional)</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
                     )}
 
                     <View className="mb-4">
@@ -708,7 +708,7 @@ export const AddMealScreen: React.FC = () => {
 
                 <View className="mx-5 border-t border-gray">
                     <TouchableOpacity
-                        className={`bg-primaryLight mt-1 mb-1 rounded-full py-5 items-center ${!mealName.trim() ? 'opacity-50' : ''}`}
+                        className={`bg-primaryLight mt-1 mb-3 rounded-full py-5 items-center ${!mealName.trim() ? 'opacity-50' : ''}`}
                         onPress={handleAddMealLog}
                         disabled={loading || !mealName.trim()}
                     >
@@ -721,33 +721,56 @@ export const AddMealScreen: React.FC = () => {
                 </View>
             </KeyboardAvoidingView>
 
-            <Modal
-                visible={showTimeModal}
-                transparent
-                animationType="slide"
-                onRequestClose={handleTimeCancel}
-            >
-                <View className="flex-1 justify-end bg-black/40">
-                    <View className="bg-white rounded-t-xl p-4">
-                        <Text className="text-center text-base font-semibold mb-2">Select Time</Text>
-                        <DateTimePicker
-                            value={tempTime || new Date()}
-                            mode="time"
-                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                            onChange={handleTimeChange}
-                            style={{ alignSelf: 'center', height: 150 }}
-                        />
-                        <View className="flex-row justify-between mt-4">
-                            <TouchableOpacity onPress={handleTimeCancel} className="flex-1 items-center py-2">
-                                <Text className="text-lg text-blue-500">Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleTimeDone} className="flex-1 items-center py-2">
-                                <Text className="text-lg text-blue-500">Done</Text>
-                            </TouchableOpacity>
+            {Platform.OS === 'ios' ? (
+                <Modal
+                    visible={showTimeModal}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={handleTimeCancel}
+                >
+                    <View className="flex-1 justify-end bg-black/40">
+                        <View className="bg-white rounded-t-xl p-4">
+                            <Text className="text-center text-base font-semibold mb-2">Select Time</Text>
+                            <DateTimePicker
+                                value={tempTime || new Date()}
+                                mode="time"
+                                display="spinner"
+                                onChange={handleTimeChange}
+                                style={{ alignSelf: 'center', height: 150 }}
+                            />
+                            <View className="flex-row justify-between mt-4">
+                                <TouchableOpacity onPress={handleTimeCancel} className="flex-1 items-center py-2">
+                                    <Text className="text-lg text-blue-500">Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleTimeDone} className="flex-1 items-center py-2">
+                                    <Text className="text-lg text-blue-500">Done</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
+            ) : (
+                showTimeModal && (
+                    <DateTimePicker
+                        value={tempTime || new Date()}
+                        mode="time"
+                        display="default"
+                        onChange={(event, selectedTime) => {
+                            if (Platform.OS === 'android') {
+                                // On Android, immediately save the time when selected
+                                if (selectedTime) {
+                                    setTime(selectedTime);
+                                }
+                                // Always close the picker on Android after any interaction
+                                setShowTimeModal(false);
+                            } else {
+                                // On iOS, use temp state for spinner mode
+                                if (selectedTime) setTempTime(selectedTime);
+                            }
+                        }}
+                    />
+                )
+            )}
 
             <Modal
                 visible={showMealTypeModal}
@@ -801,8 +824,8 @@ export const AddMealScreen: React.FC = () => {
                         <Picker
                             selectedValue={tempServingUnit}
                             onValueChange={setTempServingUnit}
-                            style={{ width: '100%' }}
-                            itemStyle={{ fontSize: 18, height: 180 }}
+                            style={{ width: '100%', color: 'black' }}
+                            itemStyle={{ fontSize: 18, height: 180, color: 'black' }}
                         >
                             {SERVING_UNITS.map((unit) => (
                                 <Picker.Item key={unit} label={unit} value={unit} />

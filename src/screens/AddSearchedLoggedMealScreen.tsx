@@ -620,10 +620,10 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
                             selectedValue={tempServingUnit}
                             onValueChange={setTempServingUnit}
                             style={{ width: '100%' }}
-                            itemStyle={{ fontSize: 18, height: 180 }}
+                            itemStyle={{ fontSize: 18, height: 180, color: 'black' }}
                         >
                             {SERVING_UNITS.map((unit) => (
-                                <Picker.Item key={unit} label={unit} value={unit} />
+                                <Picker.Item key={unit} label={unit} value={unit} style={{ color: 'black' }} />
                             ))}
                         </Picker>
                         <View className="flex-row justify-between mt-4">
