@@ -13,42 +13,52 @@ import {
 import Header from "../components/Header";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { CircularProgress } from "../components/CircularProgress";
-import { userService } from "src/services/userService";
+import { fetchUserPreferences, updateMacros } from "src/services/macroService";
 
-// Backend key to UI label mapping
-const macroConfig = [
-  { label: "Protein", key: "protein_target", suffix: "g" },
-  { label: "Fat", key: "fat_target", suffix: "g" },
-  { label: "Carbs", key: "carbs_target", suffix: "g" },
+type MacroKey = "protein" | "fat" | "carbs";
+type MacroResponse = {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+};
+const macroConfig: { label: string; key: MacroKey; suffix: string }[] = [
+  { label: "Protein", key: "protein", suffix: "g" },
+  { label: "Fat", key: "fat", suffix: "g" },
+  { label: "Carbs", key: "carbs", suffix: "g" },
 ];
 
 const AdjustTargetsScreen: React.FC = () => {
-  const [preferences, setPreferences] = useState<any>(null);
+  const [macros, setMacros] = useState<MacroResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMacro, setSelectedMacro] = useState<any>(null);
   const [inputValue, setInputValue] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
 
-  // Fetch preferences on mount
+  // Fetch macros on mount
   useEffect(() => {
-    loadPreferences();
+    loadMacros();
   }, []);
 
-  const loadPreferences = async () => {
+  const loadMacros = async () => {
     setLoading(true);
     try {
-      const data = await userService.getPreferences();
-      setPreferences(data);
+      const data = await fetchUserPreferences();
+      setMacros(data);
     } catch (err) {
-      Alert.alert("Error", "Could not load preferences.");
+      Alert.alert("Error", "Could not load macro targets.");
     }
     setLoading(false);
   };
 
-  const openModal = (macro: any) => {
+  const openModal = (macro: {
+    label: string;
+    key: MacroKey;
+    suffix: string;
+  }) => {
     setSelectedMacro(macro);
-    setInputValue(preferences[macro.key]?.toString() ?? "");
+    setInputValue(macros?.[macro.key]?.toString() ?? "");
     setInputError(null);
     setModalVisible(true);
   };
@@ -69,17 +79,22 @@ const AdjustTargetsScreen: React.FC = () => {
     setInputError(null);
     setLoading(true);
     try {
-      const updated = { ...preferences, [selectedMacro.key]: num };
-      await userService.updatePreferences(updated);
-      setPreferences(updated);
+      if (!macros || !selectedMacro) throw new Error("Missing state");
+      // Build and send the new full macro object
+      const updatedMacros = {
+        ...macros,
+        [selectedMacro.key]: num,
+      };
+      await updateMacros(updatedMacros);
       closeModal();
+      await loadMacros(); // Refresh from backend after update
     } catch (err) {
       Alert.alert("Error", "Could not update macro target.");
     }
     setLoading(false);
   };
 
-  if (loading && !preferences) {
+  if (loading && !macros) {
     return (
       <CustomSafeAreaView>
         <View className="flex-1 justify-center items-center bg-[#f6f6f6]">
@@ -93,7 +108,6 @@ const AdjustTargetsScreen: React.FC = () => {
     <CustomSafeAreaView>
       <View className="flex-1 bg-[#f6f6f6]">
         <Header title="Adjust Targets" />
-
         <View className="bg-[#01675B] px-6 py-10 items-center">
           <Text className="text-white text-base font-semibold text-center mb-4">
             Your current goal
@@ -101,14 +115,13 @@ const AdjustTargetsScreen: React.FC = () => {
           <CircularProgress
             size={120}
             strokeWidth={8}
-            consumed={preferences?.calorie_target || 0}
-            total={preferences?.calorie_target || 0}
+            consumed={String(macros?.calories ?? 0)}
+            total={macros?.calories || 0}
             color="#fff"
             backgroundColor="rgba(255,255,255,0.2)"
             label="calories/day"
           />
         </View>
-
         <ScrollView
           className="flex-1 mt-3"
           showsVerticalScrollIndicator={false}
@@ -128,7 +141,7 @@ const AdjustTargetsScreen: React.FC = () => {
                   {macro.label}
                 </Text>
                 <Text className="text-[#009688] text-lg font-bold pr-6">
-                  {preferences?.[macro.key]}
+                  {macros?.[macro.key]}
                   {macro.suffix}
                 </Text>
               </View>
@@ -136,6 +149,7 @@ const AdjustTargetsScreen: React.FC = () => {
           ))}
         </ScrollView>
 
+        {/* Modal logic remains unchanged */}
         <Modal visible={modalVisible} transparent animationType="fade">
           <View className="flex-1 justify-center items-center bg-black/40">
             <View className="bg-white rounded-2xl px-6 pt-6 pb-4 w-11/12 max-w-md shadow-lg relative">
