@@ -365,13 +365,21 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => {}}
           />
-          <SectionItem
+          {/* <SectionItem
             title="Restore Purchases"
             image={IMAGE_CONSTANTS.restoreIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
             onPress={() => { navigation.navigate('PaymentScreen') }}
+          /> */}
+          <SectionItem
+            title="Manage Subscription"
+            image={IMAGE_CONSTANTS.restoreIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => { navigation.navigate('ManageSubscriptionsScreen') }}
           />
         </ProfileSection>
 

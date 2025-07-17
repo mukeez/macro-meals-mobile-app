@@ -20,7 +20,6 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
 
   constructor() {
     this.remoteConfigInstance = remoteConfig();
-    console.log('[REMOTE CONFIG] 🚀 Service instance created');
   }
 
   /**
@@ -28,12 +27,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    */
   async initialize(defaults?: RemoteConfigDefaults, settings?: ConfigSettings): Promise<void> {
     this.initializationStartTime = Date.now();
-    console.log('[REMOTE CONFIG] 🔧 Starting initialization...', {
-      hasDefaults: !!defaults,
-      hasSettings: !!settings,
-      defaultsKeys: defaults ? Object.keys(defaults) : [],
-      settings: settings ? { minimumFetchIntervalMillis: settings.minimumFetchIntervalMillis } : undefined
-    });
+
 
     try {
       // Set defaults if provided
@@ -52,31 +46,13 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
       // Log all available values after initialization
       try {
         const allParameters = this.getAll();
-        console.log('[REMOTE CONFIG] 📋 All available values after initialization:', {
-          totalParameters: Object.keys(allParameters).length,
-          parameterKeys: Object.keys(allParameters),
-          parameterDetails: Object.entries(allParameters).reduce((acc, [key, value]) => {
-            acc[key] = {
-              value: value.asString(),
-              source: value.getSource(),
-              valueType: typeof value.asString()
-            };
-            return acc;
-          }, {} as Record<string, any>)
-        });
+        
       } catch (error) {
         console.error('[REMOTE CONFIG] ❌ Failed to log all parameters:', error);
       }
       
       this.isInitialized = true;
       const initializationTime = Date.now() - this.initializationStartTime;
-      
-      console.log('[REMOTE CONFIG] ✅ Service initialized successfully', {
-        initializationTimeMs: initializationTime,
-        fetchedRemotely,
-        isInitialized: this.isInitialized,
-        activeListeners: this.listeners.size
-      });
     } catch (error) {
       const initializationTime = Date.now() - this.initializationStartTime;
       console.error('[REMOTE CONFIG] ❌ Failed to initialize service:', {
@@ -92,17 +68,9 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    * Set default values for remote config parameters
    */
   async setDefaults(defaults: RemoteConfigDefaults): Promise<void> {
-    console.log('[REMOTE CONFIG] 📝 Setting defaults...', {
-      defaultKeys: Object.keys(defaults),
-      defaultValues: Object.entries(defaults).reduce((acc, [key, value]) => {
-        acc[key] = typeof value === 'string' ? value : JSON.stringify(value);
-        return acc;
-      }, {} as Record<string, string>)
-    });
 
     try {
       await this.remoteConfigInstance.setDefaults(defaults);
-      console.log('[REMOTE CONFIG] ✅ Defaults set successfully');
     } catch (error) {
       console.error('[REMOTE CONFIG] ❌ Failed to set defaults:', {
         error: error instanceof Error ? error.message : String(error),
@@ -116,14 +84,10 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    * Set configuration settings
    */
   async setConfigSettings(settings: ConfigSettings): Promise<void> {
-    console.log('[REMOTE CONFIG] ⚙️ Updating config settings...', {
-      minimumFetchIntervalMillis: settings.minimumFetchIntervalMillis,
-      fetchTimeoutMillis: settings.fetchTimeoutMillis
-    });
 
     try {
       await this.remoteConfigInstance.setConfigSettings(settings);
-      console.log('[REMOTE CONFIG] ✅ Config settings updated successfully');
+
     } catch (error) {
       console.error('[REMOTE CONFIG] ❌ Failed to set config settings:', {
         error: error instanceof Error ? error.message : String(error),
@@ -138,23 +102,10 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    */
   async fetchAndActivate(): Promise<boolean> {
     const fetchStartTime = Date.now();
-    console.log('[REMOTE CONFIG] 🔄 Starting fetch and activate...');
 
     try {
       const fetchedRemotely = await this.remoteConfigInstance.fetchAndActivate();
       const fetchTime = Date.now() - fetchStartTime;
-      
-      if (fetchedRemotely) {
-        console.log('[REMOTE CONFIG] ✅ Values fetched and activated from backend', {
-          fetchTimeMs: fetchTime,
-          source: 'remote'
-        });
-      } else {
-        console.log('[REMOTE CONFIG] ℹ️ Values were already activated locally', {
-          fetchTimeMs: fetchTime,
-          source: 'local'
-        });
-      }
       
       this.retryAttempts = 0; // Reset retry attempts on success
       return fetchedRemotely;
@@ -174,10 +125,6 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    */
   async fetch(cacheExpirationSeconds?: number): Promise<void> {
     const fetchStartTime = Date.now();
-    console.log('[REMOTE CONFIG] 📥 Fetching values...', {
-      cacheExpirationSeconds,
-      hasCustomExpiration: cacheExpirationSeconds !== undefined
-    });
 
     try {
       if (cacheExpirationSeconds !== undefined) {
@@ -187,10 +134,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
       }
       
       const fetchTime = Date.now() - fetchStartTime;
-      console.log('[REMOTE CONFIG] ✅ Values fetched successfully', {
-        fetchTimeMs: fetchTime,
-        cacheExpirationSeconds
-      });
+
     } catch (error) {
       const fetchTime = Date.now() - fetchStartTime;
       console.error('[REMOTE CONFIG] ❌ Failed to fetch values:', {
@@ -207,16 +151,11 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    */
   async activate(): Promise<boolean> {
     const activateStartTime = Date.now();
-    console.log('[REMOTE CONFIG] 🔄 Activating values...');
 
     try {
       const activated = await this.remoteConfigInstance.activate();
       const activateTime = Date.now() - activateStartTime;
       
-      console.log('[REMOTE CONFIG] ✅ Values activated successfully', {
-        activated,
-        activateTimeMs: activateTime
-      });
       return activated;
     } catch (error) {
       const activateTime = Date.now() - activateStartTime;
@@ -237,13 +176,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
       const valueString = value.asString();
       const source = value.getSource();
       
-      console.log(`[REMOTE CONFIG] 📖 Retrieved value for '${key}':`, {
-        value: valueString,
-        source,
-        valueType: typeof valueString,
-        valueLength: valueString.length,
-        timestamp: new Date().toISOString()
-      });
+      
       
       return value;
     } catch (error) {
@@ -264,20 +197,12 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
       const parameters = this.remoteConfigInstance.getAll();
       const parameterKeys = Object.keys(parameters);
       
-      console.log('[REMOTE CONFIG] 📋 All parameters retrieved:', {
-        totalParameters: parameterKeys.length,
-        parameterKeys,
-        timestamp: new Date().toISOString()
-      });
+      
       
       // Log each parameter's details
       parameterKeys.forEach(key => {
         const value = parameters[key];
-        console.log(`[REMOTE CONFIG] 📋 Parameter '${key}':`, {
-          value: value.asString(),
-          source: value.getSource(),
-          valueType: typeof value.asString()
-        });
+
       });
       
       return parameters;
@@ -296,10 +221,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
   onConfigUpdated(callback: ConfigUpdateCallback): RemoteConfigListener {
     const listenerId = `listener_${Date.now()}_${Math.random()}`;
     
-    console.log('[REMOTE CONFIG] 👂 Registering config update listener:', {
-      listenerId,
-      totalListeners: this.listeners.size + 1
-    });
+    
     
     const wrappedCallback = async (event: any, error?: any) => {
       try {
@@ -313,11 +235,8 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
           
           // Handle specific error cases
           if (error.code === 'config_update_not_fetched') {
-            console.log('[REMOTE CONFIG] 🔄 Handling config_update_not_fetched error, attempting retry...', {
-              listenerId,
-              retryAttempts: this.retryAttempts
-            });
-            await this.handleConfigUpdateError();
+
+            await this.handleConfigUpdateError(); 
           }
           
           const configError: ConfigUpdateError = {
@@ -332,12 +251,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
         // Extract updated keys from the event
         const updatedKeys = event?.updatedKeys || [];
         
-        console.log('[REMOTE CONFIG] 🔄 Config update received:', {
-          listenerId,
-          updatedKeys,
-          totalUpdatedKeys: updatedKeys.length,
-          timestamp: new Date().toISOString()
-        });
+
 
         // Create the event object
         const configEvent: ConfigUpdateEvent = {
@@ -349,11 +263,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
 
         // Automatically activate the new config if there are updates
         if (updatedKeys.length > 0) {
-          console.log('[REMOTE CONFIG] 🔄 Activating new config values...', {
-            listenerId,
-            updatedKeys,
-            timestamp: new Date().toISOString()
-          });
+
           await this.activate();
         }
       } catch (callbackError) {
@@ -371,21 +281,14 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
     // Subscribe to config updates
     const unsubscribe = this.remoteConfigInstance.onConfigUpdated(wrappedCallback);
 
-    console.log('[REMOTE CONFIG] ✅ Listener registered successfully:', {
-      listenerId,
-      totalListeners: this.listeners.size
-    });
+
 
     return {
       unsubscribe: () => {
         try {
           unsubscribe();
           this.listeners.delete(listenerId);
-          console.log('[REMOTE CONFIG] 👋 Listener unsubscribed:', {
-            listenerId,
-            remainingListeners: this.listeners.size,
-            timestamp: new Date().toISOString()
-          });
+
         } catch (error) {
           console.error('[REMOTE CONFIG] ❌ Error unsubscribing:', {
             listenerId,
@@ -413,12 +316,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
     this.retryAttempts++;
     const retryDelay = this.retryDelayMs * this.retryAttempts;
     
-    console.log('[REMOTE CONFIG] 🔄 Retrying fetch:', {
-      attempt: this.retryAttempts,
-      maxAttempts: this.maxRetryAttempts,
-      retryDelayMs: retryDelay,
-      timestamp: new Date().toISOString()
-    });
+
 
     try {
       // Wait before retrying
@@ -426,10 +324,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
       
       // Attempt to fetch and activate
       await this.fetchAndActivate();
-      console.log('[REMOTE CONFIG] ✅ Retry successful:', {
-        attempt: this.retryAttempts,
-        timestamp: new Date().toISOString()
-      });
+
     } catch (error) {
       console.error('[REMOTE CONFIG] ❌ Retry failed:', {
         attempt: this.retryAttempts,
@@ -471,11 +366,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
       // Convert string status to number or return default
       const statusNumber = typeof status === 'string' ? parseInt(status, 10) || -1 : status || -1;
       
-      console.log('[REMOTE CONFIG] 📊 Last fetch status:', {
-        status: statusNumber,
-        originalStatus: status,
-        timestamp: new Date().toISOString()
-      });
+
       
       return statusNumber;
     } catch (error) {
@@ -492,10 +383,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    */
   getActiveListenersCount(): number {
     const count = this.listeners.size;
-    console.log('[REMOTE CONFIG] 📊 Active listeners count:', {
-      count,
-      timestamp: new Date().toISOString()
-    });
+
     return count;
   }
 
@@ -503,10 +391,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
    * Check if the service is initialized
    */
   isServiceInitialized(): boolean {
-    console.log('[REMOTE CONFIG] 📊 Service initialization status:', {
-      isInitialized: this.isInitialized,
-      timestamp: new Date().toISOString()
-    });
+
     return this.isInitialized;
   }
 
@@ -516,21 +401,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
   debugLogAllValues(): void {
     try {
       const allParameters = this.getAll();
-      console.log('[REMOTE CONFIG] 🔍 DEBUG: All current values:', {
-        totalParameters: Object.keys(allParameters).length,
-        parameterKeys: Object.keys(allParameters),
-        parameterDetails: Object.entries(allParameters).reduce((acc, [key, value]) => {
-          acc[key] = {
-            value: value.asString(),
-            source: value.getSource(),
-            valueType: typeof value.asString(),
-            asBoolean: value.asBoolean(),
-            asNumber: value.asNumber()
-          };
-          return acc;
-        }, {} as Record<string, any>),
-        timestamp: new Date().toISOString()
-      });
+      
     } catch (error) {
       console.error('[REMOTE CONFIG] ❌ Failed to debug log all values:', {
         error: error instanceof Error ? error.message : String(error),
@@ -545,10 +416,7 @@ class MacroMealsRemoteConfigService implements RemoteConfigServiceInterface {
   cleanup(): void {
     const listenerCount = this.listeners.size;
     this.listeners.clear();
-    console.log('[REMOTE CONFIG] 🧹 Cleanup completed:', {
-      clearedListeners: listenerCount,
-      timestamp: new Date().toISOString()
-    });
+
   }
 }
 
