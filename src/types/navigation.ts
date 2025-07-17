@@ -22,7 +22,7 @@ export type RootStackParamList = {
     MealList: undefined;
     SettingsScreen: undefined;
     ScanScreenType: undefined;
-    MainTabs: undefined;
+    MainTabs: { screen?: string } | undefined;
     BarcodeScanScreen: undefined;
     GoalSetupScreen: undefined;
     GoalsBasicInfo: undefined;
@@ -102,5 +102,4 @@ export type RootStackParamList = {
             photo_url?: string | null;
         };
     };
-    NotificationsScreen: undefined;
 };

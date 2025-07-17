@@ -1,12 +1,8 @@
-// src/screens/LoginScreen.tsx
 import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -14,18 +10,12 @@ import {
 } from "react-native";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import useStore from "../store/useStore";
 import { authService } from "../services/authService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-// Import the mock service instead of the real one
-import { mockSocialAuth } from "../services/authMock";
-import { OnboardingContext } from "../contexts/OnboardingContext";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import BackButton from "../components/BackButton";
 import { RootStackParamList } from "src/types/navigation";
-
-
+import { OnboardingContext } from "../contexts/OnboardingContext";
 
 type ForgotPasswordScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -44,20 +34,30 @@ export const ForgotPasswordScreen: React.FC = () => {
   const route = useRoute<ForgotPasswordScreenRouteProp>();
 
   const source = route.params?.source ?? "Forgot";
-  const [errors, setErrors] = useState({
-    email: "",
-  });
+  const [errors, setErrors] = useState({ email: "" });
+  const [touched, setTouched] = useState(false);
+
+  // Validation function for email
+  const validateEmail = (text: string) => {
+    if (!text) {
+      return "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(text)) {
+      return "Email is invalid";
+    }
+    return "";
+  };
 
   const isDisabled = () => {
-    return isLoading || !email || !/\S+@\S+\.\S+/.test(email);
+    return isLoading || !!validateEmail(email);
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      Alert.alert(
-        "Error",
-        "Please enter the email associated with your account"
-      );
+    setTouched(true);
+
+    const emailError = validateEmail(email);
+    setErrors({ email: emailError });
+
+    if (emailError) {
       return;
     }
 
@@ -65,13 +65,11 @@ export const ForgotPasswordScreen: React.FC = () => {
 
     try {
       const response = await authService.forgotPassword(email);
-      console.log("response", response);
       navigation.navigate("VerificationScreen", { email: email, source });
     } catch (error) {
-      // Extract error message from Axios error response
       let errorMessage = "Invalid email. Please try again.";
-      
-      if (error && typeof error === 'object' && 'response' in error) {
+
+      if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as any;
         if (axiosError.response?.data?.detail) {
           errorMessage = axiosError.response.data.detail;
@@ -83,12 +81,8 @@ export const ForgotPasswordScreen: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
-      Alert.alert(
-        "Forgot Password Failed",
-        errorMessage,
-        [{ text: "OK" }]
-      );
+
+      Alert.alert("Forgot Password Failed", errorMessage, [{ text: "OK" }]);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +90,8 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   const headerText =
     source === "settings" ? "Reset your password" : "Forgot your password?";
-   return (
+
+  return (
     <CustomSafeAreaView
       className="flex-1 items-start justify-start"
       edges={["left", "right"]}
@@ -119,7 +114,9 @@ export const ForgotPasswordScreen: React.FC = () => {
           <View className="w-full">
             <View
               className={`mb-6 ${
-                errors.email ? "border border-[#ff6b6b] rounded-md" : ""
+                touched && errors.email
+                  ? "border border-[#ff6b6b] rounded-md"
+                  : ""
               }`}
             >
               <TextInput
@@ -128,20 +125,13 @@ export const ForgotPasswordScreen: React.FC = () => {
                 value={email}
                 onChangeText={(text) => {
                   setEmail(text);
-                  // Validate email on change
-                  if (!text) {
-                    setErrors((prev) => ({
-                      ...prev,
-                      email: "Email is required",
-                    }));
-                  } else if (!/\S+@\S+\.\S+/.test(text)) {
-                    setErrors((prev) => ({
-                      ...prev,
-                      email: "Email is invalid",
-                    }));
-                  } else {
-                    setErrors((prev) => ({ ...prev, email: "" }));
+                  if (touched) {
+                    setErrors({ email: validateEmail(text) });
                   }
+                }}
+                onBlur={() => {
+                  setTouched(true);
+                  setErrors({ email: validateEmail(email) });
                 }}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -150,7 +140,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                 spellCheck={false}
                 autoComplete="email"
               />
-              {errors.email ? (
+              {touched && errors.email ? (
                 <Text className="text-red-500 text-sm mt-2">
                   {errors.email}
                 </Text>
@@ -166,7 +156,7 @@ export const ForgotPasswordScreen: React.FC = () => {
               }`}
               title="Send code"
               textClassName="text-white text-[17px] font-semibold"
-              disabled={isLoading || !email || !/\S+@\S+\.\S+/.test(email)}
+              disabled={isDisabled()}
               onPress={handleForgotPassword}
               isLoading={isLoading}
             />

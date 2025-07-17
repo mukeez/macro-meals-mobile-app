@@ -142,7 +142,10 @@ const DashboardNavigator = () => {
       <Stack.Screen name="AddMealScreen" component={AddMealScreen} />
       <Stack.Screen name="EditMealScreen" component={EditMealScreen} />
       <Stack.Screen name="SnapMeal" component={SnapMealScreen} />
-      <Stack.Screen name="NotificationsScreen" component={NotificationsScreen} />
+      <Stack.Screen
+        name="NotificationsScreen"
+        component={NotificationsScreen}
+      />
       <Stack.Screen
         name="AccountSettingsScreen"
         component={AccountSettingsScreen}
@@ -181,6 +184,8 @@ const DashboardNavigator = () => {
         name="AddSearchedLoggedMeal"
         component={AddSearchedLoggedMealScreen}
       />
+      <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
     </Stack.Navigator>
   );
 };
