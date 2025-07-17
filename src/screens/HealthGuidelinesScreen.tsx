@@ -76,7 +76,7 @@ const HealthGuidelinesScreen = () => {
   return (
     <CustomSafeAreaView className="flex-1">
       <Header title="Health Guidelines" />
-      <ScrollView className="mt-2 px-5 py-5">
+      <ScrollView className="px-5 py-5">
 
         {/* References and Methodology Section */}
         <View className="mb-6">
