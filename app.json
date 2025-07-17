@@ -2,7 +2,7 @@
   "expo": {
     "name": "macro-meals",
     "slug": "macro-meals",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -34,6 +34,7 @@
       "usesApplePay": true
     },
     "android": {
+      "versionCode": 5,
       "splash": {
         "image": "./assets/splash-icon.png",
         "resizeMode": "contain",

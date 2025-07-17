@@ -30,7 +30,7 @@ export const GoalBodyMetricsWeight = () => {
           value={weight_unit_preference === 'metric'}
           onValueChange={v => setWeightUnitPreference(v ? 'metric' : 'imperial')}
           trackColor={{ false: '', true: '#ccc' }}
-          thumbColor={weight_unit_preference === 'metric' ? '#ffffff' : '#f4f3f4'}
+          thumbColor={weight_unit_preference === 'metric' ? '#f4f3f4' : '#f4f3f4'}
         />
         <Text className={`text-lg ml-2 ${weight_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Metric</Text>
       </View>
@@ -69,48 +69,37 @@ export const GoalBodyMetricsWeight = () => {
             <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
             <Picker
               selectedValue={weightLb}
-              style={{ width: 120, height: 50 }}
-              itemStyle={{ fontSize: 18 }}
+              style={{ width: 120, height: 50, color: 'black' }}
+              itemStyle={{ fontSize: 18, color: 'black' }}
               onValueChange={setWeightLb}
             >
-              <Picker.Item label="lb" value={null} />
+              <Picker.Item label="lb" value={null} style={{color: 'black'}} />
               {weightsLb.map(lb => (
-                <Picker.Item key={lb} label={`${lb} lb`} value={lb} />
+                <Picker.Item key={lb} label={`${lb} lb`} style={{color: 'black'}} value={lb} />
               ))}
             </Picker>
+            <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
             </View>
           </View>
         </View>
       ) : (
         <View className="flex-row justify-between">
-          {/* <View className="flex-1 items-center">
-            <Text className="text-base font-medium mb-2">Height</Text>
-            <Picker
-              selectedValue={heightCm}
-              style={{ width: 140, height: 200 }}
-              itemStyle={{ fontSize: 18 }}
-              onValueChange={setHeightCm}
-            >
-              <Picker.Item label="cm" value={null} />
-              {heightsCm.map(cm => (
-                <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
-              ))}
-            </Picker>
-          </View> */}
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Weight</Text>
             <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2 pb-2`}>
             <Picker
               selectedValue={weightKg}
-              style={{ width: 120, height: 50 }}
-              itemStyle={{ fontSize: 18 }}
+              style={{ width: 120, height: 50, color: 'black' }}
+              itemStyle={{ fontSize: 18, color: 'black' }}
               onValueChange={setWeightKg}
+              
             >
-              <Picker.Item label="kg" value={null} />
+              <Picker.Item label="kg" value={null} style={{color: 'black'}} />
               {weightsKg.map(kg => (
-                <Picker.Item key={kg} label={`${kg} kg`} value={kg} />
+                <Picker.Item key={kg} label={`${kg} kg`} style={{color: 'black'}} value={kg} />
               ))}
             </Picker>
+            <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
             </View>
           </View>
         </View>

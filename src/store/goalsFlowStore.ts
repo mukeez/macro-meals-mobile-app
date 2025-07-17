@@ -68,9 +68,9 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
     markSubStepComplete: (major, sub) => {
         console.log('[GoalsFlow] Marking substep complete:', { major, sub });
         set((state)=> {
-            const updated = [ ...state.completed[major]];
-            updated[sub] = true;
-            return{ completed: { ...state.completed, [major]: updated}};
+        const updated = [ ...state.completed[major]];
+        updated[sub] = true;
+        return{ completed: { ...state.completed, [major]: updated}};
         });
     },
     dateOfBirth: null,

@@ -178,153 +178,163 @@ export const SignupScreen: React.FC = () => {
     <CustomSafeAreaView className="flex-1" edges={["left", "right"]}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        <ScrollView className="flex-1 relative p-6">
-          <View className="flex-row items-center justify-start mb-3">
-            <BackButton onPress={() => navigation.navigate("LoginScreen")} />
-          </View>
-
-          <Text className="text-3xl font-medium text-black mb-2">
-            Begin Macro Tracking
-          </Text>
-          <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">
-            Enter your details to set up your account and start your tracking
-            journey.
-          </Text>
-
-          <View className="w-full">
-            <View
-              className={`${
-                errors.email ? "border border-red-500 rounded-md" : ""
-              }`}
-            >
-              <TextInput
-                className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  // Validate email on change
-                  if (!text) {
-                    setErrors((prev) => ({
-                      ...prev,
-                      email: "Email is required",
-                    }));
-                  } else if (!/\S+@\S+\.\S+/.test(text)) {
-                    setErrors((prev) => ({
-                      ...prev,
-                      email: "Email is invalid",
-                    }));
-                  } else {
-                    setErrors((prev) => ({ ...prev, email: "" }));
-                  }
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                textContentType="emailAddress"
-                spellCheck={false}
-                autoComplete="email"
-              />
+        <ScrollView 
+          className="flex-1 p-6" 
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="flex-1">
+            <View className="flex-row items-center justify-start mb-3">
+              <BackButton onPress={() => navigation.navigate("LoginScreen")} />
             </View>
-            {errors.email ? (
-              <Text className="text-red-500 text-sm mt-2">{errors.email}</Text>
-            ) : null}
 
-            <View
-              className={`relative mt-6 mb-4 ${
-                errors.password ? "border border-red-500 rounded-md" : ""
-              }`}
-            >
-              <TextInput
-                className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
-                placeholder="Create password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (errors.password) {
-                    setErrors((prev) => ({ ...prev, password: "" }));
-                  }
-                }}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                            onPress={() => setShowPassword((v) => !v)}
-                            className="absolute right-4 bottom-[30%]"
-                          >
-                            <Image
-                              source={
-                                showPassword
-                                  ? require("../../assets/visibility-on-icon.png")
-                                  : require("../../assets/visibility-off-icon.png")
-                              }
-                              className="w-6 h-6 ml-2"
-                              resizeMode="contain"
-                            />
-                          </TouchableOpacity>
-            </View>
-            {errors.password ? (
-              <Text className="text-red-500 text-sm mt-2 mb-2">
-                {errors.password}
-              </Text>
-            ) : null}
-            <View className="flex-row items-center justify-start mt-2 w-full">
+            <Text className="text-3xl font-medium text-black mb-2">
+              Begin Macro Tracking
+            </Text>
+            <Text className="text-[18px] font-normal text-textMediumGrey mb-8 leading-7">
+              Enter your details to set up your account and start your tracking
+              journey.
+            </Text>
+
+            <View className="w-full">
               <View
-                className={`w-[20px] h-[20px] rounded-full justify-center items-center mr-2 ${
-                  password.length >= 8 ? "bg-primary" : "bg-lightGrey"
+                className={`${
+                  errors.email ? "border border-red-500 rounded-md" : ""
                 }`}
               >
-                <MaterialIcons name="check" size={16} color="white" />
+                <TextInput
+                  className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                  placeholder="Enter your email"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    // Validate email on change
+                    if (!text) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        email: "Email is required",
+                      }));
+                    } else if (!/\S+@\S+\.\S+/.test(text)) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        email: "Email is invalid",
+                      }));
+                    } else {
+                      setErrors((prev) => ({ ...prev, email: "" }));
+                    }
+                  }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                  spellCheck={false}
+                  autoComplete="email"
+                />
               </View>
-              <Text className="text-sm font-normal text-textMediumGrey">
-                Password must be at least 8 characters
+              {errors.email ? (
+                <Text className="text-red-500 text-sm mt-2">{errors.email}</Text>
+              ) : null}
+
+              <View
+                className={`relative mt-6 mb-4 ${
+                  errors.password ? "border border-red-500 rounded-md" : ""
+                }`}
+              >
+                <TextInput
+                  className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                  placeholder="Create password"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (errors.password) {
+                      setErrors((prev) => ({ ...prev, password: "" }));
+                    }
+                  }}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                              onPress={() => setShowPassword((v) => !v)}
+                              className="absolute right-4 bottom-[30%]"
+                            >
+                              <Image
+                                source={
+                                  showPassword
+                                    ? require("../../assets/visibility-on-icon.png")
+                                    : require("../../assets/visibility-off-icon.png")
+                                }
+                                className="w-6 h-6 ml-2"
+                                resizeMode="contain"
+                              />
+                            </TouchableOpacity>
+              </View>
+              {errors.password ? (
+                <Text className="text-red-500 text-sm mt-2 mb-2">
+                  {errors.password}
+                </Text>
+              ) : null}
+              <View className="flex-row items-center justify-start mt-2 w-full">
+                <View
+                  className={`w-[20px] h-[20px] rounded-full justify-center items-center mr-2 ${
+                    password.length >= 8 ? "bg-primary" : "bg-lightGrey"
+                  }`}
+                >
+                  <MaterialIcons name="check" size={16} color="white" />
+                </View>
+                <Text className="text-sm font-normal text-textMediumGrey">
+                  Password must be at least 8 characters
+                </Text>
+              </View>
+
+              {errors.terms ? (
+                <Text className="text-red-500 text-sm mb-3">{errors.terms}</Text>
+              ) : null}
+            </View>
+          </View>
+
+          <View className="w-full mt-8">
+            <View className="w-full items-center">
+              <CustomTouchableOpacityButton
+                className={`h-[54px] w-full items-center justify-center bg-primary rounded-[100px] ${
+                  isLoading ||
+                  !email ||
+                  !password ||
+                  password.length < 8 ||
+                  !/\S+@\S+\.\S+/.test(email)
+                    ? "opacity-50"
+                    : ""
+                }`}
+                title="Sign up"
+                textClassName="text-white text-[17px] font-semibold"
+                disabled={
+                  isLoading ||
+                  !email ||
+                  !password ||
+                  password.length < 8 ||
+                  !/\S+@\S+\.\S+/.test(email)
+                }
+                onPress={handleSignup}
+                isLoading={isLoading}
+              />
+            </View>
+            <View className="items-center justify-center px-6 mt-2">
+              <Text className="text-[17px] text-center text-gray-600 flex-wrap">
+                By signing up, you agree to our{" "}
+                <Text
+                  className="text-base text-primary font-medium"
+                  onPress={() => navigation.navigate("TermsOfServiceScreen")}
+                >
+                  Terms of Service and Privacy Policy
+                </Text>
               </Text>
             </View>
-
-            {errors.terms ? (
-              <Text className="text-red-500 text-sm mb-3">{errors.terms}</Text>
-            ) : null}
           </View>
         </ScrollView>
-
-        <View className="px-6 absolute bottom-0 w-full">
-          <View className="w-full items-center">
-            <CustomTouchableOpacityButton
-              className={`h-[54px] w-full items-center justify-center bg-primary rounded-[100px] ${
-                isLoading ||
-                !email ||
-                !password ||
-                password.length < 8 ||
-                !/\S+@\S+\.\S+/.test(email)
-                  ? "opacity-50"
-                  : ""
-              }`}
-              title="Sign up"
-              textClassName="text-white text-[17px] font-semibold"
-              disabled={
-                isLoading ||
-                !email ||
-                !password ||
-                password.length < 8 ||
-                !/\S+@\S+\.\S+/.test(email)
-              }
-              onPress={handleSignup}
-              isLoading={isLoading}
-            />
-          </View>
-          <View className="items-center justify-center px-6 mt-2">
-            <Text className="text-[17px] text-center text-gray-600 flex-wrap">
-              By signing up, you agree to our{" "}
-              <Text
-                className="text-base text-primary font-medium"
-                onPress={() => navigation.navigate("TermsOfServiceScreen")}
-              >
-                Terms of Service and Privacy Policy
-              </Text>
-            </Text>
-          </View>
-        </View>
       </KeyboardAvoidingView>
     </CustomSafeAreaView>
   );

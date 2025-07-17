@@ -74,8 +74,11 @@ const ProgressScreen = () => {
         })
         .map(dayData => {
           const date = new Date(dayData.date);
+          // Convert to Monday = 1, Tuesday = 2, etc. for the chart
+          const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+          const adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek; // Monday = 1, Sunday = 7
           return {
-            day: date.getDay() + 1, // Convert 0-6 (Sun-Sat) to 1-7 (Mon-Sun)
+            day: adjustedDay, // Already in 1-7 range for the chart
             protein: Number(dayData.protein) || 0,
             carbs: Number(dayData.carbs) || 0,
             fat: Number(dayData.fat) || 0,
@@ -89,6 +92,16 @@ const ProgressScreen = () => {
       hasNonZeroData = macroBarData.some(day => 
         day.protein > 0 || day.carbs > 0 || day.fat > 0 || day.calories > 0
       );
+
+      // Debug logging
+      console.log('ProgressScreen: Processed macroBarData:', macroBarData.map(d => ({
+        date: d.date,
+        day: d.day,
+        protein: d.protein,
+        carbs: d.carbs,
+        fat: d.fat,
+        calories: d.calories
+      })));
     }
   } catch (err) {
     console.error('Error processing macro data:', err);

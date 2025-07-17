@@ -105,6 +105,16 @@ export const authService = {
         }
     },
 
+    deleteUser: async () => {
+        try{
+            const response = await axiosInstance.delete('/user/me');
+            return response.data;
+        } catch (error) {
+            console.error('Delete account error:', error);
+            throw error;
+        }
+    },
+
     // Function to refresh FCM token
     refreshFCMToken: async () => {
         try {

@@ -5,6 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import { MERCHANT_IDENTIFIER } from '@env';
+import { WebView } from 'react-native-webview';
 
 const API_URL = 'https://api.macromealsapp.com/api/v1';
 
@@ -17,13 +18,16 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Modal,
+  Linking
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import useStore from '../store/useStore'; 
 import { paymentService } from '../services/paymentService';
 import { userService } from '../services/userService';
+import CustomSafeAreaView from 'src/components/CustomSafeAreaView';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -46,7 +50,7 @@ const Pager = ()=>{
 
 
   return(
-    <View className='h-[55%]'>
+    <View className='flex-1 max-h-[50%] min-h-[300px]'>
       <PagerView 
       style={{ flex: 1}} 
       orientation='horizontal'
@@ -138,6 +142,8 @@ const PaymentScreen = () => {
   const { setReadyForDashboard } = useContext(HasMacrosContext);
   const [isApplePaySupported, setIsApplePaySupported] = useState(false);
   const [amount, setAmount] = useState(9.99);
+  const [showWebView, setShowWebView] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState('');
 
   console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
 
@@ -201,6 +207,52 @@ const PaymentScreen = () => {
     }
   };
 
+  const handleTrialSubscription = async () => {
+    try {
+      setIsLoading(true);
+      // Get user profile for checkout
+      const profile = await userService.getProfile();
+      if (!profile?.email || !profile?.id) {
+        throw new Error('User profile not found');
+      }
+      
+      const checkoutResponse = await paymentService.checkout(
+        profile.email,
+        selectedPlan,
+        profile.id
+      );
+      
+      if (checkoutResponse?.checkout_url) {
+        setCheckoutUrl(checkoutResponse.checkout_url);
+        setShowWebView(true);
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Error in trial subscription:', error);
+      
+      // Extract error message from API response
+      let errorMessage = 'Failed to start checkout process. Please try again.';
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response?.data?.detail) {
+          errorMessage = axiosError.response.data.detail;
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handlePaymentPress = async () => {
     try {
       setIsLoading(true);
@@ -219,7 +271,7 @@ const PaymentScreen = () => {
       if (presentError) {
         Alert.alert(`Error code: ${presentError.code}`, presentError.message);
       } else {
-        Alert.alert('You\re in', 'Your subscription is confirmed. Let’s hit those goals, one meal at a time.');
+        Alert.alert("You're in", "Your subscription is confirmed. Let’s hit those goals, one meal at a time.");
         setHasBeenPromptedForGoals(false);
         setReadyForDashboard(true);
        //navigation.navigate('MainTabs');
@@ -304,76 +356,146 @@ const PaymentScreen = () => {
   return (
     <StripeProvider publishableKey={publishableKey}
     merchantIdentifier={MERCHANT_IDENTIFIER}>
-      <View className='relative h-screen bg-[##F2F2F2]'>
-        <Pager />
-        <View className="flex px-[20px] mt-8 justify-center items-center w-full">
-          <Text className="text-base font-medium">Select a plan for your free trial</Text>
-          <View className="flex-row w-full gap-4 justify-between mt-8">
-            
-          
-            
-            <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
-              e.preventDefault();
-              setSelectedPlan('monthly');
-              setAmount(9.99);
-            }}>
+      {/* <CustomSafeAreaView edges={['left', 'right']} className="flex-1"> */}
+        <View className='flex-1 bg-[#F2F2F2]'>
+          <Pager />
+          <View className="flex-1 px-5 py-4 justify-center items-center w-full">
+            <Text className="text-base font-medium text-center">Select a plan for your free trial</Text>
+            <View className="flex-row w-full gap-3 justify-between mt-6">
               
-              <View className='w-full pl-3 pt-8 pb-3'>
-              <View className='flex-row items-center justify-between gap-2'>
-                <Text className="text-base font-medium rounded-md">MONTHLY</Text>
-                {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
-              </View>
-              <View className='mt-4'>
-                <Text className='font-medium text-[15px]'>$9.99/mo</Text>
-                <Text className='font-medium text-[15px]'></Text>
-              </View>
-              <Text className='mt-4 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
-              </View>
-             
+            
               
-            </TouchableOpacity>
+              <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
+                e.preventDefault();
+                setSelectedPlan('monthly');
+                setAmount(9.99);
+              }}>
+                
+                <View className='w-full pl-3 pt-6 pb-3'>
+                <View className='flex-row items-center justify-between gap-2'>
+                  <Text className="text-base font-medium rounded-md">MONTHLY</Text>
+                  {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
+                </View>
+                <View className='mt-3'>
+                  <Text className='font-medium text-[15px]'>£9.99/mo</Text>
+                  <Text className='font-medium text-[15px]'></Text>
+                </View>
+                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+                </View>
+               
+                
+              </TouchableOpacity>
 
 
-            <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
-             e.preventDefault();
-             setSelectedPlan('yearly');
-             setAmount(70.00);
-            }}>
-              <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
-              <Text className="text-white text-xs font-medium justify-center items-center">50% savings</Text>
+              <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
+               e.preventDefault();
+               setSelectedPlan('yearly');
+               setAmount(70.00);
+              }}>
+                <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
+                <Text className="text-white text-xs font-medium justify-center items-center">50% savings</Text>
+              </View>
+                <View className='w-full pl-3 pt-6 pb-3'>
+                <View className='flex-row items-center justify-between gap-2'>
+                  <Text className="text-base font-medium rounded-md">YEARLY</Text>
+                  {selectedPlan === 'yearly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
+                </View>
+                <View className='mt-3'>
+                  <Text className='font-medium text-[15px]'>£70.00/yr</Text>
+                  <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>£99.99/yr</Text>
+                </View>
+                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+                </View>
+              </TouchableOpacity>
             </View>
-              <View className='w-full pl-3 pt-8 pb-3'>
-              <View className='flex-row items-center justify-between gap-2'>
-                <Text className="text-base font-medium rounded-md">YEARLY</Text>
-                {selectedPlan === 'yearly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
-              </View>
-              <View className='mt-4'>
-                <Text className='font-medium text-[15px]'>$70.00/yr</Text>
-                <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>$170.80/yr</Text>
-              </View>
-              <Text className='mt-4 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          <Text className='mt-4 text-[12px] text-[#4F4F4F]'>You can change plans or cancel anytime</Text>
-          <View className="w-full mt-[30px]">
-          <TouchableOpacity 
-                  activeOpacity={0.8}
-                  onPress={handlePaymentPress}
-                  disabled={isLoading}
-                  className={isLoading ? 'opacity-70' : ''}
-                >
-                  <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
-                    {isLoading ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <Text className="text-white font-semibold text-[17px]">Start 1-Month Free Trial</Text>
-                    )}
-                  </View>
-                </TouchableOpacity>
+            <Text className='mt-4 text-[12px] text-[#4F4F4F] text-center'>You can change plans or cancel anytime</Text>
+            <View className="w-full mt-6 mb-2">
+            <TouchableOpacity 
+                    activeOpacity={0.8}
+                    onPress={handleTrialSubscription}
+                    disabled={isLoading}
+                    className={isLoading ? 'opacity-70' : 'mt-5'}
+                  >
+                    <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text className="text-white font-semibold text-[17px]">Start 7-Day Free Trial</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+        
+        {/* WebView Modal for Checkout */}
+        <Modal
+          visible={showWebView}
+          animationType="slide"
+          onRequestClose={() => setShowWebView(false)}
+        >
+          <View className="flex-1">
+            <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200">
+              <TouchableOpacity onPress={() => setShowWebView(false)}>
+                <Text className="text-blue-500 text-lg">Cancel</Text>
+              </TouchableOpacity>
+              <Text className="text-lg font-semibold">Complete Payment</Text>
+              <View style={{ width: 60 }} />
+            </View>
+            <View className="flex-1">
+              <WebView 
+                source={{ uri: checkoutUrl }}
+                onNavigationStateChange={(navState) => {
+                  // Handle successful payment completion
+                  if (navState.url.includes('success') || navState.url.includes('completed')) {
+                    setShowWebView(false);
+                    Alert.alert(
+                      "You're in", 
+                      "Your subscription is confirmed. Let's hit those goals, one meal at a time.",
+                      [
+                        {
+                          text: "Continue",
+                          onPress: () => {
+                            setHasBeenPromptedForGoals(false);
+                            setReadyForDashboard(true);
+                          }
+                        }
+                      ]
+                    );
+                  }
+                  // Handle payment cancellation
+                  if (navState.url.includes('canceled') || navState.url.includes('cancelled')) {
+                    setShowWebView(false);
+                    Alert.alert("Payment Cancelled", "Your payment was cancelled. You can try again anytime.");
+                  }
+                }}
+                onError={(syntheticEvent) => {
+                  const { nativeEvent } = syntheticEvent;
+                  console.warn('WebView error: ', nativeEvent);
+                 // Alert.alert("Error", "Failed to load checkout page. Please try again.");
+                  setShowWebView(false);
+                }}
+                onHttpError={(syntheticEvent) => {
+                  const { nativeEvent } = syntheticEvent;
+                  console.warn('WebView HTTP error: ', nativeEvent);
+                }}
+                startInLoadingState={true}
+                renderLoading={() => (
+                  <View className="flex-1 justify-center items-center">
+                    <ActivityIndicator size="large" color="#009688" />
+                    <Text className="mt-4 text-gray-600">Loading checkout...</Text>
+                  </View>
+                )}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                allowsInlineMediaPlayback={true}
+                mediaPlaybackRequiresUserAction={false}
+              />
+            </View>
+          </View>
+        </Modal>
+      {/* </CustomSafeAreaView> */}
+      
     </StripeProvider>
   )
 }
