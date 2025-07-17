@@ -69,10 +69,10 @@ const ManageSubscriptionsScreen: React.FC = () => {
   };
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: currency.toUpperCase(),
-    }).format(amount / 100); // Assuming amount is in cents
+    }).format(amount); // Amount is already in the correct units
   };
 
   const getPlanDisplayName = (plan: string, planName: string) => {
@@ -109,8 +109,6 @@ const ManageSubscriptionsScreen: React.FC = () => {
   };
 
   const handleReactivateSubscription = async () => {
-    if (!subscription) return;
-
     try {
       setReactivating(true);
 
@@ -118,22 +116,26 @@ const ManageSubscriptionsScreen: React.FC = () => {
       mixpanel?.track({
         name: 'subscription_reactivated',
         properties: {
-          plan: subscription.plan,
-          plan_name: subscription.plan_name,
-          billing_interval: subscription.billing_interval,
-          amount: subscription.amount,
-          currency: subscription.currency
+          plan: subscription?.plan || 'unknown',
+          plan_name: subscription?.plan_name || 'unknown',
+          billing_interval: subscription?.billing_interval || 'unknown',
+          amount: subscription?.amount || 0,
+          currency: subscription?.currency || 'unknown'
         }
       });
 
-      await paymentService.reactivateSubscription(subscription.subscription_id);
+      // Call reactivation without subscription_id since the backend doesn't provide it for cancelled subscriptions
+      await paymentService.reactivateSubscription();
 
       // Refresh subscription details
       await fetchSubscriptionDetails();
 
+      // Show success message as a toast-style notification
       Alert.alert(
-        'Subscription Reactivated',
-        'Subscription reactivated. Your plan remains active.'
+        'Success',
+        'Subscription reactivated. Your plan remains active.',
+        [{ text: 'OK' }],
+        { cancelable: true }
       );
     } catch (error) {
       console.error('Failed to reactivate subscription:', error);
@@ -215,8 +217,8 @@ const ManageSubscriptionsScreen: React.FC = () => {
             ) : 
             (
                 <>
-                  {!subscription?.has_subscription ? (
-          // No subscription state
+                  {!subscription ? (
+          // No subscription data at all
           <View className="bg-white rounded-2xl mx-3 px-6 py-8 shadow-sm">
             <Text className="text-lg font-semibold text-[#222] text-center mb-2">
               No Active Subscription
@@ -234,7 +236,10 @@ const ManageSubscriptionsScreen: React.FC = () => {
               <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
                 <Text className="flex-1 text-base text-[#222]">Plan</Text>
                 <Text className="text-base text-[#222] font-medium">
-                  {getPlanDisplayName(subscription!.plan, subscription!.plan_name)}
+                  {subscription?.plan && subscription?.plan_name 
+                    ? getPlanDisplayName(subscription.plan, subscription.plan_name)
+                    : 'Subscription'
+                  }
                 </Text>
               </View>
 
@@ -242,49 +247,53 @@ const ManageSubscriptionsScreen: React.FC = () => {
               <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
                 <Text className="flex-1 text-base text-[#222]">Status</Text>
                 <View className="flex-row items-center">
-                  <View className={`w-2 h-2 rounded-full mr-2 ${
-                    subscription!.cancel_at_period_end ? 'bg-orange-500' : 'bg-green-500'
-                  }`} />
-                  <Text className={`text-base font-medium ${
-                    subscription!.cancel_at_period_end ? 'text-orange-600' : 'text-green-600'
-                  }`}>
-                    {getStatusDisplay(subscription!.status, subscription!.cancel_at_period_end)}
+                  <View className="w-2 h-2 rounded-full mr-2 bg-orange-500" />
+                  <Text className="text-base font-medium text-orange-600">
+                    Premium – Cancelled
                   </Text>
                 </View>
               </View>
 
               {/* Amount */}
-              <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
-                <Text className="flex-1 text-base text-[#222]">Amount</Text>
-                <Text className="text-base text-[#222] font-medium">
-                  {formatCurrency(subscription!.amount, subscription!.currency)}
-                  <Text className="text-[#888] font-normal">
-                    /{subscription!.billing_interval}
+              {subscription?.amount && subscription?.currency && (
+                <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
+                  <Text className="flex-1 text-base text-[#222]">Amount</Text>
+                  <Text className="text-base text-[#222] font-medium">
+                    {formatCurrency(subscription.amount, subscription.currency)}
+                    {subscription.billing_interval && (
+                      <Text className="text-[#888] font-normal">
+                        /{subscription.billing_interval}
+                      </Text>
+                    )}
                   </Text>
-                </Text>
-              </View>
+                </View>
+              )}
 
               {/* Next Billing Date */}
-              <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
-                <Text className="flex-1 text-base text-[#222]">Next billing date</Text>
-                <Text className="text-base text-[#222]">
-                  {formatDate(subscription!.next_billing_date)}
-                </Text>
-              </View>
+              {subscription?.next_billing_date && (
+                <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
+                  <Text className="flex-1 text-base text-[#222]">Next billing date</Text>
+                  <Text className="text-base text-[#222]">
+                    {formatDate(subscription.next_billing_date)}
+                  </Text>
+                </View>
+              )}
 
               {/* Current Period */}
-              <View className="flex-row items-center min-h-[56px] px-4">
-                <Text className="flex-1 text-base text-[#222]">Current period</Text>
-                <Text className="text-base text-[#222] text-right">
-                  {formatDate(subscription!.current_period_start)} - {formatDate(subscription!.current_period_end)}
-                </Text>
-              </View>
+              {subscription?.current_period_start && subscription?.current_period_end && (
+                <View className="flex-row items-center min-h-[56px] px-4">
+                  <Text className="flex-1 text-base text-[#222]">Current period</Text>
+                  <Text className="text-base text-[#222] text-right">
+                    {formatDate(subscription.current_period_start)} - {formatDate(subscription.current_period_end)}
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Action Buttons */}
             <View className="mt-8 mx-4">
-              {subscription!.cancel_at_period_end ? (
-                // Reactivate button for cancelled subscriptions
+              {!subscription?.has_subscription ? (
+                // Reactivate button for cancelled subscriptions (when has_subscription is false)
                 <TouchableOpacity
                   className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
                   onPress={handleReactivateSubscription}
@@ -298,7 +307,7 @@ const ManageSubscriptionsScreen: React.FC = () => {
                     </Text>
                   )}
                 </TouchableOpacity>
-              ) : (
+              ) : subscription?.has_subscription ? (
                 // Cancel button for active subscriptions
                 <TouchableOpacity
                   className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
@@ -313,50 +322,12 @@ const ManageSubscriptionsScreen: React.FC = () => {
                     </Text>
                   )}
                 </TouchableOpacity>
-              )}
+              ) : null}
             </View>
           </>
         )}
 
-        {/* Cancellation Confirmation Modal */}
-        <Modal
-          visible={showCancelModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowCancelModal(false)}
-        >
-          <View className="flex-1 bg-black bg-opacity-50 justify-center items-center px-6">
-            <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-              <Text className="text-xl font-semibold text-[#222] text-center mb-4">
-                Are you sure you want to cancel?
-              </Text>
-              
-              <Text className="text-base text-[#666] text-center mb-6 leading-5">
-                You'll lose access to premium features at the end of your current billing period. You can resubscribe anytime from your account settings.
-              </Text>
 
-              <View className="flex-row space-x-3">
-                <TouchableOpacity
-                  className="flex-1 py-3 px-4 border border-[#ddd] rounded-xl"
-                  onPress={() => setShowCancelModal(false)}
-                >
-                  <Text className="text-base text-[#666] text-center font-medium">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  className="flex-1 py-3 px-4 bg-punchRed rounded-xl"
-                  onPress={confirmCancelSubscription}
-                >
-                  <Text className="text-base text-white text-center font-medium">
-                    Yes, Cancel
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
 
         {/* Cancellation Confirmation Modal */}
         <Modal

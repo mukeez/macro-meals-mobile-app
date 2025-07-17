@@ -18,10 +18,8 @@ export const paymentService = {
     getSubscriptionDetails: async () => {
         try {
             const response = await axiosInstance.get('/billing/subscription-details');
-            console.log('Subscription details response:', response.data);
             return response.data;
         } catch (error: any) {
-            console.error('Subscription details error:', error);
             
             // Extract detailed error message from backend
             let errorMessage = 'Failed to load subscription details';
@@ -42,17 +40,16 @@ export const paymentService = {
 
     cancelSubscription: async (subscriptionId: string, status: string) => {
         try {
+            const requestData = {
+                cancel_at_period_end: true,
+                status,
+                subscription_id: subscriptionId
+            };
             const response = await axiosInstance.delete('/billing/cancel', {
-                data: {
-                    cancel_at_period_end: true,
-                    status,
-                    subscription_id: subscriptionId
-                }
+                data: requestData
             });
-            console.log('Cancel subscription response:', response.data);
             return response.data;
         } catch (error: any) {
-            console.error('Cancel subscription error:', error);
             
             // Extract detailed error message from backend
             let errorMessage = 'Failed to cancel subscription';
@@ -71,15 +68,12 @@ export const paymentService = {
         }
     },
 
-    reactivateSubscription: async (subscriptionId: string) => {
+    reactivateSubscription: async (subscriptionId?: string) => {
         try {
-            const response = await axiosInstance.post('/billing/reactivate', {
-                subscription_id: subscriptionId
-            });
-            console.log('Reactivate subscription response:', response.data);
+            const payload = subscriptionId ? { subscription_id: subscriptionId } : {};
+            const response = await axiosInstance.post('/billing/reactivate-subscription', payload);
             return response.data;
         } catch (error: any) {
-            console.error('Reactivate subscription error:', error);
             
             // Extract detailed error message from backend
             let errorMessage = 'Failed to reactivate subscription';
