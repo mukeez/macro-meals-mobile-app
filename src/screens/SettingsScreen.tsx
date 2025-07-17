@@ -245,6 +245,10 @@ export const SettingsScreen: React.FC = () => {
     // navigation.navigate('SendFeedback' as never);
   };
 
+  const handleHealthGuidelines = () => {
+    navigation.navigate("HealthGuidelinesScreen" as never);
+  };
+
   const handleDeleteAccount = async () => {
     Alert.alert(
       "Delete Account",
@@ -365,14 +369,22 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => {}}
           />
-          <SectionItem
+          {/* <SectionItem
             title="Restore Purchases"
             image={IMAGE_CONSTANTS.restoreIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
             onPress={() => { navigation.navigate('PaymentScreen') }}
-          />
+          /> */}
+          {/* <SectionItem
+            title="Manage Subscription"
+            image={IMAGE_CONSTANTS.restoreIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => { navigation.navigate('ManageSubscriptionsScreen') }}
+          /> */}
         </ProfileSection>
 
         {/* Notifications Section */}
@@ -405,6 +417,16 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => {
               openEmail();
+            }}
+          />
+             <SectionItem
+            title="Health guidelines"
+            image={IMAGE_CONSTANTS.infoIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => {
+              handleHealthGuidelines();
             }}
           />
           <SectionItem
