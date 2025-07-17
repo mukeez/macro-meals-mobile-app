@@ -377,14 +377,14 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => { navigation.navigate('PaymentScreen') }}
           /> */}
-          {/* <SectionItem
+          <SectionItem
             title="Manage Subscription"
             image={IMAGE_CONSTANTS.restoreIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
             onPress={() => { navigation.navigate('ManageSubscriptionsScreen') }}
-          /> */}
+          />
         </ProfileSection>
 
         {/* Notifications Section */}

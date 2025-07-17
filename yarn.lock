@@ -1763,6 +1763,11 @@
     expo-build-properties "^0.14.6"
     react-native-push-notification "^8.1.1"
 
+"@macro-meals/remote-config-service@file:./packages/remote_config_service":
+  version "1.0.0"
+  dependencies:
+    "@react-native-firebase/remote-config" "^22.2.0"
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -2044,7 +2049,7 @@
   resolved "https://registry.yarnpkg.com/@react-native-firebase/messaging/-/messaging-22.4.0.tgz#91e88deb8cba799c06e847577c0c61fdcfe381cf"
   integrity sha512-iuTA8IJ102pQijFejhWZXxVIt4+JJ5n3JTN8Mb+OXZmIVswUZ4ryErk8Y0RhcFiIwEF5a99ziJfPybA1EheVLg==
 
-"@react-native-firebase/remote-config@^22.2.0", "@react-native-firebase/remote-config@^22.4.0":
+"@react-native-firebase/remote-config@^22.2.0":
   version "22.4.0"
   resolved "https://registry.yarnpkg.com/@react-native-firebase/remote-config/-/remote-config-22.4.0.tgz#73f8562c712c0328ae28fe42525dd7b26f361b75"
   integrity sha512-uisPD4ACE1PDGtAzQMmlPLg08jozT7PI2ddVLUJke499Fne9wc9f3edRqi+7afdMfXf7P70IxA3rR0iE9wagsQ==

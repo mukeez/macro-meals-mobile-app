@@ -104,4 +104,5 @@ export type RootStackParamList = {
 
     };
     HealthGuidelinesScreen: undefined;
+    ManageSubscriptionsScreen: undefined;
 };

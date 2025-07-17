@@ -40,7 +40,6 @@ function MixpanelIdentifier() {
                 is_authenticated: true
             });
             
-            console.log('[MIXPANEL] 👤 User identified:', userId);
         }
     }, [isAuthenticated, userId, mixpanel]);
 
@@ -61,7 +60,6 @@ function RemoteConfigHandler() {
             
             // Handle specific config updates here
             lastUpdate.updatedKeys.forEach((key, index) => {
-                console.log(`[REMOTE CONFIG] 📋 Key "${key}" was updated (${index + 1}/${lastUpdate.updatedKeys.length})`);
                 
                 // Add your custom logic for specific keys here
                 // For example:
