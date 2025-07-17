@@ -245,6 +245,10 @@ export const SettingsScreen: React.FC = () => {
     // navigation.navigate('SendFeedback' as never);
   };
 
+  const handleHealthGuidelines = () => {
+    navigation.navigate("HealthGuidelinesScreen" as never);
+  };
+
   const handleDeleteAccount = async () => {
     Alert.alert(
       "Delete Account",
@@ -413,6 +417,16 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => {
               openEmail();
+            }}
+          />
+             <SectionItem
+            title="Health guidelines"
+            image={IMAGE_CONSTANTS.infoIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => {
+              handleHealthGuidelines();
             }}
           />
           <SectionItem

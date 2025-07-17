@@ -101,6 +101,8 @@ export type RootStackParamList = {
             notes?: string;
             photo_url?: string | null;
         };
+
     };
+    HealthGuidelinesScreen: undefined;
     ManageSubscriptionsScreen: undefined;
 };
