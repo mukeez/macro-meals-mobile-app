@@ -102,5 +102,5 @@ export type RootStackParamList = {
             photo_url?: string | null;
         };
     };
-    NotificationsScreen: undefined;
+    ManageSubscriptionsScreen: undefined;
 };

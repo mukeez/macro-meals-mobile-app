@@ -15,7 +15,88 @@ export const paymentService = {
         }
     },
 
-    
+    getSubscriptionDetails: async () => {
+        try {
+            const response = await axiosInstance.get('/billing/subscription-details');
+            console.log('Subscription details response:', response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error('Subscription details error:', error);
+            
+            // Extract detailed error message from backend
+            let errorMessage = 'Failed to load subscription details';
+            
+            if (error.response?.data?.detail) {
+                errorMessage = error.response.data.detail;
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.statusText) {
+                errorMessage = `${error.response.statusText} (${error.response.status})`;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            throw new Error(errorMessage);
+        }
+    },
+
+    cancelSubscription: async (subscriptionId: string, status: string) => {
+        try {
+            const response = await axiosInstance.delete('/billing/cancel', {
+                data: {
+                    cancel_at_period_end: true,
+                    status,
+                    subscription_id: subscriptionId
+                }
+            });
+            console.log('Cancel subscription response:', response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error('Cancel subscription error:', error);
+            
+            // Extract detailed error message from backend
+            let errorMessage = 'Failed to cancel subscription';
+            
+            if (error.response?.data?.detail) {
+                errorMessage = error.response.data.detail;
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.statusText) {
+                errorMessage = `${error.response.statusText} (${error.response.status})`;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            throw new Error(errorMessage);
+        }
+    },
+
+    reactivateSubscription: async (subscriptionId: string) => {
+        try {
+            const response = await axiosInstance.post('/billing/reactivate', {
+                subscription_id: subscriptionId
+            });
+            console.log('Reactivate subscription response:', response.data);
+            return response.data;
+        } catch (error: any) {
+            console.error('Reactivate subscription error:', error);
+            
+            // Extract detailed error message from backend
+            let errorMessage = 'Failed to reactivate subscription';
+            
+            if (error.response?.data?.detail) {
+                errorMessage = error.response.data.detail;
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.statusText) {
+                errorMessage = `${error.response.statusText} (${error.response.status})`;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            throw new Error(errorMessage);
+        }
+    },
 
     // createSetupIntent: async () => {
     //     const response = await axiosInstance.post('/billing/create-setup-intent');
