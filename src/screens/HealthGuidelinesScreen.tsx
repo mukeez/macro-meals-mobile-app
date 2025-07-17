@@ -26,10 +26,10 @@ const HealthGuidelinesScreen = () => {
     const isExpanded = expandedSections[item.title];
     
     return (
-      <View className="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+      <View className="mb-4 bg-white rounded-lg overflow-hidden border-l-4 border-[#009688] border-t border-b border-gray-200">
         <TouchableOpacity
           onPress={() => toggleSection(item.title)}
-          className="flex-row items-center justify-between p-4 bg-gray-50"
+          className="flex-row items-center justify-between p-4 bg-white"
           activeOpacity={0.7}
         >
           <Text className="text-base font-semibold text-gray-800 flex-1">
@@ -76,7 +76,7 @@ const HealthGuidelinesScreen = () => {
   return (
     <CustomSafeAreaView className="flex-1">
       <Header title="Health Guidelines" />
-      <ScrollView className="px-5 py-5">
+      <ScrollView className="mt-2 px-5 py-5">
 
         {/* References and Methodology Section */}
         <View className="mb-6">
