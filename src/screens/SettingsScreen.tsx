@@ -29,8 +29,6 @@ import SectionItem from "src/components/SectionItem";
 import { userService } from "../services/userService";
 import ContactSupportDrawer from "./ContactSupportDrawer";
 import EditableAvatar from "src/components/EditableAvatar";
-import * as ImagePicker from "expo-image-picker";
-import handleEditAvatar from "src/services/handleEditAvatar";
 import { useMixpanel } from '@macro-meals/mixpanel';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;

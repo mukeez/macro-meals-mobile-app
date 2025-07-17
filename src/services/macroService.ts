@@ -24,7 +24,7 @@ export interface MacroSetupRequest {
 
 export async function fetchMacros(): Promise<MacroResponse> {
   try {
-    const response = await axiosInstance.get('/macros/adjust-macros');
+    const response = await axiosInstance.post('/macros/adjust-macros', {});
     return response.data;
   } catch (error) {
     console.error('Error fetching macros:', error);
@@ -32,8 +32,9 @@ export async function fetchMacros(): Promise<MacroResponse> {
   }
 }
 
-export async function updateMacros(updated: MacroResponse): Promise<void> {
+export async function updateMacros(updated: Partial<Omit<MacroResponse, "calories">>): Promise<void> {
   try {
+    // Only send the macros to be updated (not calories!)
     await axiosInstance.post('/macros/adjust-macros', updated);
   } catch (error) {
     console.error('Error updating macros:', error);
@@ -49,4 +50,18 @@ export async function setupMacros(requestData: MacroSetupRequest): Promise<Macro
     console.error('Error setting up macros:', error);
     throw error;
   }
+}
+export async function fetchUserPreferences(): Promise<MacroResponse> {
+  // Adjust this endpoint to match your actual preferences fetch endpoint
+  const response = await axiosInstance.get('/user/preferences');
+  console.log("User preferences response:", response.data);
+  // If your preferences object is nested, adjust accordingly:
+  // return response.data.macros;
+  return {
+    calories: response.data.calorie_target ?? 0,
+    protein: response.data.protein_target ?? 0,
+    fat: response.data.fat_target ?? 0,
+    carbs: response.data.carbs_target ?? 0,
+  };
+  
 }

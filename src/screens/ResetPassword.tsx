@@ -103,7 +103,7 @@ export const ResetPasswordScreen: React.FC = () => {
       const response = await authService.resetPassword(resetPasswordData);
       console.log("response", response);
       if (source === "settings") {
-        navigation.navigate("SettingsScreen");
+        navigation.navigate('MainTabs', { screen: 'Settings' });
       } else {
         navigation.navigate("LoginScreen");
       }
