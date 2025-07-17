@@ -66,22 +66,6 @@ const AiMealSuggestionsScreen: React.FC = () => {
     });
   };
 
-  const handleMealSelect = (meal: any) => {
-    navigation.navigate('AISuggestedMealsDetailsScreen', { meal });
-  };
-
-  // Update macroData when todayProgress changes
-  useEffect(() => {
-    if (todayProgress) {
-      setMacroData([
-        { label: 'Protein', value: todayProgress.protein || 0, color: '#6C5CE7' },
-        { label: 'Carbs', value: todayProgress.carbs || 0, color: '#FFC107' },
-        { label: 'Fat', value: todayProgress.fat || 0, color: '#FF69B4' },
-      ]);
-    }
-  }, [todayProgress]);
-
-  useEffect(() => {
     const fetchMeals = async () => {
       try {
         setLoading(true);
@@ -102,6 +86,26 @@ const AiMealSuggestionsScreen: React.FC = () => {
       }
     };
 
+  const handleRetry = () => {
+    fetchMeals();
+  };
+
+  const handleMealSelect = (meal: any) => {
+    navigation.navigate('AISuggestedMealsDetailsScreen', { meal });
+  };
+
+  // Update macroData when todayProgress changes
+  useEffect(() => {
+    if (todayProgress) {
+      setMacroData([
+        { label: 'Protein', value: todayProgress.protein || 0, color: '#6C5CE7' },
+        { label: 'Carbs', value: todayProgress.carbs || 0, color: '#FFC107' },
+        { label: 'Fat', value: todayProgress.fat || 0, color: '#FF69B4' },
+      ]);
+    }
+  }, [todayProgress]);
+
+  useEffect(() => {
     fetchMeals();
   }, []);
 
@@ -133,7 +137,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
           <Text className="text-[20px] font-semibold text-[#222] text-center">Suggested meals</Text>
           <View style={{ width: 32 }} />
         </View>
-        <ScrollView className="pb-8">
+          <ScrollView className="pb-8">
             {/* Macros Donut Row */}
             <View className="flex-col bg-white items-start mt-3 px-5 pt-3 pb-10 mb-4">
               <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
@@ -144,22 +148,22 @@ const AiMealSuggestionsScreen: React.FC = () => {
                   const remaining = Math.max(0, target - consumed);
                   // Match MealFinderScreen: donut shows remaining, empties as you consume
                   return (
-                    <View key={`${macro.label}-${index}`}>
-                      <View className="h-[100px] w-[100px] relative">
-                        <CircularProgress
-                          size={100}
-                          strokeWidth={12}
-                          textSize={16}
+                  <View key={`${macro.label}-${index}`}>
+                    <View className="h-[100px] w-[100px] relative">
+                      <CircularProgress
+                        size={100}
+                        strokeWidth={12}
+                        textSize={16}
                           consumed={`${remaining}g`}
                           total={target}
-                          color={macro.color}
-                          backgroundColor="#d0e8d1"
-                          label={macro.label}
-                          showLabel={false}
-                        />
-                        <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
-                      </View>
+                        color={macro.color}
+                        backgroundColor="#d0e8d1"
+                        label={macro.label}
+                        showLabel={false}
+                      />
+                      <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
                     </View>
+                  </View>
                   );
                 })}
               </View>
@@ -186,7 +190,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
                     <Text className="text-[#888] text-center text-base">Unable to load meal suggestions</Text>
                     <Text className="text-[#888] text-center text-sm mt-1">Please check your connection and try again</Text>
                     <TouchableOpacity 
-                      onPress={() => window.location.reload()} 
+                      onPress={handleRetry} 
                       className="mt-4 px-6 py-2 bg-primaryLight rounded-full"
                     >
                       <Text className="text-white font-medium">Retry</Text>
@@ -195,8 +199,8 @@ const AiMealSuggestionsScreen: React.FC = () => {
                 ) : (
                   <>
                     {meals.length === 0 && (
-                      <Text className="text-center text-[#888] mt-6">No meal suggestions found.</Text>
-                    )}
+              <Text className="text-center text-[#888] mt-6">No meal suggestions found.</Text>
+            )}
                     {meals.map((meal, idx) => (
               <TouchableOpacity 
                 key={idx} 
@@ -274,7 +278,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
                   )} */}
                 </View>
               </TouchableOpacity>
-                ))}
+            ))}
                     </>
                   )}
                   </>

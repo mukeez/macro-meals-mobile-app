@@ -12,13 +12,14 @@ import {RootStack} from "./RootStack";
 import { MIXPANEL_TOKEN } from '@env';
 import { MixpanelProvider, useMixpanel } from "@macro-meals/mixpanel";
 import {pushNotifications} from '@macro-meals/push-notifications';
-import messaging, { firebase } from '@react-native-firebase/messaging';
+import { firebase } from '@react-native-firebase/messaging';
 import {macroMealsCrashlytics} from '@macro-meals/crashlytics';
 import { OnboardingContext } from './src/contexts/OnboardingContext';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import Constants from 'expo-constants';
 import { userService } from './src/services/userService';
 import { authService } from './src/services/authService';
+import { RemoteConfigProvider, useRemoteConfigContext } from '@macro-meals/remote-config-service';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -42,6 +43,56 @@ function MixpanelIdentifier() {
             console.log('[MIXPANEL] 👤 User identified:', userId);
         }
     }, [isAuthenticated, userId, mixpanel]);
+
+    return null;
+}
+
+// Component to handle Remote Config updates
+function RemoteConfigHandler() {
+    const { lastUpdate, error, isInitialized } = useRemoteConfigContext();
+
+    useEffect(() => {
+        if (lastUpdate && lastUpdate.updatedKeys.length > 0) {
+            console.log('[REMOTE CONFIG] 🔄 Config update received in handler:', {
+                updatedKeys: lastUpdate.updatedKeys,
+                totalUpdatedKeys: lastUpdate.updatedKeys.length,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Handle specific config updates here
+            lastUpdate.updatedKeys.forEach((key, index) => {
+                console.log(`[REMOTE CONFIG] 📋 Key "${key}" was updated (${index + 1}/${lastUpdate.updatedKeys.length})`);
+                
+                // Add your custom logic for specific keys here
+                // For example:
+                // if (key === 'feature_flags') {
+                //     console.log('[REMOTE CONFIG] 🎛️ Feature flags updated, refreshing UI...');
+                //     // Handle feature flags update
+                // }
+                // if (key === 'dev_mode') {
+                //     console.log('[REMOTE CONFIG] 🛠️ Dev mode setting updated');
+                //     // Handle dev mode update
+                // }
+            });
+        }
+    }, [lastUpdate]);
+
+    useEffect(() => {
+        if (error) {
+            console.error('[REMOTE CONFIG] ❌ Error in handler:', {
+                error,
+                timestamp: new Date().toISOString()
+            });
+        }
+    }, [error]);
+
+    useEffect(() => {
+        if (isInitialized) {
+            console.log('[REMOTE CONFIG] ✅ Service initialized successfully in handler', {
+                timestamp: new Date().toISOString()
+            });
+        }
+    }, [isInitialized]);
 
     return null;
 }
@@ -105,11 +156,12 @@ export default function App() {
 
                     if (permission) {
                         // Get FCM token only after permissions are granted
-                        const token = await messaging().getToken();
+                        const token = await pushNotifications.getFCMToken();
                         await pushNotifications.intializeMessaging();
                         
                         // Check for initial notification (app opened from notification)
                         await pushNotifications.getInitialNotification();
+                        console.log('FCM TOKEN:', token);
                         
                         // Store the FCM token for later use
                         if (token) {
@@ -245,25 +297,50 @@ export default function App() {
         <MixpanelProvider config={{
             token: MIXPANEL_TOKEN,
         }}>
-            <OnboardingContext.Provider value={{ setIsOnboardingCompleted, setInitialAuthScreen }} >
-                <HasMacrosContext.Provider value={{ 
-                    hasMacros, 
-                    setHasMacros,
-                    readyForDashboard,
-                    setReadyForDashboard 
-                }}>
-                <NavigationContainer>
-                    <MixpanelIdentifier />
-                    <RootStack 
-                        isOnboardingCompleted={isOnboardingCompleted} 
-                        initialAuthScreen={initialAuthScreen}
-                        isAuthenticated={isAuthenticated}
-                        hasMacros={hasMacros}
-                        readyForDashboard={readyForDashboard}
-                    />
-                </NavigationContainer>
-                </HasMacrosContext.Provider>
-            </OnboardingContext.Provider>
+            <RemoteConfigProvider
+                defaults={{
+                    // Add your default remote config values here
+                    feature_flags: '{}',
+                    app_settings: '{}',
+                    maintenance_mode: 'false',
+                    welcome_message: 'Welcome to Macro Meals!',
+                    max_meals_per_day: '10',
+                    subscription_enabled: 'true',
+                    dev_mode: 'false',
+                }}
+                settings={{
+                    minimumFetchIntervalMillis: 30000, // 30 seconds minimum fetch interval
+                }}
+                enableRealTimeUpdates={true}
+                onConfigUpdate={(event, error) => {
+                    if (error) {
+                        console.error('[REMOTE CONFIG] Update error:', error);
+                    } else {
+                        console.log('[REMOTE CONFIG] Config updated successfully:', event.updatedKeys);
+                    }
+                }}
+            >
+                <OnboardingContext.Provider value={{ setIsOnboardingCompleted, setInitialAuthScreen }} >
+                    <HasMacrosContext.Provider value={{ 
+                        hasMacros, 
+                        setHasMacros,
+                        readyForDashboard,
+                        setReadyForDashboard 
+                    }}>
+                        <NavigationContainer>
+                            <MixpanelIdentifier />
+                            <RemoteConfigHandler />
+                            <RootStack 
+                                isOnboardingCompleted={isOnboardingCompleted} 
+                                initialAuthScreen={initialAuthScreen}
+                                isAuthenticated={isAuthenticated}
+                                hasMacros={hasMacros}
+                                readyForDashboard={readyForDashboard}
+                            />
+                        </NavigationContainer>
+                    </HasMacrosContext.Provider>
+                </OnboardingContext.Provider>
+            </RemoteConfigProvider>
         </MixpanelProvider>
     );
 }

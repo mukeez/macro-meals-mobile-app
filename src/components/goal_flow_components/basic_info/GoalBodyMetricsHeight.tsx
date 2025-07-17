@@ -69,7 +69,7 @@ export const GoalBodyMetricsHeight = () => {
           value={height_unit_preference === 'metric'}
           onValueChange={v => setHeightUnitPreference(v ? 'metric' : 'imperial')}
           trackColor={{ false: '', true: '#ccc' }}
-          thumbColor={height_unit_preference === 'metric' ? '#ffffff' : '#f4f3f4'}
+          thumbColor={height_unit_preference === 'metric' ? '#f4f3f4' : '#f4f3f4'}
         />
         <Text className={`text-lg ml-2 ${height_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Metric</Text>
       </View>
@@ -83,28 +83,30 @@ export const GoalBodyMetricsHeight = () => {
               <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
                 <Picker
                   selectedValue={heightFt}
-                  style={{ width: 100, height: 50 }}
-                  itemStyle={{ fontSize: 18 }}
+                  style={{ width: 100, height: 50, color: 'black' }}
+                  itemStyle={{ fontSize: 18, color: 'black' }}
                   onValueChange={setHeightFt}
                 >
-                  <Picker.Item label="ft" value={null} />
+                  <Picker.Item label="ft" value={null} style={{color: 'black'}} />
                   {heightsFt.map(ft => (
-                    <Picker.Item key={ft} label={`${ft} ft`} value={ft} />
+                    <Picker.Item key={ft} label={`${ft} ft`} style={{color: 'black'}} value={ft} />
                   ))}
                 </Picker>
+                <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
               </View>
               <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
                 <Picker
                   selectedValue={heightIn}
-                  style={{ width: 100, height: 50 }}
-                  itemStyle={{ fontSize: 18 }}
+                  style={{ width: 100, height: 50, color: 'black' }}
+                  itemStyle={{ fontSize: 18, color: 'black' }}
                   onValueChange={setHeightIn}
                 >
-                  <Picker.Item label="in" value={null} />
+                  <Picker.Item label="in" value={null} style={{color: 'black'}} />
                   {heightsIn.map(inc => (
-                    <Picker.Item key={inc} label={`${inc} in`} value={inc} />
+                    <Picker.Item key={inc} label={`${inc} in`} style={{color: 'black'}} value={inc} />
                   ))}
                 </Picker>
+                <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
               </View>
             </View>
           </View>
@@ -116,13 +118,13 @@ export const GoalBodyMetricsHeight = () => {
             <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'}`}>
               <Picker
                 selectedValue={heightCm}
-                style={{ width: 140, height: 50 }}
-                itemStyle={{ fontSize: 18 }}
+                style={{ width: 140, height: 50, color: 'black' }}
+                itemStyle={{ fontSize: 18, color: 'black' }}
                 onValueChange={setHeightCm}
               >
-                <Picker.Item label="cm" value={null} />
+                <Picker.Item label="cm" value={null} style={{color: 'black'}} />
                 {heightsCm.map(cm => (
-                  <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
+                  <Picker.Item key={cm} label={`${cm} cm`} style={{color: 'black'}} value={cm} />
                 ))}
               </Picker>
             </View>

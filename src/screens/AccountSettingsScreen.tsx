@@ -42,6 +42,7 @@ export default function AccountSettingsScreen() {
   const inputRefs = useRef<{ [key: string]: TextInput | null }>({});
   const userRef = useRef<any>(null);
   const navigation = useNavigation();
+  const { setAuthenticated, isAuthenticated } = useStore();
   const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>({});
   const mixpanel = useMixpanel();
 
@@ -176,7 +177,9 @@ export default function AccountSettingsScreen() {
                 }
               });
               
-              await authService.deleteAccount();
+              await authService.deleteUser();
+              await authService.logout();
+              setAuthenticated(false, "", "");
             } catch (error) {
               console.error('Error during account deletion:', error);
             }
@@ -349,52 +352,31 @@ export default function AccountSettingsScreen() {
             />
           </View>
         </View>
-        {/* Date Picker Bottom Modal */}
-        <Modal
-          visible={showDatePicker}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowDatePicker(false)}
-        >
-          <View className="flex-1 justify-end bg-black/40">
-            <View className="bg-white rounded-t-xl p-4">
-              <Text className="text-center text-base font-semibold mb-2">
-                Select Birthday
-              </Text>
+        {/* Native Date Picker - No Modal for Either Platform */}
+        {showDatePicker && (
               <DateTimePicker
                 value={tempDate || new Date()}
                 mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
                 onChange={(event, selectedDate) => {
+              if (Platform.OS === 'android') {
+                // On Android, immediately save the date when selected
+                if (selectedDate) {
+                  handleFieldChange(
+                    "dob",
+                    selectedDate.toISOString().split("T")[0]
+                  );
+                }
+                // Always close the picker on Android after any interaction
+                setShowDatePicker(false);
+              } else {
+                // On iOS, use temp state for spinner mode
                   if (selectedDate) setTempDate(selectedDate);
+              }
                 }}
                 maximumDate={new Date()}
               />
-              <View className="flex-row justify-between mt-4">
-                <TouchableOpacity
-                  onPress={() => setShowDatePicker(false)}
-                  className="flex-1 items-center py-2"
-                >
-                  <Text className="text-lg text-blue-500">Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    if (tempDate) {
-                      handleFieldChange(
-                        "dob",
-                        tempDate.toISOString().split("T")[0]
-                      );
-                    }
-                    setShowDatePicker(false);
-                  }}
-                  className="flex-1 items-center py-2"
-                >
-                  <Text className="text-lg text-blue-500">Done</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        )}
         <View className="mt-8 mx-4">
           <TouchableOpacity
             className="pl-4 flex-row justify-start bg-white rounded-xl py-6"

@@ -200,7 +200,6 @@ const MealFinderScreen: React.FC = () => {
     console.log('MEAL FINDER - Consumed:', consumed);
   }, [macrosPreferences, consumed]);
 
-  useEffect(() => {
     const fetchLocationAndSuggestions = async () => {
       setInitializing(true);
       try {
@@ -300,6 +299,12 @@ const MealFinderScreen: React.FC = () => {
         setInitializing(false);
       }
     };
+
+  const handleRetry = () => {
+    fetchLocationAndSuggestions();
+  };
+
+  useEffect(() => {
     fetchLocationAndSuggestions();
   }, []);
 
@@ -399,7 +404,7 @@ const MealFinderScreen: React.FC = () => {
           <Text className="text-[20px] font-semibold text-[#222] text-center">Meal Finder</Text>
           <View style={{ width: 32 }} />
         </View>
-        <View className="flex-1">
+            <View className="flex-1">
 
             <ScrollView className="pb-8">
                 <View className="flex-row items-center mt-4 mb-5 px-5 gap-2">
@@ -468,7 +473,7 @@ const MealFinderScreen: React.FC = () => {
                         <Text className="text-[#888] text-center text-base">Unable to load meal suggestions</Text>
                         <Text className="text-[#888] text-center text-sm mt-1">Please check your connection and try again</Text>
                         <TouchableOpacity 
-                          onPress={() => window.location.reload()} 
+                          onPress={handleRetry} 
                           className="mt-4 px-6 py-2 bg-primaryLight rounded-full"
                         >
                           <Text className="text-white font-medium">Retry</Text>
@@ -477,8 +482,8 @@ const MealFinderScreen: React.FC = () => {
                     ) : (
                       <>
                         {meals.length === 0 && (
-                          <Text className="text-center text-[#888] mt-6">No nearby meal suggestions found.</Text>
-                        )}
+                <Text className="text-center text-[#888] mt-6">No nearby meal suggestions found.</Text>
+                )}
                         {meals.map((meal, idx) => (
                 <TouchableOpacity 
                     key={idx} 
