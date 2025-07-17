@@ -16,6 +16,10 @@ const { height } = Dimensions.get("window");
 type ContactSupportDrawerProps = {
   onClose: () => void;
 };
+const subject = encodeURIComponent("Support Request");
+const body = encodeURIComponent("Hello Macro Meals,\n\nI need help with ...");
+
+const mailtoUrl = `mailto:support@macromeals.com?subject=${subject}&body=${body}`;
 
 export default function ContactSupportDrawer({
   onClose,
