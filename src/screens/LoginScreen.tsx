@@ -30,6 +30,7 @@ import { userService } from "../services/userService";
 import { HasMacrosContext } from "src/contexts/HasMacrosContext";
 import { useGoalsFlowStore } from "../store/goalsFlowStore";
 import { useMixpanel } from "@macro-meals/mixpanel";
+import { IsProContext } from "src/contexts/IsProContext";
 // import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 
 // type RootStackParamList = {
@@ -54,6 +55,7 @@ export const LoginScreen: React.FC = () => {
   const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
   const { hasMacros, setHasMacros, setReadyForDashboard } =
     React.useContext(HasMacrosContext);
+  const { setIsPro } = React.useContext(IsProContext);
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
@@ -111,6 +113,8 @@ export const LoginScreen: React.FC = () => {
       setIsOnboardingCompleted(true);
       // If user has macros, they should be ready for dashboard
       setHasMacros(profile.has_macros);
+      console.log("profile.is_pro", profile.is_pro);
+      setIsPro(profile.is_pro);
       setReadyForDashboard(profile.has_macros);
 
       // Identify user in Mixpanel
@@ -154,6 +158,7 @@ export const LoginScreen: React.FC = () => {
     } catch (error) {
       setAuthenticated(false, "", "");
       setHasMacros(false);
+      setIsPro(false);
       setReadyForDashboard(false);
       console.log("Login failed:", error);
 

@@ -20,6 +20,7 @@ import Constants from 'expo-constants';
 import { userService } from './src/services/userService';
 import { authService } from './src/services/authService';
 import { RemoteConfigProvider, useRemoteConfigContext } from '@macro-meals/remote-config-service';
+import { IsProContext } from 'src/contexts/IsProContext';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -102,6 +103,7 @@ export default function App() {
     const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
     const [initialAuthScreen, setInitialAuthScreen] = useState('LoginScreen');
     const [hasMacros, setHasMacros] = useState(false);
+    const [isPro, setIsPro] = useState(false);
     const [readyForDashboard, setReadyForDashboard] = useState(false);
     console.log('MIXPANEL_TOKEN', MIXPANEL_TOKEN);
 
@@ -200,6 +202,7 @@ export default function App() {
                 console.log('Setting initial unauthenticated state...');
                 setAuthenticated(false, '', '');
                 setHasMacros(false);
+                setIsPro(false);
                 setReadyForDashboard(false);
 
                 // Load fonts
@@ -231,6 +234,7 @@ export default function App() {
                         console.log('Token valid, setting authenticated state with profile:', profile);
                         // Set states in correct order
                         setHasMacros(profile.has_macros);
+                        setIsPro(profile.is_pro);
                         setReadyForDashboard(profile.has_macros);
                         setAuthenticated(true, token, userId);
                     } catch (error) {
@@ -263,10 +267,11 @@ export default function App() {
         console.log('Current app state:', {
             isAuthenticated,
             hasMacros,
+            isPro,
             readyForDashboard,
             isOnboardingCompleted
         });
-    }, [isAuthenticated, hasMacros, readyForDashboard, isOnboardingCompleted]);
+    }, [isAuthenticated, hasMacros, isPro, readyForDashboard, isOnboardingCompleted]);
 
     // Periodic FCM token refresh
     useEffect(() => {
@@ -325,17 +330,20 @@ export default function App() {
                         readyForDashboard,
                         setReadyForDashboard 
                     }}>
-                        <NavigationContainer>
-                            <MixpanelIdentifier />
-                            <RemoteConfigHandler />
-                            <RootStack 
-                                isOnboardingCompleted={isOnboardingCompleted} 
-                                initialAuthScreen={initialAuthScreen}
-                                isAuthenticated={isAuthenticated}
-                                hasMacros={hasMacros}
-                                readyForDashboard={readyForDashboard}
-                            />
-                        </NavigationContainer>
+                        <IsProContext.Provider value={{ isPro, setIsPro }}>
+                            <NavigationContainer>
+                                <MixpanelIdentifier />
+                                <RemoteConfigHandler />
+                                <RootStack 
+                                    isOnboardingCompleted={isOnboardingCompleted} 
+                                    initialAuthScreen={initialAuthScreen}
+                                    isAuthenticated={isAuthenticated}
+                                    hasMacros={hasMacros}
+                                    isPro={isPro}
+                                    readyForDashboard={readyForDashboard}
+                                />
+                            </NavigationContainer>
+                        </IsProContext.Provider>
                     </HasMacrosContext.Provider>
                 </OnboardingContext.Provider>
             </RemoteConfigProvider>

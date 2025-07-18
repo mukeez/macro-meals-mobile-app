@@ -53,6 +53,7 @@ export function RootStack({
   isAuthenticated,
   initialAuthScreen,
   hasMacros,
+  isPro,
   readyForDashboard,
 }: {
   isOnboardingCompleted: boolean;
@@ -60,6 +61,7 @@ export function RootStack({
   initialAuthScreen: string;
   hasMacros: boolean;
   readyForDashboard: boolean;
+  isPro: boolean;
 }) {
   console.log("initialAuthScreen", initialAuthScreen);
   return (
@@ -73,7 +75,11 @@ export function RootStack({
           initialParams={{ initialAuthScreen: initialAuthScreen }}
         />
       ) : hasMacros && readyForDashboard ? (
-        <Stack.Screen name="Dashboard" component={DashboardNavigator} />
+        isPro ? (
+          <Stack.Screen name="Dashboard" component={DashboardNavigator} />
+        ) : (
+          <Stack.Screen name="GoalSetupNav" component={PaymentScreen} />
+        )
       ) : (
         <Stack.Screen name="GoalSetupNav" component={GoalSetupNavigator} />
       )}
