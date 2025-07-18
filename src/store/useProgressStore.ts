@@ -1,7 +1,8 @@
 import { getMealProgress, getMealByPeriod } from "src/services/mealService";
 import { create } from "zustand";
 
-type MacroDay = {
+type MacroPeriod = {
+  period_label: string;
   date: string;
   protein: number;
   carbs: number;
@@ -10,11 +11,16 @@ type MacroDay = {
 };
 
 type MacrosData = {
-  daily_macros: MacroDay[];
+  period_macros: MacroPeriod[];
   average_macros: { calories: number; protein: number; carbs: number; fat: number };
   target_macros: { calories: number; protein: number; carbs: number; fat: number };
+  comparison_percentage: { calories: number; protein: number; carbs: number; fat: number };
   start_date: string;
   end_date: string;
+  period_type: string;
+  aggregation_period: string;
+  days_with_logs: number;
+  total_days: number;
 };
 
 type ProgressState = {
