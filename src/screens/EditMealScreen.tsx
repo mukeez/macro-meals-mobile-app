@@ -14,7 +14,6 @@ import {
     Platform,
     Alert,
     KeyboardAvoidingView,
-    Image as RNImage,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
@@ -27,7 +26,6 @@ import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import * as ImagePicker from 'expo-image-picker';
 import FavoritesService from '../services/favoritesService';
 import { useMixpanel } from '@macro-meals/mixpanel';
-import { Image as ExpoImage } from "expo-image";
 import { appConstants } from "constants/appConstants";
 
 interface RouteParams {
@@ -52,18 +50,18 @@ interface RouteParams {
 
 import { FavoriteMeal } from '../services/favoritesService';
 import { FavouriteIcon } from 'src/components/FavouriteIcon';
+import { SERVING_UNITS } from 'constants/serving_units';
 
-const SERVING_UNITS = [
-    'g',
-    'ml',
-    'oz',
-    'cup',
-    'tbsp',
-    'tsp',
-    'slice',
-    'piece',
-    'serving'
-];
+// const SERVING_UNITS = [
+//     'g',
+//     'ml',
+//     'oz',
+//     'cup',
+//     'tbsp',
+//     'tsp',
+//     'slice',
+//     'piece',
+// ];
 
 /**
  * Screen for adding a new meal to the log
@@ -469,23 +467,11 @@ export const EditMealScreen: React.FC = () => {
                         onPress={handleAddPhoto}
                         activeOpacity={0.8}
                     >
-                        {analyzedData?.photo_url ? (
-                            <ExpoImage
-                                source={{ uri: analyzedData.photo_url }}
-                                placeholder={IMAGE_CONSTANTS.blurhash}
-                                cachePolicy="disk"
-                                contentFit="cover"
-                                transition={300}
-                                style={{ width: '100%', height: '100%', borderRadius: 16 }}
-                                onLoad={() => {
-                                    console.log('✅ ExpoImage loaded successfully for meal:', analyzedData.photo_url);
-                                }}
-                                onError={(error) => {
-                                    console.log('❌ ExpoImage failed to load for meal:', analyzedData.photo_url, error);
-                                }}
-                                onLoadStart={() => {
-                                    console.log('🔄 ExpoImage started loading for meal:', analyzedData.photo_url);
-                                }}
+                        {mealImage ? (
+                            <Image
+                                source={{ uri: mealImage }}
+                                className="w-full h-full rounded-xl"
+                                resizeMode="cover"
                             />
                         ) : (
                             <>
