@@ -47,18 +47,8 @@ interface RouteParams {
 
 import { FavoriteMeal } from '../services/favoritesService';
 import { FavouriteIcon } from 'src/components/FavouriteIcon';
+import { SERVING_UNITS } from 'constants/serving_units';
 
-const SERVING_UNITS = [
-    'g',
-    'ml',
-    'oz',
-    'cup',
-    'tbsp',
-    'tsp',
-    'slice',
-    'piece',
-    'serving'
-];
 
 /**
  * Screen for adding a searched meal to the log with macro calculations

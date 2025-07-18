@@ -1,0 +1,15 @@
+export const SERVING_UNITS = [
+    'grams',
+    'ml',
+    'cup',
+    'tbsp',
+    'tsp',
+    'piece',
+    'tablespoon',
+    'mill',
+    'slice',
+    'scoop',
+    'plate',
+    'bowl',
+    'piece',
+];
