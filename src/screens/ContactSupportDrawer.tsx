@@ -84,7 +84,7 @@ export default function ContactSupportDrawer({
             <TouchableOpacity
               className="my-5 flex-row items-center justify-start bg-[#009688] w-3/5 rounded-3xl px-4 py-3"
               activeOpacity={0.85}
-              onPress={() => Linking.openURL("mailto:support@macromeals.com")}
+              onPress={() => Linking.openURL(mailtoUrl)}
             >
               <Ionicons name="paper-plane" size={17} color="white" />
               <Text className="text-white font-semibold text-sm ml-2">

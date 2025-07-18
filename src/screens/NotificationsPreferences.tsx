@@ -61,7 +61,7 @@ export default function NotificationsPreferences() {
     setToggles((prev) => ({ ...prev, mealReminders: value }));
     setLoading((prev) => ({ ...prev, mealReminders: true }));
     try {
-      await userService.updateUserProfile({
+      await userService.updateProfile({
         meal_reminder_preferences_set: value,
       });
     } catch (e) {
