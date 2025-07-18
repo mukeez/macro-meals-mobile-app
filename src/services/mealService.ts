@@ -68,37 +68,40 @@ interface DailyProgressResponse {
 }
 
 interface MealProgressResponse {
-    daily_macros: [
-        {
-                date: string,
-            calories: number,
-            protein: number;
-            carbs: number;
-            fat: number;
-        }
-    ];
-    average_macros: {
-        calories: number,
-        protein: number,
-        carbs: number,
-        fat: number
-    };
-    target_macros: {
-        calories: number,
-        protein: number,
-        carbs: number,
-        fat: number
-    };
-    comparison_percentage: {
-        calories: number,
-        protein: number,
-        carbs: number,
-        fat: number
-    };
-    start_date: string;
-    end_date: string;
-    days_with_logs: number;
-    total_days: number;
+  period_macros: [
+    {
+      period_label: string;
+      date: string,
+      calories: number,
+      protein: number;
+      carbs: number;
+      fat: number;
+    }
+  ];
+  average_macros: {
+    calories: number,
+    protein: number,
+    carbs: number,
+    fat: number
+  };
+  target_macros: {
+    calories: number,
+    protein: number,
+    carbs: number,
+    fat: number
+  };
+  comparison_percentage: {
+    calories: number,
+    protein: number,
+    carbs: number,
+    fat: number
+  };
+  start_date: string;
+  end_date: string;
+  period_type: string;
+  aggregation_period: string;
+  days_with_logs: number;
+  total_days: number;
 }
 
 /**
