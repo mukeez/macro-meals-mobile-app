@@ -37,6 +37,7 @@ interface MacroBarData {
   fat: number;
   calories: number;
   date: string;
+  period_label: string;
 }
 
 const ProgressScreen = () => {
@@ -61,32 +62,18 @@ const ProgressScreen = () => {
   let hasNonZeroData = false;
   
   try {
-    if (data && Array.isArray(data.daily_macros) && data.daily_macros.length > 0) {
-      // Filter out future dates
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      macroBarData = data.daily_macros
-        .filter(dayData => {
-          const date = new Date(dayData.date);
-          date.setHours(0, 0, 0, 0);
-          return date <= today;
-        })
-        .map(dayData => {
-          const date = new Date(dayData.date);
-          // Convert to Monday = 1, Tuesday = 2, etc. for the chart
-          const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-          const adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek; // Monday = 1, Sunday = 7
-          return {
-            day: adjustedDay, // Already in 1-7 range for the chart
-            protein: Number(dayData.protein) || 0,
-            carbs: Number(dayData.carbs) || 0,
-            fat: Number(dayData.fat) || 0,
-            calories: Number(dayData.calories) || 0,
-            date: dayData.date,
-          };
-        })
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    if (data && Array.isArray(data.period_macros) && data.period_macros.length > 0) {
+      macroBarData = data.period_macros.map((periodData, index) => {
+        return {
+          day: index + 1, // Use index + 1 for chart positioning
+          protein: Number(periodData.protein) || 0,
+          carbs: Number(periodData.carbs) || 0,
+          fat: Number(periodData.fat) || 0,
+          calories: Number(periodData.calories) || 0,
+          date: periodData.date,
+          period_label: periodData.period_label,
+        };
+      });
 
       // Check if we have any non-zero values
       hasNonZeroData = macroBarData.some(day => 
@@ -96,6 +83,7 @@ const ProgressScreen = () => {
       // Debug logging
       console.log('ProgressScreen: Processed macroBarData:', macroBarData.map(d => ({
         date: d.date,
+        period_label: d.period_label,
         day: d.day,
         protein: d.protein,
         carbs: d.carbs,
