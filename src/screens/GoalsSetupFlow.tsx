@@ -22,11 +22,8 @@ import { GoalsTargetWeight } from 'src/components/goal_flow_components/your_goal
 import { GoalsProgressRate } from 'src/components/goal_flow_components/your_goal/GoalsProgressRate'
 import { GoalsPersonalizedPlan } from 'src/components/goal_flow_components/your_plan/GoalsPersonalizedPlan'
 import { HasMacrosContext } from '../contexts/HasMacrosContext'
-import { API_CONSTANTS } from 'src/constants/api_constants';
 import { userService } from 'src/services/userService';
 import { setupMacros } from 'src/services/macroService';
-
-const API_URL = API_CONSTANTS.API_URL;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'GoalsSetupFlow'>;
 

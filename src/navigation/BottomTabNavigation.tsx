@@ -117,6 +117,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
 };
 
 const CustomBottomTabs = () => {
+  console.log('🔍 CustomBottomTabs - Rendering CustomBottomTabs');
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}

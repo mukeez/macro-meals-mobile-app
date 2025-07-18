@@ -1,5 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useContext } from "react";
 import { Platform } from "react-native";
+import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
+import { HasMacrosContext } from './src/contexts/HasMacrosContext';
+import { IsProContext } from './src/contexts/IsProContext';
 import MealFinderScreen from "src/screens/MealFinderScreen";
 import { WelcomeScreen } from "./src/screens/WelcomeScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
@@ -52,18 +55,77 @@ export function RootStack({
   isOnboardingCompleted,
   isAuthenticated,
   initialAuthScreen,
-  hasMacros,
-  isPro,
-  readyForDashboard,
 }: {
   isOnboardingCompleted: boolean;
   isAuthenticated: boolean;
   initialAuthScreen: string;
-  hasMacros: boolean;
-  readyForDashboard: boolean;
-  isPro: boolean;
 }) {
-  console.log("initialAuthScreen", initialAuthScreen);
+  // Get values from context instead of props for better reactivity
+  const { hasMacros, readyForDashboard } = useContext(HasMacrosContext);
+  const { isPro } = useContext(IsProContext);
+  // Get dev mode from remote config
+  const { getValue } = useRemoteConfigContext();
+  let devMode = false;
+  try {
+    devMode = getValue('dev_mode').asBoolean();
+  } catch (error) {
+    console.log('🔍 RootStack - Could not get dev_mode from remote config, defaulting to false:', error);
+    devMode = false;
+  }
+  
+  console.log("🔍 RootStack Routing Decision:", {
+    isOnboardingCompleted,
+    isAuthenticated,
+    initialAuthScreen,
+    hasMacros,
+    isPro,
+    readyForDashboard,
+    devMode,
+    shouldShowOnboarding: !isOnboardingCompleted,
+    shouldShowAuth: !isAuthenticated,
+    shouldShowDashboard: hasMacros && readyForDashboard && (isPro || devMode),
+    shouldShowPayment: hasMacros && readyForDashboard && !isPro && !devMode,
+    shouldShowGoalSetup: !(hasMacros && readyForDashboard)
+  });
+
+  // Add immediate debugging for the routing condition
+  const shouldShowDashboard = hasMacros && readyForDashboard && (isPro || devMode);
+  const shouldShowPayment = hasMacros && readyForDashboard && !isPro && !devMode;
+  
+  console.log("🔍 RootStack - Routing Conditions:", {
+    hasMacros,
+    readyForDashboard,
+    isPro,
+    devMode,
+    hasMacrosAndReady: hasMacros && readyForDashboard,
+    shouldShowDashboard,
+    shouldShowPayment,
+    finalDecision: shouldShowDashboard ? "DASHBOARD" : shouldShowPayment ? "PAYMENT" : "GOAL_SETUP"
+  });
+
+  // Log dev mode bypass if applicable
+  if (devMode && hasMacros && readyForDashboard && !isPro) {
+    console.log("🛠️ DEV MODE: Bypassing payment screen, routing to dashboard");
+  }
+
+  // Log which screen will be rendered
+  let currentScreen = '';
+  if (!isOnboardingCompleted) {
+    currentScreen = 'OnboardingNav';
+  } else if (!isAuthenticated) {
+    currentScreen = 'Auth';
+  } else if (hasMacros && readyForDashboard) {
+    if (isPro || devMode) {
+      currentScreen = 'Dashboard';
+    } else {
+      currentScreen = 'PaymentScreen';
+    }
+  } else {
+    currentScreen = 'GoalSetupNav';
+  }
+  
+  console.log('🔍 RootStack - Rendering screen:', currentScreen);
+  
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!isOnboardingCompleted ? (
@@ -75,10 +137,10 @@ export function RootStack({
           initialParams={{ initialAuthScreen: initialAuthScreen }}
         />
       ) : hasMacros && readyForDashboard ? (
-        isPro ? (
+        (isPro || devMode) ? (
           <Stack.Screen name="Dashboard" component={DashboardNavigator} />
         ) : (
-          <Stack.Screen name="GoalSetupNav" component={PaymentScreen} />
+          <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
         )
       ) : (
         <Stack.Screen name="GoalSetupNav" component={GoalSetupNavigator} />
@@ -143,6 +205,7 @@ const GoalSetupNavigator = () => {
 };
 
 const DashboardNavigator = () => {
+  console.log('🔍 DashboardNavigator - Rendering DashboardNavigator');
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={CustomBottomTabs} />

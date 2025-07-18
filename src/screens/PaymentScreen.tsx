@@ -1,13 +1,12 @@
 // src/screens/WelcomeScreen.tsx
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import { MERCHANT_IDENTIFIER } from '@env';
 import { WebView } from 'react-native-webview';
 
-const API_URL = 'https://api.macromealsapp.com/api/v1';
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StripeProvider, useStripe, PlatformPayButton, isPlatformPaySupported, PlatformPay, confirmPlatformPayPayment } from '@stripe/stripe-react-native';
@@ -28,6 +27,7 @@ import useStore from '../store/useStore';
 import { paymentService } from '../services/paymentService';
 import { userService } from '../services/userService';
 import CustomSafeAreaView from 'src/components/CustomSafeAreaView';
+import { IsProContext } from 'src/contexts/IsProContext';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -144,6 +144,7 @@ const PaymentScreen = () => {
   const [amount, setAmount] = useState(9.99);
   const [showWebView, setShowWebView] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState('');
+  const { isPro, setIsPro } = useContext(IsProContext);
 
   console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
 
@@ -420,7 +421,7 @@ const PaymentScreen = () => {
                       {isLoading ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
-                        <Text className="text-white font-semibold text-[17px]">Start 7-Day Free Trial</Text>
+                        <Text className="text-white font-semibold text-[17px]">{profile?.has_used_trial ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` : 'Start 7-Day Free Trial'}</Text>
                       )}
                     </View>
                   </TouchableOpacity>
@@ -449,6 +450,7 @@ const PaymentScreen = () => {
                   // Handle successful payment completion
                   if (navState.url.includes('success') || navState.url.includes('completed')) {
                     setShowWebView(false);
+                    console.log("🔍 PaymentScreen - Payment successful, setting isPro to true");
                     Alert.alert(
                       "You're in", 
                       "Your subscription is confirmed. Let's hit those goals, one meal at a time.",
@@ -456,8 +458,29 @@ const PaymentScreen = () => {
                         {
                           text: "Continue",
                           onPress: () => {
+                            console.log("🔍 PaymentScreen - User confirmed, updating states");
                             setHasBeenPromptedForGoals(false);
                             setReadyForDashboard(true);
+                            setIsPro(true);
+                            console.log("🔍 PaymentScreen - States updated: readyForDashboard=true, isPro=true");
+                            
+                            // Add a small delay to ensure state updates propagate
+                            setTimeout(() => {
+                              console.log("🔍 PaymentScreen - After delay, checking if navigation should trigger");
+                              
+                              // Force navigation to Dashboard using CommonActions
+                              navigation.dispatch(
+                                CommonActions.reset({
+                                  index: 0,
+                                  routes: [
+                                    {
+                                      name: 'Dashboard',
+                                    },
+                                  ],
+                                })
+                              );
+                              console.log("🔍 PaymentScreen - Forced navigation to Dashboard");
+                            }, 100);
                           }
                         }
                       ]

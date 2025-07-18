@@ -41,6 +41,7 @@ interface Profile {
     is_pro?: boolean;
     meal_reminder_preferences_set?: boolean;
     has_macros?: boolean;
+    has_used_trial?: boolean;
 }
 
 type MacrosPreferences = {

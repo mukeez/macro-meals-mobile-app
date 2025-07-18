@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   Alert, 
-  Modal 
+  Modal,
+  Platform
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
@@ -47,6 +48,13 @@ const ManageSubscriptionsScreen: React.FC = () => {
     try {
       setLoading(true);
       const data = await paymentService.getSubscriptionDetails();
+      console.log('Subscription details:', data);
+      console.log('🔍 ManageSubscriptions - Subscription state:', {
+        has_subscription: data?.has_subscription,
+        cancel_at_period_end: data?.cancel_at_period_end,
+        status: data?.status,
+        willShowResubscribe: data?.cancel_at_period_end
+      });
       setSubscription(data);
     } catch (error: any) {
       console.error('Failed to fetch subscription details:', error);
@@ -76,21 +84,22 @@ const ManageSubscriptionsScreen: React.FC = () => {
   };
 
   const getPlanDisplayName = (plan: string, planName: string) => {
-    if (planName) return planName;
-    
-    const planMap: { [key: string]: string } = {
-      'monthly': 'Premium Monthly',
-      'yearly': 'Premium Yearly',
-      'premium_monthly': 'Premium Monthly',
-      'premium_yearly': 'Premium Yearly'
-    };
-    
-    return planMap[plan] || plan;
+    if (plan === 'premium') {
+      return planName || 'Premium Plan';
+    } else if (plan === 'basic') {
+      return planName || 'Basic Plan';
+    }
+    return planName || 'Subscription';
+  };
+
+  const capitalizeFirstLetter = (str: string) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
   const getStatusDisplay = (status: string, cancelAtPeriodEnd: boolean) => {
     if (cancelAtPeriodEnd) {
-      return `Premium – Cancelled (ends ${formatDate(subscription?.current_period_end || '')})`;
+      return `Cancelled (ends ${formatDate(subscription?.current_period_end || '')})`;
     }
     
     const statusMap: { [key: string]: string } = {
@@ -108,32 +117,40 @@ const ManageSubscriptionsScreen: React.FC = () => {
     setShowCancelModal(true);
   };
 
-  const handleReactivateSubscription = async () => {
+  const handleReactivateSubscription = async (subscription_id: string) => {
     try {
       setReactivating(true);
 
-      // Track reactivation in Mixpanel
+      const isResubscribing = subscription?.cancel_at_period_end;
+      const eventName = isResubscribing ? 'subscription_resubscribed' : 'subscription_reactivated';
+
+      // Track reactivation/resubscription in Mixpanel
       mixpanel?.track({
-        name: 'subscription_reactivated',
+        name: eventName,
         properties: {
           plan: subscription?.plan || 'unknown',
           plan_name: subscription?.plan_name || 'unknown',
           billing_interval: subscription?.billing_interval || 'unknown',
           amount: subscription?.amount || 0,
-          currency: subscription?.currency || 'unknown'
+          currency: subscription?.currency || 'unknown',
+          was_cancelled: subscription?.cancel_at_period_end || false
         }
       });
 
       // Call reactivation without subscription_id since the backend doesn't provide it for cancelled subscriptions
-      await paymentService.reactivateSubscription();
+      await paymentService.reactivateSubscription(subscription_id);
 
       // Refresh subscription details
       await fetchSubscriptionDetails();
 
       // Show success message as a toast-style notification
+      const successMessage = isResubscribing 
+        ? 'Subscription reactivated. Your plan will continue after the current period ends.'
+        : 'Subscription reactivated. Your plan remains active.';
+        
       Alert.alert(
         'Success',
-        'Subscription reactivated. Your plan remains active.',
+        successMessage,
         [{ text: 'OK' }],
         { cancelable: true }
       );
@@ -166,7 +183,8 @@ const ManageSubscriptionsScreen: React.FC = () => {
 
       await paymentService.cancelSubscription(
         subscription.subscription_id,
-        subscription.status
+        // subscription.status,
+        subscription.cancel_at_period_end,
       );
 
       // Refresh subscription details
@@ -247,9 +265,9 @@ const ManageSubscriptionsScreen: React.FC = () => {
               <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
                 <Text className="flex-1 text-base text-[#222]">Status</Text>
                 <View className="flex-row items-center">
-                  <View className="w-2 h-2 rounded-full mr-2 bg-orange-500" />
-                  <Text className="text-base font-medium text-orange-600">
-                    Premium – Cancelled
+                  <View className={`w-2 h-2 rounded-full mr-2 ${subscription.cancel_at_period_end ? 'bg-orange-500' : subscription.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <Text className={`text-base font-medium ${subscription.cancel_at_period_end ? 'text-orange-600' : subscription.status === 'active' ? 'text-green-600' : 'text-red-600'}`}>
+                    {getStatusDisplay(subscription.status, subscription.cancel_at_period_end)}
                   </Text>
                 </View>
               </View>
@@ -292,11 +310,26 @@ const ManageSubscriptionsScreen: React.FC = () => {
 
             {/* Action Buttons */}
             <View className="mt-8 mx-4">
-              {!subscription?.has_subscription ? (
+              {subscription?.cancel_at_period_end ? (
+                // Resubscribe button when subscription is cancelled but still active until period end
+                <TouchableOpacity
+                  className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
+                  onPress={() => handleReactivateSubscription(subscription?.subscription_id || '')}
+                  disabled={reactivating}
+                >
+                  {reactivating ? (
+                    <ActivityIndicator size="small" color="#19a28f" style={{ marginRight: 12 }} />
+                  ) : (
+                    <Text className="text-[#19a28f] text-left font-semibold text-base">
+                      Resubscribe
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ) : !subscription?.has_subscription ? (
                 // Reactivate button for cancelled subscriptions (when has_subscription is false)
                 <TouchableOpacity
                   className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
-                  onPress={handleReactivateSubscription}
+                  onPress={() => handleReactivateSubscription(subscription?.subscription_id || '')}
                   disabled={reactivating}
                 >
                   {reactivating ? (
@@ -333,12 +366,12 @@ const ManageSubscriptionsScreen: React.FC = () => {
         <Modal
           visible={showCancelModal}
           transparent={true}
-          animationType="fade"
+          animationType={Platform.OS === 'ios' ? 'fade' : 'slide'}
           onRequestClose={() => setShowCancelModal(false)}
         >
           <View className="flex-1 bg-black bg-opacity-50 justify-center items-center px-6">
-            <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-              <Text className="text-xl font-semibold text-[#222] text-center mb-4">
+            <View className={`bg-white ${Platform.OS === 'ios' ? 'rounded-2xl' : 'rounded-t-3xl'} p-6 w-full ${Platform.OS === 'ios' ? 'max-w-sm' : 'max-w-full'}`}>
+              <Text className={`${Platform.OS === 'ios' ? 'text-xl' : 'text-lg'} font-semibold text-[#222] text-center mb-4`}>
                 Are you sure you want to cancel?
               </Text>
               
@@ -346,25 +379,49 @@ const ManageSubscriptionsScreen: React.FC = () => {
                 You'll lose access to premium features at the end of your current billing period. You can resubscribe anytime from your account settings.
               </Text>
 
-              <View className="flex-row space-x-3">
-                <TouchableOpacity
-                  className="flex-1 py-3 px-4 border border-[#ddd] rounded-xl"
-                  onPress={() => setShowCancelModal(false)}
-                >
-                  <Text className="text-base text-[#666] text-center font-medium">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  className="flex-1 py-3 px-4 bg-punchRed rounded-xl"
-                  onPress={confirmCancelSubscription}
-                >
-                  <Text className="text-base text-white text-center font-medium">
-                    Yes, Cancel
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              {Platform.OS === 'ios' ? (
+                // iOS-style buttons (side by side)
+                <View className="flex-row space-x-3">
+                  <TouchableOpacity
+                    className="flex-1 py-3 px-4 border border-[#ddd] rounded-xl"
+                    onPress={() => setShowCancelModal(false)}
+                  >
+                    <Text className="text-base text-[#666] text-center font-medium">
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    className="flex-1 py-3 px-4 bg-punchRed rounded-xl"
+                    onPress={confirmCancelSubscription}
+                  >
+                    <Text className="text-base text-white text-center font-medium">
+                      Yes, Cancel
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                // Android-style buttons (stacked)
+                <View className="space-y-3">
+                  <TouchableOpacity
+                    className="w-full py-4 px-4 bg-punchRed rounded-xl"
+                    onPress={confirmCancelSubscription}
+                  >
+                    <Text className="text-base text-white text-center font-medium">
+                      Yes, Cancel Subscription
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    className="w-full py-4 px-4 border border-[#ddd] rounded-xl"
+                    onPress={() => setShowCancelModal(false)}
+                  >
+                    <Text className="text-base text-[#666] text-center font-medium">
+                      Keep Subscription
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
         </Modal>
