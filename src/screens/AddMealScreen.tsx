@@ -50,21 +50,7 @@ interface RouteParams {
 
 import { FavoriteMeal } from '../services/favoritesService';
 import { FavouriteIcon } from 'src/components/FavouriteIcon';
-
-const SERVING_UNITS = [
-    'grams',
-    'ml',
-    'oz',
-    'cup',
-    'tbsp',
-    'tsp',
-    'slice',
-    'scoop',
-    'plate',
-    'bowl',
-    'piece',
-    'serving'
-];
+import { SERVING_UNITS } from 'constants/serving_units';
 
 /**
  * Screen for adding a new meal to the log

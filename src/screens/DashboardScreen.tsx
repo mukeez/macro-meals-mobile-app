@@ -571,7 +571,7 @@ export const DashboardScreen: React.FC = () => {
                                       carbs: meal.macros?.carbs || 0,
                                       fat: meal.macros?.fat || 0,
                                       meal_type: meal.mealType || 'lunch',
-                                      serving_unit: meal.serving_unit || 'serving',
+                                      serving_unit: meal.serving_unit || 'grams',
                                       amount: meal.amount,
                                       logging_mode: meal.logging_mode,
                                       meal_time: meal.meal_time || meal.date,
