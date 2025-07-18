@@ -231,12 +231,24 @@ export default function App() {
                     try {
                         // Fetch user profile to validate token
                         const profile = await userService.getProfile();
+                        console.log('🔍 App.tsx - Profile loaded during initialization:', {
+                            has_macros: profile.has_macros,
+                            is_pro: profile.is_pro,
+                            email: profile.email,
+                            id: profile.id
+                        });
                         console.log('Token valid, setting authenticated state with profile:', profile);
                         // Set states in correct order
                         setHasMacros(profile.has_macros);
                         setIsPro(profile.is_pro);
                         setReadyForDashboard(profile.has_macros);
                         setAuthenticated(true, token, userId);
+                        console.log('🔍 App.tsx - States set during initialization:', {
+                            hasMacros: profile.has_macros,
+                            isPro: profile.is_pro,
+                            readyForDashboard: profile.has_macros,
+                            isAuthenticated: true
+                        });
                     } catch (error) {
                         console.error('Error validating token:', error);
                         // Clear stored credentials on error
@@ -264,7 +276,7 @@ export default function App() {
 
     // Add state logging
     useEffect(() => {
-        console.log('Current app state:', {
+        console.log('🔍 App.tsx - Current app state:', {
             isAuthenticated,
             hasMacros,
             isPro,
@@ -272,6 +284,20 @@ export default function App() {
             isOnboardingCompleted
         });
     }, [isAuthenticated, hasMacros, isPro, readyForDashboard, isOnboardingCompleted]);
+
+    // Add specific logging for isPro changes
+    useEffect(() => {
+        console.log('🔍 App.tsx - isPro state changed:', isPro);
+    }, [isPro]);
+
+    // Log state right before RootStack render
+    console.log('🔍 App.tsx - Passing to RootStack:', {
+        isAuthenticated,
+        hasMacros,
+        isPro,
+        readyForDashboard,
+        isOnboardingCompleted
+    });
 
     // Periodic FCM token refresh
     useEffect(() => {
@@ -338,9 +364,6 @@ export default function App() {
                                     isOnboardingCompleted={isOnboardingCompleted} 
                                     initialAuthScreen={initialAuthScreen}
                                     isAuthenticated={isAuthenticated}
-                                    hasMacros={hasMacros}
-                                    isPro={isPro}
-                                    readyForDashboard={readyForDashboard}
                                 />
                             </NavigationContainer>
                         </IsProContext.Provider>

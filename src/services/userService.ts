@@ -1,8 +1,10 @@
+
+import { API_CONFIG } from "config/api";
 import useStore from "../store/useStore";
 import { authTokenService } from "./authTokenService";
 import axiosInstance from "./axios";
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
+// const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 
 /**
  * Default user preferences
@@ -210,7 +212,7 @@ uploadProfileImage: async (imageUri: string, authToken: string) => {
     type: type,
   } as any);
 
-  const response = await fetch(`${API_BASE_URL}/user/me`,
+  const response = await fetch(`${API_CONFIG.BASE_URL}/user/me`,
     {
     
     method: 'PATCH',

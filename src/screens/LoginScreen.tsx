@@ -1,5 +1,5 @@
 // src/screens/LoginScreen.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -53,9 +53,9 @@ export const LoginScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
-  const { hasMacros, setHasMacros, setReadyForDashboard } =
+  const { hasMacros, setHasMacros, setReadyForDashboard, readyForDashboard } =
     React.useContext(HasMacrosContext);
-  const { setIsPro } = React.useContext(IsProContext);
+  const { setIsPro, isPro } = React.useContext(IsProContext);
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
@@ -72,6 +72,16 @@ export const LoginScreen: React.FC = () => {
 
   // Set up auth state in your Zustand store
   const setAuthenticated = useStore((state) => state.setAuthenticated);
+
+  // Debug useEffect to monitor state changes
+  useEffect(() => {
+    console.log("🔍 LoginScreen - State changed:", {
+      hasMacros,
+      isPro,
+      readyForDashboard,
+      isAuthenticated: useStore.getState().isAuthenticated
+    });
+  }, [hasMacros, isPro, readyForDashboard]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -105,17 +115,47 @@ export const LoginScreen: React.FC = () => {
 
       // Then get profile using the stored token
       const profile = await userService.getProfile();
+      console.log("🔍 LoginScreen - Profile received:", {
+        has_macros: profile.has_macros,
+        is_pro: profile.is_pro,
+        email: profile.email,
+        id: profile.id
+      });
 
       // Reset steps before setting other states
       resetSteps();
 
-      // Set all state in the correct order
+      // Set all state in the correct order - batch them together
+      console.log("🔍 LoginScreen - Setting states:", {
+        hasMacros: profile.has_macros,
+        isPro: profile.is_pro,
+        readyForDashboard: profile.has_macros
+      });
+      
+      // Set all states together to ensure they're synchronized
       setIsOnboardingCompleted(true);
-      // If user has macros, they should be ready for dashboard
       setHasMacros(profile.has_macros);
-      console.log("profile.is_pro", profile.is_pro);
       setIsPro(profile.is_pro);
       setReadyForDashboard(profile.has_macros);
+
+      console.log("🔍 LoginScreen - Immediately after setting states:", {
+        profileHasMacros: profile.has_macros,
+        profileIsPro: profile.is_pro,
+        settingHasMacros: profile.has_macros,
+        settingIsPro: profile.is_pro,
+        settingReadyForDashboard: profile.has_macros
+      });
+
+      // Debug: Check context values after a short delay
+      setTimeout(() => {
+        console.log("🔍 LoginScreen - Context values after setting:", {
+          hasMacros,
+          isPro,
+          readyForDashboard,
+          profileHasMacros: profile.has_macros,
+          profileIsPro: profile.is_pro
+        });
+      }, 50);
 
       // Identify user in Mixpanel
       mixpanel?.identify(userId);
@@ -154,7 +194,13 @@ export const LoginScreen: React.FC = () => {
       }
 
       // Set authenticated last to trigger navigation
-      setAuthenticated(true, token, userId);
+      console.log("🔍 LoginScreen - Setting authenticated state");
+      
+      // Add a small delay to ensure context updates have propagated
+      setTimeout(() => {
+        console.log("🔍 LoginScreen - Setting authenticated state after delay");
+        setAuthenticated(true, token, userId);
+      }, 100);
     } catch (error) {
       setAuthenticated(false, "", "");
       setHasMacros(false);

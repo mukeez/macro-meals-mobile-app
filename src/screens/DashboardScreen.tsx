@@ -74,6 +74,7 @@ interface TodayMeal {
 }
 
 export const DashboardScreen: React.FC = () => {
+  console.log('🔍 DashboardScreen - Rendering DashboardScreen');
   const navigation = useNavigation<NavigationProp>();
 
   // State for user data
@@ -185,6 +186,9 @@ export const DashboardScreen: React.FC = () => {
       // Refresh meals from store
       await refreshMeals();
       setIsLoading(false);
+      // if (profile.is_pro === false) {
+      //   navigation.navigate("PaymentScreen");
+      // }
     } catch (error) {
       console.error("Error fetching user data:", error);
       setError("Failed to load your data. Please try again.");

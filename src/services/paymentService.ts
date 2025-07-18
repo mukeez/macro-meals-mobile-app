@@ -38,13 +38,13 @@ export const paymentService = {
         }
     },
 
-    cancelSubscription: async (subscriptionId: string, status: string) => {
+    cancelSubscription: async (subscriptionId: string,  cancel_at_period_end: boolean) => {
         try {
             const requestData = {
                 cancel_at_period_end: true,
-                status,
                 subscription_id: subscriptionId
             };
+            console.log('Request data:', requestData);
             const response = await axiosInstance.delete('/billing/cancel', {
                 data: requestData
             });
@@ -70,7 +70,8 @@ export const paymentService = {
 
     reactivateSubscription: async (subscriptionId?: string) => {
         try {
-            const payload = subscriptionId ? { subscription_id: subscriptionId } : {};
+            const payload = { subscription_id: subscriptionId };
+            console.log('Reactivate subscription payload:', payload);
             const response = await axiosInstance.post('/billing/reactivate-subscription', payload);
             return response.data;
         } catch (error: any) {
