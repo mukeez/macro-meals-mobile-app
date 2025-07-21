@@ -10,6 +10,9 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types/navigation";
 import { Image as ExpoImage } from "expo-image";
 import { appConstants } from "constants/appConstants";
+import { DatePickerModal } from 'react-native-paper-dates';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { format, parseISO } from 'date-fns';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -102,8 +105,55 @@ const AddMeal: React.FC = () => {
     return difference;
   };
 
-  const fetchMeals = async () => {
-    const { startDate, endDate } = getStartEndDates(selectedRange);
+  const [customRange, setCustomRange] = useState<{ startDate: Date | undefined, endDate: Date | undefined }>({ startDate: undefined, endDate: undefined });
+  const [customPickerOpen, setCustomPickerOpen] = useState(false);
+
+  // Accordion state for months and days
+  const [openMonths, setOpenMonths] = useState<string[]>([]); // month keys
+  const [openDays, setOpenDays] = useState<{ [month: string]: string[] }>({}); // { monthKey: [dayKey, ...] }
+
+  // Group meals by month and day
+  const mealsByMonth: { [month: string]: { [day: string]: any[] } } = React.useMemo(() => {
+    const grouped: { [month: string]: { [day: string]: any[] } } = {};
+    meals.forEach(meal => {
+      const dateObj = meal.meal_time ? new Date(meal.meal_time) : new Date();
+      const monthKey = format(dateObj, 'MMMM yyyy');
+      const dayKey = format(dateObj, 'yyyy-MM-dd');
+      if (!grouped[monthKey]) grouped[monthKey] = {};
+      if (!grouped[monthKey][dayKey]) grouped[monthKey][dayKey] = [];
+      grouped[monthKey][dayKey].push(meal);
+    });
+    return grouped;
+  }, [meals]);
+
+  // Keep all accordions closed initially
+  useEffect(() => {
+    // No need to open any accordions by default
+  }, [mealsByMonth]);
+
+  // Toggle month accordion
+  const toggleMonth = (monthKey: string) => {
+    setOpenMonths(prev =>
+      prev.includes(monthKey)
+        ? prev.filter(m => m !== monthKey)
+        : [...prev, monthKey]
+    );
+  };
+  // Toggle day accordion
+  const toggleDay = (monthKey: string, dayKey: string) => {
+    setOpenDays(prev => {
+      const days = prev[monthKey] || [];
+      return {
+        ...prev,
+        [monthKey]: days.includes(dayKey)
+          ? days.filter(d => d !== dayKey)
+          : [...days, dayKey],
+      };
+    });
+  };
+
+  const fetchMeals = async (overrideRange?: { startDate: string, endDate: string }) => {
+    const { startDate, endDate } = overrideRange || getStartEndDates(selectedRange);
     try {
       setLoading(true);
       const mealsData = await getMeals(startDate, endDate);
@@ -116,8 +166,15 @@ const AddMeal: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchMeals();
-  }, [selectedRange]);
+    if (selectedRange === 'custom' && customRange.startDate && customRange.endDate) {
+      fetchMeals({
+        startDate: customRange.startDate.toISOString().split('T')[0],
+        endDate: customRange.endDate.toISOString().split('T')[0],
+      });
+    } else if (selectedRange !== 'custom') {
+      fetchMeals();
+    }
+  }, [selectedRange, customRange]);
 
   // Fetch consumed data from API (same as DashboardScreen)
   useEffect(() => {
@@ -192,7 +249,7 @@ const AddMeal: React.FC = () => {
           title: "Filter your meals",
           message: "Select a time frame to view your meals over time.",
           options: ["Today", "Yesterday", "1 week", "1 month", "Custom", "Cancel"],
-          cancelButtonIndex: 4,
+          cancelButtonIndex: 5,
           destructiveButtonIndex: undefined,
         },
         (buttonIndex) => {
@@ -200,7 +257,10 @@ const AddMeal: React.FC = () => {
           else if (buttonIndex === 1) setSelectedRange("yesterday");
           else if (buttonIndex === 2) setSelectedRange("1w");
           else if (buttonIndex === 3) setSelectedRange("1m");
-          else if (buttonIndex === 4) setSelectedRange("custom");
+          else if (buttonIndex === 4) {
+            setSelectedRange("custom");
+            setCustomPickerOpen(true);
+          }
           // Cancel does nothing
         }
       );
@@ -210,315 +270,619 @@ const AddMeal: React.FC = () => {
   };
 
   return (
-    <View className="flex-1 bg-[#F5F5F5]">
-      {/* Top section: Range/filter and progress bars in one column */}
-      <View className="bg-primaryLight px-4 pt-[60px] pb-6 mb-4">
-        <View className="flex-row items-center justify-between mb-2">
-          <View className="flex-1"></View>
-          
-          <View className="flex-row items-center">
-            <TouchableOpacity onPress={() => {
+    <PaperProvider>
+      <View className="flex-1 bg-[#F5F5F5]">
+        {/* Top section: Range/filter and progress bars in one column */}
+        <View className="bg-primaryLight px-4 pt-[60px] pb-6 mb-4">
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-1"></View>
+            
+            <View className="flex-row items-center">
+                          <TouchableOpacity onPress={() => {
               const currentIndex = FILTER_OPTIONS.findIndex(opt => opt.value === selectedRange);
               const prevIndex = currentIndex > 0 ? currentIndex - 1 : FILTER_OPTIONS.length - 1;
-              setSelectedRange(FILTER_OPTIONS[prevIndex].value);
+              const newRange = FILTER_OPTIONS[prevIndex].value;
+              setSelectedRange(newRange);
+              if (newRange === 'custom') {
+                setCustomPickerOpen(true);
+              }
             }}>
-              <Text className="text-white text-2xl font-bold">‹</Text>
-            </TouchableOpacity>
-            
-            <Text className="text-white text-lg font-semibold mx-4">{FILTER_OPTIONS.find(opt => opt.value === selectedRange)?.label || "Today"}</Text>
-            
-            <TouchableOpacity onPress={() => {
+                <Text className="text-white text-2xl font-bold">‹</Text>
+              </TouchableOpacity>
+              
+              <Text className="text-white text-lg font-semibold mx-4">{FILTER_OPTIONS.find(opt => opt.value === selectedRange)?.label || "Today"}</Text>
+              
+                          <TouchableOpacity onPress={() => {
               const currentIndex = FILTER_OPTIONS.findIndex(opt => opt.value === selectedRange);
               const nextIndex = currentIndex < FILTER_OPTIONS.length - 1 ? currentIndex + 1 : 0;
-              setSelectedRange(FILTER_OPTIONS[nextIndex].value);
+              const newRange = FILTER_OPTIONS[nextIndex].value;
+              setSelectedRange(newRange);
+              if (newRange === 'custom') {
+                setCustomPickerOpen(true);
+              }
             }}>
-              <Text className="text-white text-2xl font-bold">›</Text>
-            </TouchableOpacity>
+                <Text className="text-white text-2xl font-bold">›</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View className="flex-1 items-end">
+              <TouchableOpacity onPress={showFilterSheet}>
+                <Image source={IMAGE_CONSTANTS.filterIcon} className="w-7 h-7" />
+              </TouchableOpacity>
+            </View>
           </View>
           
-          <View className="flex-1 items-end">
-            <TouchableOpacity onPress={showFilterSheet}>
-              <Image source={IMAGE_CONSTANTS.filterIcon} className="w-7 h-7" />
-            </TouchableOpacity>
+          {/* Macros Progress Section */}
+          <View className="bg-white/20 rounded-2xl mt-3 px-4 py-4">
+            <View className="flex-row items-center justify-start mb-3">
+              <Text className="text-white text-base font-medium">
+                Calories remaining ({getCaloriesDifference()})
+              </Text>
+            </View>
+            <View className="flex-row items-center justify-between w-full">
+              {macroData.map((macro) => (
+                <View key={macro.label} className="flex-col items-center justify-center">
+                  <Text className="text-white text-[11px] font-medium mb-1">
+                    {macro.key === 'calories' 
+                      ? `${periodMealsSum.calories}/${macros.calories}`
+                      : `${periodMealsSum[macro.key]}/${macros[macro.key]}`
+                    }
+                  </Text>
+                  <LinearProgress
+                    width={78}
+                    progress={
+                      macro.key === 'calories' 
+                        ? (periodMealsSum.calories / (macros.calories || 1)) * 100
+                        : (periodMealsSum[macro.key] / (macros[macro.key] || 1)) * 100
+                    }
+                    color={macro.color}
+                    backgroundColor="#E5E5E5"
+                  />
+                </View>
+              ))}
+            </View>
           </View>
         </View>
-        
-        {/* Macros Progress Section */}
-        <View className="bg-white/20 rounded-2xl mt-3 px-4 py-4">
-          <View className="flex-row items-center justify-start mb-3">
-            <Text className="text-white text-base font-medium">
-              Calories remaining ({getCaloriesDifference()})
-            </Text>
-          </View>
-          <View className="flex-row items-center justify-between w-full">
-            {macroData.map((macro) => (
-              <View key={macro.label} className="flex-col items-center justify-center">
-                <Text className="text-white text-[11px] font-medium mb-1">
-                  {macro.key === 'calories' 
-                    ? `${periodMealsSum.calories}/${macros.calories}`
-                    : `${periodMealsSum[macro.key]}/${macros[macro.key]}`
-                  }
-                </Text>
-                <LinearProgress
-                  width={78}
-                  progress={
-                    macro.key === 'calories' 
-                      ? (periodMealsSum.calories / (macros.calories || 1)) * 100
-                      : (periodMealsSum[macro.key] / (macros[macro.key] || 1)) * 100
-                  }
-                  color={macro.color}
-                  backgroundColor="#E5E5E5"
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
 
-      {/* Meals List */}
-      <ScrollView
-        className="flex-1" 
-        contentContainerStyle={{ paddingBottom: 32 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={["#7E54D9"]}
-            tintColor="#7E54D9"
-          />
-        }
-      >
-        {loading ? (
-          <View className="flex-1 justify-center items-center py-20">
-            <ActivityIndicator size="large" color="#19a28f" />
-            <Text className="text-textMediumGrey mt-4">Loading meals...</Text>
-          </View>
-        ) : (
-          <>
-            {/* Single Meals Card - Full Width */}
-            <View className="bg-white py-3">
-
-              {mealSections.length === 0 ? (
+        {/* Meals List */}
+        <ScrollView
+          className="flex-1" 
+          contentContainerStyle={{ paddingBottom: 32 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={["#7E54D9"]}
+              tintColor="#7E54D9"
+            />
+          }
+        >
+          {loading ? (
+            <View className="flex-1 justify-center items-center py-20">
+              <ActivityIndicator size="large" color="#19a28f" />
+              <Text className="text-textMediumGrey mt-4">Loading meals...</Text>
+            </View>
+          ) : (
+            // Show accordion UI only for custom filter
+            selectedRange === 'custom' ? (
+              Object.keys(mealsByMonth).length === 0 ? (
                 <View className="flex-1 w-full py-1">
                   <Text className="text-textMediumGrey text-center">You haven't logged any meals yet.</Text>
-                  <TouchableOpacity className="mt-4 py-2 px-4 border-t border-gray" onPress={() => navigation.navigate('ScanScreenType')}>
+                  <TouchableOpacity className="mt-4 py-2 px-4 border-t border-gray" onPress={() => {
+                    let defaultDate = new Date();
+                    if ((selectedRange as string) === 'yesterday') {
+                      defaultDate.setDate(defaultDate.getDate() - 1);
+                    }
+                    navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                  }}>
                     <Text className="text-primary font-semibold">+ ADD FOOD</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
-                mealSections.map((section, sectionIndex) => (
-                  <View key={section.key}>
-                    {/* Section Header inside the card */}
-                    {section.meals.length > 0 && (
-                      <View className="flex-row items-center mb-3 px-4 mt-3">
-                        <Text className="text-lg font-semibold">{section.emoji} {section.label}</Text>
-                      </View>
-                    )}
-                    {section.meals.map((meal, index) => (
-                      <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
-                     { meal.photo_url ?
-                       <ExpoImage
-                        placeholder={IMAGE_CONSTANTS.blurhash}
-                        cachePolicy="disk"
-                        contentFit="cover"
-                        transition={300}
-                        source={{ uri: meal.photo_url }}
-                        style={{ width: 90, height: 90, borderRadius: 8, marginRight: 8 }}
-                        onLoad={() => {
-                          console.log('✅ ExpoImage loaded successfully for meal:', meal.name, meal.photo_url);
-                        }}
-                        onError={(error) => {
-                          console.log('❌ ExpoImage failed to load for meal:', meal.name, meal.photo_url, error);
-                        }}
-                        onLoadStart={() => {
-                          console.log('🔄 ExpoImage started loading for meal:', meal.name, meal.photo_url);
-                        }}
-                      />:  <Image
-                      source={IMAGE_CONSTANTS.mealIcon}
-                      className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
-                      resizeMode="cover"
-                    />}
-                        <View className="flex-1 flex-col">
-                          <View className="flex-row items-center justify-between mb-2">
-                            <Text
-                              className="text-sm text-textMediumGrey font-medium flex-1 mr-2"
-                              numberOfLines={1}
-                              ellipsizeMode="tail"
-                            >
-                              {meal.name}
-                            </Text>
-                            <View className="flex-row items-center gap-3">
-                              <TouchableOpacity
-                                onPress={() => {
-                                  navigation.navigate('EditMealScreen', {
-                                    analyzedData: {
-                                      id: meal.id,
-                                      name: meal.name,
-                                      calories: meal.calories,
-                                      protein: meal.protein,
-                                      carbs: meal.carbs,
-                                      fat: meal.fat,
-                                      amount: meal.quantity || 1,
-                                      meal_type: meal.meal_type,
-                                      serving_unit: meal.serving_unit,
-                                      logging_mode: meal.logging_mode,
-                                      meal_time: meal.meal_time,
-                                      photo_url: meal.photo_url,
-                                      read_only: meal.read_only
-                                    }
-                                  });
-                                }}
-                              >
-                                <View className="w-[24px] h-[24px] bg-gray rounded-full justify-center items-center bg-gray-100">
+                Object.entries(mealsByMonth).map(([monthKey, daysObj]) => (
+                  Object.entries(daysObj).map(([dayKey, dayMeals]) => {
+                    // Calculate summary for the day
+                    const summary = dayMeals.reduce((acc, meal) => {
+                      acc.calories += meal.calories || 0;
+                      acc.carbs += meal.carbs || 0;
+                      acc.fat += meal.fat || 0;
+                      acc.protein += meal.protein || 0;
+                      return acc;
+                    }, { calories: 0, carbs: 0, fat: 0, protein: 0 });
+                    
+                    return (
+                      <View key={dayKey} className="mb-4 bg-white rounded-xl overflow-hidden">
+                        {/* Day Accordion Header */}
+                        <TouchableOpacity
+                          className="flex-row items-center justify-between px-4 py-4 bg-white"
+                          onPress={() => toggleDay(monthKey, dayKey)}
+                        >
+                          <View className="flex-1">
+                            <Text className="text-base font-semibold">{format(parseISO(dayKey), 'MMM d, yyyy')} ({dayMeals.length} meals)</Text>
+                            {/* Day Summary with Icons */}
+                            <View className="flex-row items-center gap-3 mt-2">
+                              <View className="flex-row items-center justify-center gap-1">
+                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
                                   <Image
-                                    source={IMAGE_CONSTANTS.editIcon}
-                                    className="w-[13px] h-[13px]"
-                                    tintColor="#253238"
+                                    source={IMAGE_CONSTANTS.caloriesIcon}
+                                    className="w-[10px] h-[10px] object-fill"
                                   />
                                 </View>
-                              </TouchableOpacity>
-                              <TouchableOpacity onPress={() => handleDeleteMeal(meal.id)}>
-                                <View className="w-[24px] h-[24px] rounded-full bg-gray justify-center items-center bg-gray-100">
-                                  <Image
-                                    source={IMAGE_CONSTANTS.deleteIcon}
-                                    className="w-[11px] h-[13px]"
-                                    tintColor="#253238"
-                                  />
+                                <Text className="text-xs text-black font-medium">
+                                  {summary.calories} cal
+                                </Text>
+                              </View>
+                              <View className="flex-row items-center gap-1">
+                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
+                                  <Text className="text-white text-[10px] text-center font-medium">
+                                    C
+                                  </Text>
                                 </View>
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                          <View className="flex-row items-center mb-2">
-                            <Text className="text-sm text-textMediumGrey text-center font-medium mr-2">
-                              {meal.meal_time ? (() => {
-                                const date = new Date(meal.meal_time);
-                                if (selectedRange === '1w' || selectedRange === '1m') {
-                                  return date.toLocaleDateString([], { 
-                                    month: 'short', 
-                                    day: 'numeric',
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                  });
-                                } else {
-                                  return date.toLocaleTimeString([], { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                  });
-                                }
-                              })() : 'N/A'}
-                            </Text>
-                            <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
-                            <Image
-                              tintColor="#000000"
-                              source={
-                                meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
-                                meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
-                                meal.logging_mode === 'scanned' ? IMAGE_CONSTANTS.scanMealIcon :
-                                IMAGE_CONSTANTS.fireIcon // default to fire icon
-                              }
-                              className="w-[12px] h-[12px] object-fill mr-1"
-                            />
-                            <Text className="text-sm text-textMediumGrey text-center font-medium">
-                              {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}
-                            </Text>
-                          </View>
-                          <View className="flex-row items-center gap-3">
-                            <View className="flex-row items-center justify-center gap-1">
-                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
-                                <Image
-                                  source={IMAGE_CONSTANTS.caloriesIcon}
-                                  className="w-[10px] h-[10px] object-fill"
-                                />
-                              </View>
-                              <Text className="text-xsm text-black text-center font-medium">
-                                {meal.calories} cal
-                              </Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
-                                <Text className="text-white text-[10px] text-center font-medium">
-                                  C
+                                <Text className="text-xs text-textMediumGrey font-medium">
+                                  {summary.carbs}g
                                 </Text>
                               </View>
-                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                                {meal.carbs}g
-                              </Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
-                                <Text className="text-white text-[10px] text-center font-medium">
-                                  F
+                              <View className="flex-row items-center gap-1">
+                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
+                                  <Text className="text-white text-[10px] text-center font-medium">
+                                    F
+                                  </Text>
+                                </View>
+                                <Text className="text-xs text-textMediumGrey font-medium">
+                                  {summary.fat}g
                                 </Text>
                               </View>
-                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                                {meal.fat}g
-                              </Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
-                                <Text className="text-white text-[10px] text-center font-medium">
-                                  P
+                              <View className="flex-row items-center gap-1">
+                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
+                                  <Text className="text-white text-[10px] text-center font-medium">
+                                    P
+                                  </Text>
+                                </View>
+                                <Text className="text-xs text-textMediumGrey font-medium">
+                                  {summary.protein}g
                                 </Text>
                               </View>
-                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
-                                {meal.protein}g
-                              </Text>
                             </View>
                           </View>
-                        </View>
-                      </View>
-                    ))}
-                    {/* Add Food Button for this section */}
-                    <TouchableOpacity 
-                      className="mt-4 py-4 px-4 border-t border-gray"
-                      onPress={() => navigation.navigate('ScanScreenType')}
-                    >
-                      <Text className="text-primary font-semibold">+ ADD FOOD</Text>
-                    </TouchableOpacity>
-                    {/* Add vertical separation between sections */}
-                    {sectionIndex < mealSections.length - 1 && section.meals.length > 0 && (
-                      <View className="h-6 bg-[#F5F5F5]"></View>
-                    )}
-                  </View>
-                ))
-              )}
-            </View>
-          </>
-        )}
-      </ScrollView>
+                          <View>
+                            <Image source={openDays[monthKey]?.includes(dayKey) ? IMAGE_CONSTANTS.chevronUpIcon : IMAGE_CONSTANTS.chevronDownIcon} className="w-[12px] h-[12px] object-fill" />
+                          </View>
+                          {/* <Text className="text-2xl text-primaryLight ml-4">{openDays[monthKey]?.includes(dayKey) ? '˄' : '˅'}</Text> */}
+                        </TouchableOpacity>
+                        {/* Day Accordion Content */}
+                        {openDays[monthKey]?.includes(dayKey) && (
+                          <View className="bg-[#F5F5F5] pb-2">
 
-      {/* Filter Modal */}
-      {Platform.OS !== "ios" && (
-        <Modal
-          visible={modalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View className="flex-1 justify-end bg-black/40">
-            <View className="bg-[#F5F5F5] rounded-t-2xl p-4 mx-2 mb-4">
-              <Text className="text-center text-base font-bold mb-1">Filter your meals</Text>
-              <Text className="text-center text-xs mb-4">Select a time frame to view your meals over time.</Text>
-              {FILTER_OPTIONS.map(opt => (
-                <Pressable
-                  key={opt.value}
-                  className="py-3 border-b border-gray-200"
-                  onPress={() => {
-                    setSelectedRange(opt.value);
-                    setModalVisible(false);
-                  }}
-                >
-                  <Text className="text-center text-lg text-blue-600 font-medium">{opt.label}</Text>
+                            <View className="bg-white py-3">
+                              {['breakfast', 'lunch', 'dinner'].map((type, idx) => {
+                                const sectionMeals = dayMeals.filter(m => m.meal_type === type);
+                                if (sectionMeals.length === 0) return null;
+                                const section = { key: type, emoji: type === 'breakfast' ? '☀️' : type === 'lunch' ? '🥗' : '🍽️', label: type.charAt(0).toUpperCase() + type.slice(1), meals: sectionMeals };
+                                return (
+                                  <React.Fragment key={section.key}>
+                                    {idx > 1 && <View className="h-px bg-lightGrey mx-4 my-3" />}
+                                    {/* Section Header inside the card */}
+                                    {section.meals.length > 0 && (
+                                      <View className="flex-row items-center px-4 mt-1">
+                                        <Text className="text-lg font-semibold">{section.emoji} {section.label}</Text>
+                                      </View>
+                                    )}
+                                    {section.meals.map((meal, index) => (
+                                      <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
+                                        { meal.photo_url ?
+                                          <ExpoImage
+                                            placeholder={IMAGE_CONSTANTS.blurhash}
+                                            cachePolicy="disk"
+                                            contentFit="cover"
+                                            transition={300}
+                                            source={{ uri: meal.photo_url }}
+                                            style={{ width: 90, height: 90, borderRadius: 8, marginRight: 8 }}
+                                          /> :
+                                          <Image
+                                            source={IMAGE_CONSTANTS.mealIcon}
+                                            className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
+                                            resizeMode="cover"
+                                          />
+                                        }
+                                        <View className="flex-1 flex-col">
+                                          <View className="flex-row items-center justify-between mb-2">
+                                            <Text
+                                              className="text-sm text-textMediumGrey font-medium flex-1 mr-2"
+                                              numberOfLines={1}
+                                              ellipsizeMode="tail"
+                                            >
+                                              {meal.name}
+                                            </Text>
+                                            <View className="flex-row items-center gap-3">
+                                              <TouchableOpacity
+                                                onPress={() => {
+                                                  navigation.navigate('EditMealScreen', {
+                                                    analyzedData: {
+                                                      id: meal.id,
+                                                      name: meal.name,
+                                                      calories: meal.calories,
+                                                      protein: meal.protein,
+                                                      carbs: meal.carbs,
+                                                      fat: meal.fat,
+                                                      amount: meal.quantity || 1,
+                                                      meal_type: meal.meal_type,
+                                                      serving_unit: meal.serving_unit,
+                                                      logging_mode: meal.logging_mode,
+                                                      meal_time: meal.meal_time,
+                                                      photo_url: meal.photo_url,
+                                                      read_only: meal.read_only
+                                                    }
+                                                  });
+                                                }}
+                                              >
+                                                <View className="w-[24px] h-[24px] bg-gray rounded-full justify-center items-center bg-gray-100">
+                                                  <Image
+                                                    source={IMAGE_CONSTANTS.editIcon}
+                                                    className="w-[13px] h-[13px]"
+                                                    tintColor="#253238"
+                                                  />
+                                                </View>
+                                              </TouchableOpacity>
+                                              <TouchableOpacity onPress={() => handleDeleteMeal(meal.id)}>
+                                                <View className="w-[24px] h-[24px] rounded-full bg-gray justify-center items-center bg-gray-100">
+                                                  <Image
+                                                    source={IMAGE_CONSTANTS.deleteIcon}
+                                                    className="w-[11px] h-[13px]"
+                                                    tintColor="#253238"
+                                                  />
+                                                </View>
+                                              </TouchableOpacity>
+                                            </View>
+                                          </View>
+                                          <View className="flex-row items-center mb-2">
+                                            <Text className="text-sm text-textMediumGrey text-center font-medium mr-2">
+                                              {meal.meal_time ? (() => {
+                                                const date = new Date(meal.meal_time);
+                                                const range = selectedRange as string;
+                                                if (range === '1w' || range === '1m') {
+                                                  return date.toLocaleDateString([], { 
+                                                    month: 'short', 
+                                                    day: 'numeric',
+                                                    hour: '2-digit', 
+                                                    minute: '2-digit' 
+                                                  });
+                                                } else {
+                                                  return date.toLocaleTimeString([], { 
+                                                    hour: '2-digit', 
+                                                    minute: '2-digit' 
+                                                  });
+                                                }
+                                              })() : 'N/A'}
+                                            </Text>
+                                            <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
+                                            <Image
+                                              tintColor="#000000"
+                                              source={
+                                                meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
+                                                meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
+                                                meal.logging_mode === 'scanned' ? IMAGE_CONSTANTS.scanMealIcon :
+                                                IMAGE_CONSTANTS.fireIcon // default to fire icon
+                                              }
+                                              className="w-[12px] h-[12px] object-fill mr-1"
+                                            />
+                                            <Text className="text-sm text-textMediumGrey text-center font-medium">
+                                              {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}
+                                            </Text>
+                                          </View>
+                                          <View className="flex-row items-center gap-3">
+                                            <View className="flex-row items-center justify-center gap-1">
+                                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
+                                                <Image
+                                                  source={IMAGE_CONSTANTS.caloriesIcon}
+                                                  className="w-[10px] h-[10px] object-fill"
+                                                />
+                                              </View>
+                                              <Text className="text-xsm text-black text-center font-medium">
+                                                {meal.calories} cal
+                                              </Text>
+                                            </View>
+                                            <View className="flex-row items-center gap-1">
+                                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
+                                                <Text className="text-white text-[10px] text-center font-medium">
+                                                  C
+                                                </Text>
+                                              </View>
+                                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                                {meal.carbs}g
+                                              </Text>
+                                            </View>
+                                            <View className="flex-row items-center gap-1">
+                                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
+                                                <Text className="text-white text-[10px] text-center font-medium">
+                                                  F
+                                                </Text>
+                                              </View>
+                                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                                {meal.fat}g
+                                              </Text>
+                                            </View>
+                                            <View className="flex-row items-center gap-1">
+                                              <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
+                                                <Text className="text-white text-[10px] text-center font-medium">
+                                                  P
+                                                </Text>
+                                              </View>
+                                              <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                                {meal.protein}g
+                                              </Text>
+                                            </View>
+                                          </View>
+                                        </View>
+                                      </View>
+                                    ))}
+                                  </React.Fragment>
+                                );
+                              })}
+                              {/* Add Food Button for this day (only one per day, inside the card) */}
+                              <TouchableOpacity 
+                                className="py-4 px-4 border-t border-gray"
+                                onPress={() => navigation.navigate('ScanScreenType')}
+                              >
+                                <Text className="text-primary font-semibold">+ ADD FOOD</Text>
+                              </TouchableOpacity>
+                            </View>
+                            {/* Add vertical separation between sections */}
+                            <View className="h-6 bg-[#F5F5F5]"></View>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })
+                ))
+              )
+            ) : (
+              // Show original meal list UI for non-custom filters
+              <>
+                {/* Single Meals Card - Full Width */}
+                <View className="bg-white py-3">
+                  {mealSections.length === 0 ? (
+                    <View className="flex-1 w-full py-1">
+                      <Text className="text-textMediumGrey text-center">You haven't logged any meals yet.</Text>
+                      <TouchableOpacity className="mt-4 py-2 px-4 border-t border-gray" onPress={() => {
+                        let defaultDate = new Date();
+                        const range = selectedRange as string;
+                        if (range === 'yesterday') {
+                          defaultDate.setDate(defaultDate.getDate() - 1);
+                        }
+                        navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                      }}>
+                        <Text className="text-primary font-semibold">+ ADD FOOD</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    mealSections.map((section, sectionIndex) => (
+                      <View key={section.key}>
+                        {/* Section Header inside the card */}
+                        {section.meals.length > 0 && (
+                          <View className="flex-row items-center mb-3 px-4 mt-3">
+                            <Text className="text-lg font-semibold">{section.emoji} {section.label}</Text>
+                          </View>
+                        )}
+                        {section.meals.map((meal, index) => (
+                          <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
+                            { meal.photo_url ?
+                              <ExpoImage
+                                placeholder={IMAGE_CONSTANTS.blurhash}
+                                cachePolicy="disk"
+                                contentFit="cover"
+                                transition={300}
+                                source={{ uri: meal.photo_url }}
+                                style={{ width: 90, height: 90, borderRadius: 8, marginRight: 8 }}
+                              /> :
+                              <Image
+                                source={IMAGE_CONSTANTS.mealIcon}
+                                className="w-[90px] h-[90px] object-cover rounded-lg mr-2"
+                                resizeMode="cover"
+                              />
+                            }
+                            <View className="flex-1 flex-col">
+                              <View className="flex-row items-center justify-between mb-2">
+                                <Text
+                                  className="text-sm text-textMediumGrey font-medium flex-1 mr-2"
+                                  numberOfLines={1}
+                                  ellipsizeMode="tail"
+                                >
+                                  {meal.name}
+                                </Text>
+                                <View className="flex-row items-center gap-3">
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      navigation.navigate('EditMealScreen', {
+                                        analyzedData: {
+                                          id: meal.id,
+                                          name: meal.name,
+                                          calories: meal.calories,
+                                          protein: meal.protein,
+                                          carbs: meal.carbs,
+                                          fat: meal.fat,
+                                          amount: meal.quantity || 1,
+                                          meal_type: meal.meal_type,
+                                          serving_unit: meal.serving_unit,
+                                          logging_mode: meal.logging_mode,
+                                          meal_time: meal.meal_time,
+                                          photo_url: meal.photo_url,
+                                          read_only: meal.read_only
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    <View className="w-[24px] h-[24px] bg-gray rounded-full justify-center items-center bg-gray-100">
+                                      <Image
+                                        source={IMAGE_CONSTANTS.editIcon}
+                                        className="w-[13px] h-[13px]"
+                                        tintColor="#253238"
+                                      />
+                                    </View>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity onPress={() => handleDeleteMeal(meal.id)}>
+                                    <View className="w-[24px] h-[24px] rounded-full bg-gray justify-center items-center bg-gray-100">
+                                      <Image
+                                        source={IMAGE_CONSTANTS.deleteIcon}
+                                        className="w-[11px] h-[13px]"
+                                        tintColor="#253238"
+                                      />
+                                    </View>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                              <View className="flex-row items-center mb-2">
+                                <Text className="text-sm text-textMediumGrey text-center font-medium mr-2">
+                                  {meal.meal_time ? (() => {
+                                    const date = new Date(meal.meal_time);
+                                    if (selectedRange === '1w' || selectedRange === '1m') {
+                                      return date.toLocaleDateString([], { 
+                                        month: 'short', 
+                                        day: 'numeric',
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                      });
+                                    } else {
+                                      return date.toLocaleTimeString([], { 
+                                        hour: '2-digit', 
+                                        minute: '2-digit' 
+                                      });
+                                    }
+                                  })() : 'N/A'}
+                                </Text>
+                                <View className="w-[4px] h-[4px] rounded-full bg-[#253238] mr-2"></View>
+                                <Image
+                                  tintColor="#000000"
+                                  source={
+                                    meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
+                                    meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
+                                    meal.logging_mode === 'scanned' ? IMAGE_CONSTANTS.scanMealIcon :
+                                    IMAGE_CONSTANTS.fireIcon // default to fire icon
+                                  }
+                                  className="w-[12px] h-[12px] object-fill mr-1"
+                                />
+                                <Text className="text-sm text-textMediumGrey text-center font-medium">
+                                  {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}
+                                </Text>
+                              </View>
+                              <View className="flex-row items-center gap-3">
+                                <View className="flex-row items-center justify-center gap-1">
+                                  <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
+                                    <Image
+                                      source={IMAGE_CONSTANTS.caloriesIcon}
+                                      className="w-[10px] h-[10px] object-fill"
+                                    />
+                                  </View>
+                                  <Text className="text-xsm text-black text-center font-medium">
+                                    {meal.calories} cal
+                                  </Text>
+                                </View>
+                                <View className="flex-row items-center gap-1">
+                                  <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
+                                    <Text className="text-white text-[10px] text-center font-medium">
+                                      C
+                                    </Text>
+                                  </View>
+                                  <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                    {meal.carbs}g
+                                  </Text>
+                                </View>
+                                <View className="flex-row items-center gap-1">
+                                  <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
+                                    <Text className="text-white text-[10px] text-center font-medium">
+                                      F
+                                    </Text>
+                                  </View>
+                                  <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                    {meal.fat}g
+                                  </Text>
+                                </View>
+                                <View className="flex-row items-center gap-1">
+                                  <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
+                                    <Text className="text-white text-[10px] text-center font-medium">
+                                      P
+                                    </Text>
+                                  </View>
+                                  <Text className="text-xsm text-textMediumGrey text-center font-medium">
+                                    {meal.protein}g
+                                  </Text>
+                                </View>
+                              </View>
+                            </View>
+                          </View>
+                        ))}
+                        {/* Add Food Button for this section */}
+                        <TouchableOpacity 
+                          className="mt-4 py-4 px-4 border-t border-gray"
+                          onPress={() => {
+                            let defaultDate = new Date();
+                            if (selectedRange === 'yesterday') {
+                              defaultDate.setDate(defaultDate.getDate() - 1);
+                            }
+                            navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                          }}
+                        >
+                          <Text className="text-primary font-semibold">+ ADD FOOD</Text>
+                        </TouchableOpacity>
+                        {/* Add vertical separation between sections */}
+                        {sectionIndex < mealSections.length - 1 && section.meals.length > 0 && (
+                          <View className="h-6 bg-[#F5F5F5]"></View>
+                        )}
+                      </View>
+                    ))
+                  )}
+                </View>
+              </>
+            )
+          )}
+        </ScrollView>
+
+        {/* Filter Modal */}
+        {Platform.OS !== "ios" && (
+          <Modal
+            visible={modalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View className="flex-1 justify-end bg-black/40">
+              <View className="bg-[#F5F5F5] rounded-t-2xl p-4 mx-2 mb-4">
+                <Text className="text-center text-base font-bold mb-1">Filter your meals</Text>
+                <Text className="text-center text-xs mb-4">Select a time frame to view your meals over time.</Text>
+                {FILTER_OPTIONS.map(opt => (
+                  <Pressable
+                    key={opt.value}
+                    className="py-3 border-b border-gray-200"
+                    onPress={() => {
+                      setSelectedRange(opt.value);
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Text className="text-center text-lg text-blue-600 font-medium">{opt.label}</Text>
+                  </Pressable>
+                ))}
+                <Pressable className="py-3 mt-2" onPress={() => setModalVisible(false)}>
+                  <Text className="text-center text-lg text-blue-600 font-bold">Cancel</Text>
                 </Pressable>
-              ))}
-              <Pressable className="py-3 mt-2" onPress={() => setModalVisible(false)}>
-                <Text className="text-center text-lg text-blue-600 font-bold">Cancel</Text>
-              </Pressable>
+              </View>
             </View>
-          </View>
-        </Modal>
-      )}
-    </View>
+          </Modal>
+        )}
+      </View>
+      {/* Date Range Picker Modal for Custom filter */}
+      <DatePickerModal
+        locale="en"
+        mode="range"
+        visible={customPickerOpen}
+        onDismiss={() => setCustomPickerOpen(false)}
+        startDate={customRange.startDate}
+        endDate={customRange.endDate}
+        onConfirm={({ startDate, endDate }) => {
+          setCustomPickerOpen(false);
+          setCustomRange({ startDate, endDate });
+        }}
+        validRange={{ endDate: new Date() }}
+      />
+    </PaperProvider>
   );  
 };
 

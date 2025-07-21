@@ -46,6 +46,7 @@ interface RouteParams {
         hideImage?: boolean;
         photo?: string;
     };
+    defaultDate?: string;
 }
 
 import { FavoriteMeal } from '../services/favoritesService';
@@ -59,7 +60,7 @@ export const AddMealScreen: React.FC = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'AddMeal'>>();
     const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
     const params = route.params || {};
-    const { barcodeData, analyzedData } = params;
+    const { barcodeData, analyzedData, defaultDate } = params;
 
 
     const [mealName, setMealName] = useState<string>('');
@@ -71,7 +72,15 @@ export const AddMealScreen: React.FC = () => {
     const userId = useStore((state) => state.userId);
     const token = useStore((state) => state.token);
     const [loading, setLoading] = useState<boolean>(false);
-    const [time, setTime] = useState<Date>(new Date());
+    const [time, setTime] = useState<Date>(() => {
+      if (analyzedData && analyzedData.meal_time) {
+        return new Date(analyzedData.meal_time);
+      } else if (defaultDate) {
+        return new Date(defaultDate);
+      } else {
+        return new Date();
+      }
+    });
     const [showTimeModal, setShowTimeModal] = useState(false);
     const [tempTime, setTempTime] = useState<Date | null>(null);
     const [mealImage, setMealImage] = useState<string | null>(null);
@@ -403,10 +412,10 @@ export const AddMealScreen: React.FC = () => {
 
     // Set initial meal type based on current time
     useEffect(() => {
-        const initialMealType = getMealTypeByTime(new Date());
+        const initialMealType = getMealTypeByTime(time);
         setTempMealType(initialMealType);
         setSelectedMealType(initialMealType);
-    }, []);
+    }, [time]);
 
     const [selectedMealType, setSelectedMealType] = useState(tempMealType);
 
