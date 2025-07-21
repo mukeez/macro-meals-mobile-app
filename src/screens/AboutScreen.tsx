@@ -19,7 +19,7 @@ export default function AboutScreen() {
   return (
     <CustomSafeAreaView className="flex-1 ">
       <Header title="About" />
-      <ScrollView className="px-5 py-5">
+      <ScrollView className="px-5 py-5" contentContainerStyle={{ paddingBottom: 60 }}>
         {about.map(({ section, body }, idx) => (
           <Section title={section} key={section}>
             {body.map((paragraph, pIdx) => {
