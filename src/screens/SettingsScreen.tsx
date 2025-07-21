@@ -29,7 +29,7 @@ import SectionItem from "src/components/SectionItem";
 import { userService } from "../services/userService";
 import ContactSupportDrawer from "./ContactSupportDrawer";
 import EditableAvatar from "src/components/EditableAvatar";
-import { useMixpanel } from '@macro-meals/mixpanel';
+import { useMixpanel } from "@macro-meals/mixpanel";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -133,21 +133,21 @@ export const SettingsScreen: React.FC = () => {
         unit_preference: value,
       });
       setUserData((prev) => ({ ...prev, ...updated }));
-      
+
       // Update Mixpanel user properties
       mixpanel?.setUserProperties({
-        unit_preference: value
+        unit_preference: value,
       });
-      
+
       // Track unit preference change
       mixpanel?.track({
-        name: 'unit_preference_changed',
+        name: "unit_preference_changed",
         properties: {
           new_unit_preference: value,
-          previous_unit_preference: userData.unit_preference
-        }
+          previous_unit_preference: userData.unit_preference,
+        },
       });
-      
+
       setShowUnitsModal(false);
     } catch (error) {
       console.error("Error updating unit preference:", error);
@@ -174,46 +174,50 @@ export const SettingsScreen: React.FC = () => {
   /**
    * Handle logout action
    */
- const handleLogout = async () => {
-  Alert.alert(
-    "Are you sure you want to log out?",
-    "",
-    [
-      {
-        text: "Cancel",
-        style: "cancel"
-      },
-      {
-        text: "Log Out",
-        style: "destructive", 
-        onPress: async () => {
-          try {
-            // Track logout in Mixpanel
-            mixpanel?.track({
-              name: 'user_logged_out',
-              properties: {
-                user_id: userData.id,
-                email: userData.email,
-                session_duration_minutes: userData.created_at ? 
-                  Math.floor((Date.now() - new Date(userData.created_at).getTime()) / (1000 * 60)) : 0
-              }
-            });
-            
-            await authService.logout();
-            setAuthenticated(false, "", "");
-            // navigation.reset({
-            //   index: 0,
-            //   routes: [{ name: "Login" }],
-            // });
-          } catch (error) {
-            console.error("Logout error:", error);
-          }
-        }
-      }
-    ],
-    { cancelable: true }
-  );
-};
+  const handleLogout = async () => {
+    Alert.alert(
+      "Are you sure you want to log out?",
+      "",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Track logout in Mixpanel
+              mixpanel?.track({
+                name: "user_logged_out",
+                properties: {
+                  user_id: userData.id,
+                  email: userData.email,
+                  session_duration_minutes: userData.created_at
+                    ? Math.floor(
+                        (Date.now() - new Date(userData.created_at).getTime()) /
+                          (1000 * 60)
+                      )
+                    : 0,
+                },
+              });
+
+              await authService.logout();
+              setAuthenticated(false, "", "");
+              // navigation.reset({
+              //   index: 0,
+              //   routes: [{ name: "Login" }],
+              // });
+            } catch (error) {
+              console.error("Logout error:", error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   /**
    * Handle navigation to help screen
@@ -227,7 +231,7 @@ export const SettingsScreen: React.FC = () => {
     const { email } = appConstants();
 
     let url = `mailto:${email.to}`;
-   const subject = `?subject=${encodeURIComponent(email.subject)}`;
+    const subject = `?subject=${encodeURIComponent(email.subject)}`;
     const body = `&body=${encodeURIComponent(email.body)}`;
     url += subject + body;
     Linking.openURL(url).catch((err) =>
@@ -339,22 +343,6 @@ export const SettingsScreen: React.FC = () => {
               navigation.navigate("ChangePassword");
             }}
           />
-          <SectionItem
-            title="Units"
-            image={IMAGE_CONSTANTS.balanceIcon}
-            rightComponent={
-              <View className="flex-row px-2 py-2 gap-1 bg-gray rounded-lg items-center">
-                <Text className="text-md text-black">
-                  {userData?.unit_preference}
-                </Text>
-                <FontAwesome name="angle-down" size={15} color="black" />
-              </View>
-            }
-            onPress={() => {
-              setTempUnitPreference(userData?.unit_preference || "metric");
-              setShowUnitsModal(true);
-            }}
-          />
         </ProfileSection>
 
         {/* Account Section */}
@@ -383,7 +371,9 @@ export const SettingsScreen: React.FC = () => {
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
-            onPress={() => { navigation.navigate('ManageSubscriptionsScreen') }}
+            onPress={() => {
+              navigation.navigate("ManageSubscriptionsScreen");
+            }}
           />
         </ProfileSection>
 
@@ -419,7 +409,7 @@ export const SettingsScreen: React.FC = () => {
               openEmail();
             }}
           />
-             <SectionItem
+          <SectionItem
             title="Health guidelines"
             image={IMAGE_CONSTANTS.infoIcon}
             rightComponent={
