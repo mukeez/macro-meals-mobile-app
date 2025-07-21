@@ -203,30 +203,30 @@ export const EditMealScreen: React.FC = () => {
         
         let isValid = true;
         
-        const caloriesValue = parseInt(calories, 10) || 0;
-        const proteinValue = parseInt(protein, 10) || 0;
-        const carbsValue = parseInt(carbs, 10) || 0;
-        const fatsValue = parseInt(fats, 10) || 0;
+        // const caloriesValue = parseInt(calories, 10) || 0;
+        // const proteinValue = parseInt(protein, 10) || 0;
+        // const carbsValue = parseInt(carbs, 10) || 0;
+        // const fatsValue = parseInt(fats, 10) || 0;
         
-        if (caloriesValue <= 0) {
-            errors.calories = 'Calories must be greater than 0';
-            isValid = false;
-        }
+        // if (caloriesValue <= 0) {
+        //     errors.calories = 'Calories must be greater than 0';
+        //     isValid = false;
+        // }
         
-        if (proteinValue <= 0) {
-            errors.protein = 'Protein must be greater than 0';
-            isValid = false;
-        }
+        // if (proteinValue <= 0) {
+        //     errors.protein = 'Protein must be greater than 0';
+        //     isValid = false;
+        // }
         
-        if (carbsValue <= 0) {
-            errors.carbs = 'Carbs must be greater than 0';
-            isValid = false;
-        }
+        // if (carbsValue <= 0) {
+        //     errors.carbs = 'Carbs must be greater than 0';
+        //     isValid = false;
+        // }
         
-        if (fatsValue <= 0) {
-            errors.fats = 'Fats must be greater than 0';
-            isValid = false;
-        }
+        // if (fatsValue <= 0) {
+        //     errors.fats = 'Fats must be greater than 0';
+        //     isValid = false;
+        // }
         
         setValidationErrors(errors);
         return isValid;
