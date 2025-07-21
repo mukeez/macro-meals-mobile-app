@@ -9,7 +9,10 @@ export default function PrivacyPolicyScreen() {
   return (
     <CustomSafeAreaView className="flex-1 ">
       <Header title="Privacy Policy" />
-      <ScrollView className="px-5 py-5">
+      <ScrollView
+        className="px-5 py-5 "
+        contentContainerStyle={{ paddingBottom: 60 }}
+      >
         <Text className="text-xs text-[#121212] mb-4">
           Last updated: May 19, 2025
         </Text>

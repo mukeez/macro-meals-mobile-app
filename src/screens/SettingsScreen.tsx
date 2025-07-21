@@ -339,22 +339,6 @@ export const SettingsScreen: React.FC = () => {
               navigation.navigate("ChangePassword");
             }}
           />
-          <SectionItem
-            title="Units"
-            image={IMAGE_CONSTANTS.balanceIcon}
-            rightComponent={
-              <View className="flex-row px-2 py-2 gap-1 bg-gray rounded-lg items-center">
-                <Text className="text-md text-black">
-                  {userData?.unit_preference}
-                </Text>
-                <FontAwesome name="angle-down" size={15} color="black" />
-              </View>
-            }
-            onPress={() => {
-              setTempUnitPreference(userData?.unit_preference || "metric");
-              setShowUnitsModal(true);
-            }}
-          />
         </ProfileSection>
 
         {/* Account Section */}

@@ -9,7 +9,10 @@ export default function TermsOfServiceScreen() {
   return (
     <CustomSafeAreaView className="flex-1">
       <Header title="Terms Of Service" />
-      <ScrollView className="py-5 px-5">
+      <ScrollView
+        className="py-5 px-5"
+        contentContainerStyle={{ paddingBottom: 60 }}
+      >
         <Text className="text-xs text-gray-500 mb-4">
           Last updated: May 19 2025
         </Text>
