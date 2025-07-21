@@ -42,6 +42,7 @@ export type RootStackParamList = {
         meal_time?: string;
         logging_mode?: string;
       };
+      defaultDate?: string;
     };
     SnapMeal: undefined;
     MealLog: undefined;
