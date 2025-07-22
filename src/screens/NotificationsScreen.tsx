@@ -1,23 +1,43 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
   ActivityIndicator,
   Alert,
   FlatList,
-  ListRenderItemInfo,
+  ViewToken,
 } from "react-native";
 import NotificationItem from "../components/NotificationItem";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import Header from "../components/Header";
 import { notificationService } from "../services/notificationsService";
 
+type APINotification = {
+  id: string;
+  created_at: string;
+  user_id: string;
+  type: string;
+  subtype: string;
+  title: string;
+  body: string;
+  status: string;
+  delivered_at: string;
+  read_at?: string;
+};
+
 type Notification = {
   id: string;
-  text: string;
+  title: string;
+  body: string;
   timeAgo: string;
-  timestamp: Date | string;
-  read?: boolean;
+  timestamp: Date;
+  read: boolean;
 };
 
 type NotificationsByDay = {
@@ -29,7 +49,7 @@ function groupByDay(notifications: Notification[]): NotificationsByDay {
   const sections: NotificationsByDay = {};
 
   notifications.forEach((notif) => {
-    const notifDate = new Date(notif.timestamp);
+    const notifDate = notif.timestamp;
     const notifDay = new Date(
       notifDate.getFullYear(),
       notifDate.getMonth(),
@@ -64,6 +84,20 @@ function groupByDay(notifications: Notification[]): NotificationsByDay {
   return sections;
 }
 
+// Utility to get time ago string from timestamp
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay}d ago`;
+}
+
 const NotificationsScreen: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,10 +112,21 @@ const NotificationsScreen: React.FC = () => {
         setLoading(true);
         const data = await notificationService.getNotifications();
         console.log("Fetched notifications:", data);
-        const formatted = (data ?? []).map((n: any) => ({
-          ...n,
-          timestamp: n.timestamp ? new Date(n.timestamp) : new Date(),
+
+        const apiNotifications: APINotification[] = Array.isArray(
+          data?.notifications
+        )
+          ? data.notifications
+          : [];
+        const formatted: Notification[] = apiNotifications.map((n) => ({
+          id: n.id,
+          title: n.title,
+          body: n.body,
+          timeAgo: n.created_at ? getTimeAgo(new Date(n.created_at)) : "",
+          timestamp: n.created_at ? new Date(n.created_at) : new Date(),
+          read: !!n.read_at,
         }));
+
         setNotifications(formatted);
       } catch (e: any) {
         setError(e?.message || "Could not fetch notifications.");
@@ -94,25 +139,30 @@ const NotificationsScreen: React.FC = () => {
   }, []);
 
   // FlatList wants a flat array, so group, then flatten with section headers
-  const notificationsByDay = groupByDay(notifications);
+  const notificationsByDay = useMemo(
+    () => groupByDay(notifications),
+    [notifications]
+  );
   const flatListData: Array<
     { type: "header"; section: string } | { type: "notif"; notif: Notification }
-  > = [];
-  Object.keys(notificationsByDay).forEach((section) => {
-    flatListData.push({ type: "header", section });
-    notificationsByDay[section].forEach((notif) =>
-      flatListData.push({ type: "notif", notif })
-    );
-  });
+  > = useMemo(() => {
+    const arr: Array<
+      | { type: "header"; section: string }
+      | { type: "notif"; notif: Notification }
+    > = [];
+    Object.keys(notificationsByDay).forEach((section) => {
+      arr.push({ type: "header", section });
+      notificationsByDay[section].forEach((notif) =>
+        arr.push({ type: "notif", notif })
+      );
+    });
+    return arr;
+  }, [notificationsByDay]);
 
   // Mark notifications as read when they become visible
   const onViewableItemsChanged = useCallback(
-    ({
-      viewableItems,
-    }: {
-      viewableItems: Array<ListRenderItemInfo<any>["item"]>;
-    }) => {
-      viewableItems.forEach((item) => {
+    ({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
+      viewableItems.forEach(({ item }) => {
         if (
           item.type === "notif" &&
           !item.notif.read &&
@@ -141,7 +191,9 @@ const NotificationsScreen: React.FC = () => {
     return (
       <CustomSafeAreaView>
         <Header title="Notifications" />
-        <View className="flex-1 items-center justify-center">
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <ActivityIndicator size="large" color="#009688" />
         </View>
       </CustomSafeAreaView>
@@ -152,8 +204,10 @@ const NotificationsScreen: React.FC = () => {
     return (
       <CustomSafeAreaView>
         <Header title="Notifications" />
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-red-600">{error}</Text>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <Text style={{ color: "#e53e3e" }}>{error}</Text>
         </View>
       </CustomSafeAreaView>
     );
@@ -163,15 +217,19 @@ const NotificationsScreen: React.FC = () => {
     return (
       <CustomSafeAreaView>
         <Header title="Notifications" />
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-gray-400 text-base">No notifications yet</Text>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <Text className="text-lg px-8 text-[#fffff] opacity-65 font-sans-medium">
+            Your progress towards your Macro goals will appear here
+          </Text>
         </View>
       </CustomSafeAreaView>
     );
   }
 
   return (
-    <CustomSafeAreaView>
+    <CustomSafeAreaView className="flex-1">
       <Header title="Notifications" />
       <FlatList
         data={flatListData}
@@ -180,13 +238,21 @@ const NotificationsScreen: React.FC = () => {
         }
         renderItem={({ item }) =>
           item.type === "header" ? (
-            <Text className="p-4 text-xs font-bold text-[#777] uppercase">
+            <Text
+              className="font-sans-medium"
+              style={{
+                padding: 16,
+                fontSize: 16,
+                color: "#000000",
+              }}
+            >
               {item.section}
             </Text>
           ) : (
             <NotificationItem
               key={item.notif.id}
-              text={item.notif.text}
+              text={item.notif.title}
+              body={item.notif.body}
               timeAgo={item.notif.timeAgo}
               read={item.notif.read}
             />
@@ -194,7 +260,8 @@ const NotificationsScreen: React.FC = () => {
         }
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-        className="bg-white flex-1"
+        style={{ backgroundColor: "#F2F2F2", flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 60 }}
       />
     </CustomSafeAreaView>
   );
