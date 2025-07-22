@@ -191,9 +191,7 @@ const NotificationsScreen: React.FC = () => {
     return (
       <CustomSafeAreaView>
         <Header title="Notifications" />
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
+        <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#009688" />
         </View>
       </CustomSafeAreaView>
@@ -204,10 +202,8 @@ const NotificationsScreen: React.FC = () => {
     return (
       <CustomSafeAreaView>
         <Header title="Notifications" />
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <Text style={{ color: "#e53e3e" }}>{error}</Text>
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-[#e53e3e] font-sans-medium">{error}</Text>
         </View>
       </CustomSafeAreaView>
     );
@@ -217,10 +213,8 @@ const NotificationsScreen: React.FC = () => {
     return (
       <CustomSafeAreaView>
         <Header title="Notifications" />
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <Text className="text-lg px-8 text-[#fffff] opacity-65 font-sans-medium">
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-lg px-8 text-[#000000] opacity-65 font-sans-medium">
             Your progress towards your Macro goals will appear here
           </Text>
         </View>
@@ -238,14 +232,7 @@ const NotificationsScreen: React.FC = () => {
         }
         renderItem={({ item }) =>
           item.type === "header" ? (
-            <Text
-              className="font-sans-medium"
-              style={{
-                padding: 16,
-                fontSize: 16,
-                color: "#000000",
-              }}
-            >
+            <Text className="py-4 px-4 text-base font-sans-medium text-[#000000]">
               {item.section}
             </Text>
           ) : (
