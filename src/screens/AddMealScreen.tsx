@@ -179,10 +179,11 @@ export const AddMealScreen: React.FC = () => {
         setCalories(meal.macros.calories.toString());
         setProtein(meal.macros.protein.toString());
         setCarbs(meal.macros.carbs.toString());
-        setNoOfServings(meal.no_of_servings.toString());
+        setNoOfServings(meal?.no_of_servings?.toString() || '1');
         setFats(meal.macros.fat.toString());
-        setLoggingMode('favorite');
+        setLoggingMode(meal.logging_mode || 'manual');
         setMealType(meal.meal_type);
+
     };
 
     /**

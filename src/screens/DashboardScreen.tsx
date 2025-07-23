@@ -86,12 +86,8 @@ export const DashboardScreen: React.FC = () => {
     fat: 0,
     calories: 0,
   });
-  const [consumed, setConsumed] = useState({
-    protein: 0,
-    carbs: 0,
-    fat: 0,
-    calories: 0,
-  });
+  const todayProgress = useStore((state) => state.todayProgress);
+  const fetchTodayProgress = useStore((state) => state.fetchTodayProgress);
 
   const [profile, setProfile] = useState<Profile>({
     display_name: undefined,
@@ -168,19 +164,11 @@ export const DashboardScreen: React.FC = () => {
 
       // macroMealsCrashlytics.triggerCrash();
 
-      const progressData = await mealService.getDailyProgress();
-      console.log('PROGRESS DATA', progressData)
-
-      setConsumed({
-        protein: progressData.logged_macros.protein,
-        carbs: progressData.logged_macros.carbs,
-        fat: progressData.logged_macros.fat,
-        calories: progressData.logged_macros.calories,
-      });
+      await fetchTodayProgress();
 
       const totalCalories = macros.calories;
       const progressPercentage =
-        totalCalories > 0 ? (consumed.calories / totalCalories) * 100 : 0;
+        totalCalories > 0 ? (todayProgress.calories / totalCalories) * 100 : 0;
       setProgress(Math.min(100, progressPercentage));
       
       // Refresh meals from store
@@ -205,7 +193,7 @@ export const DashboardScreen: React.FC = () => {
         });
       }
     }
-  }, [userId, token, macros.calories, consumed.calories, preferences, setStoreProfile, setMacrosPreferences]);
+  }, [userId, token, macros.calories, todayProgress.calories, preferences, setStoreProfile, setMacrosPreferences, fetchTodayProgress]);
 
   // Initial load
   useEffect(() => {
@@ -282,23 +270,23 @@ export const DashboardScreen: React.FC = () => {
   }
 
   const remaining = {
-    protein: Math.max(0, macros.protein - consumed.protein),
-    carbs: Math.max(0, macros.carbs - consumed.carbs),
-    fat: Math.max(0, macros.fat - consumed.fat),
-    calories: Math.max(0, macros.calories - consumed.calories),
+    protein: Math.max(0, macros.protein - todayProgress.protein),
+    carbs: Math.max(0, macros.carbs - todayProgress.carbs),
+    fat: Math.max(0, macros.fat - todayProgress.fat),
+    calories: Math.max(0, macros.calories - todayProgress.calories),
   };
 
   const proteinProgress = Math.min(
     100,
-    Math.round((consumed.protein / macros.protein) * 100) || 0
+    Math.round((todayProgress.protein / macros.protein) * 100) || 0
   );
   const carbsProgress = Math.min(
     100,
-    Math.round((consumed.carbs / macros.carbs) * 100) || 0
+    Math.round((todayProgress.carbs / macros.carbs) * 100) || 0
   );
   const fatProgress = Math.min(
     100,
-    Math.round((consumed.fat / macros.fat) * 100) || 0
+    Math.round((todayProgress.fat / macros.fat) * 100) || 0
   );
 
   // Calculate today's total macros from loggedMeals
@@ -419,8 +407,8 @@ export const DashboardScreen: React.FC = () => {
                   <CircularProgress
                     size={150}
                     strokeWidth={8}
-                    consumed={consumed.calories.toString()}
-                    total={consumed.calories + remaining.calories}
+                                      consumed={todayProgress.calories.toString()}
+                  total={todayProgress.calories + remaining.calories}
                     color="#44A047"
                     backgroundColor="#d0e8d1"
                     label="Consumed"

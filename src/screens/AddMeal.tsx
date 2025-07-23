@@ -87,6 +87,7 @@ const AddMeal: React.FC = () => {
   const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const token = useStore((state) => state.token);
   const deleteLoggedMeal = useStore((state) => state.deleteLoggedMeal);
+  const fetchTodayProgress = useStore((state) => state.fetchTodayProgress);
   
   // State for consumed calories (same as DashboardScreen)
   const [consumed, setConsumed] = useState({
@@ -279,6 +280,12 @@ const AddMeal: React.FC = () => {
               deleteLoggedMeal(mealId);
               // Refresh the meals list
               fetchMeals();
+              // Refresh Dashboard progress data behind the scenes
+              try {
+                await fetchTodayProgress();
+              } catch (progressError) {
+                console.error('Error refreshing progress data:', progressError);
+              }
             } catch (error) {
               console.error('Error deleting meal:', error);
               Alert.alert('Error', 'Failed to delete meal. Please try again.');
