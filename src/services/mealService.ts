@@ -447,16 +447,32 @@ export async function getMealByPeriod(period: string) {
     }
 }
 
-export async function getMeals(startDate: string, endDate: string) {
-    const url = `/meals/logs?start_date=${startDate}&end_date=${endDate}`;
+export async function getMeals(startDate: string, endDate: string, page: number = 0) {
+    // Only include page parameter if it's greater than 0, as some APIs don't like page=0
+    const pageParam = page > 0 ? `&page=${page}` : '';
+    const url = `/meals/logs?start_date=${startDate}&end_date=${endDate}${pageParam}`;
     console.log('getMeals URL:', url);
+    console.log('getMeals parameters:', { startDate, endDate, page });
     
     try {
         const response = await axiosInstance.get(url);
         console.log('Get Meals Response:', response.data);
-        return response.data;
-    } catch (error) {
+        console.log('Response meals count:', response.data.results?.length || 0);
+        return {
+            meals: response.data.results || [],
+            pagination: response.data.pagination || {
+                has_next: false,
+                has_previous: false,
+                page: 0,
+                page_size: 0,
+                total: 0,
+                total_pages: 0
+            }
+        };
+    } catch (error: any) {
         console.error('getMeals error:', error);
+        console.error('Error response data:', error.response?.data);
+        console.error('Error status:', error.response?.status);
         throw error;
     }
 }

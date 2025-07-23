@@ -45,8 +45,18 @@ function getStartEndDates(range: string): { startDate: string; endDate: string }
     default:
       break;
   }
-  const format = (date: Date) => date.toISOString().split("T")[0];
-  return { startDate: format(startDate), endDate: format(endDate) };
+  
+  // Format dates as YYYY-MM-DD with proper timezone handling
+  const format = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const result = { startDate: format(startDate), endDate: format(endDate) };
+  console.log('Date range for filter:', range, result);
+  return result;
 }
 
 const macroData = [
@@ -63,6 +73,15 @@ const AddMeal: React.FC = () => {
   const [meals, setMeals] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pagination, setPagination] = useState({
+    has_next: false,
+    has_previous: false,
+    page: 0,
+    page_size: 0,
+    total: 0,
+    total_pages: 0
+  });
   const macrosPreferences = useStore((state) => state.macrosPreferences);
   const preferences = useStore((state) => state.preferences);
   const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
@@ -153,25 +172,62 @@ const AddMeal: React.FC = () => {
     });
   };
 
-  const fetchMeals = async (overrideRange?: { startDate: string, endDate: string }) => {
+  const fetchMeals = async (overrideRange?: { startDate: string, endDate: string }, page: number = 0, append: boolean = false) => {
     const { startDate, endDate } = overrideRange || getStartEndDates(selectedRange);
+    console.log('Fetching meals with dates:', { startDate, endDate, page, append });
+    
     try {
-      setLoading(true);
-      const mealsData = await getMeals(startDate, endDate);
-      setMeals(mealsData);
+      if (page === 0) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      
+      const response = await getMeals(startDate, endDate, page);
+      console.log('Meals response:', response);
+      
+      if (append) {
+        setMeals(prev => [...prev, ...response.meals]);
+      } else {
+        setMeals(response.meals);
+      }
+      
+      setPagination(response.pagination);
     } catch (e) {
-      setMeals([]);
+      console.error('Error fetching meals:', e);
+      if (!append) {
+        setMeals([]);
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreMeals = async () => {
+    if (pagination.has_next && !loadingMore) {
+      const nextPage = pagination.page + 1;
+      await fetchMeals(undefined, nextPage, true);
     }
   };
 
   useEffect(() => {
     if (selectedRange === 'custom' && customRange.startDate && customRange.endDate) {
-      fetchMeals({
-        startDate: customRange.startDate.toISOString().split('T')[0],
-        endDate: customRange.endDate.toISOString().split('T')[0],
-      });
+      // Use the same date formatting function for consistency
+      const format = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      
+      const customDates = {
+        startDate: format(customRange.startDate),
+        endDate: format(customRange.endDate),
+      };
+      
+      console.log('Custom date range:', customDates);
+      fetchMeals(customDates);
     } else if (selectedRange !== 'custom') {
       fetchMeals();
     }
@@ -363,6 +419,15 @@ const AddMeal: React.FC = () => {
               tintColor="#7E54D9"
             />
           }
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+            const paddingToBottom = 20;
+            if (layoutMeasurement.height + contentOffset.y >= 
+                contentSize.height - paddingToBottom) {
+              loadMoreMeals();
+            }
+          }}
+          scrollEventThrottle={400}
         >
           {loading ? (
             <View className="flex-1 justify-center items-center py-20">
@@ -628,7 +693,10 @@ const AddMeal: React.FC = () => {
                               {/* Add Food Button for this day (only one per day, inside the card) */}
                               <TouchableOpacity 
                                 className="py-4 px-4 border-t border-gray"
-                                onPress={() => navigation.navigate('ScanScreenType')}
+                                onPress={() => {
+                                  const defaultDate = new Date(dayKey);
+                                  navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                                }}
                               >
                                 <Text className="text-primary font-semibold">+ ADD FOOD</Text>
                               </TouchableOpacity>
@@ -652,8 +720,7 @@ const AddMeal: React.FC = () => {
                       <Text className="text-textMediumGrey text-center">You haven't logged any meals yet.</Text>
                       <TouchableOpacity className="mt-4 py-2 px-4 border-t border-gray" onPress={() => {
                         let defaultDate = new Date();
-                        const range = selectedRange as string;
-                        if (range === 'yesterday') {
+                        if (selectedRange === 'yesterday') {
                           defaultDate.setDate(defaultDate.getDate() - 1);
                         }
                         navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
@@ -840,6 +907,14 @@ const AddMeal: React.FC = () => {
                 </View>
               </>
             )
+          )}
+          
+          {/* Loading more indicator */}
+          {loadingMore && (
+            <View className="py-4 items-center">
+              <ActivityIndicator size="small" color="#19a28f" />
+              <Text className="text-textMediumGrey mt-2">Loading more meals...</Text>
+            </View>
           )}
         </ScrollView>
 
