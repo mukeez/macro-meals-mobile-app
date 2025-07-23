@@ -7,6 +7,10 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "ENV": "development"
+      },
+      "prebuildCommand": "node scripts/copy-icons.js",
       "android": {
         "gradleCommand": ":app:assembleDebug"
       },
@@ -14,16 +18,41 @@
         "simulator": true
       }
     },
+    "staging": {
+      "distribution": "internal",
+      "env": {
+        "ENV": "staging"
+      },
+      "prebuildCommand": "node scripts/copy-icons.js",
+      "ios": {
+        "buildConfiguration": "Release",
+        "autoIncrement": false,
+        "uploadArtifacts": true
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "ENV": "staging"
+      },
+      "prebuildCommand": "node scripts/copy-icons.js",
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "uploadArtifacts": true
       }
     },
     "production": {
+      "env": {
+        "ENV": "production"
+      },
+      "prebuildCommand": "node scripts/copy-icons.js",
       "ios": {
         "buildConfiguration": "Release",
-        "autoIncrement": true
+        "autoIncrement": true,
+        "uploadArtifacts": true
       }
     }
   },

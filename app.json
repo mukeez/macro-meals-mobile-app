@@ -81,7 +81,19 @@
         }
       ],
       "@react-native-firebase/messaging",
-      "@react-native-firebase/crashlytics",
+      [
+        "@react-native-firebase/crashlytics",
+        {
+          "ios": {
+            "uploadSymbols": true,
+            "debugMode": false
+          },
+          "android": {
+            "uploadSymbols": true,
+            "debugMode": false
+          }
+        }
+      ],
       [
         "expo-build-properties",
         {
