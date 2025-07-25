@@ -10,7 +10,13 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "ios:dev": "expo run:ios --scheme macromeals-dev",
+    "ios:stg": "expo run:ios --scheme macromeals-stg", 
+    "ios:prod": "expo run:ios --scheme macromeals",
+    "android:dev": "expo run:android --variant devDebug",
+    "android:stg": "expo run:android --variant stgDebug",
+    "android:prod": "expo run:android --variant prodRelease"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -52,6 +58,7 @@
     "expo-secure-store": "~14.2.3",
     "expo-splash-screen": "^0.30.9",
     "expo-status-bar": "~2.2.3",
+    "hermes-engine": "^0.11.0",
     "location": "^0.0.1",
     "lodash": "^4.17.21",
     "mixpanel-react-native": "^3.0.9",
@@ -59,6 +66,7 @@
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-chart-kit": "^6.12.0",
+    "react-native-config": "^1.5.5",
     "react-native-confirmation-code-field": "^8.0.0",
     "react-native-device-info": "^14.0.4",
     "react-native-dotenv": "^3.4.11",

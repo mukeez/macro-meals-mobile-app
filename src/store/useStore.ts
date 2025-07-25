@@ -29,7 +29,7 @@ const DEFAULT_USER_PREFERENCES: UserPreferences = {
 };
 
 // Add Profile interface
-interface Profile {
+export interface Profile {
     id?: string;
     display_name?: string;
     email?: string;

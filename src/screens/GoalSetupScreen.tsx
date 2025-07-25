@@ -18,6 +18,7 @@ import useStore from 'src/store/useStore';
 import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
 import { HasMacrosContext } from '../contexts/HasMacrosContext';
 import { useContext } from 'react';
+import Config from 'react-native-config';
 
 
 
@@ -31,7 +32,21 @@ export const GoalSetupScreen: React.FC = () => {
     const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
     const { getValue, debugLogAllValues } = useRemoteConfigContext();
     const { setReadyForDashboard } = useContext(HasMacrosContext);
-    const devMode = getValue('dev_mode').asBoolean();
+    
+    // Only allow dev_mode to bypass payment in non-production environments
+    let devMode = false;
+    try {
+      const currentEnv = Config.ENVIRONMENT;
+      if (currentEnv !== 'production') {
+        devMode = getValue('dev_mode').asBoolean();
+      } else {
+        console.log('[GOAL SETUP] Production environment detected, ignoring dev_mode remote config');
+        devMode = false;
+      }
+    } catch (error) {
+      console.log('[GOAL SETUP] Could not get dev_mode from remote config, defaulting to false:', error);
+      devMode = false;
+    }
     
     // Debug: Test force_update variable
     React.useEffect(() => {

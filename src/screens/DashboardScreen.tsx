@@ -40,18 +40,8 @@ import { Image as ExpoImage } from 'expo-image';
 //     SettingsScreen: undefined;
 // };
 
-type Profile = {
-  display_name?: string;
-  email?: string;
-  avatar_url?: string;
-  first_name?: string;
-  last_name?: string;
-  gender?: string;
-  is_pro?: boolean;
-  has_macros?: boolean;
-  meal_reminder_preferences_set?: boolean;
-  is_active?: boolean;
-};
+// Use the Profile type from the store instead of defining a local one
+import { Profile } from '../store/useStore';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useContext } from "react";
 import { Platform } from "react-native";
 import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
+import Config from 'react-native-config';
 import { HasMacrosContext } from './src/contexts/HasMacrosContext';
 import { IsProContext } from './src/contexts/IsProContext';
 import MealFinderScreen from "src/screens/MealFinderScreen";
@@ -63,11 +64,18 @@ export function RootStack({
   // Get values from context instead of props for better reactivity
   const { hasMacros, readyForDashboard } = useContext(HasMacrosContext);
   const { isPro } = useContext(IsProContext);
-  // Get dev mode from remote config
+  // Get dev mode from remote config (ignored in production)
   const { getValue } = useRemoteConfigContext();
   let devMode = false;
   try {
-    devMode = getValue('dev_mode').asBoolean();
+    // Only allow dev_mode to bypass payment in non-production environments
+    const currentEnv = Config.ENVIRONMENT;
+    if (currentEnv !== 'production') {
+      devMode = getValue('dev_mode').asBoolean();
+    } else {
+      console.log('🔍 RootStack - Production environment detected, ignoring dev_mode remote config');
+      devMode = false;
+    }
   } catch (error) {
     console.log('🔍 RootStack - Could not get dev_mode from remote config, defaulting to false:', error);
     devMode = false;
@@ -102,6 +110,17 @@ export function RootStack({
     shouldShowPayment,
     finalDecision: shouldShowDashboard ? "DASHBOARD" : shouldShowPayment ? "PAYMENT" : "GOAL_SETUP"
   });
+
+  // Add specific logging for isPro routing
+  if (hasMacros && readyForDashboard) {
+    if (isPro) {
+      console.log("🔍 RootStack - User is PRO, routing to Dashboard");
+    } else if (devMode) {
+      console.log("🔍 RootStack - User is not PRO but dev mode is enabled, routing to Dashboard");
+    } else {
+      console.log("🔍 RootStack - User is not PRO and dev mode is disabled, routing to PaymentScreen");
+    }
+  }
 
   // Log dev mode bypass if applicable
   if (devMode && hasMacros && readyForDashboard && !isPro) {

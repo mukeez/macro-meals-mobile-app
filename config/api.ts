@@ -1,5 +1,7 @@
+import { API_BASE_URL } from '../src/config/environment';
+
 export const API_CONFIG = {
-    BASE_URL: 'https://api-dev.macromealsapp.com/api/v1',
+    BASE_URL: API_BASE_URL,
     ENDPOINTS: {
         LOGIN: '/auth/login',
         GOOGLE_AUTH: '/auth/google',

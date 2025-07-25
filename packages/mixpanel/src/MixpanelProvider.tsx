@@ -15,6 +15,8 @@ export const MixpanelProvider: React.FC<{
     const [mixpanel, setMixpanel] = useState<MixpanelInstance | null>(null);
 
     useEffect(()=> {
+        console.log('[MIXPANEL] 🔧 Initializing with token:', config.token ? `${config.token.substring(0, 10)}...` : 'undefined');
+        
         if (!config.token || config.token === 'undefined' || config.token === 'your_actual_mixpanel_token_here') {
             console.warn('[MIXPANEL] ⚠️  Invalid or missing token:', config.token);
             return;
