@@ -135,7 +135,7 @@ export const LoginScreen: React.FC = () => {
       // Set all states together to ensure they're synchronized
       setIsOnboardingCompleted(true);
       setHasMacros(profile.has_macros);
-      setIsPro(profile.is_pro);
+      setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
       setReadyForDashboard(profile.has_macros);
 
       console.log("🔍 LoginScreen - Immediately after setting states:", {
@@ -180,18 +180,18 @@ export const LoginScreen: React.FC = () => {
       });
 
       // Update FCM token on backend after successful login
-      try {
-        const fcmToken = await AsyncStorage.getItem("fcm_token");
-        console.log("FCM token from AsyncStorage:", fcmToken);
-        if (fcmToken) {
-          await userService.updateFCMToken(fcmToken);
-          console.log("FCM token updated on backend after login");
-        } else {
-          console.log("No FCM token found in AsyncStorage");
-        }
-      } catch (error) {
-        console.log("Could not update FCM token on backend:", error);
-      }
+      // try {
+      //   const fcmToken = await AsyncStorage.getItem("fcm_token");
+      //   console.log("FCM token from AsyncStorage:", fcmToken);
+      //   if (fcmToken) {
+      //     await userService.updateFCMToken(fcmToken);
+      //     console.log("FCM token updated on backend after login");
+      //   } else {
+      //     console.log("No FCM token found in AsyncStorage");
+      //   }
+      // } catch (error) {
+      //   console.log("Could not update FCM token on backend:", error);
+      // }
 
       // Set authenticated last to trigger navigation
       console.log("🔍 LoginScreen - Setting authenticated state");
@@ -374,7 +374,7 @@ export const LoginScreen: React.FC = () => {
                     className="w-6 h-6 ml-2"
                     resizeMode="contain"
                   />
-                </TouchableOpacity>{" "}
+                </TouchableOpacity>
               </View>
               {errors.password ? (
                 <Text className="text-red-500 text-sm mt-2 mb-2">

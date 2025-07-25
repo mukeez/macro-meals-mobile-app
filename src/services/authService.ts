@@ -4,7 +4,6 @@ import useStore from '../store/useStore';
 import {pushNotifications} from '@macro-meals/push-notifications';
 import axiosInstance from './axios';
 
-const API_URL = `${API_CONFIG.BASE_URL}/api/v1`;
 
 interface SignupResponse {
     message: string;

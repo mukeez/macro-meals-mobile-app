@@ -9,7 +9,6 @@ import * as Font from 'expo-font';
 import useStore from "./src/store/useStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {RootStack} from "./RootStack";
-import { MIXPANEL_TOKEN } from '@env';
 import { MixpanelProvider, useMixpanel } from "@macro-meals/mixpanel";
 import {pushNotifications} from '@macro-meals/push-notifications';
 import { firebase } from '@react-native-firebase/messaging';
@@ -21,6 +20,7 @@ import { userService } from './src/services/userService';
 import { authService } from './src/services/authService';
 import { RemoteConfigProvider, useRemoteConfigContext } from '@macro-meals/remote-config-service';
 import { IsProContext } from 'src/contexts/IsProContext';
+import Config from 'react-native-config';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -105,7 +105,8 @@ export default function App() {
     const [hasMacros, setHasMacros] = useState(false);
     const [isPro, setIsPro] = useState(false);
     const [readyForDashboard, setReadyForDashboard] = useState(false);
-    console.log('MIXPANEL_TOKEN', MIXPANEL_TOKEN);
+    const MIXPANEL_TOKEN = Config.MIXPANEL_TOKEN as string;
+    console.log('MIXPANEL_TOKEN', Config.MIXPANEL_TOKEN);
 
     useEffect(() => {
         async function initializeApp() {
@@ -164,21 +165,21 @@ export default function App() {
                         console.log('FCM TOKEN:', token);
                         
                         // Store the FCM token for later use
-                        if (token) {
-                            await AsyncStorage.setItem('fcm_token', token);
-                            console.log('FCM token stored during app initialization:', token);
+                        // if (token) {
+                        //     await AsyncStorage.setItem('fcm_token', token);
+                        //     console.log('FCM token stored during app initialization:', token);
                             
-                            // Try to update FCM token on backend if user is authenticated
-                            try {
-                                const storedToken = await AsyncStorage.getItem('my_token');
-                                if (storedToken) {
-                                    await userService.updateFCMToken(token);
-                                    console.log('FCM token sent to backend successfully');
-                                }
-                            } catch (error) {
-                                console.log('Could not update FCM token on backend (user may not be logged in):', error);
-                            }
-                        }
+                        //     // Try to update FCM token on backend if user is authenticated
+                        //     try {
+                        //         const storedToken = await AsyncStorage.getItem('my_token');
+                        //         if (storedToken) {
+                        //             await userService.updateFCMToken(token);
+                        //             console.log('FCM token sent to backend successfully');
+                        //         }
+                        //     } catch (error) {
+                        //         console.log('Could not update FCM token on backend (user may not be logged in):', error);
+                        //     }
+                        // }
                         
                         return token;
                     } else {
@@ -240,7 +241,7 @@ export default function App() {
                         console.log('Token valid, setting authenticated state with profile:', profile);
                         // Set states in correct order
                         setHasMacros(profile.has_macros);
-                        setIsPro(profile.is_pro);
+                        setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
                         setReadyForDashboard(profile.has_macros);
                         setAuthenticated(true, token, userId);
                         console.log('🔍 App.tsx - States set during initialization:', {
@@ -300,19 +301,19 @@ export default function App() {
     });
 
     // Periodic FCM token refresh
-    useEffect(() => {
-        if (isAuthenticated) {
-            const refreshInterval = setInterval(async () => {
-                try {
-                    await authService.refreshAndUpdateFCMToken();
-                } catch (error) {
-                    console.log('Error during periodic FCM token refresh:', error);
-                }
-            }, 24 * 60 * 60 * 1000); // Refresh every 24 hours
+    // useEffect(() => {
+    //     if (isAuthenticated) {
+    //         const refreshInterval = setInterval(async () => {
+    //             try {
+    //                 await authService.refreshAndUpdateFCMToken();
+    //             } catch (error) {
+    //                 console.log('Error during periodic FCM token refresh:', error);
+    //             }
+    //         }, 24 * 60 * 60 * 1000); // Refresh every 24 hours
 
-            return () => clearInterval(refreshInterval);
-        }
-    }, [isAuthenticated]);
+    //         return () => clearInterval(refreshInterval);
+    //     }
+    // }, [isAuthenticated]);
 
     if (isLoading) {
         return (

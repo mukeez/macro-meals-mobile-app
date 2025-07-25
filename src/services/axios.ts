@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequ
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '../../config/api';
 import useStore from '../store/useStore';
+import Config from 'react-native-config';
 
 // Define non-authenticated endpoints
 const nonAuthEndpoints = [
@@ -19,7 +20,7 @@ const nonAuthEndpoints = [
 ];
 
 const axiosInstance = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
+  baseURL: Config.API_BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
