@@ -113,10 +113,8 @@ const NotificationsScreen: React.FC = () => {
         const data = await notificationService.getNotifications();
         console.log("Fetched notifications:", data);
 
-        const apiNotifications: APINotification[] = Array.isArray(
-          data?.notifications
-        )
-          ? data.notifications
+        const apiNotifications: APINotification[] = Array.isArray(data?.results)
+          ? data.results
           : [];
         const formatted: Notification[] = apiNotifications.map((n) => ({
           id: n.id,
