@@ -130,6 +130,7 @@ bower_components/
 dist/
 web-build/
 .env
+.env.staging
 
 .cursorrules
 .cursor/

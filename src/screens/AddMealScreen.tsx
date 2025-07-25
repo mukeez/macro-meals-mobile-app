@@ -28,7 +28,7 @@ import FavoritesService from '../services/favoritesService';
 import { useMixpanel } from '@macro-meals/mixpanel';
 
 interface RouteParams {
-    barcodeData: any;
+    barcodeData?: string;
     analyzedData?: {
         name: string;
         calories: number;
@@ -271,6 +271,7 @@ export const AddMealScreen: React.FC = () => {
                 serving_size: servingUnit,
                 description: mealDescription || undefined,
                 logging_mode: logging_mode,
+                barcode: barcodeData || undefined, // Include barcode if available
                 photo: mealImage ? {
                     uri: mealImage,
                     type: 'image/jpeg',
@@ -299,6 +300,7 @@ export const AddMealScreen: React.FC = () => {
                     meal_time: time.toISOString(),
                     amount: amount,
                     serving_size: servingUnit,
+                    barcode: barcodeData || null, // Track barcode usage
                     ...adjustedMacros
                 }
             });
@@ -472,6 +474,13 @@ export const AddMealScreen: React.FC = () => {
                             </>
                         )}
                     </TouchableOpacity>
+                    )}
+
+                    {barcodeData && (
+                        <View className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <Text className="text-sm text-blue-700 font-medium mb-1">Barcode Scanned</Text>
+                            <Text className="text-xs text-blue-600 font-mono">{barcodeData}</Text>
+                        </View>
                     )}
 
                     <View className="mb-4">
