@@ -41,12 +41,12 @@ export const authService = {
                 console.log('No stored FCM token, attempting to get a new one...');
                 try {
                     fcmToken = await pushNotifications.getFCMToken();
-                    if (fcmToken) {
-                        await AsyncStorage.setItem('fcm_token', fcmToken);
-                        console.log('New FCM token obtained and stored:', fcmToken);
-                    } else {
-                        console.log('Failed to get new FCM token, continuing without push notifications');
-                    }
+                    // if (fcmToken) {
+                    //     await AsyncStorage.setItem('fcm_token', fcmToken);
+                    //     console.log('New FCM token obtained and stored:', fcmToken);
+                    // } else {
+                    //     console.log('Failed to get new FCM token, continuing without push notifications');
+                    // }
                 } catch (error) {
                     console.log('Error getting FCM token:', error);
                 }
@@ -56,14 +56,14 @@ export const authService = {
             const loginPayload = {
                 email: credentials.email,
                 password: credentials.password,
-                ...(fcmToken && { fcm_token: fcmToken })
+                // ...(fcmToken && { fcm_token: fcmToken })
             };
 
-            console.log('Login payload being sent:', {
-                email: loginPayload.email,
-                hasFcmToken: !!loginPayload.fcm_token,
-                fcmTokenLength: loginPayload.fcm_token?.length
-            });
+            // console.log('Login payload being sent:', {
+            //     email: loginPayload.email,
+            //     hasFcmToken: !!loginPayload.fcm_token,
+            //     fcmTokenLength: loginPayload.fcm_token?.length
+            // });
 
             const response = await axiosInstance.post('/auth/login', loginPayload);
             
@@ -115,24 +115,24 @@ export const authService = {
     },
 
     // Function to refresh FCM token
-    refreshFCMToken: async () => {
-        try {
-            console.log('Refreshing FCM token...');
-            const newToken = await pushNotifications.getFCMToken();
+    // refreshFCMToken: async () => {
+    //     try {
+    //         console.log('Refreshing FCM token...');
+    //         const newToken = await pushNotifications.getFCMToken();
             
-            if (newToken) {
-                await AsyncStorage.setItem('fcm_token', newToken);
-                console.log('FCM token refreshed and stored successfully');
-                return newToken;
-            } else {
-                console.log('Failed to refresh FCM token');
-                return null;
-            }
-        } catch (error) {
-            console.error('Error refreshing FCM token:', error);
-            return null;
-        }
-    },
+    //         if (newToken) {
+    //             await AsyncStorage.setItem('fcm_token', newToken);
+    //             console.log('FCM token refreshed and stored successfully');
+    //             return newToken;
+    //         } else {
+    //             console.log('Failed to refresh FCM token');
+    //             return null;
+    //         }
+    //     } catch (error) {
+    //         console.error('Error refreshing FCM token:', error);
+    //         return null;
+    //     }
+    // },
 
     // Function to get current FCM token
     getFCMToken: async () => {
@@ -145,34 +145,34 @@ export const authService = {
     },
 
     // Function to refresh FCM token and update on backend
-    refreshAndUpdateFCMToken: async () => {
-        try {
-            console.log('Refreshing FCM token...');
-            const newToken = await pushNotifications.getFCMToken();
+    // refreshAndUpdateFCMToken: async () => {
+    //     try {
+    //         console.log('Refreshing FCM token...');
+    //         const newToken = await pushNotifications.getFCMToken();
             
-            if (newToken) {
-                await AsyncStorage.setItem('fcm_token', newToken);
-                console.log('FCM token refreshed and stored successfully');
+    //         if (newToken) {
+    //             await AsyncStorage.setItem('fcm_token', newToken);
+    //             console.log('FCM token refreshed and stored successfully');
                 
-                // Try to update on backend if user is authenticated
-                try {
-                    const { userService } = await import('./userService');
-                    await userService.updateFCMToken(newToken);
-                    console.log('FCM token updated on backend after refresh');
-                } catch (backendError) {
-                    console.log('Could not update FCM token on backend (user may not be logged in):', backendError);
-                }
+    //             // Try to update on backend if user is authenticated
+    //             try {
+    //                 const { userService } = await import('./userService');
+    //                 await userService.updateFCMToken(newToken);
+    //                 console.log('FCM token updated on backend after refresh');
+    //             } catch (backendError) {
+    //                 console.log('Could not update FCM token on backend (user may not be logged in):', backendError);
+    //             }
                 
-                return newToken;
-            } else {
-                console.log('Failed to refresh FCM token');
-                return null;
-            }
-        } catch (error) {
-            console.error('Error refreshing FCM token:', error);
-            return null;
-        }
-    },
+    //             return newToken;
+    //         } else {
+    //             console.log('Failed to refresh FCM token');
+    //             return null;
+    //         }
+    //     } catch (error) {
+    //         console.error('Error refreshing FCM token:', error);
+    //         return null;
+    //     }
+    // },
 
     forgotPassword: async(email: string) => {
         try {
@@ -196,6 +196,7 @@ export const authService = {
     },
     
     verifyEmail: async (params: { email: string, otp: string }) => {
+        console.log('AuthService: Verifying email with params:', params);
         try {
             const response = await axiosInstance.post('/auth/verify-email', params);
             console.log('responseData', response.data);

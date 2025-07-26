@@ -176,7 +176,7 @@ export const userService = {
       const response = await axiosInstance.get('/user/me');
       return response.data;
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error fetching user data new:', error);
       throw error;
     }
   },

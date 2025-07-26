@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '../../config/api';
 import useStore from '../store/useStore';
 import Config from 'react-native-config';
+import { clearSession } from './sessionService';
 
 // Define non-authenticated endpoints
 const nonAuthEndpoints = [
@@ -18,6 +19,8 @@ const nonAuthEndpoints = [
   '/auth/apple',
   '/auth/facebook',
 ];
+
+console.log('\n\n\n\n\n\THE API BASE URL IS', Config.API_BASE_URL);
 
 const axiosInstance = axios.create({
   baseURL: Config.API_BASE_URL,
@@ -137,10 +140,8 @@ axiosInstance.interceptors.response.use(
 // Helper function to handle logout
 const handleLogout = async () => {
   try {
-    // Clear stored tokens
-    await AsyncStorage.removeItem('my_token');
-    await AsyncStorage.removeItem('refresh_token');
-    await AsyncStorage.removeItem('user_id');
+    // Clear session using the session service
+    await clearSession();
     
     // Update store state
     const store = useStore.getState();
@@ -170,9 +171,7 @@ export const setAuthTokens = async (accessToken: string, refreshToken?: string, 
 // Helper function to clear auth tokens
 export const clearAuthTokens = async () => {
   try {
-    await AsyncStorage.removeItem('my_token');
-    await AsyncStorage.removeItem('refresh_token');
-    await AsyncStorage.removeItem('user_id');
+    await clearSession();
   } catch (error) {
     console.error('Error clearing auth tokens:', error);
   }

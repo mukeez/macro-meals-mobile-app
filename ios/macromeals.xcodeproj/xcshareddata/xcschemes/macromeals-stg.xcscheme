@@ -24,7 +24,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "04052F152E334297002AF05A"
+               BlueprintIdentifier = "049DD59E2E35174900E906C0"
                BuildableName = "macromeals-stg.app"
                BlueprintName = "macromeals-stg"
                ReferencedContainer = "container:macromeals.xcodeproj">
@@ -53,7 +53,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "04052F152E334297002AF05A"
+            BlueprintIdentifier = "049DD59E2E35174900E906C0"
             BuildableName = "macromeals-stg.app"
             BlueprintName = "macromeals-stg"
             ReferencedContainer = "container:macromeals.xcodeproj">
@@ -70,7 +70,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "04052F152E334297002AF05A"
+            BlueprintIdentifier = "049DD59E2E35174900E906C0"
             BuildableName = "macromeals-stg.app"
             BlueprintName = "macromeals-stg"
             ReferencedContainer = "container:macromeals.xcodeproj">

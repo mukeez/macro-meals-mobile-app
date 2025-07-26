@@ -21,6 +21,8 @@ import { authService } from './src/services/authService';
 import { RemoteConfigProvider, useRemoteConfigContext } from '@macro-meals/remote-config-service';
 import { IsProContext } from 'src/contexts/IsProContext';
 import Config from 'react-native-config';
+import { validateSession, SessionValidationResult } from './src/services/sessionService';
+import { debugService } from './src/services/debugService';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -98,6 +100,7 @@ function RemoteConfigHandler() {
 
 export default function App() {
     const [isLoading, setIsLoading] = useState(true);
+    const [isSessionValidated, setIsSessionValidated] = useState(false);
     const { setAuthenticated, isAuthenticated } = useStore();
     
     const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
@@ -157,31 +160,16 @@ export default function App() {
 
                     if (permission) {
                         // Get FCM token only after permissions are granted
-                        const token = await pushNotifications.getFCMToken();
+                        //const token = await pushNotifications.getFCMToken();
                         await pushNotifications.intializeMessaging();
                         
                         // Check for initial notification (app opened from notification)
                         await pushNotifications.getInitialNotification();
-                        console.log('FCM TOKEN:', token);
+                        // console.log('FCM TOKEN:', token);
                         
-                        // Store the FCM token for later use
-                        // if (token) {
-                        //     await AsyncStorage.setItem('fcm_token', token);
-                        //     console.log('FCM token stored during app initialization:', token);
-                            
-                        //     // Try to update FCM token on backend if user is authenticated
-                        //     try {
-                        //         const storedToken = await AsyncStorage.getItem('my_token');
-                        //         if (storedToken) {
-                        //             await userService.updateFCMToken(token);
-                        //             console.log('FCM token sent to backend successfully');
-                        //         }
-                        //     } catch (error) {
-                        //         console.log('Could not update FCM token on backend (user may not be logged in):', error);
-                        //     }
-                        // }
+
                         
-                        return token;
+                        return null;
                     } else {
                         return null;
                     }
@@ -199,9 +187,8 @@ export default function App() {
                 const onboardingCompleted = await AsyncStorage.getItem('isOnboardingCompleted');
                 setIsOnboardingCompleted(onboardingCompleted === 'true');
 
-                // Start with unauthenticated state
-                console.log('Setting initial unauthenticated state...');
-                setAuthenticated(false, '', '');
+                // Don't set authentication state yet - wait for session validation
+                console.log('Starting session validation without clearing tokens...');
                 setHasMacros(false);
                 setIsPro(false);
                 setReadyForDashboard(false);
@@ -214,54 +201,73 @@ export default function App() {
                     'UncutSans-Semibold': require('./assets/fonts/Uncut-Sans-Semibold.otf'),
                 });
 
-                // Check auth status
-                const [token, userId] = await Promise.all([
-                    AsyncStorage.getItem('my_token'),
-                    AsyncStorage.getItem('user_id'),
-                ]);
+                // Debug: Log all stored values
+                await debugService.logAllStoredValues();
+                await debugService.checkAuthValues();
 
-                console.log('Retrieved stored values:', {
-                    onboardingCompleted,
-                    hasToken: !!token,
-                    hasUserId: !!userId
+                // Enhanced session validation
+                console.log('🔍 App.tsx - Starting enhanced session validation...');
+                console.log('🔍 App.tsx - Current state before validation:', {
+                    isAuthenticated,
+                    hasMacros,
+                    isPro,
+                    readyForDashboard,
+                    isOnboardingCompleted
                 });
+                const sessionValidation: SessionValidationResult = await validateSession();
                 
-                // Only proceed with auth check if we have both token and userId
-                if (token && userId) {
-                    console.log('Found stored credentials, validating token...');
-                    try {
-                        // Fetch user profile to validate token
-                        const profile = await userService.getProfile();
-                        console.log('🔍 App.tsx - Profile loaded during initialization:', {
-                            has_macros: profile.has_macros,
-                            is_pro: profile.is_pro,
-                            email: profile.email,
-                            id: profile.id
-                        });
-                        console.log('Token valid, setting authenticated state with profile:', profile);
-                        // Set states in correct order
-                        setHasMacros(profile.has_macros);
-                        setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
-                        setReadyForDashboard(profile.has_macros);
-                        setAuthenticated(true, token, userId);
-                        console.log('🔍 App.tsx - States set during initialization:', {
-                            hasMacros: profile.has_macros,
-                            isPro: profile.is_pro,
-                            readyForDashboard: profile.has_macros,
-                            isAuthenticated: true
-                        });
-                    } catch (error) {
-                        console.error('Error validating token:', error);
-                        // Clear stored credentials on error
+                console.log('🔍 App.tsx - Session validation result:', {
+                    isValid: sessionValidation.isValid,
+                    isComplete: sessionValidation.isComplete,
+                    hasUser: !!sessionValidation.user,
+                    error: sessionValidation.error
+                });
+
+                if (sessionValidation.isValid && sessionValidation.user) {
+                    const profile = sessionValidation.user;
+                    console.log('🔍 App.tsx - Valid session found, setting authenticated state:', {
+                        has_macros: profile.has_macros,
+                        is_pro: profile.is_pro,
+                        email: profile.email,
+                        id: profile.id,
+                        sessionComplete: sessionValidation.isComplete
+                    });
+
+                    // Set states in correct order
+                    setHasMacros(profile.has_macros);
+                    setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
+                    setReadyForDashboard(profile.has_macros);
+                    setAuthenticated(true, profile.id, profile.id);
+                    
+                    console.log('🔍 App.tsx - Session restored successfully:', {
+                        hasMacros: profile.has_macros,
+                        isPro: profile.is_pro,
+                        readyForDashboard: profile.has_macros,
+                        isAuthenticated: true,
+                        sessionComplete: sessionValidation.isComplete
+                    });
+                } else {
+                    console.log('🔍 App.tsx - No valid session found:', {
+                        error: sessionValidation.error,
+                        isValid: sessionValidation.isValid,
+                        isComplete: sessionValidation.isComplete
+                    });
+                    
+                    // Set unauthenticated state only if session validation fails
+                    setAuthenticated(false, '', '');
+                    
+                    // Clear any invalid stored credentials
+                    if (sessionValidation.error) {
                         await Promise.all([
                             AsyncStorage.removeItem('my_token'),
                             AsyncStorage.removeItem('refresh_token'),
                             AsyncStorage.removeItem('user_id')
                         ]);
                     }
-                } else {
-                    console.log('No stored credentials found, staying unauthenticated');
                 }
+                
+                // Mark session validation as complete
+                setIsSessionValidated(true);
             } catch (error) {
                 console.error('Error initializing app:', error);
             } finally {
@@ -297,7 +303,8 @@ export default function App() {
         hasMacros,
         isPro,
         readyForDashboard,
-        isOnboardingCompleted
+        isOnboardingCompleted,
+        isSessionValidated
     });
 
     // Periodic FCM token refresh
@@ -315,7 +322,7 @@ export default function App() {
     //     }
     // }, [isAuthenticated]);
 
-    if (isLoading) {
+    if (isLoading || !isSessionValidated) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" />
@@ -336,7 +343,7 @@ export default function App() {
                     welcome_message: 'Welcome to Macro Meals!',
                     max_meals_per_day: '10',
                     subscription_enabled: 'true',
-                    dev_mode: 'false',
+                    dev_mode: __DEV__ ? 'true' : 'false',
                 }}
                 settings={{
                     minimumFetchIntervalMillis: 30000, // 30 seconds minimum fetch interval

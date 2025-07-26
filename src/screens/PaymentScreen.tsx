@@ -4,7 +4,6 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
-import { MERCHANT_IDENTIFIER } from '@env';
 import { WebView } from 'react-native-webview';
 
 
@@ -28,6 +27,7 @@ import { paymentService } from '../services/paymentService';
 import { userService } from '../services/userService';
 import CustomSafeAreaView from 'src/components/CustomSafeAreaView';
 import { IsProContext } from 'src/contexts/IsProContext';
+import Config from 'react-native-config';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -145,6 +145,7 @@ const PaymentScreen = () => {
   const [showWebView, setShowWebView] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState('');
   const { isPro, setIsPro } = useContext(IsProContext);
+  const MERCHANT_IDENTIFIER = Config.MERCHANT_IDENTIFIER;
 
   console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
 
