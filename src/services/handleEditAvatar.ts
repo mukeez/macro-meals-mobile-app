@@ -32,24 +32,22 @@ const handleEditAvatar = async (setUserData: any, setIsProcessing: any) => {
         setIsProcessing(false);
         return;
       }
-
-      // 1. Upload the image
-      console.log('[handleEditAvatar] Uploading profile image...');
-      await userService.uploadProfileImage(imageUri, authToken);
-      console.log('[handleEditAvatar] Image uploaded successfully.');
-
-      // 2. Fetch the updated user profile
-      console.log('[handleEditAvatar] Fetching updated user profile...');
+   
+      const filename = imageUri.split('/').pop() || 'avatar.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';  
+      const avatarFile = {
+        uri: imageUri,
+        type: type,
+        name: filename
+      };
+      
+      await userService.updateProfile({avatar: avatarFile});
       const updatedUser = await userService.getProfile();
-      console.log('[handleEditAvatar] Updated user profile retrieved:', updatedUser);
-
-      // 3. Update local state with the updated user data (including new avatar_url)
-     setUserData(updatedUser);
+      setUserData(updatedUser);
       setIsProcessing(false);
-      console.log('[handleEditAvatar] Avatar updated successfully.');
     } catch (error: any) {
       setIsProcessing(false);
-      console.error('[handleEditAvatar] Error updating avatar:', error);
       Alert.alert('Error', error.message || 'There was a problem uploading your new avatar. Please try again.');
     }
   } else {
