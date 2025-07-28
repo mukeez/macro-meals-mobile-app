@@ -145,9 +145,9 @@ const PaymentScreen = () => {
   const [showWebView, setShowWebView] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState('');
   const { isPro, setIsPro } = useContext(IsProContext);
-  const MERCHANT_IDENTIFIER = Config.MERCHANT_IDENTIFIER;
+          const MERCHANT_IDENTIFIER = Config.MERCHANT_IDENTIFIER;
 
-  console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
+    console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
 
   // useEffect(() => {
   //   (async function () {

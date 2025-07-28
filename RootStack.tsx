@@ -74,7 +74,7 @@ export function RootStack({
   if (isInitialized) {
     try {
       // Only allow dev_mode to bypass payment in non-production environments
-      const currentEnv = Config.ENVIRONMENT;
+              const currentEnv = Config.ENVIRONMENT;
       console.log('🔍 RootStack - Current environment:', currentEnv);
       
       if (currentEnv !== 'production') {

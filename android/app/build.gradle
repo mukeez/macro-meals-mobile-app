@@ -2,6 +2,19 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// Load environment-specific .env file based on build variant
+def getEnvFile() {
+    def envFile = ".env"
+    if (project.hasProperty('ENVFILE')) {
+        envFile = project.getProperty('ENVFILE')
+    }
+    return envFile
+}
+
+// Apply react-native-config with the correct env file
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
+project.ext.envConfigFiles = [getEnvFile()]
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 // Load signing config
@@ -39,7 +52,7 @@ react {
     //   The list of variants to that are debuggable. For those we're going to
     //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
     //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
-    // debuggableVariants = ["liteDebug", "prodDebug"]
+    debuggableVariants = ["devDebug", "stgDebug", "prodDebug"]
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -95,12 +108,14 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace 'com.macromeals.app'
+    flavorDimensions "environment"
+    
     defaultConfig {
         applicationId 'com.macromeals.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.2"
+        versionCode 12
+        versionName "1.0.3"
         
         // Enable multidex
         multiDexEnabled true
@@ -109,23 +124,37 @@ android {
         resConfigs "en"
         vectorDrawables.useSupportLibrary = true
     }
-
+    
     productFlavors {
         dev {
-            applicationIdSuffix ".dev"
+            // applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
             resValue "string", "app_name", "Macro Meals [DEV]"
             buildConfigField "String", "ENVIRONMENT", "\"development\""
+            // Set environment file for react-native-config
+            project.env.each { k, v ->
+                buildConfigField "String", k, "\"$v\""
+            }
         }
         stg {
-            applicationIdSuffix ".stg"
+            dimension "environment"
+            // applicationIdSuffix ".stg"
             versionNameSuffix "-stg"
             resValue "string", "app_name", "Macro Meals [STG]"
             buildConfigField "String", "ENVIRONMENT", "\"staging\""
+            // Set environment file for react-native-config
+            project.env.each { k, v ->
+                buildConfigField "String", k, "\"$v\""
+            }
         }
         prod {
+            dimension "environment"
             resValue "string", "app_name", "Macro Meals"
             buildConfigField "String", "ENVIRONMENT", "\"production\""
+            // Set environment file for react-native-config
+            project.env.each { k, v ->
+                buildConfigField "String", k, "\"$v\""
+            }
         }
     }
 
@@ -186,6 +215,30 @@ android {
     }
 }
 
+// Task to print environment variables for debugging
+task printEnvVars {
+    doLast {
+        println "Environment variables for build:"
+        project.env.each { k, v ->
+            println "  $k = $v"
+        }
+    }
+}
+
+// Task to verify environment variables in the final build
+task verifyBuildEnv {
+    doLast {
+        println "=== BUILD ENVIRONMENT VERIFICATION ==="
+        println "Build variant: ${android.defaultConfig.applicationId}"
+        println "Environment file: ${getEnvFile()}"
+        println "Environment variables:"
+        project.env.each { k, v ->
+            println "  $k = $v"
+        }
+        println "=== END VERIFICATION ==="
+    }
+}
+
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
 // Accepts values in comma delimited lists, example:
 // android.packagingOptions.pickFirsts=/LICENSE,**/picasa.ini
@@ -214,6 +267,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-messaging'
     implementation "com.stripe:stripe-android:20.35.2"
+    implementation project(':react-native-config')
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
@@ -245,3 +299,42 @@ dependencies {
 
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
+
+// Fix Crashlytics task dependencies for multi-flavor builds
+android.applicationVariants.all { variant ->
+    def variantName = variant.name.capitalize()
+    def uploadTask = tasks.findByName("uploadCrashlyticsMappingFile${variantName}")
+    
+    // Find all Google Services process tasks that might be related
+    def processTasks = []
+    tasks.each { task ->
+        if (task.name.startsWith("process") && task.name.endsWith("GoogleServices")) {
+            processTasks.add(task)
+        }
+    }
+    
+    if (uploadTask && processTasks.size() > 0) {
+        uploadTask.dependsOn processTasks
+    }
+}
+
+// Disable Crashlytics mapping file upload for development builds to avoid dependency issues
+android.applicationVariants.all { variant ->
+    if (variant.buildType.name == 'debug' || variant.flavorName == 'dev') {
+        def uploadTask = tasks.findByName("uploadCrashlyticsMappingFile${variant.name.capitalize()}")
+        if (uploadTask) {
+            uploadTask.enabled = false
+        }
+    }
+}
+
+// Additional fix for specific task dependencies
+tasks.whenTaskAdded { task ->
+    if (task.name.startsWith("uploadCrashlyticsMappingFile")) {
+        tasks.each { otherTask ->
+            if (otherTask.name.startsWith("process") && otherTask.name.endsWith("GoogleServices")) {
+                task.dependsOn otherTask
+            }
+        }
+    }
+}

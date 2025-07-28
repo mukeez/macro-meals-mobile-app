@@ -2,8 +2,9 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequ
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '../../config/api';
 import useStore from '../store/useStore';
-import Config from 'react-native-config';
+
 import { clearSession } from './sessionService';
+import Config from 'react-native-config';
 
 // Define non-authenticated endpoints
 const nonAuthEndpoints = [
@@ -20,7 +21,7 @@ const nonAuthEndpoints = [
   '/auth/facebook',
 ];
 
-console.log('\n\n\n\n\n\THE API BASE URL IS', Config.API_BASE_URL);
+
 
 const axiosInstance = axios.create({
   baseURL: Config.API_BASE_URL,

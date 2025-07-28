@@ -363,7 +363,7 @@ export const SettingsScreen: React.FC = () => {
             onPress={() => {}}
           />
           {
-            Config.ENVIRONMENT !== 'production' ? (
+                            Config.ENVIRONMENT !== 'production' ? (
               <SectionItem
             title="Payment"
             image={IMAGE_CONSTANTS.restoreIcon}

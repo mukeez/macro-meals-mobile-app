@@ -108,7 +108,6 @@ export default function App() {
     const [hasMacros, setHasMacros] = useState(false);
     const [isPro, setIsPro] = useState(false);
     const [readyForDashboard, setReadyForDashboard] = useState(false);
-    const MIXPANEL_TOKEN = Config.MIXPANEL_TOKEN as string;
     console.log('MIXPANEL_TOKEN', Config.MIXPANEL_TOKEN);
 
     useEffect(() => {
@@ -160,7 +159,7 @@ export default function App() {
 
                     if (permission) {
                         // Get FCM token only after permissions are granted
-                        //const token = await pushNotifications.getFCMToken();
+                        const token = await pushNotifications.getFCMToken();
                         await pushNotifications.intializeMessaging();
                         
                         // Check for initial notification (app opened from notification)
@@ -169,7 +168,7 @@ export default function App() {
                         
 
                         
-                        return null;
+                        return token;
                     } else {
                         return null;
                     }
@@ -332,7 +331,7 @@ export default function App() {
 
     return (
         <MixpanelProvider config={{
-            token: MIXPANEL_TOKEN,
+                            token: Config.MIXPANEL_TOKEN as string,
         }}>
             <RemoteConfigProvider
                 defaults={{
