@@ -100,8 +100,35 @@ class PushNotifications {
 
       return enabled;
     } else {
-      // For Android, we'll use the notification permission that's already configured in app.json
-      return true;
+      // For Android, force permission request
+      try {
+        console.log('=== ANDROID NOTIFICATION PERMISSION REQUEST ===');
+        console.log('Android version:', Platform.Version);
+        
+        // Check current status first
+        const currentSettings = await notifee.getNotificationSettings();
+        console.log('Current notification settings:', currentSettings);
+        
+        // Request permission
+        console.log('Requesting Android notification permission...');
+        const notifeeResult = await notifee.requestPermission();
+        console.log('Notifee permission result:', notifeeResult);
+        
+        // Check the actual authorization status after request
+        const settings = await notifee.getNotificationSettings();
+        console.log('Notification settings after request:', settings);
+        
+        // Return true if authorized (status 1 = authorized)
+        const isAuthorized = settings.authorizationStatus === 1;
+        console.log('Is notification permission authorized:', isAuthorized);
+        console.log('=== END ANDROID NOTIFICATION PERMISSION REQUEST ===');
+        
+        return isAuthorized;
+        
+      } catch (error) {
+        console.error('Error requesting Android notification permissions:', error);
+        return false;
+      }
     }
   }
 
