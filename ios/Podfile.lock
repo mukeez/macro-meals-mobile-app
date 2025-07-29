@@ -2257,7 +2257,7 @@ PODS:
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
     - React-Core
-  - RNPermissions (5.4.1):
+  - RNPermissions (5.4.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -3161,7 +3161,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: 8ff2b1434b0ff8bab28c8242a656fb842990bbc8
   RNGoogleSignin: 34668f9c7a67213c8949b356404bcc7facb1b946
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
-  RNPermissions: 2032e81fbb3e6c480b6f2496300ca5b98f995779
+  RNPermissions: 913e830a18973804e2ca7cd38786e8d0c8f821eb
   RNReanimated: d48e87df3d70586eb405a77240aa0dafaa857ee4
   RNScreens: 90b905d545a5ebbe976985702b8a39e3475727b2
   RNSVG: 4470464e129f6bc58b78b961850b054dbbea8ef7
