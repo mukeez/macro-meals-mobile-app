@@ -21,6 +21,7 @@ interface SignupData {
     email: string;
     password: string;
     nickname?: string;
+    referral_code?: string;
 }
 
 interface LoginCredentials {
@@ -79,10 +80,17 @@ export const authService = {
     
     signup: async (data: SignupData) => {
         try {
-            const response = await axiosInstance.post('/auth/signup', {
+            const signupPayload: any = {
                 email: data.email,
                 password: data.password,
-            });
+            };
+
+            // Add referral_code if provided
+            if (data.referral_code) {
+                signupPayload.referral_code = data.referral_code;
+            }
+
+            const response = await axiosInstance.post('/auth/signup', signupPayload);
 
             return response.data.user.id;
         } catch (error) {

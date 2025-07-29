@@ -37,6 +37,7 @@ export const SignupScreen: React.FC = () => {
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
@@ -57,6 +58,7 @@ export const SignupScreen: React.FC = () => {
     nickname: "",
     password: "",
     confirmPassword: "",
+    referralCode: "",
     terms: "",
   });
 
@@ -72,6 +74,7 @@ export const SignupScreen: React.FC = () => {
       nickname: "",
       password: "",
       confirmPassword: "",
+      referralCode: "",
       terms: "",
     };
 
@@ -123,10 +126,17 @@ export const SignupScreen: React.FC = () => {
   try {
     const signUpTime = new Date().toISOString();
     // user does NOT log in yet
-    const userId = await authService.signup({
+    const signupData: any = {
       email,
       password,
-    });
+    };
+
+    // Add referral code if provided
+    if (referralCode.trim()) {
+      signupData.referral_code = referralCode.trim();
+    }
+
+    const userId = await authService.signup(signupData);
 
     if (mixpanel) {
       mixpanel.identify(userId);
@@ -136,6 +146,7 @@ export const SignupScreen: React.FC = () => {
           signup_method: "email",
           platform: Platform.OS,
           signup_time: signUpTime,
+          has_referral_code: !!referralCode.trim(),
         },
       });
       mixpanel.register({ signup_time: signUpTime });
@@ -154,6 +165,12 @@ export const SignupScreen: React.FC = () => {
       const axiosError = error as any;
       if (axiosError.response?.data?.detail) {
         errorMessage = axiosError.response.data.detail;
+        
+        // Handle invalid referral code specifically
+        if (errorMessage.toLowerCase().includes('referral code') || 
+            errorMessage.toLowerCase().includes('referral_code')) {
+          errorMessage = "Referral code not found, please check again";
+        }
       } else if (axiosError.response?.data?.message) {
         errorMessage = axiosError.response.data.message;
       } else if (axiosError.message) {
@@ -290,6 +307,29 @@ export const SignupScreen: React.FC = () => {
                   Password must be at least 8 characters
                 </Text>
               </View>
+
+              {/* Referral Code Field */}
+              <View className="mt-6">
+                <TextInput
+                  className="border border-lightGrey text-base rounded-md pl-4 font-normal text-black h-[68px]"
+                  placeholder="Referral code (optional)"
+                  placeholderTextColor="#9CA3AF"
+                  value={referralCode}
+                  onChangeText={(text) => {
+                    setReferralCode(text);
+                    // Clear referral code error when user types
+                    if (errors.referralCode) {
+                      setErrors((prev) => ({ ...prev, referralCode: "" }));
+                    }
+                  }}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  spellCheck={false}
+                />
+              </View>
+              {errors.referralCode ? (
+                <Text className="text-red-500 text-sm mt-2">{errors.referralCode}</Text>
+              ) : null}
 
               {errors.terms ? (
                 <Text className="text-red-500 text-sm mb-3">{errors.terms}</Text>
