@@ -1,38 +1,51 @@
 const fs = require('fs');
 const path = require('path');
 
-// Get environment from EAS build or default to production
-const environment = process.env.ENV || 'production';
+const environment = process.env.NODE_ENV || 'development';
 
-console.log(`🎨 Setting up icons for ${environment} environment...`);
-
-// Map of environment to icon files
-const iconMap = {
-  development: 'assets/icon-dev.png',
-  staging: 'assets/icon-dev.png',
-  production: 'assets/icon.png'
+const iconSourceMap = {
+  development: 'assets/icons/dev',
+  staging: 'assets/icons/stg',
+  production: 'assets/icons/prod'
 };
 
-// Source icon for current environment
-const sourceIcon = iconMap[environment];
-const targetIcon = 'assets/icon.png';
+const sourceDir = iconSourceMap[environment];
 
-// Check if source icon exists
-if (fs.existsSync(sourceIcon)) {
-  // Copy the environment-specific icon to the main icon location
-  fs.copyFileSync(sourceIcon, targetIcon);
-  console.log(`✅ Successfully copied ${sourceIcon} to ${targetIcon} for ${environment} environment`);
-} else {
-  console.log(`⚠️  Warning: Icon not found at ${sourceIcon}`);
-  console.log(`📁 Available icons: ${Object.values(iconMap).join(', ')}`);
-  
-  // If environment-specific icon doesn't exist, check if default icon exists
-  if (fs.existsSync('assets/icon.png')) {
-    console.log(`✅ Using default icon: assets/icon.png`);
-  } else {
-    console.log(`❌ Error: No icon found. Please create an icon at assets/icon.png`);
-    process.exit(1);
-  }
+if (!sourceDir) {
+  console.error(`❌ Unknown environment: ${environment}`);
+  process.exit(1);
 }
 
-console.log(`🎯 Icon setup complete for ${environment} environment`); 
+if (!fs.existsSync(sourceDir)) {
+  console.error(`❌ Icon source directory not found: ${sourceDir}`);
+  process.exit(1);
+}
+
+const targetDir = 'assets';
+
+// Files to copy
+const filesToCopy = [
+  { source: 'icon.png', target: 'icon.png' },
+  { source: 'adaptive-icon.png', target: 'adaptive-icon.png' }
+];
+
+console.log(`🔄 Copying ${environment} icons...`);
+
+try {
+  filesToCopy.forEach(({ source, target }) => {
+    const sourcePath = path.join(sourceDir, source);
+    const targetPath = path.join(targetDir, target);
+    
+    if (fs.existsSync(sourcePath)) {
+      fs.copyFileSync(sourcePath, targetPath);
+      console.log(`✅ Copied ${source} → ${target}`);
+    } else {
+      console.warn(`⚠️  Source file not found: ${sourcePath}`);
+    }
+  });
+  
+  console.log(`🎉 Successfully copied ${environment} icons!`);
+} catch (error) {
+  console.error(`❌ Error copying icons:`, error.message);
+  process.exit(1);
+} 

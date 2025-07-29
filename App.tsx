@@ -109,6 +109,8 @@ export default function App() {
     const [isPro, setIsPro] = useState(false);
     const [readyForDashboard, setReadyForDashboard] = useState(false);
     console.log('MIXPANEL_TOKEN', Config.MIXPANEL_TOKEN);
+    console.log('🔍 Current environment:', Config.ENVIRONMENT);
+    console.log('🎨 App icon should be:', Config.ENVIRONMENT === 'development' ? 'dev' : Config.ENVIRONMENT === 'staging' ? 'stg' : 'prod');
 
     useEffect(() => {
         async function initializeApp() {
@@ -160,6 +162,7 @@ export default function App() {
                     if (permission) {
                         // Get FCM token only after permissions are granted
                         const token = await pushNotifications.getFCMToken();
+                        console.log('THIS IS \n\n\n\n\nFCM TOKEN:', token);
                         await pushNotifications.intializeMessaging();
                         
                         // Check for initial notification (app opened from notification)
