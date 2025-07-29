@@ -41,6 +41,7 @@ export const authService = {
                 console.log('No stored FCM token, attempting to get a new one...');
                 try {
                     fcmToken = await pushNotifications.getFCMToken();
+                    console.log('FCM TOKEN FROM PUSH NOTIFICATIONS', fcmToken);
                     // if (fcmToken) {
                     //     await AsyncStorage.setItem('fcm_token', fcmToken);
                     //     console.log('New FCM token obtained and stored:', fcmToken);
@@ -52,11 +53,13 @@ export const authService = {
                 }
             }
 
+            console.log('FCM TOKEN FROM AUTH SERVICE', fcmToken);
+
             // Prepare login payload with FCM token if available
             const loginPayload = {
                 email: credentials.email,
                 password: credentials.password,
-                // ...(fcmToken && { fcm_token: fcmToken })
+                ...(fcmToken && { fcm_token: fcmToken })
             };
 
             // console.log('Login payload being sent:', {
@@ -93,11 +96,9 @@ export const authService = {
     
     logout: async () => {
         try {
-            // Remove tokens from AsyncStorage
             await AsyncStorage.removeItem('my_token');
             await AsyncStorage.removeItem('refresh_token');
             await AsyncStorage.removeItem('user_id');
-            await AsyncStorage.removeItem('fcm_token'); // Clear FCM token on logout
         } catch (error) {
             console.error('Logout error:', error);
             throw error;

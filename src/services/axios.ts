@@ -74,6 +74,14 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      // Special handling for email verification required error
+      const errorDetail = (error.response?.data as any)?.detail;
+      if (errorDetail && typeof errorDetail === 'string' && 
+          errorDetail.toLowerCase().includes('email verification required')) {
+        console.log('Email verification required - letting component handle routing');
+        return Promise.reject(error);
+      }
+
       try {
         const refreshToken = await AsyncStorage.getItem('refresh_token');
         
