@@ -19,6 +19,10 @@ import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMixpanel } from "@macro-meals/mixpanel";
+import { Picker } from "@react-native-picker/picker";
+import { useGoalsFlowStore } from "src/store/goalsFlowStore";
+import Header from "src/components/Header";
+import { useSyncBodyMetricToBackend } from "src/components/hooks/useBodyMetricsUpdate";
 
 function debounce(func: (...args: any[]) => void, wait: number) {
   let timeout: NodeJS.Timeout;
@@ -54,26 +58,40 @@ export default function AccountSettingsScreen() {
   const userRef = useRef<any>(null);
   const navigation = useNavigation();
   const { setAuthenticated, isAuthenticated } = useStore();
-  const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>({});
+  const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>(
+    {}
+  );
 
   const mixpanel = useMixpanel();
-  const [heightUnit, setHeightUnit] = useState("cm");
-  const [weightUnit, setWeightUnit] = useState("kg");
 
-  useEffect(() => {
-    if (user) {
-      setHeightUnit(
-        user.height_unit_preference === "imperial" ? "ft/in" : "cm"
-      );
-      setWeightUnit(user.weight_unit_preference === "imperial" ? "lbs" : "kg");
-    }
-  }, [user]);
+  function floatFeetToFtIn(floatFeet: number) {
+    const ft = Math.floor(floatFeet);
+    const inch = Math.round((floatFeet - ft) * 12);
+    return { ft, inch };
+  }
+  const {
+    height_unit_preference,
+    setHeightUnitPreference,
+    heightFt,
+    setHeightFt,
+    heightIn,
+    setHeightIn,
+    heightCm,
+    setHeightCm,
+    weight_unit_preference,
+    setWeightUnitPreference,
+    weightLb,
+    setWeightLb,
+    weightKg,
+    setWeightKg,
+  } = useGoalsFlowStore();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await userService.getProfile();
         setUser(data);
+        console.log("[HYDRATE] Got user from backend:", data);
         userRef.current = data;
         setLocalValues({
           first_name: data?.first_name || "",
@@ -81,6 +99,45 @@ export default function AccountSettingsScreen() {
           height: data?.height?.toString() || "",
           weight: data?.weight?.toString() || "",
         });
+
+        if (
+          data.height_unit_preference === "imperial" &&
+          typeof data.height === "number"
+        ) {
+          let ft = Math.floor(data.height);
+          let inch = Math.round((data.height - ft) * 12);
+          if (inch >= 12) {
+            ft += 1;
+            inch = 0;
+          }
+          setHeightFt(ft);
+          setHeightIn(inch);
+          setHeightCm(null);
+        } else if (
+          data.height_unit_preference === "metric" &&
+          typeof data.height === "number"
+        ) {
+          setHeightCm(data.height);
+          setHeightFt(null);
+          setHeightIn(null);
+        }
+        setHeightUnitPreference(data.height_unit_preference ?? "metric");
+
+        if (
+          data.weight_unit_preference === "imperial" &&
+          typeof data.weight === "number"
+        ) {
+          setWeightLb(data.weight);
+          setWeightKg(null);
+        } else if (
+          data.weight_unit_preference === "metric" &&
+          typeof data.weight === "number"
+        ) {
+          setWeightKg(data.weight);
+          setWeightLb(null);
+        }
+        setWeightUnitPreference(data.weight_unit_preference ?? "metric");
+        // --- End hydration ---
       } catch (e) {
         setUser(null);
         userRef.current = null;
@@ -144,14 +201,16 @@ export default function AccountSettingsScreen() {
   const getDebouncedPatch = (field: string) => {
     if (!debouncedPatch.current[field]) {
       debouncedPatch.current[field] = debounce(async (value: any) => {
+        console.log(`[PATCH] Field: ${field}, Value:`, value); // <-- ADD THIS
         if (!value || value === userRef.current[field]) return;
 
         setUpdating((prev) => ({ ...prev, [field]: true }));
         try {
           const patch: any = {};
           patch[field] = value;
+          console.log("[PATCH] Sending to backend:", patch);
           await userService.updateProfile(patch);
-
+          console.log("[PATCH] Backend update successful");
           // Update Mixpanel user properties
           updateMixpanelUserProperties(patch);
 
@@ -161,12 +220,12 @@ export default function AccountSettingsScreen() {
               const freshUserData = await userService.getProfile();
               updateUserSilently(freshUserData);
             } catch (e) {
-              console.error("Failed to refresh user data:", e);
+              console.error("[PATCH] Error updating:", e);
             }
           }, 1000);
         } catch (e) {
           Alert.alert("Error", "Failed to update profile");
-          setLocalValues(prev => ({
+          setLocalValues((prev) => ({
             ...prev,
             [field]: userRef.current[field]?.toString() || "",
           }));
@@ -178,8 +237,15 @@ export default function AccountSettingsScreen() {
     return debouncedPatch.current[field];
   };
 
+  useSyncBodyMetricToBackend("weight", (val) =>
+    setUpdating((prev) => ({ ...prev, weight: val }))
+  );
+  useSyncBodyMetricToBackend("height", (val) =>
+    setUpdating((prev) => ({ ...prev, height: val }))
+  );
+
   const handleFieldChange = (field: string, value: any) => {
-    setLocalValues(prev => ({ ...prev, [field]: value }));
+    setLocalValues((prev) => ({ ...prev, [field]: value }));
     getDebouncedPatch(field)(value);
   };
 
@@ -190,6 +256,109 @@ export default function AccountSettingsScreen() {
     setUser(userRef.current);
   };
 
+  const handleHeightUnitChange = (newUnit: "imperial" | "metric") => {
+    if (newUnit === height_unit_preference) return;
+    if (
+      newUnit === "imperial" &&
+      typeof heightCm === "number" &&
+      !isNaN(heightCm)
+    ) {
+      // Prefill ft/in fields for user convenience
+      const totalInches = heightCm / 2.54;
+      const ft = Math.floor(totalInches / 12);
+      const inch = Math.round(totalInches % 12);
+      setHeightFt(ft);
+      setHeightIn(inch);
+      setHeightCm(null);
+    } else if (
+      newUnit === "metric" &&
+      typeof heightFt === "number" &&
+      typeof heightIn === "number" &&
+      !isNaN(heightFt) &&
+      !isNaN(heightIn)
+    ) {
+      // Prefill cm field for user convenience
+      const cm = Math.round(heightFt * 30.48 + heightIn * 2.54);
+      setHeightCm(cm);
+      setHeightFt(null);
+      setHeightIn(null);
+    }
+    setHeightUnitPreference(newUnit);
+  };
+
+  const handleWeightUnitChange = (newUnit: "imperial" | "metric") => {
+    if (newUnit === weight_unit_preference) return;
+    if (newUnit === "imperial") {
+      if (typeof weightKg === "number" && !isNaN(weightKg)) {
+        const lbs = Math.round(weightKg * 2.20462);
+        setWeightLb(lbs);
+      } else {
+        // fallback to 0 or empty string
+        setWeightLb(0);
+      }
+      setWeightKg(null);
+    } else if (newUnit === "metric") {
+      if (typeof weightLb === "number" && !isNaN(weightLb)) {
+        const kg = Math.round(weightLb / 2.20462);
+        setWeightKg(kg);
+      } else {
+        setWeightKg(0);
+      }
+      setWeightLb(null);
+    }
+    setWeightUnitPreference(newUnit);
+  };
+
+  const onHeightFtChange = (v: string) => {
+    const ft = Number(v.replace(/[^0-9]/g, ""));
+    setHeightFt(ft);
+  };
+
+  const onHeightInChange = (v: string) => {
+    let inch = Number(v.replace(/[^0-9]/g, ""));
+    if (inch > 11) inch = 11;
+    setHeightIn(inch);
+  };
+
+  const handleMultiFieldChange = (fields: Record<string, any>) => {
+    setLocalValues((prev) => ({ ...prev, ...fields }));
+    getDebouncedPatch("weight")(fields); // or "height" if for height, or a generic key
+  };
+  const onHeightBlur = () => {
+    let patchObj: Record<string, any> = {};
+    if (height_unit_preference === "imperial") {
+      const ft = Number(heightFt) || 0;
+      const inch = Number(heightIn) || 0;
+      const floatFeet = ft + inch / 12;
+      patchObj = {
+        height: floatFeet,
+        height_unit_preference: "imperial",
+      };
+    } else {
+      const cm = Number(heightCm) || 0;
+      patchObj = {
+        height: cm,
+        height_unit_preference: "metric",
+      };
+    }
+    handleMultiFieldChange(patchObj);
+  };
+
+  const onWeightBlur = () => {
+    let patchObj: Record<string, any> = {};
+    if (weight_unit_preference === "imperial") {
+      patchObj = {
+        weight: Number(weightLb) || 0,
+        weight_unit_preference: "imperial",
+      };
+    } else {
+      patchObj = {
+        weight: Number(weightKg) || 0,
+        weight_unit_preference: "metric",
+      };
+    }
+    handleMultiFieldChange(patchObj);
+  };
   const handleDeleteAccount = () => {
     Alert.alert(
       "Delete Account",
@@ -238,21 +407,10 @@ export default function AccountSettingsScreen() {
 
   return (
     <CustomSafeAreaView className="flex-1 bg-white" edges={["left", "right"]}>
+      <Header title="Account Settings" />
       <ScrollView
         contentContainerStyle={{ backgroundColor: "#f8f8f8", flexGrow: 1 }}
       >
-        <View className="flex-row bg-white items-center justify-between px-5 pt-4 pb-5 mb-5">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]"
-          >
-            <Text className="text-[22px]">‹</Text>
-          </TouchableOpacity>
-          <Text className="text-[20px] font-semibold text-[#222] text-center">
-            Account Settings
-          </Text>
-          <View className="w-8" />
-        </View>
         <View className="bg-white rounded-2xl mx-3 px-0 py-0 shadow-sm">
           {/* Email */}
           <View className="flex-row items-center min-h-[56px] border-b border-[#f0f0f0] px-4">
@@ -379,22 +537,53 @@ export default function AccountSettingsScreen() {
             )}
           </View>
           {/* Height */}
-          <View className="flex-row items-center min-h-[56px] px-4">
+          <View className="flex-row items-center h-1/4 px-4 border-b border-[#f0f0f0]">
             <Text className="flex-1 text-base text-[#222]">Height</Text>
             <View className="flex-row items-center flex-1 justify-end">
-              <TextInput
-                value={localValues.height}
-                onChangeText={(v) =>
-                  handleFieldChange("height", v.replace(/[^0-9]/g, ""))
-                }
-                className="text-base text-[#222] text-right min-w-[60px]"
-                placeholder={`Height (${heightUnit})`}
-                editable={!updating.height}
-                underlineColorAndroid="transparent"
-                keyboardType="numeric"
-                style={{ flex: 1, textAlign: "right" }}
-              />
-              <Text style={{ marginLeft: 4, color: "#888" }}>{heightUnit}</Text>
+              {/* Metric input */}
+              {height_unit_preference === "metric" ? (
+                <TextInput
+                  value={heightCm?.toString() ?? ""}
+                  onChangeText={(v) => {
+                    const cm = Number(v.replace(/[^0-9]/g, ""));
+                    setHeightCm(cm);
+                  }}
+                  onBlur={onHeightBlur}
+                  className="text-base text-[#222] text-right min-w-[60px]"
+                  placeholder="cm"
+                  keyboardType="numeric"
+                  style={{ flex: 1, textAlign: "right" }}
+                />
+              ) : (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flex: 1,
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <TextInput
+                    value={heightFt?.toString() ?? ""}
+                    onChangeText={onHeightFtChange}
+                    onBlur={onHeightBlur}
+                    className="text-base text-[#222] text-right min-w-[32px]"
+                    placeholder="ft"
+                    keyboardType="numeric"
+                    style={{ textAlign: "right" }}
+                  />
+                  <Text style={{ marginHorizontal: 4 }}>ft</Text>
+                  <TextInput
+                    value={heightIn?.toString() ?? ""}
+                    onChangeText={onHeightInChange}
+                    onBlur={onHeightBlur}
+                    className="text-base text-[#222] text-right min-w-[32px]"
+                    placeholder="in"
+                    keyboardType="numeric"
+                    style={{ textAlign: "right" }}
+                  />
+                  <Text style={{ marginLeft: 4 }}>in</Text>
+                </View>
+              )}
               {updating.height && (
                 <ActivityIndicator
                   size="small"
@@ -402,59 +591,151 @@ export default function AccountSettingsScreen() {
                   style={{ marginLeft: 8 }}
                 />
               )}
+              <Picker
+                selectedValue={height_unit_preference}
+                style={{ width: 100, marginLeft: 4 }}
+                onValueChange={handleHeightUnitChange}
+              >
+                <Picker.Item label="cm" value="metric" />
+                <Picker.Item label="ft/in" value="imperial" />
+              </Picker>
             </View>
           </View>
           {/* Weight */}
-          <View className="flex-row items-center min-h-[56px] px-4">
+          <View className="flex-row items-center h-1/4 px-4  border-b border-[#f0f0f0]">
             <Text className="flex-1 text-base text-[#222]">Weight</Text>
             <View className="flex-row items-center flex-1 justify-end">
-              <TextInput
-                value={localValues.weight}
-                onChangeText={(v) =>
-                  handleFieldChange("weight", v.replace(/[^0-9]/g, ""))
-                }
-                className="text-base text-[#222] text-right min-w-[60px]"
-                placeholder={`Weight (${weightUnit})`}
-                editable={!updating.weight}
-                underlineColorAndroid="transparent"
-                keyboardType="numeric"
-                style={{ flex: 1, textAlign: "right" }}
-              />
-              <Text style={{ marginLeft: 4, color: "#888" }}>{weightUnit}</Text>
+              {weight_unit_preference === "metric" ? (
+                <TextInput
+                  value={weightKg?.toString() ?? ""}
+                  onChangeText={(v) =>
+                    setWeightKg(Number(v.replace(/[^0-9]/g, "")))
+                  }
+                  className="text-base text-[#222] text-right min-w-[60px]"
+                  placeholder="kg"
+                  keyboardType="numeric"
+                  style={{ flex: 1, textAlign: "right" }}
+                  editable={!updating.weight}
+                />
+              ) : (
+                <TextInput
+                  value={weightLb?.toString() ?? ""}
+                  onChangeText={(v) =>
+                    setWeightLb(Number(v.replace(/[^0-9]/g, "")))
+                  }
+                  className="text-base text-[#222] text-right min-w-[60px]"
+                  placeholder="lbs"
+                  keyboardType="numeric"
+                  style={{ flex: 1, textAlign: "right" }}
+                  editable={!updating.weight}
+                />
+              )}
               {updating.weight && (
                 <ActivityIndicator
                   size="small"
                   color="#19a28f"
-                  style={{ marginLeft: 8 }}
+                  style={{ marginLeft: 18 }}
                 />
               )}
+              <Picker
+                selectedValue={weight_unit_preference}
+                style={{ width: 100, marginLeft: 4 }}
+                onValueChange={handleWeightUnitChange}
+                enabled={!updating.weight}
+              >
+                <Picker.Item label="kg" value="metric" />
+                <Picker.Item label="lbs" value="imperial" />
+              </Picker>
             </View>
           </View>
         </View>
-        {/* Native Date Picker - No Modal for Either Platform */}
         {showDatePicker && (
-              <DateTimePicker
-                value={tempDate || new Date()}
-                mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(event, selectedDate) => {
-              if (Platform.OS === 'android') {
-                // On Android, immediately save the date when selected
-                if (selectedDate) {
-                  handleFieldChange(
-                    "dob",
-                    selectedDate.toISOString().split("T")[0]
-                  );
-                }
-                // Always close the picker on Android after any interaction
-                setShowDatePicker(false);
-              } else {
-                // On iOS, use temp state for spinner mode
-                  if (selectedDate) setTempDate(selectedDate);
-              }
+          <Modal
+            visible={showDatePicker}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowDatePicker(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0,0,0,0.3)",
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: 16,
+                  padding: 24,
+                  alignItems: "center",
+                  minWidth: 280,
                 }}
-                maximumDate={new Date()}
-              />
+              >
+                <DateTimePicker
+                  value={tempDate || new Date()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === "android") {
+                      // Save immediately and close on Android
+                      if (selectedDate) {
+                        handleFieldChange(
+                          "dob",
+                          selectedDate.toISOString().split("T")[0]
+                        );
+                      }
+                      setShowDatePicker(false);
+                    } else {
+                      // On iOS, update tempDate, don't close yet
+                      if (selectedDate) setTempDate(selectedDate);
+                    }
+                  }}
+                  maximumDate={new Date()}
+                />
+                {/* Modal Buttons */}
+                {Platform.OS === "ios" && (
+                  <View style={{ flexDirection: "row", marginTop: 24 }}>
+                    <TouchableOpacity
+                      onPress={() => setShowDatePicker(false)}
+                      style={{
+                        marginRight: 18,
+                        paddingVertical: 8,
+                        paddingHorizontal: 16,
+                      }}
+                    >
+                      <Text style={{ color: "#888", fontSize: 16 }}>
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (tempDate) {
+                          handleFieldChange(
+                            "dob",
+                            tempDate.toISOString().split("T")[0]
+                          );
+                        }
+                        setShowDatePicker(false);
+                      }}
+                      style={{ paddingVertical: 8, paddingHorizontal: 16 }}
+                    >
+                      <Text
+                        style={{
+                          color: "#19a28f",
+                          fontWeight: "bold",
+                          fontSize: 16,
+                        }}
+                      >
+                        Done
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          </Modal>
         )}
         <View className="mt-8 mx-4">
           <TouchableOpacity
