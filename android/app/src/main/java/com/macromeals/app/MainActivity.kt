@@ -1,5 +1,6 @@
 package com.macromeals.app
 import expo.modules.splashscreen.SplashScreenManager
+import com.lugg.RNCConfig.RNCConfigPackage;
 
 import android.os.Build
 import android.os.Bundle

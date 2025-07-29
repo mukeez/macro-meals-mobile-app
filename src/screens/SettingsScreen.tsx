@@ -30,6 +30,8 @@ import { userService } from "../services/userService";
 import ContactSupportDrawer from "./ContactSupportDrawer";
 import EditableAvatar from "src/components/EditableAvatar";
 import { useMixpanel } from "@macro-meals/mixpanel";
+import { useRemoteConfigContext } from "@macro-meals/remote-config-service";
+import Config from "react-native-config";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -44,10 +46,13 @@ export const SettingsScreen: React.FC = () => {
   const updatePreferences = useStore((state) => state.updatePreferences);
   const logout = useStore((state) => state.logout);
   const setAuthenticated = useStore((state) => state.setAuthenticated);
+  const { getValue, debugLogAllValues } = useRemoteConfigContext();
   const [showDrawer, setShowDrawer] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const mixpanel = useMixpanel();
+  let devMode = true;
+  devMode = getValue('dev_mode').asBoolean();
 
   // Local state for settings
   const [units, setUnits] = useState<string>("g/kcal");
@@ -357,14 +362,19 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => {}}
           />
-          {/* <SectionItem
-            title="Restore Purchases"
+          {
+                            Config.ENVIRONMENT !== 'production' ? (
+              <SectionItem
+            title="Payment"
             image={IMAGE_CONSTANTS.restoreIcon}
             rightComponent={
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
             onPress={() => { navigation.navigate('PaymentScreen') }}
-          /> */}
+          />
+            ): (<></>)
+          }
+          
           <SectionItem
             title="Manage Subscription"
             image={IMAGE_CONSTANTS.restoreIcon}

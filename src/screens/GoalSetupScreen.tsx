@@ -36,7 +36,7 @@ export const GoalSetupScreen: React.FC = () => {
     // Only allow dev_mode to bypass payment in non-production environments
     let devMode = false;
     try {
-      const currentEnv = Config.ENVIRONMENT;
+              const currentEnv = Config.ENVIRONMENT;
       if (currentEnv !== 'production') {
         devMode = getValue('dev_mode').asBoolean();
       } else {

@@ -64,22 +64,43 @@ export function RootStack({
   // Get values from context instead of props for better reactivity
   const { hasMacros, readyForDashboard } = useContext(HasMacrosContext);
   const { isPro } = useContext(IsProContext);
+  
+
   // Get dev mode from remote config (ignored in production)
-  const { getValue } = useRemoteConfigContext();
+  const { getValue, isInitialized } = useRemoteConfigContext();
   let devMode = false;
-  try {
-    // Only allow dev_mode to bypass payment in non-production environments
-    const currentEnv = Config.ENVIRONMENT;
-    if (currentEnv !== 'production') {
-      devMode = getValue('dev_mode').asBoolean();
-    } else {
-      console.log('🔍 RootStack - Production environment detected, ignoring dev_mode remote config');
+  
+  // Only try to get dev_mode if remote config is initialized
+  if (isInitialized) {
+    try {
+      // Only allow dev_mode to bypass payment in non-production environments
+              const currentEnv = Config.ENVIRONMENT;
+      console.log('🔍 RootStack - Current environment:', currentEnv);
+      
+      if (currentEnv !== 'production') {
+        const devModeValue = getValue('dev_mode');
+        console.log('🔍 RootStack - Raw dev_mode value:', devModeValue);
+        devMode = devModeValue.asBoolean();
+        console.log('🔍 RootStack - Parsed dev_mode value:', devMode);
+      } else {
+        console.log('🔍 RootStack - Production environment detected, ignoring dev_mode remote config');
+        devMode = false;
+      }
+    } catch (error) {
+      console.log('🔍 RootStack - Could not get dev_mode from remote config, defaulting to false:', error);
       devMode = false;
     }
-  } catch (error) {
-    console.log('🔍 RootStack - Could not get dev_mode from remote config, defaulting to false:', error);
-    devMode = false;
+  } else {
+    console.log('🔍 RootStack - Remote config not initialized yet, dev_mode defaults to false');
+    // In development, default to true if remote config isn't loaded yet
+    if (__DEV__) {
+      console.log('🔍 RootStack - Development mode detected, setting dev_mode to true as fallback');
+      devMode = true;
+    }
   }
+  
+  // Simplified routing logic - App.tsx handles session validation
+  const shouldShowLogin = !isAuthenticated;
   
   console.log("🔍 RootStack Routing Decision:", {
     isOnboardingCompleted,
@@ -90,7 +111,7 @@ export function RootStack({
     readyForDashboard,
     devMode,
     shouldShowOnboarding: !isOnboardingCompleted,
-    shouldShowAuth: !isAuthenticated,
+    shouldShowAuth: shouldShowLogin,
     shouldShowDashboard: hasMacros && readyForDashboard && (isPro || devMode),
     shouldShowPayment: hasMacros && readyForDashboard && !isPro && !devMode,
     shouldShowGoalSetup: !(hasMacros && readyForDashboard)
@@ -145,11 +166,13 @@ export function RootStack({
   
   console.log('🔍 RootStack - Rendering screen:', currentScreen);
   
+
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!isOnboardingCompleted ? (
         <Stack.Screen name="OnboardingNav" component={OnboardingNavigator} />
-      ) : !isAuthenticated ? (
+      ) : shouldShowLogin ? (
         <Stack.Screen
           name="Auth"
           component={AuthNavigator}
