@@ -167,7 +167,7 @@ const SnapMealScreen = () => {
                     We need camera access to analyze your meals
                 </Text>
                 <Button
-                    title="Grant Permission"
+                    title="Continue"
                     onPress={requestPermission}
                 />
             </View>

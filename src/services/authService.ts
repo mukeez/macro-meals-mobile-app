@@ -21,6 +21,7 @@ interface SignupData {
     email: string;
     password: string;
     nickname?: string;
+    referral_code?: string;
 }
 
 interface LoginCredentials {
@@ -53,7 +54,7 @@ export const authService = {
                 }
             }
 
-            console.log(`\n\n\n\n\nFCM TOKEN FROM AUTH SERVICE ${fcmToken}\n\n\n\n\n`);
+            console.log('FCM TOKEN FROM AUTH SERVICE', fcmToken);
 
             // Prepare login payload with FCM token if available
             const loginPayload = {
@@ -82,10 +83,17 @@ export const authService = {
     
     signup: async (data: SignupData) => {
         try {
-            const response = await axiosInstance.post('/auth/signup', {
+            const signupPayload: any = {
                 email: data.email,
                 password: data.password,
-            });
+            };
+
+            // Add referral_code if provided
+            if (data.referral_code) {
+                signupPayload.referral_code = data.referral_code;
+            }
+
+            const response = await axiosInstance.post('/auth/signup', signupPayload);
 
             return response.data.user.id;
         } catch (error) {
@@ -96,7 +104,9 @@ export const authService = {
     
     logout: async () => {
         try {
-            await axiosInstance.post('/auth/logout');
+            await AsyncStorage.removeItem('my_token');
+            await AsyncStorage.removeItem('refresh_token');
+            await AsyncStorage.removeItem('user_id');
         } catch (error) {
             console.error('Logout error:', error);
             throw error;

@@ -114,93 +114,95 @@ export const LoginScreen: React.FC = () => {
       });
 
       // Then get profile using the stored token
-      const profile = await userService.getProfile();
-      console.log("🔍 LoginScreen - Profile received:", {
-        has_macros: profile.has_macros,
-        is_pro: profile.is_pro,
-        email: profile.email,
-        id: profile.id,
-      });
+      try {
+        const profile = await userService.getProfile();
+        console.log("🔍 LoginScreen - Profile received:", {
+          has_macros: profile.has_macros,
+          is_pro: profile.is_pro,
+          email: profile.email,
+          id: profile.id,
+        });
 
-      // Reset steps before setting other states
-      resetSteps();
+        // Reset steps before setting other states
+        resetSteps();
 
-      // Set all state in the correct order - batch them together
-      console.log("🔍 LoginScreen - Setting states:", {
-        hasMacros: profile.has_macros,
-        isPro: profile.is_pro,
-        readyForDashboard: profile.has_macros,
-      });
+        // Set all state in the correct order - batch them together
+        console.log("🔍 LoginScreen - Setting states:", {
+          hasMacros: profile.has_macros,
+          isPro: profile.is_pro,
+          readyForDashboard: profile.has_macros,
+        });
 
-      // Set all states together to ensure they're synchronized
-      setIsOnboardingCompleted(true);
-      setHasMacros(profile.has_macros);
-      setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
-      setReadyForDashboard(profile.has_macros);
+        // Set all states together to ensure they're synchronized
+        setIsOnboardingCompleted(true);
+        setHasMacros(profile.has_macros);
+        setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
+        setReadyForDashboard(profile.has_macros);
 
-      console.log("🔍 LoginScreen - Immediately after setting states:", {
-        profileHasMacros: profile.has_macros,
-        profileIsPro: profile.is_pro,
-        settingHasMacros: profile.has_macros,
-        settingIsPro: profile.is_pro,
-        settingReadyForDashboard: profile.has_macros,
-      });
-
-      // Debug: Check context values after a short delay
-      setTimeout(() => {
-        console.log("🔍 LoginScreen - Context values after setting:", {
-          hasMacros,
-          isPro,
-          readyForDashboard,
+        console.log("🔍 LoginScreen - Immediately after setting states:", {
           profileHasMacros: profile.has_macros,
           profileIsPro: profile.is_pro,
+          settingHasMacros: profile.has_macros,
+          settingIsPro: profile.is_pro,
+          settingReadyForDashboard: profile.has_macros,
         });
-      }, 50);
 
-      // Identify user in Mixpanel
-      mixpanel?.identify(userId);
-      mixpanel?.setUserProperties({
-        email: profile.email || email,
-        name: profile.display_name || profile.first_name,
-        signup_date: profile.created_at || new Date().toISOString(),
-        has_macros: profile.has_macros,
-        is_pro: profile.is_pro || false,
-        meal_reminder_preferences_set:
-          profile.meal_reminder_preferences_set || false,
-      });
+        // Debug: Check context values after a short delay
+        setTimeout(() => {
+          console.log("🔍 LoginScreen - Context values after setting:", {
+            hasMacros,
+            isPro,
+            readyForDashboard,
+            profileHasMacros: profile.has_macros,
+            profileIsPro: profile.is_pro,
+          });
+        }, 50);
 
-      // Track successful login
-      mixpanel?.track({
-        name: "user_logged_in",
-        properties: {
-          login_method: "email",
+        // Identify user in Mixpanel
+        mixpanel?.identify(userId);
+        mixpanel?.setUserProperties({
+          email: profile.email || email,
+          name: profile.display_name || profile.first_name,
+          signup_date: profile.created_at || new Date().toISOString(),
           has_macros: profile.has_macros,
           is_pro: profile.is_pro || false,
-        },
-      });
+          meal_reminder_preferences_set:
+            profile.meal_reminder_preferences_set || false,
+        });
 
-      // Update FCM token on backend after successful login
-      // try {
-      //   const fcmToken = await AsyncStorage.getItem("fcm_token");
-      //   console.log("FCM token from AsyncStorage:", fcmToken);
-      //   if (fcmToken) {
-      //     await userService.updateFCMToken(fcmToken);
-      //     console.log("FCM token updated on backend after login");
-      //   } else {
-      //     console.log("No FCM token found in AsyncStorage");
-      //   }
-      // } catch (error) {
-      //   console.log("Could not update FCM token on backend:", error);
-      // }
+        // Track successful login
+        mixpanel?.track({
+          name: "user_logged_in",
+          properties: {
+            login_method: "email",
+            has_macros: profile.has_macros,
+            is_pro: profile.is_pro || false,
+          },
+        });
 
-      // Set authenticated last to trigger navigation
-      console.log("🔍 LoginScreen - Setting authenticated state");
+        // Set authenticated last to trigger navigation
+        console.log("🔍 LoginScreen - Setting authenticated state");
 
-      // Add a small delay to ensure context updates have propagated
-      setTimeout(() => {
-        console.log("🔍 LoginScreen - Setting authenticated state after delay");
-        setAuthenticated(true, token, userId);
-      }, 100);
+        // Add a small delay to ensure context updates have propagated
+        setTimeout(() => {
+          console.log("🔍 LoginScreen - Setting authenticated state after delay");
+          setAuthenticated(true, token, userId);
+        }, 100);
+      } catch (profileError: any) {
+        // Check if this is the email verification required error
+        const errorDetail = profileError?.response?.data?.detail;
+        if (errorDetail && typeof errorDetail === 'string' && 
+            errorDetail.toLowerCase().includes('email verification required')) {
+          // Route to email verification screen
+          navigation.navigate("EmailVerificationScreen", {
+            email,
+            password,
+          });
+          return;
+        }
+        // If it's not the email verification error, re-throw it
+        throw profileError;
+      }
     } catch (error) {
       setAuthenticated(false, "", "");
       setHasMacros(false);

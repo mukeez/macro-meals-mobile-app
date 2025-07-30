@@ -288,7 +288,7 @@ const BarcodeScanScreen = () => {
         return (
             <View className="flex-1 bg-black justify-center items-center">
                 <TouchableOpacity onPress={requestPermission} className="bg-teal-600 px-6 py-3 rounded-full mb-4">
-                    <Text className="text-white font-semibold">Grant Camera Permission</Text>
+                    <Text className="text-white font-semibold">Continue</Text>
                 </TouchableOpacity>
             </View>
         );

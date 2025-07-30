@@ -21,7 +21,7 @@ const nonAuthEndpoints = [
   '/auth/facebook',
 ];
 
-
+console.log(`\n\n\n\n\n\nAPI_BASE_URL: ${Config.API_BASE_URL}\n\n\n\n\n\n`);
 
 const axiosInstance = axios.create({
   baseURL: Config.API_BASE_URL,
@@ -71,6 +71,14 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       // Don't handle auth errors for login/register endpoints
       if (nonAuthEndpoints.some(endpoint => originalRequest?.url?.includes(endpoint))) {
+        return Promise.reject(error);
+      }
+
+      // Special handling for email verification required error
+      const errorDetail = (error.response?.data as any)?.detail;
+      if (errorDetail && typeof errorDetail === 'string' && 
+          errorDetail.toLowerCase().includes('email verification required')) {
+        console.log('Email verification required - letting component handle routing');
         return Promise.reject(error);
       }
 
