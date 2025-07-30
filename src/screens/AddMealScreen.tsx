@@ -498,20 +498,36 @@ export const AddMealScreen: React.FC = () => {
 
                     <View className="mb-4">
                         <Text className="text-base font-medium mb-2">Meal Type</Text>
-                        <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
-                            <TouchableOpacity
-                              className="flex-1 items-start justify-center h-full"
-                              onPress={() => {
-                                setTempMealType(selectedMealType);
-                                setShowMealTypeModal(true);
-                              }}
-                              activeOpacity={0.8}
-                            >
-                              <Text className="text-base text-[#222]">
-                                {selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}
-                              </Text>
-                            </TouchableOpacity>
-                        </View>
+                        {Platform.OS === 'android' ? (
+                            <View className="border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white justify-center">
+                                <Picker
+                                    selectedValue={selectedMealType}
+                                    onValueChange={setSelectedMealType}
+                                    style={{ width: '100%', color: 'black' }}
+                                    itemStyle={{ fontSize: 16, color: 'black' }}
+                                >
+                                    <Picker.Item label="Breakfast" value="breakfast" />
+                                    <Picker.Item label="Lunch" value="lunch" />
+                                    <Picker.Item label="Dinner" value="dinner" />
+                                    <Picker.Item label="Other" value="other" />
+                                </Picker>
+                            </View>
+                        ) : (
+                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                                <TouchableOpacity
+                                    className="flex-1 items-start justify-center h-full"
+                                    onPress={() => {
+                                        setTempMealType(selectedMealType);
+                                        setShowMealTypeModal(true);
+                                    }}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text className="text-base text-[#222]">
+                                        {selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
 
                     <View className="mb-4">
@@ -659,21 +675,37 @@ export const AddMealScreen: React.FC = () => {
 
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Serving Size</Text>
-                            <TouchableOpacity
-                                disabled={analyzedData?.read_only}
-                                onPress={() => {
-                                    setTempServingUnit(servingUnit);
-                                    setShowServingUnitModal(true);
-                                }}
-                                className="flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white"
-                            >
-                                <Text className={`flex-1 text-base ${analyzedData?.read_only ? 'text-[#8e929a]' : 'text-[#222]'}`}>{servingUnit}</Text>
-                                <Image 
-                                    source={IMAGE_CONSTANTS.chevronRightIcon} 
-                                    className="w-4 h-4" 
-                                    style={{ transform: [{ rotate: '90deg' }] }}
-                                />
-                            </TouchableOpacity>
+                            {Platform.OS === 'android' ? (
+                                <View className="border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white justify-center">
+                                    <Picker
+                                        selectedValue={servingUnit}
+                                        onValueChange={setServingUnit}
+                                        style={{ width: '100%', color: 'black' }}
+                                        itemStyle={{ fontSize: 16, color: 'black' }}
+                                        enabled={!analyzedData?.read_only}
+                                    >
+                                        {SERVING_UNITS.map((unit) => (
+                                            <Picker.Item key={unit} label={unit} value={unit} />
+                                        ))}
+                                    </Picker>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    disabled={analyzedData?.read_only}
+                                    onPress={() => {
+                                        setTempServingUnit(servingUnit);
+                                        setShowServingUnitModal(true);
+                                    }}
+                                    className="flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white"
+                                >
+                                    <Text className={`flex-1 text-base ${analyzedData?.read_only ? 'text-[#8e929a]' : 'text-[#222]'}`}>{servingUnit}</Text>
+                                    <Image 
+                                        source={IMAGE_CONSTANTS.chevronRightIcon} 
+                                        className="w-4 h-4" 
+                                        style={{ transform: [{ rotate: '90deg' }] }}
+                                    />
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
 
@@ -762,11 +794,14 @@ export const AddMealScreen: React.FC = () => {
                         display="default"
                         onChange={(event, selectedTime) => {
                             if (Platform.OS === 'android') {
-                                // On Android, immediately save the time when selected
-                                if (selectedTime) {
-                                    setTime(selectedTime);
+                                // On Android, handle all events
+                                if (event.type === 'set') {
+                                    // User confirmed the time
+                                    if (selectedTime) {
+                                        setTime(selectedTime);
+                                    }
                                 }
-                                // Always close the picker on Android after any interaction
+                                // Always close the picker on Android (for both set and dismiss events)
                                 setShowTimeModal(false);
                             } else {
                                 // On iOS, use temp state for spinner mode
@@ -828,7 +863,18 @@ export const AddMealScreen: React.FC = () => {
                         <Text className="text-center text-base font-semibold mb-2">Select Serving Unit</Text>
                         <Picker
                             selectedValue={tempServingUnit}
-                            onValueChange={setTempServingUnit}
+                            onValueChange={(value) => {
+                                if (Platform.OS === 'android') {
+                                    // On Android, immediately update the serving unit
+                                    setServingUnit(value);
+                                    setTempServingUnit(value);
+                                    // Close modal after selection
+                                    setShowServingUnitModal(false);
+                                } else {
+                                    // On iOS, use temp state for modal mode
+                                    setTempServingUnit(value);
+                                }
+                            }}
                             style={{ width: '100%', color: 'black' }}
                             itemStyle={{ fontSize: 18, height: 180, color: 'black' }}
                         >

@@ -68,8 +68,9 @@ export const GoalBodyMetricsHeight = () => {
         <Switch
           value={height_unit_preference === 'metric'}
           onValueChange={v => setHeightUnitPreference(v ? 'metric' : 'imperial')}
-          trackColor={{ false: '', true: '#ccc' }}
-          thumbColor={height_unit_preference === 'metric' ? '#f4f3f4' : '#f4f3f4'}
+          trackColor={{ false: '#009688', true: '#009688' }}
+          thumbColor="#ffffff"
+          ios_backgroundColor="#009688"
         />
         <Text className={`text-lg ml-2 ${height_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-textMediumGrey'}`}>Metric</Text>
       </View>
@@ -79,31 +80,49 @@ export const GoalBodyMetricsHeight = () => {
         <View className="flex-row justify-between ml-5">
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>
-            <View className="flex-row">
-              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
+            <View className="flex-row gap-4">
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
                 <Picker
                   selectedValue={heightFt}
-                  style={{ width: 100, height: 50, color: 'black' }}
-                  itemStyle={{ fontSize: 18, color: 'black' }}
+                  style={{ 
+                    width: 100, 
+                    height: 50, 
+                    color: 'black',
+                    backgroundColor: 'transparent',
+                    borderWidth: Platform.OS === 'android' ? 1 : 0,
+                    borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                    borderRadius: Platform.OS === 'android' ? 4 : 0
+                  }}
+                  itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
                   onValueChange={setHeightFt}
+                  dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
                 >
-                  <Picker.Item label="ft" value={null} style={{color: 'black'}} />
+                  <Picker.Item label="ft" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
                   {heightsFt.map(ft => (
-                    <Picker.Item key={ft} label={`${ft} ft`} style={{color: 'black'}} value={ft} />
+                    <Picker.Item key={ft} label={`${ft} ft`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={ft} />
                   ))}
                 </Picker>
                 <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
               </View>
-              <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'} mx-2`}>
+              <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
                 <Picker
                   selectedValue={heightIn}
-                  style={{ width: 100, height: 50, color: 'black' }}
-                  itemStyle={{ fontSize: 18, color: 'black' }}
+                  style={{ 
+                    width: 100, 
+                    height: 50, 
+                    color: 'black',
+                    backgroundColor: 'transparent',
+                    borderWidth: Platform.OS === 'android' ? 1 : 0,
+                    borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                    borderRadius: Platform.OS === 'android' ? 4 : 0
+                  }}
+                  itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
                   onValueChange={setHeightIn}
+                  dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
                 >
-                  <Picker.Item label="in" value={null} style={{color: 'black'}} />
+                  <Picker.Item label="in" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
                   {heightsIn.map(inc => (
-                    <Picker.Item key={inc} label={`${inc} in`} style={{color: 'black'}} value={inc} />
+                    <Picker.Item key={inc} label={`${inc} in`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={inc} />
                   ))}
                 </Picker>
                 <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
@@ -115,16 +134,25 @@ export const GoalBodyMetricsHeight = () => {
         <View className="flex-row justify-between">
           <View className="flex-1 items-center">
             <Text className="text-base font-medium mb-2">Height</Text>
-            <View className={`${Platform.OS === 'ios' ? '' : 'border-b-2 border-blue-500'}`}>
+            <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
               <Picker
                 selectedValue={heightCm}
-                style={{ width: 140, height: 50, color: 'black' }}
-                itemStyle={{ fontSize: 18, color: 'black' }}
+                style={{ 
+                  width: 140, 
+                  height: 50, 
+                  color: 'black',
+                  backgroundColor: 'transparent',
+                  borderWidth: Platform.OS === 'android' ? 1 : 0,
+                  borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                  borderRadius: Platform.OS === 'android' ? 4 : 0
+                }}
+                itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
                 onValueChange={setHeightCm}
+                dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
               >
-                <Picker.Item label="cm" value={null} style={{color: 'black'}} />
+                <Picker.Item label="cm" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
                 {heightsCm.map(cm => (
-                  <Picker.Item key={cm} label={`${cm} cm`} style={{color: 'black'}} value={cm} />
+                  <Picker.Item key={cm} label={`${cm} cm`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={cm} />
                 ))}
               </Picker>
             </View>
