@@ -32,9 +32,9 @@ export const about = [
       section: "Contact Us",
       body: [
         `We love hearing from our users! For support, feedback, or partnership inquiries:`,
-        `Email: support@macromeals.com`,
-        `Support: support@macromeals.com`,
-        `Business Inquiries: support@macromeals.com`,
+        `Email: support@macromealsapp.com`,
+        `Support: support@macromealsapp.com`,
+        `Business Inquiries: support@macromealsapp.com`,
       ],
     },
   ];

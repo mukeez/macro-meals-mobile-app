@@ -83,7 +83,7 @@ export const privacyPolicy = [
     {
       title: "9. CONTACT US",
       paragraph: [
-        "If you have questions about this Privacy Policy, please contact us at support@macromeals.com.",
+        "If you have questions about this Privacy Policy, please contact us at support@macromealsapp.com.",
       ],
     },
   ];
