@@ -411,20 +411,36 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
 
                     <View className="mb-4">
                         <Text className="text-base font-medium mb-2">Meal Type</Text>
-                        <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
-                            <TouchableOpacity
-                              className="flex-1 items-start justify-center h-full"
-                              onPress={() => {
-                                setTempMealType(selectedMealType);
-                                setShowMealTypeModal(true);
-                              }}
-                              activeOpacity={0.8}
-                            >
-                              <Text className="text-base text-[#222]">
-                                {selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}
-                              </Text>
-                            </TouchableOpacity>
-                        </View>
+                        {Platform.OS === 'android' ? (
+                            <View className="border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white justify-center">
+                                <Picker
+                                    selectedValue={selectedMealType}
+                                    onValueChange={setSelectedMealType}
+                                    style={{ width: '100%', color: 'black' }}
+                                    itemStyle={{ fontSize: 16, color: 'black' }}
+                                >
+                                    <Picker.Item label="Breakfast" value="breakfast" />
+                                    <Picker.Item label="Lunch" value="lunch" />
+                                    <Picker.Item label="Dinner" value="dinner" />
+                                    <Picker.Item label="Other" value="other" />
+                                </Picker>
+                            </View>
+                        ) : (
+                            <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
+                                <TouchableOpacity
+                                    className="flex-1 items-start justify-center h-full"
+                                    onPress={() => {
+                                        setTempMealType(selectedMealType);
+                                        setShowMealTypeModal(true);
+                                    }}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text className="text-base text-[#222]">
+                                        {selectedMealType.charAt(0).toUpperCase() + selectedMealType.slice(1)}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
 
                     <View className="mb-4">
@@ -519,25 +535,41 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
 
                         <View className="w-[48%]">
                             <Text className="text-base font-medium text-black mb-2">Serving Size</Text>
-                            <TouchableOpacity
-                                onPress={() => {
-                                    if (!isReadOnly) {
-                                        setTempServingUnit(servingUnit);
-                                        setShowServingUnitModal(true);
-                                    }
-                                }}
-                                disabled={isReadOnly}
-                                className={`flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white ${isReadOnly ? 'opacity-50' : ''}`}
-                            >
-                                <Text className="flex-1 text-base text-[#222]">{servingUnit}</Text>
-                                {!isReadOnly && (
-                                    <Image 
-                                        source={IMAGE_CONSTANTS.chevronRightIcon} 
-                                        className="w-4 h-4" 
-                                        style={{ transform: [{ rotate: '90deg' }] }}
-                                    />
-                                )}
-                            </TouchableOpacity>
+                            {Platform.OS === 'android' ? (
+                                <View className={`border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white justify-center ${isReadOnly ? 'opacity-50' : ''}`}>
+                                    <Picker
+                                        selectedValue={servingUnit}
+                                        onValueChange={setServingUnit}
+                                        style={{ width: '100%', color: 'black' }}
+                                        itemStyle={{ fontSize: 16, color: 'black' }}
+                                        enabled={!isReadOnly}
+                                    >
+                                        {SERVING_UNITS.map((unit) => (
+                                            <Picker.Item key={unit} label={unit} value={unit} />
+                                        ))}
+                                    </Picker>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        if (!isReadOnly) {
+                                            setTempServingUnit(servingUnit);
+                                            setShowServingUnitModal(true);
+                                        }
+                                    }}
+                                    disabled={isReadOnly}
+                                    className={`flex-row items-center border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white ${isReadOnly ? 'opacity-50' : ''}`}
+                                >
+                                    <Text className="flex-1 text-base text-[#222]">{servingUnit}</Text>
+                                    {!isReadOnly && (
+                                        <Image 
+                                            source={IMAGE_CONSTANTS.chevronRightIcon} 
+                                            className="w-4 h-4" 
+                                            style={{ transform: [{ rotate: '90deg' }] }}
+                                        />
+                                    )}
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
 
@@ -676,33 +708,60 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
                 </View>
             </Modal>
 
-            <Modal
-                visible={showTimeModal}
-                transparent
-                animationType="slide"
-                onRequestClose={handleTimeCancel}
-            >
-                <View className="flex-1 justify-end bg-black/40">
-                    <View className="bg-white rounded-t-xl p-4">
-                        <Text className="text-center text-base font-semibold mb-2">Select Time</Text>
-                        <DateTimePicker
-                            value={tempTime || new Date()}
-                            mode="time"
-                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                            onChange={handleTimeChange}
-                            style={{ alignSelf: 'center', height: 150 }}
-                        />
-                        <View className="flex-row justify-between mt-4">
-                            <TouchableOpacity onPress={handleTimeCancel} className="flex-1 items-center py-2">
-                                <Text className="text-lg text-blue-500">Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleTimeDone} className="flex-1 items-center py-2">
-                                <Text className="text-lg text-blue-500">Done</Text>
-                            </TouchableOpacity>
+            {/* Time Picker */}
+            {Platform.OS === 'ios' ? (
+                <Modal
+                    visible={showTimeModal}
+                    transparent
+                    animationType="slide"
+                    onRequestClose={handleTimeCancel}
+                >
+                    <View className="flex-1 justify-end bg-black/40">
+                        <View className="bg-white rounded-t-xl p-4">
+                            <Text className="text-center text-base font-semibold mb-2">Select Time</Text>
+                            <DateTimePicker
+                                value={tempTime || new Date()}
+                                mode="time"
+                                display="spinner"
+                                onChange={handleTimeChange}
+                                style={{ alignSelf: 'center', height: 150 }}
+                            />
+                            <View className="flex-row justify-between mt-4">
+                                <TouchableOpacity onPress={handleTimeCancel} className="flex-1 items-center py-2">
+                                    <Text className="text-lg text-blue-500">Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={handleTimeDone} className="flex-1 items-center py-2">
+                                    <Text className="text-lg text-blue-500">Done</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
+            ) : (
+                showTimeModal && (
+                    <DateTimePicker
+                        value={tempTime || new Date()}
+                        mode="time"
+                        display="default"
+                        onChange={(event, selectedTime) => {
+                            if (Platform.OS === 'android') {
+                                // On Android, handle all events
+                                if (event.type === 'set') {
+                                    // User confirmed the time
+                                    if (selectedTime) {
+                                        setTime(selectedTime);
+                                    }
+                                }
+                                // Always close the picker on Android (for both set and dismiss events)
+                                setShowTimeModal(false);
+                            } else {
+                                // On iOS, use temp state for spinner mode
+                                if (selectedTime) setTempTime(selectedTime);
+                            }
+                        }}
+                    />
+                )
+            )}
         </SafeAreaView>
     );
 };
