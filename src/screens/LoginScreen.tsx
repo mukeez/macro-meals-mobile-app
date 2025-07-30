@@ -194,6 +194,9 @@ export const LoginScreen: React.FC = () => {
         if (errorDetail && typeof errorDetail === 'string' && 
             errorDetail.toLowerCase().includes('email verification required')) {
           // Route to email verification screen
+          await authService.resendEmailVerification({
+            email,
+          });
           navigation.navigate("EmailVerificationScreen", {
             email,
             password,
