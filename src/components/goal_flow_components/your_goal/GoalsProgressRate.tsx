@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
 
 export const GoalsProgressRate: React.FC = () => {
-  const progressRate = useGoalsFlowStore((s) => s.progressRate);
+  const progressRate = useGoalsFlowStore((s) => s.progressRate); // number
   const setProgressRate = useGoalsFlowStore((s) => s.setProgressRate);
   const weight_unit_preference = useGoalsFlowStore((s) => s.weight_unit_preference);
   const weightLb = useGoalsFlowStore((s) => s.weightLb);
@@ -30,12 +30,19 @@ export const GoalsProgressRate: React.FC = () => {
   };
 
   // Default value if not set, otherwise use recommended rate
-  const value = progressRate ? parseFloat(progressRate) : getRecommendedRate();
+  const value = typeof progressRate === 'number' && progressRate > 0 ? progressRate : getRecommendedRate();
 
-  // Set initial recommended rate
+  // For Android: use local state for slider value
+  const [sliderValue, setSliderValue] = useState(value);
   useEffect(() => {
-    if (!progressRate) {
-      setProgressRate(getRecommendedRate().toFixed(2));
+    setSliderValue(value);
+  }, [value]);
+
+  const didSetInitial = useRef(false);
+  useEffect(() => {
+    if (!didSetInitial.current && (!progressRate || progressRate === 0)) {
+      setProgressRate(getRecommendedRate());
+      didSetInitial.current = true;
     }
   }, []);
 
@@ -90,23 +97,39 @@ export const GoalsProgressRate: React.FC = () => {
         
         {/* Slider */}
         <View className="items-center w-full mb-4">
-          <Slider
-            style={{ width: '100%', height: 40 }}
-            minimumValue={0}
-            maximumValue={weight_unit_preference === 'imperial' ? 3.0 : 1.36} // 3 lbs or 1.36 kg
-            step={weight_unit_preference === 'imperial' ? 0.01 : 0.005}
-            value={value}
-            minimumTrackTintColor={trackColor}
-            maximumTrackTintColor="#E0E0E0"
-            thumbTintColor={trackColor}
-            thumbImage={IMAGE_CONSTANTS.checkPrimary}
-            onValueChange={(val: number) => setProgressRate(val.toFixed(2))}
-          />
+          {Platform.OS === 'android' ? (
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={0}
+              maximumValue={weight_unit_preference === 'imperial' ? 3.0 : 1.36} // 3 lbs or 1.36 kg
+              step={0.01}
+              value={sliderValue}
+              minimumTrackTintColor={trackColor}
+              maximumTrackTintColor="#E0E0E0"
+              thumbTintColor={trackColor}
+              thumbImage={IMAGE_CONSTANTS.checkPrimary}
+              onValueChange={val => setSliderValue(Math.round(val * 100) / 100)}
+              onSlidingComplete={val => setProgressRate(Math.round(val * 100) / 100)}
+            />
+          ) : (
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={0}
+              maximumValue={weight_unit_preference === 'imperial' ? 3.0 : 1.36}
+              step={0.01}
+              value={value}
+              minimumTrackTintColor={trackColor}
+              maximumTrackTintColor="#E0E0E0"
+              thumbTintColor={trackColor}
+              thumbImage={IMAGE_CONSTANTS.checkPrimary}
+              onValueChange={setProgressRate}
+            />
+          )}
         </View>
         
         {/* Rate display */}
         <Text className="text-base font-normal text-black text-center mb-2">
-          {rateSign}{value.toFixed(2)} {weightUnit} / week
+          {rateSign}{(Platform.OS === 'android' ? sliderValue : value).toFixed(2)} {weightUnit} / week
         </Text>
         <Text className="text-base text-black text-center mb-4">
           {rateSign}{monthly} {weightUnit} / month

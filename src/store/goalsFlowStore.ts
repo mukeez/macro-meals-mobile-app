@@ -38,8 +38,8 @@ type GoalsFlowState = {
     setFitnessGoal: (goal: string) => void;
     targetWeight: number | null;
     setTargetWeight: (weight: number) => void;
-    progressRate: string | null;
-    setProgressRate: (rate: string) => void;
+    progressRate: number;
+    setProgressRate: (rate: number) => void;
     preferences: any | null;
     setPreferences: (prefs: any) => void;
     macroTargets: { carbs: number; fat: number; protein: number; calorie: number } | null;
@@ -151,11 +151,8 @@ export const useGoalsFlowStore = create<GoalsFlowState>((set, get)=> ({
         console.log('[GoalsFlow] Target weight selected:', weight);
         set({ targetWeight: weight });
     },
-    progressRate: null,
-    setProgressRate: (rate) => {
-        console.log('[GoalsFlow] Progress rate selected:', rate);
-        set({ progressRate: rate });
-    },
+    progressRate: 0,
+    setProgressRate: (rate: number) => set({ progressRate: rate }),
     preferences: null,
     setPreferences: (prefs) => {
         console.log('[GoalsFlow] Preferences set:', prefs);
