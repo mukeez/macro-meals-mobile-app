@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useContext, useEffect, useState } from "react";
+import { IsProContext } from "src/contexts/IsProContext";
 import {
   KeyboardAvoidingView,
   View,
@@ -44,6 +45,7 @@ export const EmailVerificationScreen = () => {
 const { setIsOnboardingCompleted } = useContext(OnboardingContext);
 const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
 const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+const { setIsPro, isPro } = React.useContext(IsProContext);
 const { email: routeEmail, password: routePassword } = route.params;
   const CELL_COUNT = 6;
   const [value, setValue] = useState("");
@@ -134,6 +136,7 @@ const { email: routeEmail, password: routePassword } = route.params;
             resetSteps();
             setIsOnboardingCompleted(true);
             setHasMacros(profile.has_macros);
+            setIsPro(!!profile.is_pro);
             setReadyForDashboard(profile.has_macros);
             setAuthenticated(true, token, loginUserId);
         } else {
