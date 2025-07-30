@@ -382,7 +382,7 @@ const PaymentScreen = () => {
                   <Text className='font-medium text-[15px]'>£9.99/mo</Text>
                   <Text className='font-medium text-[15px]'></Text>
                 </View>
-                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed monthly after free trial.</Text>
                 </View>
                
                 
@@ -395,7 +395,7 @@ const PaymentScreen = () => {
                setAmount(70.00);
               }}>
                 <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
-                <Text className="text-white text-xs font-medium justify-center items-center">50% savings</Text>
+                <Text className="text-white text-xs font-medium justify-center items-center">Save 30%</Text>
               </View>
                 <View className='w-full pl-3 pt-6 pb-3'>
                 <View className='flex-row items-center justify-between gap-2'>
