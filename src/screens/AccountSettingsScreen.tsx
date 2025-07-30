@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   Keyboard,
+  Switch,
 } from "react-native";
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";
@@ -536,52 +537,126 @@ export default function AccountSettingsScreen() {
               />
             )}
           </View>
-          {/* Height */}
-          <View className="flex-row items-center h-1/4 px-4 border-b border-[#f0f0f0]">
+          {/* Height Unit Switch */}
+          <View className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]">
+            <Text className="flex-1 text-base text-[#222]">Height Unit</Text>
+            <View className="flex-row items-center justify-end">
+              <Text className={`text-base mr-3 ${height_unit_preference === 'imperial' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>ft/in</Text>
+              <Switch
+                value={height_unit_preference === 'metric'}
+                onValueChange={v => handleHeightUnitChange(v ? 'metric' : 'imperial')}
+                trackColor={{ false: '#009688', true: '#009688' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#009688"
+              />
+              <Text className={`text-base ml-3 ${height_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>cm</Text>
+            </View>
+          </View>
+          {/* Height Value */}
+          <View className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]">
             <Text className="flex-1 text-base text-[#222]">Height</Text>
             <View className="flex-row items-center flex-1 justify-end">
-              {/* Metric input */}
               {height_unit_preference === "metric" ? (
-                <TextInput
-                  value={heightCm?.toString() ?? ""}
-                  onChangeText={(v) => {
-                    const cm = Number(v.replace(/[^0-9]/g, ""));
-                    setHeightCm(cm);
-                  }}
-                  onBlur={onHeightBlur}
-                  className="text-base text-[#222] text-right min-w-[60px]"
-                  placeholder="cm"
-                  keyboardType="numeric"
-                  style={{ flex: 1, textAlign: "right" }}
-                />
+                <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
+                  <Picker
+                    selectedValue={heightCm}
+                    style={{ 
+                      width: 140, 
+                      height: 50, 
+                      color: 'black',
+                      backgroundColor: 'transparent',
+                      borderWidth: Platform.OS === 'android' ? 1 : 0,
+                      borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                      borderRadius: Platform.OS === 'android' ? 4 : 0
+                    }}
+                    itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                    onValueChange={(value) => {
+                      setHeightCm(value);
+                      if (value !== null) {
+                        const patchObj = {
+                          height: value,
+                          height_unit_preference: "metric",
+                        };
+                        handleMultiFieldChange(patchObj);
+                      }
+                    }}
+                    dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                  >
+                    <Picker.Item label="cm" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                    {Array.from({ length: 121 }, (_, i) => 100 + i).map(cm => (
+                      <Picker.Item key={cm} label={`${cm} cm`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={cm} />
+                    ))}
+                  </Picker>
+                  <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                </View>
               ) : (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    flex: 1,
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <TextInput
-                    value={heightFt?.toString() ?? ""}
-                    onChangeText={onHeightFtChange}
-                    onBlur={onHeightBlur}
-                    className="text-base text-[#222] text-right min-w-[32px]"
-                    placeholder="ft"
-                    keyboardType="numeric"
-                    style={{ textAlign: "right" }}
-                  />
-                  <Text style={{ marginHorizontal: 4 }}>ft</Text>
-                  <TextInput
-                    value={heightIn?.toString() ?? ""}
-                    onChangeText={onHeightInChange}
-                    onBlur={onHeightBlur}
-                    className="text-base text-[#222] text-right min-w-[32px]"
-                    placeholder="in"
-                    keyboardType="numeric"
-                    style={{ textAlign: "right" }}
-                  />
-                  <Text style={{ marginLeft: 4 }}>in</Text>
+                <View className="flex-row gap-4">
+                  <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
+                    <Picker
+                      selectedValue={heightFt}
+                      style={{ 
+                        width: 100, 
+                        height: 50, 
+                        color: 'black',
+                        backgroundColor: 'transparent',
+                        borderWidth: Platform.OS === 'android' ? 1 : 0,
+                        borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                        borderRadius: Platform.OS === 'android' ? 4 : 0
+                      }}
+                      itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                      onValueChange={(value) => {
+                        setHeightFt(value);
+                        if (value !== null && heightIn !== null) {
+                          const floatFeet = value + (heightIn / 12);
+                          const patchObj = {
+                            height: floatFeet,
+                            height_unit_preference: "imperial",
+                          };
+                          handleMultiFieldChange(patchObj);
+                        }
+                      }}
+                      dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                    >
+                      <Picker.Item label="ft" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                      {[3, 4, 5, 6, 7, 8, 9].map(ft => (
+                        <Picker.Item key={ft} label={`${ft} ft`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={ft} />
+                      ))}
+                    </Picker>
+                    <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                  </View>
+                  <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
+                    <Picker
+                      selectedValue={heightIn}
+                      style={{ 
+                        width: 100, 
+                        height: 50, 
+                        color: 'black',
+                        backgroundColor: 'transparent',
+                        borderWidth: Platform.OS === 'android' ? 1 : 0,
+                        borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                        borderRadius: Platform.OS === 'android' ? 4 : 0
+                      }}
+                      itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                      onValueChange={(value) => {
+                        setHeightIn(value);
+                        if (value !== null && heightFt !== null) {
+                          const floatFeet = heightFt + (value / 12);
+                          const patchObj = {
+                            height: floatFeet,
+                            height_unit_preference: "imperial",
+                          };
+                          handleMultiFieldChange(patchObj);
+                        }
+                      }}
+                      dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                    >
+                      <Picker.Item label="in" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                      {Array.from({ length: 12 }, (_, i) => i).map(inc => (
+                        <Picker.Item key={inc} label={`${inc} in`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={inc} />
+                      ))}
+                    </Picker>
+                    <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                  </View>
                 </View>
               )}
               {updating.height && (
@@ -591,61 +666,101 @@ export default function AccountSettingsScreen() {
                   style={{ marginLeft: 8 }}
                 />
               )}
-              <Picker
-                selectedValue={height_unit_preference}
-                style={{ width: 100, marginLeft: 4 }}
-                onValueChange={handleHeightUnitChange}
-              >
-                <Picker.Item label="cm" value="metric" />
-                <Picker.Item label="ft/in" value="imperial" />
-              </Picker>
             </View>
           </View>
-          {/* Weight */}
-          <View className="flex-row items-center h-1/4 px-4  border-b border-[#f0f0f0]">
+          {/* Weight Unit Switch */}
+          <View className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]">
+            <Text className="flex-1 text-base text-[#222]">Weight Unit</Text>
+            <View className="flex-row items-center justify-end">
+              <Text className={`text-base mr-3 ${weight_unit_preference === 'imperial' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>lbs</Text>
+              <Switch
+                value={weight_unit_preference === 'metric'}
+                onValueChange={v => handleWeightUnitChange(v ? 'metric' : 'imperial')}
+                trackColor={{ false: '#009688', true: '#009688' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#009688"
+              />
+              <Text className={`text-base ml-3 ${weight_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>kg</Text>
+            </View>
+          </View>
+          {/* Weight Value */}
+          <View className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]">
             <Text className="flex-1 text-base text-[#222]">Weight</Text>
             <View className="flex-row items-center flex-1 justify-end">
               {weight_unit_preference === "metric" ? (
-                <TextInput
-                  value={weightKg?.toString() ?? ""}
-                  onChangeText={(v) =>
-                    setWeightKg(Number(v.replace(/[^0-9]/g, "")))
-                  }
-                  className="text-base text-[#222] text-right min-w-[60px]"
-                  placeholder="kg"
-                  keyboardType="numeric"
-                  style={{ flex: 1, textAlign: "right" }}
-                  editable={!updating.weight}
-                />
+                <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
+                  <Picker
+                    selectedValue={weightKg}
+                    style={{ 
+                      width: 140, 
+                      height: 50, 
+                      color: 'black',
+                      backgroundColor: 'transparent',
+                      borderWidth: Platform.OS === 'android' ? 1 : 0,
+                      borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                      borderRadius: Platform.OS === 'android' ? 4 : 0
+                    }}
+                    itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                    onValueChange={(value) => {
+                      setWeightKg(value);
+                      if (value !== null) {
+                        const patchObj = {
+                          weight: value,
+                          weight_unit_preference: "metric",
+                        };
+                        handleMultiFieldChange(patchObj);
+                      }
+                    }}
+                    dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                  >
+                    <Picker.Item label="kg" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                    {Array.from({ length: 221 }, (_, i) => 30 + i).map(kg => (
+                      <Picker.Item key={kg} label={`${kg} kg`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={kg} />
+                    ))}
+                  </Picker>
+                  <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                </View>
               ) : (
-                <TextInput
-                  value={weightLb?.toString() ?? ""}
-                  onChangeText={(v) =>
-                    setWeightLb(Number(v.replace(/[^0-9]/g, "")))
-                  }
-                  className="text-base text-[#222] text-right min-w-[60px]"
-                  placeholder="lbs"
-                  keyboardType="numeric"
-                  style={{ flex: 1, textAlign: "right" }}
-                  editable={!updating.weight}
-                />
+                <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
+                  <Picker
+                    selectedValue={weightLb}
+                    style={{ 
+                      width: 120, 
+                      height: 50, 
+                      color: 'black',
+                      backgroundColor: 'transparent',
+                      borderWidth: Platform.OS === 'android' ? 1 : 0,
+                      borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
+                      borderRadius: Platform.OS === 'android' ? 4 : 0
+                    }}
+                    itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                    onValueChange={(value) => {
+                      setWeightLb(value);
+                      if (value !== null) {
+                        const patchObj = {
+                          weight: value,
+                          weight_unit_preference: "imperial",
+                        };
+                        handleMultiFieldChange(patchObj);
+                      }
+                    }}
+                    dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                  >
+                    <Picker.Item label="lb" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                    {Array.from({ length: 321 }, (_, i) => 80 + i).map(lb => (
+                      <Picker.Item key={lb} label={`${lb} lb`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={lb} />
+                    ))}
+                  </Picker>
+                  <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                </View>
               )}
               {updating.weight && (
                 <ActivityIndicator
                   size="small"
                   color="#19a28f"
-                  style={{ marginLeft: 18 }}
+                  style={{ marginLeft: 8 }}
                 />
               )}
-              <Picker
-                selectedValue={weight_unit_preference}
-                style={{ width: 100, marginLeft: 4 }}
-                onValueChange={handleWeightUnitChange}
-                enabled={!updating.weight}
-              >
-                <Picker.Item label="kg" value="metric" />
-                <Picker.Item label="lbs" value="imperial" />
-              </Picker>
             </View>
           </View>
         </View>
