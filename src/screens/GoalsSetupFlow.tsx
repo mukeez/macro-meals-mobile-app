@@ -358,7 +358,14 @@ export const GoalsSetupFlow =  () => {
       return !!fitnessGoal;
     }
     if (majorStep === 1 && subSteps[majorStep] === 1) {
-      return !!targetWeight;
+      if (!targetWeight) return false;
+      if (fitnessGoal === 'Gain weight') {
+        return targetWeight > (weight_unit_preference === 'imperial' ? weightLb ?? 0 : weightKg ?? 0);
+      }
+      if (fitnessGoal === 'Lose weight') {
+        return targetWeight < (weight_unit_preference === 'imperial' ? weightLb ?? 0 : weightKg ?? 0);
+      }
+      return true;
     }
     if (majorStep === 1 && subSteps[majorStep] === 2) { 
       if (progressRate === '0.00') {
