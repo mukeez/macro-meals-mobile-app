@@ -7,10 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		04EBB0122E393BE9006A1374 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 04EBB0112E393BE9006A1374 /* GoogleService-Info.plist */; };
+		044616392E3BD35A00BAE4FA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		0446163A2E3BD35A00BAE4FA /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24D27D3DCDD3D081A026ADE5 /* ExpoModulesProvider.swift */; };
+		0446163E2E3BD35A00BAE4FA /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		0446163F2E3BD35A00BAE4FA /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		044616412E3BD35A00BAE4FA /* .env.staging in Resources */ = {isa = PBXBuildFile; fileRef = 048C9C062E3A63B000D35563 /* .env.staging */; };
+		044616422E3BD35A00BAE4FA /* .env.development in Resources */ = {isa = PBXBuildFile; fileRef = 048C9C042E3A63B000D35563 /* .env.development */; };
+		044616432E3BD35A00BAE4FA /* .env.production in Resources */ = {isa = PBXBuildFile; fileRef = 048C9C052E3A63B000D35563 /* .env.production */; };
+		044616442E3BD35A00BAE4FA /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		044616452E3BD35A00BAE4FA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 65D6850B94D730587C508F47 /* PrivacyInfo.xcprivacy */; };
+		044616612E3BDC9500BAE4FA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 0446165D2E3BDC9500BAE4FA /* GoogleService-Info.plist */; };
+		044616642E3BDD0000BAE4FA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 044616632E3BDD0000BAE4FA /* GoogleService-Info.plist */; };
+		048C9C072E3A63B000D35563 /* .env.staging in Resources */ = {isa = PBXBuildFile; fileRef = 048C9C062E3A63B000D35563 /* .env.staging */; };
+		048C9C082E3A63B000D35563 /* .env.development in Resources */ = {isa = PBXBuildFile; fileRef = 048C9C042E3A63B000D35563 /* .env.development */; };
+		048C9C092E3A63B000D35563 /* .env.production in Resources */ = {isa = PBXBuildFile; fileRef = 048C9C052E3A63B000D35563 /* .env.production */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1B542264E5ACBCAEDB6B630C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24D27D3DCDD3D081A026ADE5 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		6BFB7EED686FC12B3BB18A3B /* Pods_macromeals.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92EE6F2F6FCBD6D62E1328A4 /* Pods_macromeals.framework */; };
 		8CF115A6F07A72774620F769 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 65D6850B94D730587C508F47 /* PrivacyInfo.xcprivacy */; };
 		932455DA5AE60625AEB0CF81 /* Pods_macromeals.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 92EE6F2F6FCBD6D62E1328A4 /* Pods_macromeals.framework */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
@@ -18,40 +32,79 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		04EBB0112E393BE9006A1374 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		044616542E3BD35A00BAE4FA /* macromeals-stg.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "macromeals-stg.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		044616552E3BD35A00BAE4FA /* macromeals stg-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "macromeals stg-Info.plist"; path = "/Users/mac/Dev/source/repo/react_native_projects/macro-meals-mobile-app/ios/macromeals stg-Info.plist"; sourceTree = "<absolute>"; };
+		0446165D2E3BDC9500BAE4FA /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		044616632E3BDD0000BAE4FA /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		048C9C042E3A63B000D35563 /* .env.development */ = {isa = PBXFileReference; lastKnownFileType = text; path = .env.development; sourceTree = "<group>"; };
+		048C9C052E3A63B000D35563 /* .env.production */ = {isa = PBXFileReference; lastKnownFileType = text; path = .env.production; sourceTree = "<group>"; };
+		048C9C062E3A63B000D35563 /* .env.staging */ = {isa = PBXFileReference; lastKnownFileType = text; path = .env.staging; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* macromeals.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macromeals.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = macromeals/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = macromeals/Info.plist; sourceTree = "<group>"; };
+		22256B3A8E60ECBF773F7759 /* Pods-macromeals.release-stg.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release-stg.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release-stg.xcconfig"; sourceTree = "<group>"; };
 		24D27D3DCDD3D081A026ADE5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-macromeals/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		2DD531F392CB03D7F427E867 /* Pods-macromeals.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug.xcconfig"; sourceTree = "<group>"; };
-		4D9A4175F3E7FD09964958FE /* Pods-macromeals.debug-stg.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug-stg.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug-stg.xcconfig"; sourceTree = "<group>"; };
-		52732993C097589B8DEA345A /* Pods-macromeals.debug-prod.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug-prod.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug-prod.xcconfig"; sourceTree = "<group>"; };
+		4D6FBD6279BF4B84F946C177 /* Pods-macromeals.debug-dev.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug-dev.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug-dev.xcconfig"; sourceTree = "<group>"; };
 		65D6850B94D730587C508F47 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = macromeals/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		8D751FB26D3D3B4EC79AC31E /* Pods-macromeals.debug-dev.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug-dev.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug-dev.xcconfig"; sourceTree = "<group>"; };
+		8AA9B371AF5981CFD22BB852 /* Pods-macromeals.debug-prod.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug-prod.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug-prod.xcconfig"; sourceTree = "<group>"; };
+		8C4457C6AD9EAAFF8917EDF0 /* Pods-macromeals.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug.xcconfig"; sourceTree = "<group>"; };
+		8F9C2361B09A30033ADE868A /* Pods-macromeals.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release.xcconfig"; sourceTree = "<group>"; };
+		8FBB7558300442B6CE81A7E7 /* Pods-macromeals.release-prod.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release-prod.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release-prod.xcconfig"; sourceTree = "<group>"; };
 		92EE6F2F6FCBD6D62E1328A4 /* Pods_macromeals.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_macromeals.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = macromeals/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B397A1D14D768D11AD42B47C /* Pods-macromeals.release-stg.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release-stg.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release-stg.xcconfig"; sourceTree = "<group>"; };
+		B7521F173D0A9EBB2BCAC45D /* Pods-macromeals.release-dev.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release-dev.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release-dev.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		CE43F8C1DEBF2F5142E96CA0 /* Pods-macromeals.release-prod.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release-prod.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release-prod.xcconfig"; sourceTree = "<group>"; };
-		ECB75FE34D82F291EB75A4E7 /* Pods-macromeals.release-dev.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release-dev.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release-dev.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EDD719C740BCCE3E36C2FDB8 /* Pods-macromeals.debug-stg.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.debug-stg.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.debug-stg.xcconfig"; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = macromeals/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* macromeals-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "macromeals-Bridging-Header.h"; path = "macromeals/macromeals-Bridging-Header.h"; sourceTree = "<group>"; };
-		FE44B35F401F739973903BA2 /* Pods-macromeals.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macromeals.release.xcconfig"; path = "Target Support Files/Pods-macromeals/Pods-macromeals.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0446163B2E3BD35A00BAE4FA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				932455DA5AE60625AEB0CF81 /* Pods_macromeals.framework in Frameworks */,
+				6BFB7EED686FC12B3BB18A3B /* Pods_macromeals.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0446165E2E3BDC9500BAE4FA /* Production */ = {
+			isa = PBXGroup;
+			children = (
+				0446165D2E3BDC9500BAE4FA /* GoogleService-Info.plist */,
+			);
+			path = Production;
+			sourceTree = "<group>";
+		};
+		0446165F2E3BDC9500BAE4FA /* Staging */ = {
+			isa = PBXGroup;
+			children = (
+				044616632E3BDD0000BAE4FA /* GoogleService-Info.plist */,
+			);
+			path = Staging;
+			sourceTree = "<group>";
+		};
+		044616602E3BDC9500BAE4FA /* Firebase */ = {
+			isa = PBXGroup;
+			children = (
+				0446165E2E3BDC9500BAE4FA /* Production */,
+				0446165F2E3BDC9500BAE4FA /* Staging */,
+			);
+			path = Firebase;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* macromeals */ = {
 			isa = PBXGroup;
 			children = (
@@ -60,7 +113,6 @@
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
-				04EBB0112E393BE9006A1374 /* GoogleService-Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				65D6850B94D730587C508F47 /* PrivacyInfo.xcprivacy */,
 			);
@@ -102,12 +154,17 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				048C9C042E3A63B000D35563 /* .env.development */,
+				048C9C052E3A63B000D35563 /* .env.production */,
+				048C9C062E3A63B000D35563 /* .env.staging */,
 				13B07FAE1A68108700A75B9A /* macromeals */,
+				044616602E3BDC9500BAE4FA /* Firebase */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				86BA629687CC8FFD2B75F296 /* Pods */,
 				4A408A00B395A3414EE40A05 /* ExpoModulesProviders */,
+				044616552E3BD35A00BAE4FA /* macromeals stg-Info.plist */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -118,6 +175,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* macromeals.app */,
+				044616542E3BD35A00BAE4FA /* macromeals-stg.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -125,14 +183,14 @@
 		86BA629687CC8FFD2B75F296 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				2DD531F392CB03D7F427E867 /* Pods-macromeals.debug.xcconfig */,
-				FE44B35F401F739973903BA2 /* Pods-macromeals.release.xcconfig */,
-				52732993C097589B8DEA345A /* Pods-macromeals.debug-prod.xcconfig */,
-				4D9A4175F3E7FD09964958FE /* Pods-macromeals.debug-stg.xcconfig */,
-				8D751FB26D3D3B4EC79AC31E /* Pods-macromeals.debug-dev.xcconfig */,
-				CE43F8C1DEBF2F5142E96CA0 /* Pods-macromeals.release-prod.xcconfig */,
-				ECB75FE34D82F291EB75A4E7 /* Pods-macromeals.release-dev.xcconfig */,
-				B397A1D14D768D11AD42B47C /* Pods-macromeals.release-stg.xcconfig */,
+				8C4457C6AD9EAAFF8917EDF0 /* Pods-macromeals.debug.xcconfig */,
+				8AA9B371AF5981CFD22BB852 /* Pods-macromeals.debug-prod.xcconfig */,
+				EDD719C740BCCE3E36C2FDB8 /* Pods-macromeals.debug-stg.xcconfig */,
+				4D6FBD6279BF4B84F946C177 /* Pods-macromeals.debug-dev.xcconfig */,
+				8F9C2361B09A30033ADE868A /* Pods-macromeals.release.xcconfig */,
+				8FBB7558300442B6CE81A7E7 /* Pods-macromeals.release-prod.xcconfig */,
+				B7521F173D0A9EBB2BCAC45D /* Pods-macromeals.release-dev.xcconfig */,
+				22256B3A8E60ECBF773F7759 /* Pods-macromeals.release-stg.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -149,6 +207,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		044616352E3BD35A00BAE4FA /* macromeals-stg */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0446164B2E3BD35A00BAE4FA /* Build configuration list for PBXNativeTarget "macromeals-stg" */;
+			buildPhases = (
+				044616372E3BD35A00BAE4FA /* [Expo] Configure project */,
+				044616382E3BD35A00BAE4FA /* Sources */,
+				0446163B2E3BD35A00BAE4FA /* Frameworks */,
+				0446163D2E3BD35A00BAE4FA /* Resources */,
+				044616462E3BD35A00BAE4FA /* Bundle React Native code and images */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "macromeals-stg";
+			productName = macromeals;
+			productReference = 044616542E3BD35A00BAE4FA /* macromeals-stg.app */;
+			productType = "com.apple.product-type.application";
+		};
 		13B07F861A680F5B00A75B9A /* macromeals */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "macromeals" */;
@@ -200,18 +277,37 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* macromeals */,
+				044616352E3BD35A00BAE4FA /* macromeals-stg */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0446163D2E3BD35A00BAE4FA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0446163E2E3BD35A00BAE4FA /* Expo.plist in Resources */,
+				0446163F2E3BD35A00BAE4FA /* Images.xcassets in Resources */,
+				044616642E3BDD0000BAE4FA /* GoogleService-Info.plist in Resources */,
+				044616412E3BD35A00BAE4FA /* .env.staging in Resources */,
+				044616422E3BD35A00BAE4FA /* .env.development in Resources */,
+				044616432E3BD35A00BAE4FA /* .env.production in Resources */,
+				044616442E3BD35A00BAE4FA /* SplashScreen.storyboard in Resources */,
+				044616452E3BD35A00BAE4FA /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
-				04EBB0122E393BE9006A1374 /* GoogleService-Info.plist in Resources */,
+				044616612E3BDC9500BAE4FA /* GoogleService-Info.plist in Resources */,
+				048C9C072E3A63B000D35563 /* .env.staging in Resources */,
+				048C9C082E3A63B000D35563 /* .env.development in Resources */,
+				048C9C092E3A63B000D35563 /* .env.production in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				8CF115A6F07A72774620F769 /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -221,6 +317,40 @@
 
 /* Begin PBXShellScriptBuildPhase section */
 		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
+		};
+		044616372E3BD35A00BAE4FA /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-macromeals/expo-configure-project.sh\"\n";
+		};
+		044616462E3BD35A00BAE4FA /* Bundle React Native code and images */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -364,14 +494,6 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/Stripe/StripeBundle.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/StripeCore/StripeCoreBundle.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/StripeFinancialConnections/StripeFinancialConnectionsBundle.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/StripePaymentSheet/StripePaymentSheetBundle.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/StripePayments/StripePaymentsBundle.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/StripePayments/Stripe3DS2.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/StripePaymentsUI/StripePaymentsUIBundle.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/StripeUICore/StripeUICoreBundle.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/nanopb/nanopb_Privacy.bundle",
@@ -428,14 +550,6 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/StripeBundle.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/StripeCoreBundle.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/StripeFinancialConnectionsBundle.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/StripePaymentSheetBundle.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/StripePaymentsBundle.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Stripe3DS2.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/StripePaymentsUIBundle.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/StripeUICoreBundle.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/nanopb_Privacy.bundle",
@@ -462,6 +576,15 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		044616382E3BD35A00BAE4FA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				044616392E3BD35A00BAE4FA /* AppDelegate.swift in Sources */,
+				0446163A2E3BD35A00BAE4FA /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F871A680F5B00A75B9A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -474,6 +597,302 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		0446164C2E3BD35A00BAE4FA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		0446164D2E3BD35A00BAE4FA /* Debug-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Debug-Prod";
+		};
+		0446164E2E3BD35A00BAE4FA /* Debug-Stg */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Debug-Stg";
+		};
+		0446164F2E3BD35A00BAE4FA /* Debug-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Debug-Dev";
+		};
+		044616502E3BD35A00BAE4FA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		044616512E3BD35A00BAE4FA /* Release-Prod */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Release-Prod";
+		};
+		044616522E3BD35A00BAE4FA /* Release-Dev */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Release-Dev";
+		};
+		044616532E3BD35A00BAE4FA /* Release-Stg */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = macromeals/macromeals.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B7JY43F6R4;
+				INFOPLIST_FILE = "macromeals stg-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "macromeals/macromeals-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Release-Stg";
+		};
 		04B1AE9F2E390120002ACBB6 /* Release-Stg */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -532,7 +951,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -542,7 +964,7 @@
 		};
 		04B1AEA02E390120002ACBB6 /* Release-Stg */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B397A1D14D768D11AD42B47C /* Pods-macromeals.release-stg.xcconfig */;
+			baseConfigurationReference = 22256B3A8E60ECBF773F7759 /* Pods-macromeals.release-stg.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -562,7 +984,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
 				PRODUCT_NAME = "macromeals-stg";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -641,7 +1063,10 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -651,7 +1076,7 @@
 		};
 		04B1AEA22E390199002ACBB6 /* Debug-Dev */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8D751FB26D3D3B4EC79AC31E /* Pods-macromeals.debug-dev.xcconfig */;
+			baseConfigurationReference = 4D6FBD6279BF4B84F946C177 /* Pods-macromeals.debug-dev.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -756,7 +1181,10 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -766,7 +1194,7 @@
 		};
 		04B1AEA42E3901C3002ACBB6 /* Debug-Stg */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4D9A4175F3E7FD09964958FE /* Pods-macromeals.debug-stg.xcconfig */;
+			baseConfigurationReference = EDD719C740BCCE3E36C2FDB8 /* Pods-macromeals.debug-stg.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -791,7 +1219,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.macromeals.app.stg;
 				PRODUCT_NAME = "macromeals-stg";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -863,7 +1291,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -873,7 +1304,7 @@
 		};
 		04B1AEA62E3901CE002ACBB6 /* Release-Dev */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = ECB75FE34D82F291EB75A4E7 /* Pods-macromeals.release-dev.xcconfig */;
+			baseConfigurationReference = B7521F173D0A9EBB2BCAC45D /* Pods-macromeals.release-dev.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -972,7 +1403,10 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -982,7 +1416,7 @@
 		};
 		04B1AEA82E3901F3002ACBB6 /* Debug-Prod */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 52732993C097589B8DEA345A /* Pods-macromeals.debug-prod.xcconfig */;
+			baseConfigurationReference = 8AA9B371AF5981CFD22BB852 /* Pods-macromeals.debug-prod.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -1079,7 +1513,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -1089,7 +1526,7 @@
 		};
 		04B1AEAA2E390200002ACBB6 /* Release-Prod */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CE43F8C1DEBF2F5142E96CA0 /* Pods-macromeals.release-prod.xcconfig */;
+			baseConfigurationReference = 8FBB7558300442B6CE81A7E7 /* Pods-macromeals.release-prod.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -1124,7 +1561,7 @@
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2DD531F392CB03D7F427E867 /* Pods-macromeals.debug.xcconfig */;
+			baseConfigurationReference = 8C4457C6AD9EAAFF8917EDF0 /* Pods-macromeals.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -1165,7 +1602,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FE44B35F401F739973903BA2 /* Pods-macromeals.release.xcconfig */;
+			baseConfigurationReference = 8F9C2361B09A30033ADE868A /* Pods-macromeals.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -1347,6 +1784,21 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0446164B2E3BD35A00BAE4FA /* Build configuration list for PBXNativeTarget "macromeals-stg" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0446164C2E3BD35A00BAE4FA /* Debug */,
+				0446164D2E3BD35A00BAE4FA /* Debug-Prod */,
+				0446164E2E3BD35A00BAE4FA /* Debug-Stg */,
+				0446164F2E3BD35A00BAE4FA /* Debug-Dev */,
+				044616502E3BD35A00BAE4FA /* Release */,
+				044616512E3BD35A00BAE4FA /* Release-Prod */,
+				044616522E3BD35A00BAE4FA /* Release-Dev */,
+				044616532E3BD35A00BAE4FA /* Release-Stg */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "macromeals" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

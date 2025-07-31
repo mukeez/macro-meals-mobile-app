@@ -8,7 +8,7 @@ import { WebView } from 'react-native-webview';
 
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StripeProvider, useStripe, PlatformPayButton, isPlatformPaySupported, PlatformPay, confirmPlatformPayPayment } from '@stripe/stripe-react-native';
+
 import {
   ActivityIndicator,
   Alert,
@@ -28,6 +28,7 @@ import { userService } from '../services/userService';
 import CustomSafeAreaView from 'src/components/CustomSafeAreaView';
 import { IsProContext } from 'src/contexts/IsProContext';
 import Config from 'react-native-config';
+import BackButton from 'src/components/BackButton';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -47,7 +48,18 @@ type Profile = {
 
 const Pager = ()=>{
   const [currentPage, setCurrentPage] = useState(0);
-
+  const navigation = useNavigation<NavigationProp>();
+  const handleBackPress = ()=>{
+    // Option 1: Logout user to reset authentication state and return to login
+    const { logout } = useStore.getState();
+    logout();
+    
+    // Option 2: Alternative - Use navigation reset (uncomment if you prefer this)
+    // navigation.reset({
+    //   index: 0,
+    //   routes: [{ name: 'Auth', params: { initialAuthScreen: 'LoginScreen' } }],
+    // });
+  }
 
   return(
     <View className='flex-1 max-h-[50%] min-h-[300px]'>
@@ -66,12 +78,16 @@ const Pager = ()=>{
         </View>
       </PagerView>
       <View className="absolute w-full top-[5rem] left-0">
-      <View className="flex-row gap-2 justify-center mb-16">
-        <Text className='text-2xl font-bold text-white'>Macro Meals</Text>
-        <View className='flex-row justify-center items-center gap-1 px-2 py-1 bg-primaryLigh rounded-md'>
-          <Image source={IMAGE_CONSTANTS.crown} className='w-[18px] h-[14px]' />
-          <Text className='text-white mt-0.5 font-medium text-base'>PREMIUM</Text> 
+      <View className="flex-row items-center justify-between px-4 mb-16">
+        <BackButton onPress={handleBackPress}/>
+        <View className="flex-row gap-2 items-center">
+          <Text className='text-2xl font-bold text-white'>Macro Meals</Text>
+          <View className='flex-row justify-center items-center gap-1 px-2 py-1 bg-primaryLigh rounded-md'>
+            <Image source={IMAGE_CONSTANTS.crown} className='w-[18px] h-[14px]' />
+            <Text className='text-white mt-0.5 font-medium text-base'>PREMIUM</Text> 
+          </View>
         </View>
+        <View className="w-[40px]" />
       </View>
       </View>
       <View className="absolute bottom-4 w-full flex-row gap-2 justify-center items-center">
@@ -134,80 +150,14 @@ const PaymentScreen = () => {
   const profile = useStore((state) => state.profile);
   const setStoreProfile = useStore((state) => state.setProfile);
   const clearProfile = useStore((state) => state.clearProfile);
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [isLoading, setIsLoading] = useState(false);
-  const [publishableKey, setPublishableKey] = useState('');
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const { setReadyForDashboard } = useContext(HasMacrosContext);
-  const [isApplePaySupported, setIsApplePaySupported] = useState(false);
   const [amount, setAmount] = useState(9.99);
   const [showWebView, setShowWebView] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState('');
   const { isPro, setIsPro } = useContext(IsProContext);
-          const MERCHANT_IDENTIFIER = Config.MERCHANT_IDENTIFIER;
-
-    console.log('MERCHANT_IDENTIFIER', MERCHANT_IDENTIFIER);
-
-  // useEffect(() => {
-  //   (async function () {
-  //     setIsApplePaySupported(await isPlatformPaySupported());
-  //   })();
-  // }, [isPlatformPaySupported]);
-
-
-  const fetchPublishableKey = async () => {
-    try {
-      const response = await paymentService.getStripeConfig();
-      setPublishableKey(response.publishable_key);
-      return response.publishable_key;
-    } catch (error) {
-      console.error('Error fetching publishable key:', error);
-      throw error;
-    }
-  };
-
-  const initializePaymentSheet = async () => {
-    try {
-      // Clear existing profile and fetch fresh data
-      clearProfile();
-      const fetchedProfile = await userService.getProfile();
-      
-      if (!fetchedProfile?.id || !fetchedProfile?.email) {
-        throw new Error('Invalid profile data received');
-      }
-      
-      const currentProfile = fetchedProfile as Profile;
-      setStoreProfile(currentProfile);
-
-      const response = await paymentService.createPaymentIntent(
-        currentProfile.email,
-        currentProfile.id,
-        selectedPlan
-      );
-
-      if (!response || !response.client_secret) {
-        throw new Error('Invalid response from payment service');
-      }
-
-      const { error } = await initPaymentSheet({
-        merchantDisplayName: "Macro meals",
-        customerId: response.customer_id,
-        customerEphemeralKeySecret: response.ephemeral_key,
-        setupIntentClientSecret: response.client_secret,
-        allowsDelayedPaymentMethods: true,
-        returnURL: 'macromeals://stripe-redirect',
-        style: 'automatic'
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to initialize payment');
-      }
-    } catch (error) {
-      console.error('Error initializing payment sheet:', error);
-      throw error;
-    }
-  };
 
   const handleTrialSubscription = async () => {
     try {
@@ -255,110 +205,8 @@ const PaymentScreen = () => {
     }
   };
 
-  const handlePaymentPress = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Get publishable key if not already set
-      if (!publishableKey) {
-        await fetchPublishableKey();
-      }
-
-      // Initialize payment sheet (this will now fetch profile if needed)
-      await initializePaymentSheet();
-
-      // Present payment sheet
-      const { error: presentError } = await presentPaymentSheet();
-
-      if (presentError) {
-        Alert.alert(`Error code: ${presentError.code}`, presentError.message);
-      } else {
-        Alert.alert("You're in", "Your subscription is confirmed. Let’s hit those goals, one meal at a time.");
-        setHasBeenPromptedForGoals(false);
-        setReadyForDashboard(true);
-       //navigation.navigate('MainTabs');
-      }
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      if (error instanceof Error) {
-        if (error.message === 'Failed to fetch user profile' || error.message === 'Invalid profile data' || error.message === 'Invalid profile data received') {
-          Alert.alert('Error', 'Failed to fetch user profile. Please try again.');
-        } else {
-          Alert.alert('Error', 'Failed to process payment. Please try again.');
-        }
-      } else {
-        Alert.alert('Error', 'Failed to process payment. Please try again.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleApplePayPress = async () => {
-    try {
-      // Get publishable key if not already set
-      if (!publishableKey) {
-        await fetchPublishableKey();
-      }
-
-      // Clear existing profile and fetch fresh data
-      clearProfile();
-      const fetchedProfile = await userService.getProfile();
-      
-      if (!fetchedProfile?.id || !fetchedProfile?.email) {
-        throw new Error('Invalid profile data received');
-      }
-      
-      const currentProfile = fetchedProfile as Profile;
-      setStoreProfile(currentProfile);
-      const response = await paymentService.createPaymentIntent(
-        currentProfile.email,
-        currentProfile.id,
-        selectedPlan
-      );  
-      const { error } = await confirmPlatformPayPayment(
-        response.client_secret,
-        {
-          applePay: {
-            cartItems: [
-              {
-                label: `Macro Meals ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'}`,
-                amount: amount.toString(),  
-                paymentType: PlatformPay.PaymentType.Immediate,
-              },
-              {
-                label: 'Total',
-                amount: amount.toString(),
-                paymentType: PlatformPay.PaymentType.Immediate,
-              },
-            ],
-            merchantCountryCode: 'US',
-            currencyCode: 'USD',
-            requiredShippingAddressFields: [
-              PlatformPay.ContactField.PostalAddress,
-            ],
-            requiredBillingContactFields: [PlatformPay.ContactField.PhoneNumber],
-          },
-        }
-      );
-      if (error) {
-        console.error('Apple Pay error:', error);
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('You\'re in', 'Your subscription is confirmed. Let’s hit those goals, one meal at a time.');
-        setHasBeenPromptedForGoals(false);
-        setReadyForDashboard(true);
-      }
-    } catch (error) {
-      console.error('Error processing Apple Pay:', error);
-      Alert.alert('Error', 'Failed to process Apple Pay payment. Please try again.');
-    }
-  };
-
   return (
-    <StripeProvider publishableKey={publishableKey}
-    merchantIdentifier={MERCHANT_IDENTIFIER}>
-      {/* <CustomSafeAreaView edges={['left', 'right']} className="flex-1"> */}
+    <>
         <View className='flex-1 bg-[#F2F2F2]'>
           <Pager />
           <View className="flex-1 px-5 py-4 justify-center items-center w-full">
@@ -395,7 +243,7 @@ const PaymentScreen = () => {
                setAmount(70.00);
               }}>
                 <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
-                <Text className="text-white text-xs font-medium justify-center items-center">50% savings</Text>
+                <Text className="text-white text-xs font-medium justify-center items-center">30% savings</Text>
               </View>
                 <View className='w-full pl-3 pt-6 pb-3'>
                 <View className='flex-row items-center justify-between gap-2'>
@@ -519,8 +367,7 @@ const PaymentScreen = () => {
           </View>
         </Modal>
       {/* </CustomSafeAreaView> */}
-      
-    </StripeProvider>
+    </>
   )
 }
 
