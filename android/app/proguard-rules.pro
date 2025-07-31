@@ -1,17 +1,6 @@
 # Keep required classes
 -keep class androidx.camera.extensions.** { *; }
 -keep class androidx.work.** { *; }
--keep class com.stripe.android.** { *; }
--keep class com.reactnativestripesdk.** { *; }
-
-# Ignore warnings for unused Stripe Push Provisioning classes
--dontwarn com.stripe.android.pushProvisioning.**
--dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivity$g
--dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Args
--dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Error
--dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter
--dontwarn com.stripe.android.pushProvisioning.PushProvisioningEphemeralKeyProvider
--dontwarn com.stripe.android.pushProvisioning.EphemeralKeyUpdateListener
 
 -dontwarn com.jwplayer.**
 -dontwarn com.google.android.gms.cast.framework.**
@@ -67,4 +56,4 @@
     public static *** i(...);
 }
 
-# Keep Stripe related classes
+

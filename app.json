@@ -30,8 +30,7 @@
       },
       "appleTeamId": "SA3LF6JRDF",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "merchantId": "merchant.com.macromeals.app",
-      "usesApplePay": true
+      "merchantId": "merchant.com.macromeals.app"
     },
     "android": {
       "versionCode": 5,
@@ -56,8 +55,7 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
-      "googleServicesFile": "./google-services.json",
-      "extraProguardRules": "-dontwarn com.stripe.android.pushProvisioning.** -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivity$g -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Args -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Error -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter -dontwarn com.stripe.android.pushProvisioning.PushProvisioningEphemeralKeyProvider -dontwarn com.stripe.android.pushProvisioning.EphemeralKeyUpdateListener"
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -102,8 +100,7 @@
           },
           "android": {
             "enableProguardInReleaseBuilds": true,
-            "enableDexGuardInReleaseBuilds": true,
-            "extraProguardRules": "-dontwarn com.stripe.android.pushProvisioning.** -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivity$g -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Args -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Error -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter -dontwarn com.stripe.android.pushProvisioning.PushProvisioningEphemeralKeyProvider -dontwarn com.stripe.android.pushProvisioning.EphemeralKeyUpdateListener"
+            "enableDexGuardInReleaseBuilds": true
           }
         }
       ],

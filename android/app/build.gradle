@@ -138,7 +138,7 @@ android {
         }
         stg {
             dimension "environment"
-            // applicationIdSuffix ".stg"
+            applicationIdSuffix ".stg"
             versionNameSuffix "-stg"
             resValue "string", "app_name", "Macro Meals [STG]"
             buildConfigField "String", "ENVIRONMENT", "\"staging\""
@@ -266,7 +266,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-messaging'
-    implementation "com.stripe:stripe-android:20.35.2"
+
     implementation project(':react-native-config')
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
