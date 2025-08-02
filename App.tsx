@@ -23,6 +23,7 @@ import { IsProContext } from 'src/contexts/IsProContext';
 import Config from 'react-native-config';
 import { validateSession, SessionValidationResult } from './src/services/sessionService';
 import { debugService } from './src/services/debugService';
+import revenueCatService from './src/services/revenueCatService';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -183,6 +184,15 @@ export default function App() {
                 }
             }
             await initializeFirebase();
+            
+            // Initialize RevenueCat
+            try {
+                await revenueCatService.initialize();
+                console.log('✅ RevenueCat initialized successfully');
+            } catch (error) {
+                console.error('❌ RevenueCat initialization failed:', error);
+                // Don't fail the app if RevenueCat fails to initialize
+            }
             
             try {
                 // Check onboarding status first

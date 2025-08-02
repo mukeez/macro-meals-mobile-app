@@ -4,9 +4,6 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
-import { WebView } from 'react-native-webview';
-
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
@@ -17,14 +14,14 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Modal,
-  Linking
+  Modal
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import useStore from '../store/useStore'; 
 import { paymentService } from '../services/paymentService';
 import { userService } from '../services/userService';
+import revenueCatService from '../services/revenueCatService';
 import CustomSafeAreaView from 'src/components/CustomSafeAreaView';
 import { IsProContext } from 'src/contexts/IsProContext';
 import Config from 'react-native-config';
@@ -155,47 +152,91 @@ const PaymentScreen = () => {
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const { setReadyForDashboard } = useContext(HasMacrosContext);
   const [amount, setAmount] = useState(9.99);
-  const [showWebView, setShowWebView] = useState(false);
-  const [checkoutUrl, setCheckoutUrl] = useState('');
+
   const { isPro, setIsPro } = useContext(IsProContext);
+  const [offerings, setOfferings] = useState<any>(null);
+
+  // Load RevenueCat offerings when component mounts
+  useEffect(() => {
+    const loadOfferings = async () => {
+      try {
+        const currentOfferings = await revenueCatService.getOfferings();
+        setOfferings(currentOfferings);
+      } catch (error) {
+        console.error('Failed to load offerings:', error);
+      }
+    };
+    
+    loadOfferings();
+  }, []);
 
   const handleTrialSubscription = async () => {
     try {
       setIsLoading(true);
-      // Get user profile for checkout
-      const profile = await userService.getProfile();
-      if (!profile?.email || !profile?.id) {
-        throw new Error('User profile not found');
+      
+      // Get RevenueCat offerings
+      const currentOfferings = await revenueCatService.getOfferings();
+      if (!currentOfferings) {
+        throw new Error('No subscription offerings available');
       }
       
-      const checkoutResponse = await paymentService.checkout(
-        profile.email,
-        selectedPlan,
-        profile.id
-      );
-      
-      if (checkoutResponse?.checkout_url) {
-        setCheckoutUrl(checkoutResponse.checkout_url);
-        setShowWebView(true);
+      // Find the appropriate package based on selected plan
+      let packageToPurchase;
+      if (selectedPlan === 'monthly') {
+        packageToPurchase = currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === 'monthly_subscription'
+        );
       } else {
-        throw new Error('No checkout URL received');
+        packageToPurchase = currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === 'yearly_subscription'
+        );
+      }
+      
+      if (!packageToPurchase) {
+        throw new Error(`No package found for ${selectedPlan} plan`);
+      }
+      
+      // Purchase the package
+      const customerInfo = await revenueCatService.purchasePackage(packageToPurchase);
+      
+      // Check if purchase was successful
+      if (customerInfo.entitlements.active['pro']) {
+        console.log('✅ Purchase successful, setting isPro to true');
+        setHasBeenPromptedForGoals(false);
+        setReadyForDashboard(true);
+        setIsPro(true);
+        
+        Alert.alert(
+          "You're in", 
+          "Your subscription is confirmed. Let's hit those goals, one meal at a time.",
+          [
+            {
+              text: "Continue",
+              onPress: () => {
+                // Force navigation to Dashboard using CommonActions
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [
+                      {
+                        name: 'Dashboard',
+                      },
+                    ],
+                  })
+                );
+              }
+            }
+          ]
+        );
+      } else {
+        throw new Error('Purchase completed but no active entitlements found');
       }
     } catch (error) {
       console.error('Error in trial subscription:', error);
       
-      // Extract error message from API response
-      let errorMessage = 'Failed to start checkout process. Please try again.';
+      let errorMessage = 'Failed to complete purchase. Please try again.';
       
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response?.data?.detail) {
-          errorMessage = axiosError.response.data.detail;
-        } else if (axiosError.response?.data?.message) {
-          errorMessage = axiosError.response.data.message;
-        } else if (axiosError.message) {
-          errorMessage = axiosError.message;
-        }
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         errorMessage = error.message;
       }
       
@@ -278,94 +319,7 @@ const PaymentScreen = () => {
           </View>
         </View>
         
-        {/* WebView Modal for Checkout */}
-        <Modal
-          visible={showWebView}
-          animationType="slide"
-          onRequestClose={() => setShowWebView(false)}
-        >
-          <View className="flex-1">
-            <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200">
-              <TouchableOpacity onPress={() => setShowWebView(false)}>
-                <Text className="text-blue-500 text-lg">Cancel</Text>
-              </TouchableOpacity>
-              <Text className="text-lg font-semibold">Complete Payment</Text>
-              <View style={{ width: 60 }} />
-            </View>
-            <View className="flex-1">
-              <WebView 
-                source={{ uri: checkoutUrl }}
-                onNavigationStateChange={(navState) => {
-                  // Handle successful payment completion
-                  if (navState.url.includes('success') || navState.url.includes('completed')) {
-                    setShowWebView(false);
-                    console.log("🔍 PaymentScreen - Payment successful, setting isPro to true");
-                    Alert.alert(
-                      "You're in", 
-                      "Your subscription is confirmed. Let's hit those goals, one meal at a time.",
-                      [
-                        {
-                          text: "Continue",
-                          onPress: () => {
-                            console.log("🔍 PaymentScreen - User confirmed, updating states");
-                            setHasBeenPromptedForGoals(false);
-                            setReadyForDashboard(true);
-                            setIsPro(true);
-                            console.log("🔍 PaymentScreen - States updated: readyForDashboard=true, isPro=true");
-                            
-                            // Add a small delay to ensure state updates propagate
-                            setTimeout(() => {
-                              console.log("🔍 PaymentScreen - After delay, checking if navigation should trigger");
-                              
-                              // Force navigation to Dashboard using CommonActions
-                              navigation.dispatch(
-                                CommonActions.reset({
-                                  index: 0,
-                                  routes: [
-                                    {
-                                      name: 'Dashboard',
-                                    },
-                                  ],
-                                })
-                              );
-                              console.log("🔍 PaymentScreen - Forced navigation to Dashboard");
-                            }, 100);
-                          }
-                        }
-                      ]
-                    );
-                  }
-                  // Handle payment cancellation
-                  if (navState.url.includes('canceled') || navState.url.includes('cancelled')) {
-                    setShowWebView(false);
-                    Alert.alert("Payment Cancelled", "Your payment was cancelled. You can try again anytime.");
-                  }
-                }}
-                onError={(syntheticEvent) => {
-                  const { nativeEvent } = syntheticEvent;
-                  console.warn('WebView error: ', nativeEvent);
-                 // Alert.alert("Error", "Failed to load checkout page. Please try again.");
-                  setShowWebView(false);
-                }}
-                onHttpError={(syntheticEvent) => {
-                  const { nativeEvent } = syntheticEvent;
-                  console.warn('WebView HTTP error: ', nativeEvent);
-                }}
-                startInLoadingState={true}
-                renderLoading={() => (
-                  <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#009688" />
-                    <Text className="mt-4 text-gray-600">Loading checkout...</Text>
-                  </View>
-                )}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-                allowsInlineMediaPlayback={true}
-                mediaPlaybackRequiresUserAction={false}
-              />
-            </View>
-          </View>
-        </Modal>
+
       {/* </CustomSafeAreaView> */}
     </>
   )
