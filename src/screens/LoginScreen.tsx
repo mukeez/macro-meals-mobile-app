@@ -31,6 +31,7 @@ import { HasMacrosContext } from "src/contexts/HasMacrosContext";
 import { useGoalsFlowStore } from "../store/goalsFlowStore";
 import { useMixpanel } from "@macro-meals/mixpanel";
 import { IsProContext } from "src/contexts/IsProContext";
+import revenueCatService from "../services/revenueCatService";
 // import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 
 // type RootStackParamList = {
@@ -136,8 +137,24 @@ export const LoginScreen: React.FC = () => {
         // Set all states together to ensure they're synchronized
         setIsOnboardingCompleted(true);
         setHasMacros(profile.has_macros);
-        setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
         setReadyForDashboard(profile.has_macros);
+
+        // Set user ID in RevenueCat after successful login and check subscription status
+        try {
+          console.log(`\n\n\n\n\nUSER ID  ${profile.id}`);
+          await revenueCatService.setUserID(profile.id);
+          console.log('✅ RevenueCat user ID set after login:', profile.id);
+          
+          // Check subscription status from RevenueCat (source of truth)
+          const { syncSubscriptionStatus } = await import('../services/subscriptionChecker');
+          const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
+          
+          console.log('🔍 LoginScreen - RevenueCat subscription status:', subscriptionStatus);
+        } catch (error) {
+          console.error('❌ Failed to set RevenueCat user ID or check subscription after login:', error);
+          // Fallback to backend isPro value if RevenueCat fails
+          setIsPro(!!profile.is_pro);
+        }
 
         console.log("🔍 LoginScreen - Immediately after setting states:", {
           profileHasMacros: profile.has_macros,

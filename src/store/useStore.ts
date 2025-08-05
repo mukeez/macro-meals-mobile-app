@@ -262,6 +262,16 @@ const useStore = create<AppState>()(
             logout: async () => {
                 try {
                     await authService.logout();
+                    
+                    // Clear RevenueCat user ID
+                    try {
+                        await import('../services/revenueCatService').then(({ default: revenueCatService }) => {
+                            return revenueCatService.logout();
+                        });
+                        console.log('✅ RevenueCat user logged out');
+                    } catch (error) {
+                        console.error('❌ Failed to logout RevenueCat user:', error);
+                    }
                 } catch (error) {
                     console.error('Error during logout:', error);
                 } finally {

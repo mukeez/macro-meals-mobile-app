@@ -28,6 +28,7 @@ export const userService = {
   getProfile: async (): Promise<any> => {
     try {
       const response = await axiosInstance.get('/user/me');
+      console.log(`\n\n\n\n🔍 USER SERVICE - Profile: ${JSON.stringify(response.data)}\n\n\n\n`);
       return response.data;
     } catch (error) {
       console.error('Error fetching user profile:', error);

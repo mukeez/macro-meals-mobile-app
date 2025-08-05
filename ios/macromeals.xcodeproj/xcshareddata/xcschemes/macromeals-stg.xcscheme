@@ -24,7 +24,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "044616892E3C174B00BAE4FA"
+               BlueprintIdentifier = "041460BB2E3F405D00E86FA4"
                BuildableName = "macromeals-stg.app"
                BlueprintName = "macromeals-stg"
                ReferencedContainer = "container:macromeals.xcodeproj">
@@ -33,7 +33,7 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildConfiguration = "Debug-Stg"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
@@ -53,7 +53,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "044616892E3C174B00BAE4FA"
+            BlueprintIdentifier = "041460BB2E3F405D00E86FA4"
             BuildableName = "macromeals-stg.app"
             BlueprintName = "macromeals-stg"
             ReferencedContainer = "container:macromeals.xcodeproj">
@@ -61,7 +61,7 @@
       </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction
-      buildConfiguration = "Release-Stg"
+      buildConfiguration = "Release"
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
@@ -70,7 +70,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "044616892E3C174B00BAE4FA"
+            BlueprintIdentifier = "041460BB2E3F405D00E86FA4"
             BuildableName = "macromeals-stg.app"
             BlueprintName = "macromeals-stg"
             ReferencedContainer = "container:macromeals.xcodeproj">
@@ -78,7 +78,7 @@
       </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
-      buildConfiguration = "Debug-Stg">
+      buildConfiguration = "Debug">
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Release"

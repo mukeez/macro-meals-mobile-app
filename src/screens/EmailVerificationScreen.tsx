@@ -3,6 +3,7 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useContext, useEffect, useState } from "react";
 import { IsProContext } from "src/contexts/IsProContext";
+import revenueCatService from '../services/revenueCatService';
 import {
   KeyboardAvoidingView,
   View,
@@ -136,9 +137,24 @@ const { email: routeEmail, password: routePassword } = route.params;
             resetSteps();
             setIsOnboardingCompleted(true);
             setHasMacros(profile.has_macros);
-            setIsPro(!!profile.is_pro);
             setReadyForDashboard(profile.has_macros);
             setAuthenticated(true, token, loginUserId);
+            
+            // Set user ID in RevenueCat and check subscription status
+            try {
+                await revenueCatService.setUserID(profile.id);
+                console.log('✅ RevenueCat user ID set after email verification:', profile.id);
+                
+                // Check subscription status from RevenueCat (source of truth)
+                const { syncSubscriptionStatus } = await import('../services/subscriptionChecker');
+                const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
+                
+                console.log('🔍 EmailVerification - RevenueCat subscription status:', subscriptionStatus);
+            } catch (error) {
+                console.error('❌ Failed to set RevenueCat user ID or check subscription after verification:', error);
+                // Fallback to backend isPro value if RevenueCat fails
+                setIsPro(!!profile.is_pro);
+            }
         } else {
             setError("Invalid verification code. Please try again.");
             Alert.alert("Error", "Invalid verification code");

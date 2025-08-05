@@ -43,6 +43,35 @@ type Profile = {
   is_active?: boolean;
 };
 
+// Helper function to get product information from RevenueCat offerings
+const getProductInfo = (offerings: any, planType: 'monthly' | 'yearly') => {
+  if (!offerings?.availablePackages) return null;
+  
+  const packageId = planType === 'monthly' ? 'com.macromeals.app.subscription.premium.monthly' : 'com.macromeals.app.subscription.premium.annual';
+  const pkg = offerings.availablePackages.find(
+    (p: any) => p.product.identifier === packageId
+  );
+  
+  if (!pkg) return null;
+  
+  const product = pkg.product;
+  
+  return {
+    price: product.priceString || product.price,
+    pricePerPeriod: product.priceString || `${product.price}/${product.period}`,
+    period: product.period,
+    periodWithUnit: product.period === 'month' ? '1 month' : 
+                   product.period === 'year' ? '1 year' : 
+                   product.period,
+    offerPeriod: product.introductoryPrice?.period || 'week',
+    offerPeriodWithUnit: product.introductoryPrice?.period === 'week' ? '1 week' :
+                        product.introductoryPrice?.period === 'month' ? '1 month' :
+                        product.introductoryPrice?.period || '1 week',
+    currencySymbol: product.currencySymbol || '£',
+    originalPrice: product.originalPriceString || product.priceString
+  };
+};
+
 const Pager = ()=>{
   const [currentPage, setCurrentPage] = useState(0);
   const navigation = useNavigation<NavigationProp>();
@@ -156,8 +185,14 @@ const PaymentScreen = () => {
   const { isPro, setIsPro } = useContext(IsProContext);
   const [offerings, setOfferings] = useState<any>(null);
 
+  // Get product information for current selected plan
+  const currentProductInfo = getProductInfo(offerings, selectedPlan as 'monthly' | 'yearly');
+  const monthlyProductInfo = getProductInfo(offerings, 'monthly');
+  const yearlyProductInfo = getProductInfo(offerings, 'yearly');
+
   // Load RevenueCat offerings when component mounts
   useEffect(() => {
+    console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
     const loadOfferings = async () => {
       try {
         const currentOfferings = await revenueCatService.getOfferings();
@@ -184,11 +219,11 @@ const PaymentScreen = () => {
       let packageToPurchase;
       if (selectedPlan === 'monthly') {
         packageToPurchase = currentOfferings.availablePackages.find(
-          pkg => pkg.product.identifier === 'monthly_subscription'
+          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.monthly'
         );
       } else {
         packageToPurchase = currentOfferings.availablePackages.find(
-          pkg => pkg.product.identifier === 'yearly_subscription'
+          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.annual'
         );
       }
       
@@ -198,13 +233,33 @@ const PaymentScreen = () => {
       
       // Purchase the package
       const customerInfo = await revenueCatService.purchasePackage(packageToPurchase);
+      console.log('🔍 PaymentScreen - Purchase completed, customerInfo:', JSON.stringify(customerInfo, null, 2));
       
-      // Check if purchase was successful
-      if (customerInfo.entitlements.active['pro']) {
+      // Check if purchase was successful by verifying active entitlements
+      const entitlementId = 'MacroMeals Premium';
+      const hasActiveEntitlement = customerInfo.entitlements.active[entitlementId] !== undefined;
+      
+      console.log('🔍 PaymentScreen - Entitlement check:', {
+        entitlementId,
+        hasActiveEntitlement,
+        activeEntitlements: Object.keys(customerInfo.entitlements.active)
+      });
+      
+      if (hasActiveEntitlement) {
         console.log('✅ Purchase successful, setting isPro to true');
+        
+        // Update local state
         setHasBeenPromptedForGoals(false);
         setReadyForDashboard(true);
         setIsPro(true);
+        
+        // Update user profile on backend (optional, if you want to sync with your backend)
+        try {
+          await userService.updateProfile({ is_pro: true });
+          console.log('✅ Backend profile updated with pro status');
+        } catch (error) {
+          console.error('⚠️ Failed to update backend profile, but RevenueCat subscription is active:', error);
+        }
         
         Alert.alert(
           "You're in", 
@@ -229,7 +284,7 @@ const PaymentScreen = () => {
           ]
         );
       } else {
-        throw new Error('Purchase completed but no active entitlements found');
+        throw new Error('Purchase completed but no active entitlements found. Please contact support.');
       }
     } catch (error) {
       console.error('Error in trial subscription:', error);
@@ -259,7 +314,7 @@ const PaymentScreen = () => {
               <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
                 e.preventDefault();
                 setSelectedPlan('monthly');
-                setAmount(9.99);
+                setAmount(monthlyProductInfo?.price || 9.99);
               }}>
                 
                 <View className='w-full pl-3 pt-6 pb-3'>
@@ -268,10 +323,14 @@ const PaymentScreen = () => {
                   {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
                 </View>
                 <View className='mt-3'>
-                  <Text className='font-medium text-[15px]'>£9.99/mo</Text>
+                  <Text className='font-medium text-[15px]'>
+                    {monthlyProductInfo?.pricePerPeriod || '£9.99/mo'}
+                  </Text>
                   <Text className='font-medium text-[15px]'></Text>
                 </View>
-                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>
+                  Billed {monthlyProductInfo?.period || 'monthly'} after free trial.
+                </Text>
                 </View>
                
                 
@@ -281,7 +340,7 @@ const PaymentScreen = () => {
               <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
                e.preventDefault();
                setSelectedPlan('yearly');
-               setAmount(70.00);
+               setAmount(yearlyProductInfo?.price || 70.00);
               }}>
                 <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
                 <Text className="text-white text-xs font-medium justify-center items-center">30% savings</Text>
@@ -292,10 +351,18 @@ const PaymentScreen = () => {
                   {selectedPlan === 'yearly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
                 </View>
                 <View className='mt-3'>
-                  <Text className='font-medium text-[15px]'>£70.00/yr</Text>
-                  <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>£99.99/yr</Text>
+                  <Text className='font-medium text-[15px]'>
+                    {yearlyProductInfo?.pricePerPeriod || '£70.00/yr'}
+                  </Text>
+                  {yearlyProductInfo?.originalPrice && (
+                    <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>
+                      {yearlyProductInfo.originalPrice}
+                    </Text>
+                  )}
                 </View>
-                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>
+                  Billed {yearlyProductInfo?.period || 'yearly'} after free trial.
+                </Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -311,7 +378,12 @@ const PaymentScreen = () => {
                       {isLoading ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
-                        <Text className="text-white font-semibold text-[17px]">{profile?.has_used_trial ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` : 'Start 7-Day Free Trial'}</Text>
+                        <Text className="text-white font-semibold text-[17px]">
+                          {profile?.has_used_trial 
+                            ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` 
+                            : `Start ${currentProductInfo?.offerPeriodWithUnit || '7-Day'} Free Trial`
+                          }
+                        </Text>
                       )}
                     </View>
                   </TouchableOpacity>

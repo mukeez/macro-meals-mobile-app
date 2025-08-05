@@ -1,0 +1,89 @@
+name: Staging Build
+
+on:
+  push:
+    branches: [ develop, staging ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to build for'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - 'staging'
+          - 'development'
+
+env:
+  NODE_VERSION: 18.x
+
+jobs:
+  build-staging:
+    name: Build Staging App
+    runs-on: ubuntu-latest
+    outputs:
+      ios-build-id: ${{ steps.build-ios.outputs.build-id }}
+      android-build-id: ${{ steps.build-android.outputs.build-id }}
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build iOS staging app
+        id: build-ios
+        run: |
+          BUILD_OUTPUT=$(eas build --platform ios --profile staging --non-interactive --json)
+          BUILD_ID=$(echo $BUILD_OUTPUT | jq -r '.[0].id')
+          echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
+          echo "iOS build started with ID: $BUILD_ID"
+
+      - name: Build Android staging app
+        id: build-android
+        run: |
+          BUILD_OUTPUT=$(eas build --platform android --profile staging --non-interactive --json)
+          BUILD_ID=$(echo $BUILD_OUTPUT | jq -r '.[0].id')
+          echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
+          echo "Android build started with ID: $BUILD_ID"
+
+      - name: Wait for iOS build to complete
+        run: |
+          eas build:wait --id ${{ steps.build-ios.outputs.build-id }}
+
+      - name: Wait for Android build to complete
+        run: |
+          eas build:wait --id ${{ steps.build-android.outputs.build-id }}
+
+  notify:
+    name: Notify Build Complete
+    needs: build-staging
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Notify on success
+        if: needs.build-staging.result == 'success'
+        run: |
+          echo "✅ Staging builds completed successfully!"
+          echo "iOS Build ID: ${{ needs.build-staging.outputs.ios-build-id }}"
+          echo "Android Build ID: ${{ needs.build-staging.outputs.android-build-id }}"
+
+      - name: Notify on failure
+        if: needs.build-staging.result == 'failure'
+        run: |
+          echo "❌ Staging builds failed!"
+          echo "Check the build logs for more details." 

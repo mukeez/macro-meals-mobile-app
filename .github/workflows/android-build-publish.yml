@@ -1,12 +1,12 @@
-name: iOS Build and Publish
+name: Android Build and Publish
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
     inputs:
-      submit_to_testflight:
-        description: 'Submit Macromeals to TestFlight'
+      submit_to_play_store:
+        description: 'Submit Macromeals to Google Play Store'
         required: true
         default: 'false'
         type: choice
@@ -18,8 +18,8 @@ env:
   NODE_VERSION: 18.x
 
 jobs:
-  build-ios:
-    name: Build iOS App
+  build-android:
+    name: Build Android App
     runs-on: ubuntu-latest
     outputs:
       build-id: ${{ steps.build.outputs.build-id }}
@@ -43,10 +43,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Build iOS app
+      - name: Build Android app
         id: build
         run: |
-          BUILD_OUTPUT=$(eas build --platform ios --profile production --non-interactive --json)
+          BUILD_OUTPUT=$(eas build --platform android --profile production --non-interactive --json)
           BUILD_ID=$(echo $BUILD_OUTPUT | jq -r '.[0].id')
           echo "build-id=$BUILD_ID" >> $GITHUB_OUTPUT
           echo "Build started with ID: $BUILD_ID"
@@ -55,39 +55,10 @@ jobs:
         run: |
           eas build:wait --id ${{ steps.build.outputs.build-id }}
 
-  submit-to-testflight:
-    name: Submit to TestFlight
-    needs: build-ios
-    if: github.event.inputs.submit_to_testflight == 'true' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Setup repo
-        uses: actions/checkout@v3
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: yarn
-
-      - name: Setup Expo and EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Submit to TestFlight
-        run: |
-          eas submit --platform ios --id ${{ needs.build-ios.outputs.build-id }} --non-interactive
-
-  submit-to-app-store:
-    name: Submit to App Store
-    needs: build-ios
-    if: github.event.inputs.submit_to_testflight == 'false' && github.ref == 'refs/heads/main'
+  submit-to-play-store:
+    name: Submit to Google Play Store
+    needs: build-android
+    if: github.event.inputs.submit_to_play_store == 'true' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
 
@@ -110,6 +81,6 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Submit to App Store
+      - name: Submit to Google Play Store
         run: |
-          eas submit --platform ios --id ${{ needs.build-ios.outputs.build-id }} --non-interactive --submit-to-app-store
+          eas submit --platform android --id ${{ needs.build-android.outputs.build-id }} --non-interactive 

@@ -17,6 +17,7 @@ import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 import useStore from 'src/store/useStore';
 import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
 import { HasMacrosContext } from '../contexts/HasMacrosContext';
+import { IsProContext } from '../contexts/IsProContext';
 import { useContext } from 'react';
 import Config from 'react-native-config';
 
@@ -32,6 +33,7 @@ export const GoalSetupScreen: React.FC = () => {
     const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
     const { getValue, debugLogAllValues } = useRemoteConfigContext();
     const { setReadyForDashboard } = useContext(HasMacrosContext);
+    const { isPro, setIsPro } = useContext(IsProContext);
     
     // Only allow dev_mode to bypass payment in non-production environments
     let devMode = false;
@@ -135,15 +137,33 @@ export const GoalSetupScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity className="absolute bottom-5 left-0 right-0 bg-primary h-[56px] rounded-[1000px] p-4 flex-row items-center justify-center gap-3"
-                onPress={() => {
+                onPress={async () => {
                     const allCompleted = completed[0]?.every(Boolean) && completed[1]?.every(Boolean) && completed[2]?.every(Boolean);
                     if (allCompleted) {
-                        if (devMode) {
-                            // In dev mode, bypass PaymentScreen and go directly to dashboard
-                            setHasBeenPromptedForGoals(false);
-                            setReadyForDashboard(true);
-                            return;
-                        } else {
+                        // Check subscription status from RevenueCat before routing
+                        try {
+                            const { checkSubscriptionStatus } = await import('../services/subscriptionChecker');
+                            const subscriptionStatus = await checkSubscriptionStatus();
+                            
+                            console.log('🔍 GoalSetup - Subscription status check:', subscriptionStatus);
+                            setIsPro(subscriptionStatus.isPro);
+                            
+                            if (subscriptionStatus.isPro || devMode) {
+                                // User has subscription or dev mode - go to dashboard
+                                console.log('🔍 GoalSetup - User is pro or dev mode, going to dashboard');
+                                setHasBeenPromptedForGoals(false);
+                                setReadyForDashboard(true);
+                                return;
+                            } else {
+                                // User needs subscription - go to payment screen
+                                console.log('🔍 GoalSetup - User needs subscription, going to payment screen');
+                                navigation.navigate('PaymentScreen');
+                                setHasBeenPromptedForGoals(false);
+                                return;
+                            }
+                        } catch (error) {
+                            console.error('❌ GoalSetup - Failed to check subscription status:', error);
+                            // Fallback to payment screen if check fails
                             navigation.navigate('PaymentScreen');
                             setHasBeenPromptedForGoals(false);
                             return;
