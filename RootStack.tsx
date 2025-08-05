@@ -1,7 +1,8 @@
-import React, { useEffect, useContext } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import { Platform } from "react-native";
 import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
 import Config from 'react-native-config';
+import { checkSubscriptionStatus } from './src/services/subscriptionChecker';
 import { HasMacrosContext } from './src/contexts/HasMacrosContext';
 import { IsProContext } from './src/contexts/IsProContext';
 import MealFinderScreen from "src/screens/MealFinderScreen";
@@ -63,7 +64,35 @@ export function RootStack({
 }) {
   // Get values from context instead of props for better reactivity
   const { hasMacros, readyForDashboard } = useContext(HasMacrosContext);
-  const { isPro } = useContext(IsProContext);
+  const { isPro, setIsPro } = useContext(IsProContext);
+  
+  // Add subscription check to ensure we have latest status
+  useEffect(() => {
+    const recheckSubscription = async () => {
+      if (isAuthenticated) {
+        try {
+          console.log('🔍 RootStack - Checking subscription status...');
+          const status = await checkSubscriptionStatus();
+          
+          console.log('🔍 RootStack - Subscription status check result:', {
+            oldIsPro: isPro,
+            newIsPro: status.isPro,
+            isOnTrial: status.isOnTrial,
+            hasActiveSubscription: status.hasActiveSubscription,
+            willUpdate: status.isPro !== isPro
+          });
+          
+          // Always update isPro state to ensure we have the latest from RevenueCat
+          setIsPro(status.isPro);
+        } catch (error) {
+          console.error('❌ RootStack - Failed to check subscription status:', error);
+        }
+      }
+    };
+    
+    // Check subscription when component mounts or when authentication changes
+    recheckSubscription();
+  }, [isAuthenticated, isPro, setIsPro]);
   
 
   // Get dev mode from remote config (ignored in production)

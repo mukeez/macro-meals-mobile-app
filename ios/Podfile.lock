@@ -237,6 +237,8 @@ PODS:
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
+  - PurchasesHybridCommon (16.0.2):
+    - RevenueCat (= 5.33.1)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2085,6 +2087,7 @@ PODS:
     - React-logger (= 0.79.5)
     - React-perflogger (= 0.79.5)
     - React-utils (= 0.79.5)
+  - RevenueCat (5.33.1)
   - RNAppleAuthentication (2.4.1):
     - React-Core
   - RNCAsyncStorage (2.1.2):
@@ -2281,6 +2284,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNPurchases (9.1.0):
+    - PurchasesHybridCommon (= 16.0.2)
+    - React-Core
   - RNReanimated (3.17.4):
     - DoubleConversion
     - glog
@@ -2505,7 +2511,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNVectorIcons (10.2.0):
+  - RNVectorIcons (10.3.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2659,6 +2665,7 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
+  - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
@@ -2692,6 +2699,8 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - PromisesSwift
+    - PurchasesHybridCommon
+    - RevenueCat
     - SDWebImage
     - SDWebImageAVIFCoder
     - SDWebImageSVGCoder
@@ -2917,6 +2926,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@notifee/react-native"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
+  RNPurchases:
+    :path: "../node_modules/react-native-purchases"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -2980,6 +2991,7 @@ SPEC CHECKSUMS:
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
+  PurchasesHybridCommon: ae7a0a6e105ecdde3e8816a004e57f0a2a7b9261
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
   RCTDeprecation: 5f638f65935e273753b1f31a365db6a8d6dc53b5
   RCTRequired: 8b46a520ea9071e2bc47d474aa9ca31b4a935bd8
@@ -3048,6 +3060,7 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: f3e842e6cb5a825b6918a74a38402ba1409411f8
   ReactCodegen: 542dbcd3d677ed7c4fe69e28b7c492998f48c9db
   ReactCommon: 1aa48867a0fc71a2b4f9e8a1529f5673648354f3
+  RevenueCat: b0ed01125b05a45b8264a2951ad68acb61942038
   RNAppleAuthentication: c3dddf5918126c9aae85dc2e2ce9fb87835e9e04
   RNCAsyncStorage: 646c1bf2ebfc78d6632a3b0399f471fba8101e73
   RNCPicker: c424533f7747c9463b35d294328e7b2b4d2baf31
@@ -3062,10 +3075,11 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 34668f9c7a67213c8949b356404bcc7facb1b946
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNPermissions: 913e830a18973804e2ca7cd38786e8d0c8f821eb
+  RNPurchases: 791e8c81fa5bbd192b77894740c63bd9f813a5ac
   RNReanimated: d48e87df3d70586eb405a77240aa0dafaa857ee4
   RNScreens: 90b905d545a5ebbe976985702b8a39e3475727b2
   RNSVG: 4470464e129f6bc58b78b961850b054dbbea8ef7
-  RNVectorIcons: fe9afebb925c9ce70f441b611d679e402ecb3f6e
+  RNVectorIcons: d7d40d54aa3281f36b840bc1caaefa163166af34
   SDWebImage: f29024626962457f3470184232766516dee8dfea
   SDWebImageAVIFCoder: 00310d246aab3232ce77f1d8f0076f8c4b021d90
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c

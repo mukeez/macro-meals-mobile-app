@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: 18.x
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Run ESLint
+        run: npx eslint . --ext .ts,.tsx --max-warnings 0
+
+      - name: Run tests (if available)
+        run: yarn test --if-present
+
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Check EAS build configuration
+        run: eas build:configure
+
+      - name: Validate EAS configuration
+        run: eas build:list --limit 1 --non-interactive 

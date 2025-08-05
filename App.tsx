@@ -23,6 +23,7 @@ import { IsProContext } from 'src/contexts/IsProContext';
 import Config from 'react-native-config';
 import { validateSession, SessionValidationResult } from './src/services/sessionService';
 import { debugService } from './src/services/debugService';
+import revenueCatService from './src/services/revenueCatService';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -184,6 +185,15 @@ export default function App() {
             }
             await initializeFirebase();
             
+            // Initialize RevenueCat
+            try {
+                await revenueCatService.initialize();
+                console.log('✅ RevenueCat initialized successfully');
+            } catch (error) {
+                console.error('❌ RevenueCat initialization failed:', error);
+                // Don't fail the app if RevenueCat fails to initialize
+            }
+            
             try {
                 // Check onboarding status first
                 const onboardingCompleted = await AsyncStorage.getItem('isOnboardingCompleted');
@@ -237,9 +247,24 @@ export default function App() {
 
                     // Set states in correct order
                     setHasMacros(profile.has_macros);
-                    setIsPro(!!profile.is_pro); // Convert to boolean to handle undefined/null
                     setReadyForDashboard(profile.has_macros);
                     setAuthenticated(true, profile.id, profile.id);
+                    
+                    // Set user ID in RevenueCat after successful authentication
+                    try {
+                        await revenueCatService.setUserID(profile.id);
+                        console.log('✅ RevenueCat user ID set:', profile.id);
+                        
+                        // Check subscription status from RevenueCat (source of truth)
+                        const { syncSubscriptionStatus } = await import('./src/services/subscriptionChecker');
+                        const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
+                        
+                        console.log('🔍 App.tsx - RevenueCat subscription status:', subscriptionStatus);
+                    } catch (error) {
+                        console.error('❌ Failed to set RevenueCat user ID or check subscription:', error);
+                        // Fallback to backend isPro value if RevenueCat fails
+                        setIsPro(!!profile.is_pro);
+                    }
                     
                     console.log('🔍 App.tsx - Session restored successfully:', {
                         hasMacros: profile.has_macros,

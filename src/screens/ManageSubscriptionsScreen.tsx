@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { 
+import {
   View, 
   Text, 
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator, 
   Alert, 
-  Modal,
-  Platform
+  Platform,
+  Linking
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import { paymentService } from '../services/paymentService';
 import { useMixpanel } from '@macro-meals/mixpanel';
+import revenueCatService from '../services/revenueCatService';
 
 interface SubscriptionDetails {
   amount: number;
@@ -40,22 +41,81 @@ const ManageSubscriptionsScreen: React.FC = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const mixpanel = useMixpanel();
 
+
   useEffect(() => {
+  
     fetchSubscriptionDetails();
   }, []);
 
   const fetchSubscriptionDetails = async () => {
+    // Commented out backend call
+    // const data = await paymentService.getSubscriptionDetails();
+
     try {
       setLoading(true);
-      const data = await paymentService.getSubscriptionDetails();
-      console.log('Subscription details:', data);
-      console.log('🔍 ManageSubscriptions - Subscription state:', {
-        has_subscription: data?.has_subscription,
-        cancel_at_period_end: data?.cancel_at_period_end,
-        status: data?.status,
-        willShowResubscribe: data?.cancel_at_period_end
-      });
-      setSubscription(data);
+
+      // Use RevenueCat customerInfo
+      const customerInfo = await revenueCatService.getCustomerInfo();
+      console.log('🔍 ManageSubscriptions - Customer info:', JSON.stringify(customerInfo, null, 2));
+
+      // Extract active entitlement (assume first active entitlement is the subscription)
+      const activeEntitlement = customerInfo.entitlements?.active && Object.values(customerInfo.entitlements.active)[0];
+      const productId = activeEntitlement?.productIdentifier;
+      console.log('🔍 ManageSubscriptions - Product ID:', productId);
+      const subscription = productId ? customerInfo.subscriptionsByProductIdentifier[productId] : null;
+      
+      // Get real price from offerings (not from subscription which shows $0 during trial)
+      let realPrice = 0;
+      let realCurrency = 'USD';
+      
+      if (productId) {
+        try {
+          const offerings = await revenueCatService.getOfferings();
+          const matchedPackage = offerings?.availablePackages?.find(
+            pkg => pkg.product.identifier === productId
+          );
+          if (matchedPackage) {
+            realPrice = matchedPackage.product.price;
+            realCurrency = matchedPackage.product.currencyCode;
+            console.log('🔍 ManageSubscriptions - Real price from offerings:', {
+              price: realPrice,
+              currency: realCurrency,
+              priceString: matchedPackage.product.priceString
+            });
+          }
+        } catch (error) {
+          console.error('⚠️ Failed to get real price from offerings:', error);
+        }
+      }
+      
+      if (subscription) {
+        console.log('🔍 ManageSubscriptions - Full subscription:', JSON.stringify(subscription, null, 2));
+        console.log('🔍 ManageSubscriptions - Trial price:', JSON.stringify((subscription as any).price, null, 2));
+      }
+
+      // Map RevenueCat data to SubscriptionDetails shape
+      const mapped: SubscriptionDetails | null = subscription
+        ? {
+            amount: realPrice > 0 ? realPrice : ((subscription as any).price?.amount ?? 0),
+            billing_interval: subscription.periodType === 'TRIAL' ? 'trial' : 'regular',
+            cancel_at_period_end: !subscription.willRenew,
+            created: subscription.originalPurchaseDate || '',
+            currency: realCurrency || (subscription as any).price?.currency || 'USD',
+            current_period_end: subscription.expiresDate || '',
+            current_period_start: subscription.purchaseDate || '',
+            has_subscription: subscription.isActive,
+            next_billing_date: subscription.expiresDate || '',
+            plan: 'premium',
+            plan_name: 'Premium Plan',
+            status: subscription.isActive
+              ? (subscription.periodType === 'TRIAL' ? 'trialing' : 'active')
+              : 'canceled',
+            subscription_id: productId || '',
+            trial_end: subscription.periodType === 'TRIAL' ? (subscription.expiresDate || '') : '',
+          }
+        : null;
+
+      setSubscription(mapped);
     } catch (error: any) {
       console.error('Failed to fetch subscription details:', error);
       const errorMessage = error.message || 'Failed to load subscription details';
@@ -114,93 +174,53 @@ const ManageSubscriptionsScreen: React.FC = () => {
   };
 
   const handleCancelSubscription = () => {
-    setShowCancelModal(true);
+    // With RevenueCat, users must cancel through Apple/Google
+    Alert.alert(
+      'Cancel Subscription',
+      'To cancel your subscription, please use your device settings:\n\niOS: Settings → Apple ID → Subscriptions\nAndroid: Google Play Store → Subscriptions',
+      [
+        { text: 'Open Settings', onPress: openSubscriptionSettings },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
+  };
+
+  const openSubscriptionSettings = () => {
+    // Open the platform's subscription management
+    try {
+      if (Platform.OS === 'ios') {
+        // iOS: Opens App Store subscription management
+        const url = 'https://apps.apple.com/account/subscriptions';
+        Linking.openURL(url);
+      } else {
+        // Android: Opens Google Play subscription management  
+        const url = 'https://play.google.com/store/account/subscriptions';
+        Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error('Failed to open subscription settings:', error);
+    }
   };
 
   const handleReactivateSubscription = async (subscription_id: string) => {
-    try {
-      setReactivating(true);
-
-      const isResubscribing = subscription?.cancel_at_period_end;
-      const eventName = isResubscribing ? 'subscription_resubscribed' : 'subscription_reactivated';
-
-      // Track reactivation/resubscription in Mixpanel
-      mixpanel?.track({
-        name: eventName,
-        properties: {
-          plan: subscription?.plan || 'unknown',
-          plan_name: subscription?.plan_name || 'unknown',
-          billing_interval: subscription?.billing_interval || 'unknown',
-          amount: subscription?.amount || 0,
-          currency: subscription?.currency || 'unknown',
-          was_cancelled: subscription?.cancel_at_period_end || false
-        }
-      });
-
-      // Call reactivation without subscription_id since the backend doesn't provide it for cancelled subscriptions
-      await paymentService.reactivateSubscription(subscription_id);
-
-      // Refresh subscription details
-      await fetchSubscriptionDetails();
-
-      // Show success message as a toast-style notification
-      const successMessage = isResubscribing 
-        ? 'Subscription reactivated. Your plan will continue after the current period ends.'
-        : 'Subscription reactivated. Your plan remains active.';
-        
-      Alert.alert(
-        'Success',
-        successMessage,
-        [{ text: 'OK' }],
-        { cancelable: true }
-      );
-    } catch (error) {
-      console.error('Failed to reactivate subscription:', error);
-      Alert.alert('Error', 'Failed to reactivate subscription. Please try again.');
-    } finally {
-      setReactivating(false);
-    }
+    // With RevenueCat, users need to resubscribe through the purchase flow
+    Alert.alert(
+      'Reactivate Subscription',
+      'To reactivate your subscription, you\'ll need to subscribe again through our payment screen.',
+      [
+        { 
+          text: 'Subscribe Again', 
+          onPress: () => {
+            // Navigate back to payment screen to resubscribe
+            navigation.navigate('PaymentScreen' as never);
+          }
+        },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
   };
 
-  const confirmCancelSubscription = async () => {
-    if (!subscription) return;
-
-    try {
-      setCancelling(true);
-      setShowCancelModal(false);
-
-      // Track cancellation in Mixpanel
-      mixpanel?.track({
-        name: 'subscription_cancelled',
-        properties: {
-          plan: subscription.plan,
-          plan_name: subscription.plan_name,
-          billing_interval: subscription.billing_interval,
-          amount: subscription.amount,
-          currency: subscription.currency
-        }
-      });
-
-      await paymentService.cancelSubscription(
-        subscription.subscription_id,
-        // subscription.status,
-        subscription.cancel_at_period_end,
-      );
-
-      // Refresh subscription details
-      await fetchSubscriptionDetails();
-
-      Alert.alert(
-        'Subscription Cancelled',
-        `Your subscription has been cancelled. You'll continue to have access until ${formatDate(subscription.current_period_end)}.`
-      );
-    } catch (error) {
-      console.error('Failed to cancel subscription:', error);
-      Alert.alert('Error', 'Failed to cancel subscription. Please try again.');
-    } finally {
-      setCancelling(false);
-    }
-  };
+  // Remove old backend-based cancellation since RevenueCat uses platform management
 
 //   if (loading) {
 //     return (
@@ -362,69 +382,7 @@ const ManageSubscriptionsScreen: React.FC = () => {
 
 
 
-        {/* Cancellation Confirmation Modal */}
-        <Modal
-          visible={showCancelModal}
-          transparent={true}
-          animationType={Platform.OS === 'ios' ? 'fade' : 'slide'}
-          onRequestClose={() => setShowCancelModal(false)}
-        >
-          <View className="flex-1 bg-black bg-opacity-50 justify-center items-center px-6">
-            <View className={`bg-white ${Platform.OS === 'ios' ? 'rounded-2xl' : 'rounded-t-3xl'} p-6 w-full ${Platform.OS === 'ios' ? 'max-w-sm' : 'max-w-full'}`}>
-              <Text className={`${Platform.OS === 'ios' ? 'text-xl' : 'text-lg'} font-semibold text-[#222] text-center mb-4`}>
-                Are you sure you want to cancel?
-              </Text>
-              
-              <Text className="text-base text-[#666] text-center mb-6 leading-5">
-                You'll lose access to premium features at the end of your current billing period. You can resubscribe anytime from your account settings.
-              </Text>
-
-              {Platform.OS === 'ios' ? (
-                // iOS-style buttons (side by side)
-                <View className="flex-row space-x-3">
-                  <TouchableOpacity
-                    className="flex-1 py-3 px-4 border border-[#ddd] rounded-xl"
-                    onPress={() => setShowCancelModal(false)}
-                  >
-                    <Text className="text-base text-[#666] text-center font-medium">
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    className="flex-1 py-3 px-4 bg-punchRed rounded-xl"
-                    onPress={confirmCancelSubscription}
-                  >
-                    <Text className="text-base text-white text-center font-medium">
-                      Yes, Cancel
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                // Android-style buttons (stacked)
-                <View className="space-y-3">
-                  <TouchableOpacity
-                    className="w-full py-4 px-4 bg-punchRed rounded-xl"
-                    onPress={confirmCancelSubscription}
-                  >
-                    <Text className="text-base text-white text-center font-medium">
-                      Yes, Cancel Subscription
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    className="w-full py-4 px-4 border border-[#ddd] rounded-xl"
-                    onPress={() => setShowCancelModal(false)}
-                  >
-                    <Text className="text-base text-[#666] text-center font-medium">
-                      Keep Subscription
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </View>
-        </Modal>
+        {/* Modal removed - RevenueCat uses platform-native subscription management */}
                 </>
             )
         }           

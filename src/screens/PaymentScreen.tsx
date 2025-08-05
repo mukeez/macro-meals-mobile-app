@@ -4,9 +4,6 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
-import { WebView } from 'react-native-webview';
-
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
@@ -17,14 +14,14 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Modal,
-  Linking
+  Modal
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import useStore from '../store/useStore'; 
 import { paymentService } from '../services/paymentService';
 import { userService } from '../services/userService';
+import revenueCatService from '../services/revenueCatService';
 import CustomSafeAreaView from 'src/components/CustomSafeAreaView';
 import { IsProContext } from 'src/contexts/IsProContext';
 import Config from 'react-native-config';
@@ -44,6 +41,35 @@ type Profile = {
   has_macros?: boolean;
   meal_reminder_preferences_set?: boolean;
   is_active?: boolean;
+};
+
+// Helper function to get product information from RevenueCat offerings
+const getProductInfo = (offerings: any, planType: 'monthly' | 'yearly') => {
+  if (!offerings?.availablePackages) return null;
+  
+  const packageId = planType === 'monthly' ? 'com.macromeals.app.subscription.premium.monthly' : 'com.macromeals.app.subscription.premium.annual';
+  const pkg = offerings.availablePackages.find(
+    (p: any) => p.product.identifier === packageId
+  );
+  
+  if (!pkg) return null;
+  
+  const product = pkg.product;
+  
+  return {
+    price: product.priceString || product.price,
+    pricePerPeriod: product.priceString || `${product.price}/${product.period}`,
+    period: product.period,
+    periodWithUnit: product.period === 'month' ? '1 month' : 
+                   product.period === 'year' ? '1 year' : 
+                   product.period,
+    offerPeriod: product.introductoryPrice?.period || 'week',
+    offerPeriodWithUnit: product.introductoryPrice?.period === 'week' ? '1 week' :
+                        product.introductoryPrice?.period === 'month' ? '1 month' :
+                        product.introductoryPrice?.period || '1 week',
+    currencySymbol: product.currencySymbol || '£',
+    originalPrice: product.originalPriceString || product.priceString
+  };
 };
 
 const Pager = ()=>{
@@ -155,47 +181,117 @@ const PaymentScreen = () => {
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const { setReadyForDashboard } = useContext(HasMacrosContext);
   const [amount, setAmount] = useState(9.99);
-  const [showWebView, setShowWebView] = useState(false);
-  const [checkoutUrl, setCheckoutUrl] = useState('');
+
   const { isPro, setIsPro } = useContext(IsProContext);
+  const [offerings, setOfferings] = useState<any>(null);
+
+  // Get product information for current selected plan
+  const currentProductInfo = getProductInfo(offerings, selectedPlan as 'monthly' | 'yearly');
+  const monthlyProductInfo = getProductInfo(offerings, 'monthly');
+  const yearlyProductInfo = getProductInfo(offerings, 'yearly');
+
+  // Load RevenueCat offerings when component mounts
+  useEffect(() => {
+    console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
+    const loadOfferings = async () => {
+      try {
+        const currentOfferings = await revenueCatService.getOfferings();
+        setOfferings(currentOfferings);
+      } catch (error) {
+        console.error('Failed to load offerings:', error);
+      }
+    };
+    
+    loadOfferings();
+  }, []);
 
   const handleTrialSubscription = async () => {
     try {
       setIsLoading(true);
-      // Get user profile for checkout
-      const profile = await userService.getProfile();
-      if (!profile?.email || !profile?.id) {
-        throw new Error('User profile not found');
+      
+      // Get RevenueCat offerings
+      const currentOfferings = await revenueCatService.getOfferings();
+      if (!currentOfferings) {
+        throw new Error('No subscription offerings available');
       }
       
-      const checkoutResponse = await paymentService.checkout(
-        profile.email,
-        selectedPlan,
-        profile.id
-      );
-      
-      if (checkoutResponse?.checkout_url) {
-        setCheckoutUrl(checkoutResponse.checkout_url);
-        setShowWebView(true);
+      // Find the appropriate package based on selected plan
+      let packageToPurchase;
+      if (selectedPlan === 'monthly') {
+        packageToPurchase = currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.monthly'
+        );
       } else {
-        throw new Error('No checkout URL received');
+        packageToPurchase = currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.annual'
+        );
+      }
+      
+      if (!packageToPurchase) {
+        throw new Error(`No package found for ${selectedPlan} plan`);
+      }
+      
+      // Purchase the package
+      const customerInfo = await revenueCatService.purchasePackage(packageToPurchase);
+      console.log('🔍 PaymentScreen - Purchase completed, customerInfo:', JSON.stringify(customerInfo, null, 2));
+      
+      // Check if purchase was successful by verifying active entitlements
+      const entitlementId = 'MacroMeals Premium';
+      const hasActiveEntitlement = customerInfo.entitlements.active[entitlementId] !== undefined;
+      
+      console.log('🔍 PaymentScreen - Entitlement check:', {
+        entitlementId,
+        hasActiveEntitlement,
+        activeEntitlements: Object.keys(customerInfo.entitlements.active)
+      });
+      
+      if (hasActiveEntitlement) {
+        console.log('✅ Purchase successful, setting isPro to true');
+        
+        // Update local state
+        setHasBeenPromptedForGoals(false);
+        setReadyForDashboard(true);
+        setIsPro(true);
+        
+        // Update user profile on backend (optional, if you want to sync with your backend)
+        try {
+          await userService.updateProfile({ is_pro: true });
+          console.log('✅ Backend profile updated with pro status');
+        } catch (error) {
+          console.error('⚠️ Failed to update backend profile, but RevenueCat subscription is active:', error);
+        }
+        
+        Alert.alert(
+          "You're in", 
+          "Your subscription is confirmed. Let's hit those goals, one meal at a time.",
+          [
+            {
+              text: "Continue",
+              onPress: () => {
+                // Force navigation to Dashboard using CommonActions
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [
+                      {
+                        name: 'Dashboard',
+                      },
+                    ],
+                  })
+                );
+              }
+            }
+          ]
+        );
+      } else {
+        throw new Error('Purchase completed but no active entitlements found. Please contact support.');
       }
     } catch (error) {
       console.error('Error in trial subscription:', error);
       
-      // Extract error message from API response
-      let errorMessage = 'Failed to start checkout process. Please try again.';
+      let errorMessage = 'Failed to complete purchase. Please try again.';
       
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
-        if (axiosError.response?.data?.detail) {
-          errorMessage = axiosError.response.data.detail;
-        } else if (axiosError.response?.data?.message) {
-          errorMessage = axiosError.response.data.message;
-        } else if (axiosError.message) {
-          errorMessage = axiosError.message;
-        }
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         errorMessage = error.message;
       }
       
@@ -218,7 +314,7 @@ const PaymentScreen = () => {
               <TouchableOpacity activeOpacity={0.8} className={`flex-1 bg-white rounded-2xl ${selectedPlan === 'monthly' ? 'border-primaryLight border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
                 e.preventDefault();
                 setSelectedPlan('monthly');
-                setAmount(9.99);
+                setAmount(monthlyProductInfo?.price || 9.99);
               }}>
                 
                 <View className='w-full pl-3 pt-6 pb-3'>
@@ -227,10 +323,14 @@ const PaymentScreen = () => {
                   {selectedPlan === 'monthly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
                 </View>
                 <View className='mt-3'>
-                  <Text className='font-medium text-[15px]'>£9.99/mo</Text>
+                  <Text className='font-medium text-[15px]'>
+                    {monthlyProductInfo?.pricePerPeriod || '£9.99/mo'}
+                  </Text>
                   <Text className='font-medium text-[15px]'></Text>
                 </View>
-                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>
+                  Billed {monthlyProductInfo?.period || 'monthly'} after free trial.
+                </Text>
                 </View>
                
                 
@@ -240,7 +340,7 @@ const PaymentScreen = () => {
               <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
                e.preventDefault();
                setSelectedPlan('yearly');
-               setAmount(70.00);
+               setAmount(yearlyProductInfo?.price || 70.00);
               }}>
                 <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
                 <Text className="text-white text-xs font-medium justify-center items-center">30% savings</Text>
@@ -251,10 +351,18 @@ const PaymentScreen = () => {
                   {selectedPlan === 'yearly' && <Image source={IMAGE_CONSTANTS.checkPrimary} className='w-[16px] h-[16px] mr-5' />}
                 </View>
                 <View className='mt-3'>
-                  <Text className='font-medium text-[15px]'>£70.00/yr</Text>
-                  <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>£99.99/yr</Text>
+                  <Text className='font-medium text-[15px]'>
+                    {yearlyProductInfo?.pricePerPeriod || '£70.00/yr'}
+                  </Text>
+                  {yearlyProductInfo?.originalPrice && (
+                    <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>
+                      {yearlyProductInfo.originalPrice}
+                    </Text>
+                  )}
                 </View>
-                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>Billed yearly after free trial.</Text>
+                <Text className='mt-3 mb-3 text-[12px] text-[#4F4F4F]'>
+                  Billed {yearlyProductInfo?.period || 'yearly'} after free trial.
+                </Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -270,7 +378,12 @@ const PaymentScreen = () => {
                       {isLoading ? (
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
-                        <Text className="text-white font-semibold text-[17px]">{profile?.has_used_trial ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` : 'Start 7-Day Free Trial'}</Text>
+                        <Text className="text-white font-semibold text-[17px]">
+                          {profile?.has_used_trial 
+                            ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` 
+                            : `Start ${currentProductInfo?.offerPeriodWithUnit || '7-Day'} Free Trial`
+                          }
+                        </Text>
                       )}
                     </View>
                   </TouchableOpacity>
@@ -278,94 +391,7 @@ const PaymentScreen = () => {
           </View>
         </View>
         
-        {/* WebView Modal for Checkout */}
-        <Modal
-          visible={showWebView}
-          animationType="slide"
-          onRequestClose={() => setShowWebView(false)}
-        >
-          <View className="flex-1">
-            <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200">
-              <TouchableOpacity onPress={() => setShowWebView(false)}>
-                <Text className="text-blue-500 text-lg">Cancel</Text>
-              </TouchableOpacity>
-              <Text className="text-lg font-semibold">Complete Payment</Text>
-              <View style={{ width: 60 }} />
-            </View>
-            <View className="flex-1">
-              <WebView 
-                source={{ uri: checkoutUrl }}
-                onNavigationStateChange={(navState) => {
-                  // Handle successful payment completion
-                  if (navState.url.includes('success') || navState.url.includes('completed')) {
-                    setShowWebView(false);
-                    console.log("🔍 PaymentScreen - Payment successful, setting isPro to true");
-                    Alert.alert(
-                      "You're in", 
-                      "Your subscription is confirmed. Let's hit those goals, one meal at a time.",
-                      [
-                        {
-                          text: "Continue",
-                          onPress: () => {
-                            console.log("🔍 PaymentScreen - User confirmed, updating states");
-                            setHasBeenPromptedForGoals(false);
-                            setReadyForDashboard(true);
-                            setIsPro(true);
-                            console.log("🔍 PaymentScreen - States updated: readyForDashboard=true, isPro=true");
-                            
-                            // Add a small delay to ensure state updates propagate
-                            setTimeout(() => {
-                              console.log("🔍 PaymentScreen - After delay, checking if navigation should trigger");
-                              
-                              // Force navigation to Dashboard using CommonActions
-                              navigation.dispatch(
-                                CommonActions.reset({
-                                  index: 0,
-                                  routes: [
-                                    {
-                                      name: 'Dashboard',
-                                    },
-                                  ],
-                                })
-                              );
-                              console.log("🔍 PaymentScreen - Forced navigation to Dashboard");
-                            }, 100);
-                          }
-                        }
-                      ]
-                    );
-                  }
-                  // Handle payment cancellation
-                  if (navState.url.includes('canceled') || navState.url.includes('cancelled')) {
-                    setShowWebView(false);
-                    Alert.alert("Payment Cancelled", "Your payment was cancelled. You can try again anytime.");
-                  }
-                }}
-                onError={(syntheticEvent) => {
-                  const { nativeEvent } = syntheticEvent;
-                  console.warn('WebView error: ', nativeEvent);
-                 // Alert.alert("Error", "Failed to load checkout page. Please try again.");
-                  setShowWebView(false);
-                }}
-                onHttpError={(syntheticEvent) => {
-                  const { nativeEvent } = syntheticEvent;
-                  console.warn('WebView HTTP error: ', nativeEvent);
-                }}
-                startInLoadingState={true}
-                renderLoading={() => (
-                  <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#009688" />
-                    <Text className="mt-4 text-gray-600">Loading checkout...</Text>
-                  </View>
-                )}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-                allowsInlineMediaPlayback={true}
-                mediaPlaybackRequiresUserAction={false}
-              />
-            </View>
-          </View>
-        </Modal>
+
       {/* </CustomSafeAreaView> */}
     </>
   )

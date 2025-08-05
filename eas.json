@@ -28,11 +28,11 @@
         "buildConfiguration": "Release",
         "autoIncrement": false,
         "uploadArtifacts": true,
-        "bundleIdentifier": "com.macromeals.app.stg"
+        "bundleIdentifier": "com.macromeals.app"
       },
       "android": {
         "buildType": "apk",
-        "applicationId": "com.macromeals.app.stg"
+        "applicationId": "com.macromeals.app"
       }
     },
     "preview": {
