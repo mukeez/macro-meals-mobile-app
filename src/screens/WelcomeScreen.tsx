@@ -2,7 +2,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
@@ -10,10 +9,8 @@ import { RootStackParamList } from '../types/navigation';
 
 
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'WelcomeScreen'>;
-
 export const WelcomeScreen: React.FC = () => {
-    const navigation = useNavigation<NavigationProp>();
+    const navigation = useNavigation<any>();
 
     const handleGetStarted = () => {
         navigation.navigate('SignupScreen');

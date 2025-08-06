@@ -7,24 +7,27 @@ import {
     FlatList,
     ActivityIndicator,
     RefreshControl,
-    Alert,
-    Platform
+    Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import * as Location from 'expo-location';
+import { RootStackParamList } from '../types/navigation';
 
 import { MealCard } from '../components/MealCard';
 import { MacroDisplay } from '../components/MacroDisplay';
 import useStore from '../store/useStore';
 import { mealService } from '../services/mealService';
 import { locationService } from '../services/locationService';
-import { Meal, UserPreferences } from '../types';
+import { Meal } from '../types';
 
 /**
  * Screen for displaying nearby meal suggestions based on user's macro goals
  */
+type NearbyMealsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'NearbyMeals'>;
+
 export const NearbyMealsScreen: React.FC = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NearbyMealsScreenNavigationProp>();
     const preferences = useStore((state) => state.preferences);
     const updatePreferences = useStore((state) => state.updatePreferences);
 
