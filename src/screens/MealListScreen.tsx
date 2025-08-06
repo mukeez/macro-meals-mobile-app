@@ -54,7 +54,7 @@ export const MealListScreen: React.FC = () => {
         setError(null);
 
         try {
-            const meals = await mealService.getMockMealSuggestions(preferences);
+            const meals = await mealService.getAiMealSuggestions();
             setSuggestedMeals(meals);
         } catch (err) {
             setError('Failed to load meal suggestions. Please try again.');

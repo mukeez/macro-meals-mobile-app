@@ -10,7 +10,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { Modalize } from 'react-native-modalize';
 import useStore from '../store/useStore';
-import { API_CONSTANTS } from '../constants/api_constants';
+
 import { mealService } from '../services/mealService';
 import { Meal } from '../types';
 import { userService } from '../services/userService';
