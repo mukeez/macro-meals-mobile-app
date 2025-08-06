@@ -15,7 +15,7 @@ const useAuthStore = create(
             isLoading: false,
             error: null,
 
-            setAuthenticated: (authenticated, token, userId) => {
+            setAuthenticated: (authenticated: boolean, token: string, userId: string) => {
                 set({
                     isAuthenticated: authenticated,
                     token,
@@ -32,7 +32,7 @@ const useAuthStore = create(
                 }
             },
 
-            login: async (credentials) => {
+            login: async (credentials: any) => {
                 set({ isLoading: true, error: null });
                 try {
                     const response = await authService.login(credentials);
@@ -44,7 +44,7 @@ const useAuthStore = create(
                         isLoading: false
                     });
                     return response;
-                } catch (error) {
+                } catch (error: any) {
                     set({
                         isLoading: false,
                         error: error.message || 'Login failed'
@@ -54,69 +54,21 @@ const useAuthStore = create(
             },
 
             loginWithGoogle: async () => {
-                set({ isLoading: true, error: null });
-                try {
-                    const authData = await authService.googleSignIn();
-                    set({
-                        isAuthenticated: true,
-                        token: authData.token,
-                        userId: authData.user.id,
-                        user: authData.user,
-                        isLoading: false
-                    });
-                    return authData;
-                } catch (error) {
-                    set({
-                        isLoading: false,
-                        error: error.message || 'Google login failed'
-                    });
-                    throw error;
-                }
+                // Google Sign-In not implemented in authService
+                throw new Error('Google Sign-In not available');
             },
 
             loginWithApple: async () => {
-                set({ isLoading: true, error: null });
-                try {
-                    const authData = await authService.appleSignIn();
-                    set({
-                        isAuthenticated: true,
-                        token: authData.token,
-                        userId: authData.user.id,
-                        user: authData.user,
-                        isLoading: false
-                    });
-                    return authData;
-                } catch (error) {
-                    set({
-                        isLoading: false,
-                        error: error.message || 'Apple login failed'
-                    });
-                    throw error;
-                }
+                // Apple Sign-In not implemented in authService
+                throw new Error('Apple Sign-In not available');
             },
 
             loginWithFacebook: async () => {
-                set({ isLoading: true, error: null });
-                try {
-                    const authData = await authService.facebookSignIn();
-                    set({
-                        isAuthenticated: true,
-                        token: authData.token,
-                        userId: authData.user.id,
-                        user: authData.user,
-                        isLoading: false
-                    });
-                    return authData;
-                } catch (error) {
-                    set({
-                        isLoading: false,
-                        error: error.message || 'Facebook login failed'
-                    });
-                    throw error;
-                }
+                // Facebook Sign-In not implemented in authService
+                throw new Error('Facebook Sign-In not available');
             },
 
-            signup: async (userData) => {
+            signup: async (userData: any) => {
                 set({ isLoading: true, error: null });
                 try {
                     const userId = await authService.signup(userData);
@@ -126,7 +78,7 @@ const useAuthStore = create(
                         isLoading: false
                     });
                     return userId;
-                } catch (error) {
+                } catch (error: any) {
                     set({
                         isLoading: false,
                         error: error.message || 'Signup failed'
@@ -139,7 +91,7 @@ const useAuthStore = create(
             logout: async () => {
                 try {
                     await authService.logout();
-                } catch (error) {
+                } catch (error: any) {
                     console.error('Error during logout:', error);
                 } finally {
                     set({
@@ -165,7 +117,7 @@ const useAuthStore = create(
                             userId
                         });
                         return true;
-                    } catch (error) {
+                    } catch (error: any) {
                         localStorage.removeItem('token');
                         localStorage.removeItem('userId');
                         set({
@@ -181,7 +133,7 @@ const useAuthStore = create(
         }),
         {
             name: 'auth-storage',
-            partialize: (state) => ({
+            partialize: (state: any) => ({
                 isAuthenticated: state.isAuthenticated,
                 token: state.token,
                 userId: state.userId
