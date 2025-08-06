@@ -70,8 +70,8 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
     const [originalProtein, setOriginalProtein] = useState<number>(0);
     const [originalCarbs, setOriginalCarbs] = useState<number>(0);
     const [originalFats, setOriginalFats] = useState<number>(0);
-    const userId = useStore((state) => state.userId);
-    const token = useStore((state) => state.token);
+    // const userId = useStore((state) => state.userId);
+    // const token = useStore((state) => state.token);
     const [loading, setLoading] = useState<boolean>(false);
     const [time, setTime] = useState<Date>(new Date());
     const [showTimeModal, setShowTimeModal] = useState(false);
@@ -85,9 +85,9 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
     const [mealDescription, setMealDescription] = useState('');
     const [showMealTypeModal, setShowMealTypeModal] = useState(false);
     const [tempMealType, setTempMealType] = useState('breakfast');
-    const [mealType, setMealType] = useState('breakfast');
+    // const [mealType, setMealType] = useState('breakfast');
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
-    const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
+    // const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
     const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
     const mixpanel = useMixpanel();
 
@@ -150,14 +150,14 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
     // Fetch favorite meals on component mount
     useEffect(() => {
         const fetchFavorites = async () => {
-            setLoadingFavorites(true);
+            // setLoadingFavorites(true);
             try {
                 const favorites = await FavoritesService.getFavorites();
                 setFavoriteMeals(favorites);
             } catch (error) {
                 console.error('Error fetching favorites:', error);
             } finally {
-                setLoadingFavorites(false);
+                // setLoadingFavorites(false);
             }
         };
         fetchFavorites();
@@ -319,7 +319,7 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
                 },
                 serving_size: parseInt(noOfServings, 10) || 0,
                 no_of_servings: parseInt(noOfServings, 10) || 0,
-                meal_type: mealType,
+                meal_type: tempMealType,
                 amount: parseInt(noOfServings, 10) || 1,
                 serving_unit: 'serving',
                 meal_time: time.toISOString(),
@@ -335,7 +335,7 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
             } else {
                 Alert.alert('Removed from favorites');
             }
-        } catch (error) {
+        } catch  {
             Alert.alert('Error', 'Failed to update favorites');
         }
     };

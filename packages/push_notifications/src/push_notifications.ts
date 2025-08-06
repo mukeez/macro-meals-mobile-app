@@ -1,9 +1,9 @@
-import { getMessaging, getToken, onMessage, onNotificationOpenedApp, getInitialNotification, AuthorizationStatus } from '@react-native-firebase/messaging';
+import { getMessaging, onMessage, onNotificationOpenedApp, getInitialNotification, AuthorizationStatus } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
-import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+// import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import firebase from '@react-native-firebase/app';
-import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 
 class PushNotifications {
 

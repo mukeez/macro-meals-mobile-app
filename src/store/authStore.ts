@@ -7,7 +7,7 @@ import { authService } from '../services/authService';
 
 const useAuthStore = create(
     persist(
-        (set, get) => ({
+        (set, _get) => ({
             isAuthenticated: false,
             token: null,
             userId: null,
@@ -91,8 +91,8 @@ const useAuthStore = create(
             logout: async () => {
                 try {
                     await authService.logout();
-                } catch (error: any) {
-                    console.error('Error during logout:', error);
+                } catch (_error: any) {
+                    console.error('Error during logout:', _error);
                 } finally {
                     set({
                         isAuthenticated: false,
@@ -117,7 +117,7 @@ const useAuthStore = create(
                             userId
                         });
                         return true;
-                    } catch (error: any) {
+                    } catch {
                         localStorage.removeItem('token');
                         localStorage.removeItem('userId');
                         set({

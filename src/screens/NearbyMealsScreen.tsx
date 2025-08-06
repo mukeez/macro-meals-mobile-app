@@ -5,7 +5,6 @@ import {
     StyleSheet,
     TouchableOpacity,
     FlatList,
-    ActivityIndicator,
     RefreshControl,
     Alert
 } from 'react-native';
@@ -32,10 +31,10 @@ export const NearbyMealsScreen: React.FC = () => {
     const updatePreferences = useStore((state) => state.updatePreferences);
 
     const [meals, setMeals] = useState<Meal[]>([]);
-    const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    // const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [currentAddress, setCurrentAddress] = useState<string>('');
-    const [refreshing, setRefreshing] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    // const [refreshing, setRefreshing] = useState(false);
+    // const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchCurrentLocation = async () => {
@@ -55,7 +54,7 @@ export const NearbyMealsScreen: React.FC = () => {
             console.log(currentLocation)
 
             if (currentLocation) {
-                setLocation(currentLocation);
+                // setLocation(currentLocation);
 
                 const address = await locationService.reverseGeocode(
                     currentLocation.coords.latitude,
@@ -148,14 +147,14 @@ export const NearbyMealsScreen: React.FC = () => {
     }, []);
 
     // Render loading state
-    if (isLoading && !refreshing) {
-        return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#19a28f" />
-                <Text style={styles.loadingText}>Finding meals near you...</Text>
-            </View>
-        );
-    }
+    // if (isLoading && !refreshing) {
+    //     return (
+    //         <View style={styles.centerContainer}>
+    //             <ActivityIndicator size="large" color="#19a28f" />
+    //             <Text style={styles.loadingText}>Finding meals near you...</Text>
+    //         </View>
+    //     );
+    // }
 
     console.log("here",preferences.location)
 
@@ -200,7 +199,7 @@ export const NearbyMealsScreen: React.FC = () => {
                 contentContainerStyle={styles.listContent}
                 refreshControl={
                     <RefreshControl
-                        refreshing={refreshing}
+                        refreshing={false}
                         onRefresh={() => fetchNearbyMeals()}
                         colors={['#19a28f']}
                     />
@@ -231,17 +230,17 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    loadingText: {
-        marginTop: 16,
-        fontSize: 16,
-        color: '#666',
-    },
+    // centerContainer: {
+    //     flex: 1,
+    //     justifyContent: 'center',
+    //     alignItems: 'center',
+    //     padding: 20,
+    // },
+    // loadingText: {
+    //     marginTop: 16,
+    //     fontSize: 16,
+    //     color: '#666',
+    // },
     headerContainer: {
         padding: 16,
         backgroundColor: '#f9f9f9',

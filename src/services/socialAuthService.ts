@@ -1,6 +1,6 @@
 // src/services/socialAuthService.ts
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-import { authService } from './authService';
+// import { authService } from './authService';
 import axiosInstance from './axios';
 
 import appleAuth, {

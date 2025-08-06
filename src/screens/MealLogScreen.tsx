@@ -24,7 +24,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import * as ImagePicker from 'expo-image-picker';
 import FavoritesService from '../services/favoritesService';
-import { useMixpanel } from '@macro-meals/mixpanel';
+// import { useMixpanel } from '@macro-meals/mixpanel';
 
 interface RouteParams {
     barcodeData: any;
@@ -70,39 +70,39 @@ export const AddMealScreen: React.FC = () => {
     const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'AddMeal'>>();
     const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
     const params = route.params || {};
-    const { barcodeData, analyzedData } = params;
-    const mixpanel = useMixpanel();
+    const { analyzedData } = params;
+    // const mixpanel = useMixpanel();
 
-    const trackRestaurantMealFinderUsed = async (location: string) => {
-        if (!mixpanel) return;
+    // const trackRestaurantMealFinderUsed = async (location: string) => {
+    //     if (!mixpanel) return;
         
-        const signupTime = mixpanel.getSuperProperty('signup_time');
-        const properties: Record<string, any> = {
-            search_location: location,
-        };
+    //     const signupTime = mixpanel.getSuperProperty('signup_time');
+    //     const properties: Record<string, any> = {
+    //         search_location: location,
+    //     };
 
-        const firstRestaurantSearchDone = mixpanel.getSuperProperty('first_restaurant_search_done');
-        if (!firstRestaurantSearchDone) {
-            const now = new Date();
-            const timeToFirstSearch = signupTime ? 
-                (now.getTime() - new Date(signupTime).getTime()) / 1000 : 0;
-            properties.time_to_first_restaurant_search_seconds = timeToFirstSearch;
-            mixpanel.register({ first_restaurant_search_done: true });
-        }
+    //     const firstRestaurantSearchDone = mixpanel.getSuperProperty('first_restaurant_search_done');
+    //     if (!firstRestaurantSearchDone) {
+    //         const now = new Date();
+    //         const timeToFirstSearch = signupTime ? 
+    //             (now.getTime() - new Date(signupTime).getTime()) / 1000 : 0;
+    //         properties.time_to_first_restaurant_search_seconds = timeToFirstSearch;
+    //         mixpanel.register({ first_restaurant_search_done: true });
+    //     }
 
-        mixpanel.track({
-            name: 'restaurant_meal_finder_used',
-            properties
-        });
-    };
+    //     mixpanel.track({
+    //         name: 'restaurant_meal_finder_used',
+    //         properties
+    //     });
+    // };
 
     const [mealName, setMealName] = useState<string>('');
     const [calories, setCalories] = useState<string>('0');
     const [protein, setProtein] = useState<string>('0');
     const [carbs, setCarbs] = useState<string>('0');
     const [fats, setFats] = useState<string>('0');
-    const userId = useStore((state) => state.userId);
-    const token = useStore((state) => state.token);
+    // const userId = useStore((state) => state.userId);
+    // const token = useStore((state) => state.token);
     const [loading, setLoading] = useState<boolean>(false);
     const [time, setTime] = useState<Date>(new Date());
     const [showTimeModal, setShowTimeModal] = useState(false);
@@ -110,7 +110,7 @@ export const AddMealScreen: React.FC = () => {
     const [mealImage, setMealImage] = useState<string | null>(null);
     const [isFavorite, setIsFavorite] = useState(false);
     const [selectedMealType, setSelectedMealType] = useState(getMealTypeByTime(new Date()));
-    const [mealDescription, setMealDescription] = useState('');
+    // const [mealDescription, setMealDescription] = useState('');
     const [showMealTypeModal, setShowMealTypeModal] = useState(false);
     const [tempMealType, setTempMealType] = useState(selectedMealType);
 
@@ -148,13 +148,13 @@ export const AddMealScreen: React.FC = () => {
         navigation.goBack();
     };
 
-    /**
-     * Handles saving the meal to bookmarks
-     */
-    const handleBookmark = (): void => {
-        // Implementation for bookmarking a meal
-        console.log('Bookmark meal');
-    };
+    // /**
+    //  * Handles saving the meal to bookmarks
+    //  */
+    // const handleBookmark = (): void => {
+    //     // Implementation for bookmarking a meal
+    //     console.log('Bookmark meal');
+    // };
 
     /**
      * Quick add a recent meal
@@ -184,7 +184,7 @@ export const AddMealScreen: React.FC = () => {
                 fat: parseInt(fats, 10) || 0,
                 meal_type: selectedMealType,
                 meal_time: time.toISOString(),
-                description: mealDescription || "",
+                description: "",
             };
 
             console.log('Meal request JSON:', JSON.stringify(newMeal));
@@ -206,7 +206,7 @@ export const AddMealScreen: React.FC = () => {
                 try {
                     console.error('Error adding meal to log:', JSON.stringify(error));
                 } catch (e) {
-                    console.error('Error adding meal to log:', error);
+                    console.error('Error adding meal to log:', e);
                 }
             }
         } finally {
@@ -214,13 +214,13 @@ export const AddMealScreen: React.FC = () => {
         }
     };
 
-    /**
-     * Saves the current meal as a template
-     */
-    const handleSaveTemplate = (): void => {
-        // Implementation for saving a meal template
-        console.log('Save as template');
-    };
+    // /**
+    //  * Saves the current meal as a template
+    //  */
+    // const handleSaveTemplate = (): void => {
+    //     // Implementation for saving a meal template
+    //     console.log('Save as template');
+    // };
 
     /**
      * Handles adding a photo to the meal
@@ -281,7 +281,7 @@ export const AddMealScreen: React.FC = () => {
         } else {
           Alert.alert('Removed from favorites');
         }
-      } catch (error) {
+      } catch {
         Alert.alert('Error', 'Failed to update favorites');
       }
     };

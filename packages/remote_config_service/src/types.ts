@@ -1,4 +1,4 @@
-import { FirebaseRemoteConfigTypes } from '@react-native-firebase/remote-config';
+// import { FirebaseRemoteConfigTypes } from '@react-native-firebase/remote-config';
 
 export interface RemoteConfigValue {
   asString(): string;
