@@ -17,6 +17,7 @@
     "web": "expo start --web",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "test": "echo 'No tests configured yet'",
     "ios:dev": "ENVFILE=.env.development NODE_ENV=development expo run:ios --scheme macromeals-stg",
     "ios:stg": "ENVFILE=.env.staging NODE_ENV=staging expo run:ios --scheme macromeals-stg",
     "ios:stg:debug": "ENVFILE=.env.staging NODE_ENV=staging expo run:ios --scheme macromeals-stg",
