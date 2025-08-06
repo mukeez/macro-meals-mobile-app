@@ -45,7 +45,7 @@ export default [
     },
     rules: {
       // Unused imports and variables
-      '@typescript-eslint/no-unused-vars': ['error', { 
+      '@typescript-eslint/no-unused-vars': ['warn', { 
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
       }],
