@@ -47,7 +47,7 @@ export const useMixpanel = ()=> {
         getSuperProperty: (property: string)=> {
             try {
                 console.log('[MIXPANEL] 🔍 Getting user properties');
-                return mixpanel.getSuperProperties()[property];
+                return (mixpanel.getSuperProperties() as Record<string, any>)[property];
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error getting user properties:', error);
                 return null;

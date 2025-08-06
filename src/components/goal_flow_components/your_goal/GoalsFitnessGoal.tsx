@@ -21,7 +21,7 @@ export const GoalsFitnessGoal: React.FC = () => {
         if (currentWeight !== null) {
             setTargetWeight(currentWeight);
             // Set progress rate to 0
-            setProgressRate('0.00');
+            setProgressRate(0);
             // Mark the next two substeps as complete
             markSubStepComplete(1, 1); // Mark target weight step complete
             markSubStepComplete(1, 2); // Mark progress rate step complete

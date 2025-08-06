@@ -28,12 +28,7 @@ export const MacroInputScreen: React.FC = () => {
     const setSuggestedMeals = useStore((state) => state.setSuggestedMeals);
     const setSuggestionsError = useStore((state) => state.setSuggestionsError);
 
-    let navigation;
-    try {
-        navigation = useNavigation();
-    } catch (error) {
-        console.log('Navigation not available');
-    }
+    const navigation = useNavigation<any>();
 
     const [unit, setUnit] = useState<'Metric' | 'Imperial'>('Metric');
     const [age, setAge] = useState(preferences.age ? preferences.age.toString() : '');
@@ -137,7 +132,7 @@ export const MacroInputScreen: React.FC = () => {
     );
 
     // Render input row
-    const renderInputRow = (label, value, onChangeText, unit) => (
+    const renderInputRow = (label: string, value: string, onChangeText: (text: string) => void, unit: string) => (
         <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>{label}</Text>
             <View style={styles.inputRow}>

@@ -213,18 +213,8 @@ const AiMealSuggestionsScreen: React.FC = () => {
                   </View>
                 <View className="flex-col flex-1 w-full">
                   <View className='right-2 flex-row items-center justify-between w-full'>
-                  <View></View>
-                      <View className='flex-row items-center gap-4'>
-                        <View className='flex-row items-center justify-center h-[24px] w-[24px] bg-grey rounded-full'>
-                        <Image source={IMAGE_CONSTANTS.likeIcon} className="w-[14px] h-[14px] bg-white rounded-full" />
-                        </View>
-                        
-                        <View className='flex-row items-center justify-center h-[24px] w-[24px] bg-grey rounded-full'>
-                        <Image source={IMAGE_CONSTANTS.dislikeIcon} className="w-[14px] h-[14px] bg-white rounded-full" />
-                        </View>
-                      </View>
                   </View>
-                  <Text className="text-sm font-medium text-[#222] mb-0.5">{meal.name}</Text>
+                  <Text className="text-sm font-medium text-[#222] mt-1 mb-0.5">{meal.name}</Text>
                   <Text className="text-sm font-semibold text-[#222] mb-0.5">{meal.restaurant.name}</Text>
                   <View className="flex-row items-center gap-2 mt-2">
                         <View className="flex-row items-center justify-center gap-1">

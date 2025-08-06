@@ -368,7 +368,7 @@ export const GoalsSetupFlow =  () => {
       return true;
     }
     if (majorStep === 1 && subSteps[majorStep] === 2) { 
-      if (progressRate === '0.00') {
+      if (progressRate === 0) {
         return false;
       }
       return true;

@@ -97,6 +97,7 @@ export const NearbyMealsScreen: React.FC = () => {
 
         } catch (error) {
             console.error('Error parsing location:', error);
+            return 'Unknown Location';
         }
     };
 
@@ -197,7 +198,7 @@ export const NearbyMealsScreen: React.FC = () => {
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
-                        onRefresh={() => fetchNearbyMeals(true)}
+                        onRefresh={() => fetchNearbyMeals()}
                         colors={['#19a28f']}
                     />
                 }

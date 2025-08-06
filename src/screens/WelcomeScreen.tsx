@@ -16,11 +16,11 @@ export const WelcomeScreen: React.FC = () => {
     const navigation = useNavigation<NavigationProp>();
 
     const handleGetStarted = () => {
-        navigation.navigate('Signup');
+        navigation.navigate('SignupScreen');
     };
 
     const handleLogin = () => {
-        navigation.navigate('Login');
+        navigation.navigate('LoginScreen');
     };
 
     return (

@@ -26,13 +26,10 @@
       "prebuildCommand": "node scripts/copy-icons.js",
       "ios": {
         "buildConfiguration": "Release",
-        "autoIncrement": false,
-        "uploadArtifacts": true,
-        "bundleIdentifier": "com.macromeals.app"
+        "autoIncrement": false
       },
       "android": {
-        "buildType": "apk",
-        "applicationId": "com.macromeals.app"
+        "buildType": "apk"
       }
     },
     "preview": {
@@ -42,8 +39,7 @@
       },
       "prebuildCommand": "node scripts/copy-icons.js",
       "ios": {
-        "buildConfiguration": "Release",
-        "uploadArtifacts": true
+        "buildConfiguration": "Release"
       }
     },
     "production": {
@@ -54,8 +50,7 @@
       "prebuildCommand": "node scripts/copy-icons.js",
       "ios": {
         "buildConfiguration": "Release",
-        "autoIncrement": true,
-        "uploadArtifacts": true
+        "autoIncrement": true
       }
     }
   },

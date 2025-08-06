@@ -9,7 +9,7 @@ import { RootStackParamList } from '../types/navigation';
 import FavoritesService, { FavoriteMeal } from '../services/favoritesService';
 
 const FavoritesScreen: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'FavoritesScreen'>>();
+  const navigation = useNavigation<any>();
   const [favorites, setFavorites] = useState<FavoriteMeal[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 

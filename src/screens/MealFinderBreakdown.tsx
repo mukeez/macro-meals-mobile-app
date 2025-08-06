@@ -98,7 +98,22 @@ const MealFinderBreakdownScreen: React.FC = () => {
 
   const toggleFavorite = async (): Promise<void> => {
     try {
-      const newFavoriteStatus = await FavoritesService.toggleFavorite(meal);
+      // Convert Meal to FavoriteMeal format
+      const mealObj = {
+        name: meal.name,
+        macros: meal.macros,
+        image: meal.image || '',
+        restaurant: meal.restaurant,
+        amount: 1,
+        serving_size: 1,
+        serving_unit: 'serving',
+        no_of_servings: 1,
+        meal_type: 'other',
+        meal_time: new Date().toISOString(),
+        logging_mode: 'meal_finder',
+        favorite: isFavorite,
+      };
+      const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
       setIsFavorite(newFavoriteStatus);
       
       if (newFavoriteStatus) {

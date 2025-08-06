@@ -7,13 +7,15 @@ export const useFeatureTracking =  (featureName: string) => {
 
     return {
         trackFeatureUse: (properties?: Record<string, any>)=> {
-            mixpanel.track({
-                name: EVENTS.FEATURE_USED,
-                properties: {
-                    feature: featureName,
-                    ...properties,
-                }
-            });
+            if (mixpanel) {
+                mixpanel.track({
+                    name: EVENTS.FEATURE_USED,
+                    properties: {
+                        feature: featureName,
+                        ...properties,
+                    }
+                });
+            }
         },
     };
 };

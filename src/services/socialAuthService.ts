@@ -4,11 +4,11 @@ import { authService } from './authService';
 import axiosInstance from './axios';
 
 import appleAuth, {
-    AppleAuthRequestOperation,
-    AppleAuthRequestScope,
+    AppleRequestOperation,
+    AppleRequestScope,
 } from '@invertase/react-native-apple-authentication';
 
-import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
+// import { LoginManager, AccessToken } from 'react-native-fbsdk-next';
 
 // Initialize Google Sign-In in your App.tsx or earlier
 export const initGoogleSignIn = () => {
@@ -25,11 +25,11 @@ export const socialAuthService = {
             const userInfo = await GoogleSignin.signIn();
 
             const response = await axiosInstance.post('/auth/google', { 
-                idToken: userInfo.idToken 
+                idToken: (userInfo as any).idToken 
             });
 
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             if (error.code === statusCodes.SIGN_IN_CANCELLED) {
                 console.log('Google sign in cancelled');
             } else if (error.code === statusCodes.IN_PROGRESS) {
@@ -50,8 +50,8 @@ export const socialAuthService = {
 
         try {
             const appleAuthRequestResponse = await appleAuth.performRequest({
-                requestedOperation: AppleAuthRequestOperation.LOGIN,
-                requestedScopes: [AppleAuthRequestScope.EMAIL, AppleAuthRequestScope.FULL_NAME],
+                requestedOperation: AppleRequestOperation.LOGIN,
+                requestedScopes: [AppleRequestScope.EMAIL, AppleRequestScope.FULL_NAME],
             });
 
             if (!appleAuthRequestResponse.identityToken) {
@@ -73,28 +73,7 @@ export const socialAuthService = {
     },
     
     signInWithFacebook: async () => {
-        try {
-            const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
-
-            if (result.isCancelled) {
-                throw new Error('Facebook login was cancelled');
-            }
-
-            // Get access token
-            const data = await AccessToken.getCurrentAccessToken();
-
-            if (!data) {
-                throw new Error('Failed to get Facebook access token');
-            }
-
-            const response = await axiosInstance.post('/auth/facebook', { 
-                accessToken: data.accessToken.toString() 
-            });
-
-            return response.data;
-        } catch (error) {
-            console.error('Facebook sign in error:', error);
-            throw error;
-        }
+        // Facebook SDK not installed - functionality disabled
+        throw new Error('Facebook authentication not available');
     },
 };

@@ -21,7 +21,7 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onPress }) => {
     const nameText =
         typeof meal.name === 'string'
             ? meal.name
-            : meal.name?.toString?.() || '[Unnamed Meal]';
+            : (meal.name as any)?.toString?.() || '[Unnamed Meal]';
 
     const restaurantText =
         typeof meal.restaurant === 'string'

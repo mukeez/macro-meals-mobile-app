@@ -54,7 +54,7 @@ const MacroGoalsScreen: React.FC<MacroGoalsScreenProps> = ({ route }) => {
                 age: preferences.age || 30,
                 weight: preferences.weight || 70,
                 height: preferences.height || 170,
-                sex: preferences.sex === 'male' ? 'Male' : 'Female',
+                sex: preferences.gender || 'Male',
                 activityLevel: preferences.activityLevel || 'Moderate',
                 goal: preferences.goal || 'Maintain',
                 unitSystem: 'Metric' as const,
