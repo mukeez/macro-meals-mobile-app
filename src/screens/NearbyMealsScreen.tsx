@@ -97,6 +97,7 @@ export const NearbyMealsScreen: React.FC = () => {
 
         } catch (error) {
             console.error('Error parsing location:', error);
+            return 'Unknown Location';
         }
     };
 
@@ -162,7 +163,7 @@ export const NearbyMealsScreen: React.FC = () => {
                 <Text style={styles.locationText}>
                     📍 {currentAddress || preferences.location || 'Unknown Location'}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('MacroInput')}>
+                <TouchableOpacity onPress={() => navigation.navigate('MacroGoals')}>
                     <Text style={styles.filterIcon}>⚙️</Text>
                 </TouchableOpacity>
             </View>

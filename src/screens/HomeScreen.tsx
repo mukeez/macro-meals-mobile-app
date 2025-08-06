@@ -7,10 +7,8 @@ import { RootStackParamList } from '../types/navigation';
 
 
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'HomeScreen'>;
-
 export const HomeScreen: React.FC = () => {
-    const navigation = useNavigation<NavigationProp>();
+    const navigation = useNavigation<any>();
 
     return (
         <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>
