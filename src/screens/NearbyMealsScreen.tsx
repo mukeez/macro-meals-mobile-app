@@ -163,7 +163,7 @@ export const NearbyMealsScreen: React.FC = () => {
                 <Text style={styles.locationText}>
                     📍 {currentAddress || preferences.location || 'Unknown Location'}
                 </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('MacroGoals')}>
+                <TouchableOpacity onPress={() => navigation.navigate('MacroInput')}>
                     <Text style={styles.filterIcon}>⚙️</Text>
                 </TouchableOpacity>
             </View>
@@ -198,7 +198,7 @@ export const NearbyMealsScreen: React.FC = () => {
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
-                        onRefresh={() => fetchNearbyMeals(true)}
+                        onRefresh={() => fetchNearbyMeals()}
                         colors={['#19a28f']}
                     />
                 }

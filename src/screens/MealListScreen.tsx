@@ -54,8 +54,8 @@ export const MealListScreen: React.FC = () => {
         setError(null);
 
         try {
-            const meals = await mealService.getAiMealSuggestions();
-            setSuggestedMeals(meals);
+            const result = await mealService.getAiMealSuggestions();
+            setSuggestedMeals(result.meals);
         } catch (err) {
             setError('Failed to load meal suggestions. Please try again.');
             console.error('Error fetching meals:', err);
@@ -88,7 +88,7 @@ export const MealListScreen: React.FC = () => {
     /**
      * Handles when a meal card is pressed.
      */
-    const handleMealPress = (meal) => {
+    const handleMealPress = (meal: Meal) => {
         console.log('Meal pressed:', meal.name);
     };
 
