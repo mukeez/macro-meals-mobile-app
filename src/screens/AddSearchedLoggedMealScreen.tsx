@@ -320,9 +320,12 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
                 serving_size: parseInt(noOfServings, 10) || 0,
                 no_of_servings: parseInt(noOfServings, 10) || 0,
                 meal_type: mealType,
+                amount: parseInt(noOfServings, 10) || 1,
+                serving_unit: 'serving',
                 meal_time: time.toISOString(),
                 image: mealImage || IMAGE_CONSTANTS.mealIcon,
                 restaurant: { name: 'custom', location: '' },
+                logging_mode: 'manual',
             };
             const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
             setIsFavorite(newFavoriteStatus);

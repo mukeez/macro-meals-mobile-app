@@ -8,8 +8,8 @@ export const validateEvent = (event: TrackEvent): TrackEvent => {
     if (event.properties){
         // Remove the undefined values
         Object.keys(event.properties).forEach(key => {
-            if (event.properties[key] === undefined) {
-                delete event.properties[key];
+            if (event.properties![key] === undefined) {
+                delete event.properties![key];
             }
         });
     }

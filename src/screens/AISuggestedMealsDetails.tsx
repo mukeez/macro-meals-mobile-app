@@ -113,7 +113,21 @@ const AISuggestedMealsDetailsScreen: React.FC = () => {
     ]).start();
 
     try {
-      const newFavoriteStatus = await FavoritesService.toggleFavorite(meal);
+      // Convert Meal to FavoriteMeal format
+      const mealObj = {
+        name: meal.name,
+        macros: meal.macros,
+        image: meal.image || '',
+        restaurant: meal.restaurant,
+        amount: (meal as any).amount || 1,
+        serving_size: 1,
+        serving_unit: (meal as any).serving_unit || 'serving',
+        no_of_servings: 1,
+        meal_type: (meal as any).mealType || 'other',
+        meal_time: (meal as any).meal_time || new Date().toISOString(),
+        logging_mode: (meal as any).logging_mode || 'ai_suggested',
+      };
+      const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
       setIsFavorite(newFavoriteStatus);
       
       if (newFavoriteStatus) {
