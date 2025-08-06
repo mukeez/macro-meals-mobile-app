@@ -326,6 +326,7 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
                 image: mealImage || IMAGE_CONSTANTS.mealIcon,
                 restaurant: { name: 'custom', location: '' },
                 logging_mode: 'manual',
+                favorite: isFavorite,
             };
             const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
             setIsFavorite(newFavoriteStatus);

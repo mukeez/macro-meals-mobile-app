@@ -269,6 +269,10 @@ export const AddMealScreen: React.FC = () => {
           no_of_servings: 1,
           meal_type: selectedMealType,
           meal_time: time.toISOString(),
+          serving_unit: 'serving',
+          logging_mode: 'manual',
+          amount: 1,
+          favorite: isFavorite,
         };
         const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
         setIsFavorite(newFavoriteStatus);

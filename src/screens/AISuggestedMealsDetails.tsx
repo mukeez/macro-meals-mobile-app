@@ -126,6 +126,7 @@ const AISuggestedMealsDetailsScreen: React.FC = () => {
         meal_type: (meal as any).mealType || 'other',
         meal_time: (meal as any).meal_time || new Date().toISOString(),
         logging_mode: (meal as any).logging_mode || 'ai_suggested',
+        favorite: isFavorite,
       };
       const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
       setIsFavorite(newFavoriteStatus);
