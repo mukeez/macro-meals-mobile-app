@@ -2,10 +2,8 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -13,21 +11,15 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import useStore from "../store/useStore";
 import { authService } from "../services/authService";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import BackButton from "../components/BackButton";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialIcons } from "@expo/vector-icons";
 import { RootStackParamList } from "src/types/navigation";
 import { StackNavigationProp } from "@react-navigation/stack";
 
 type ResetPasswordScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
-  "ResetPassword"
->;
-type ResetPasswordScreenRouteProp = RouteProp<
   RootStackParamList,
   "ResetPassword"
 >;
@@ -42,7 +34,6 @@ export const ResetPasswordScreen: React.FC = () => {
     otp: routeOtp,
     source,
   } = route.params;
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,14 +43,7 @@ export const ResetPasswordScreen: React.FC = () => {
     password: false,
     confirmPassword: false,
   });
-  const setAuthenticated = useStore((state) => state.setAuthenticated);
   const navigation = useNavigation<ResetPasswordScreenNavigationProp>();
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
 
   // Validation logic
   React.useEffect(() => {

@@ -1,11 +1,11 @@
-import { API_CONFIG } from '../../config/api';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useStore from '../store/useStore';
 import {pushNotifications} from '@macro-meals/push-notifications';
 import axiosInstance from './axios';
 
 
-interface SignupResponse {
+interface _SignupResponse {
     message: string;
     user: {
         id?: string;

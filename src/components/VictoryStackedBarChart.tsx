@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Dimensions, ActivityIndicator, Modal, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { View, ActivityIndicator, Modal, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { CartesianChart, StackedBar } from 'victory-native';
 import { useFont } from '@shopify/react-native-skia';
 
@@ -13,7 +13,7 @@ type MacroData = {
   period_label: string;
 };
 
-type TimePeriod = '1w' | '1m' | '3m' | '6m' | '1y';
+// type TimePeriod = '1w' | '1m' | '3m' | '6m' | '1y';
 
 const macroColors = ['#7E54D9', '#FFC008', '#E283E0', '#ffffff']; // [protein, carbs, fat, calories]
 
@@ -116,10 +116,10 @@ const MacroTooltip = ({
 
 export const VictoryStackedBarChart = ({ 
   data, 
-  timePeriod = '1w' 
+ // timePeriod = '1w' 
 }: { 
   data: MacroData[];
-  timePeriod?: TimePeriod;
+  //timePeriod?: TimePeriod;
 }) => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipData, setTooltipData] = useState<{ period: string; protein: number; carbs: number; fat: number; calories: number; originalProtein?: number; originalCarbs?: number; originalFat?: number } | null>(null);
@@ -127,12 +127,11 @@ export const VictoryStackedBarChart = ({
   // Load the font
   const font = useFont(require('../../assets/fonts/GeneralSans-Regular.otf'), 12);
 
-  const screenWidth = Dimensions.get('window').width;
-  const padding = 10;
+
 
   // Transform data for the chart - use period_label from backend
   const getChartData = () => {
-    return data.map((item, index) => {
+    return data.map((item, _) => {
       const calorieMacros = convertMacrosToCalories(item.protein, item.carbs, item.fat);
       return {
         x: item.period_label, // Use the period_label from backend

@@ -15,10 +15,8 @@ import {
 import { userService } from "../services/userService";
 import { authService } from "../services/authService";
 import useStore from "../store/useStore";
-import { useNavigation } from "@react-navigation/native";
 import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMixpanel } from "@macro-meals/mixpanel";
 import { Picker } from "@react-native-picker/picker";
 import { useGoalsFlowStore } from "src/store/goalsFlowStore";
@@ -48,7 +46,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function AccountSettingsScreen() {
-  const [user, setUser] = useState<any>(null);
+  const [_user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<{ [key: string]: boolean }>({});
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -64,19 +62,18 @@ export default function AccountSettingsScreen() {
   const [tempWeightLb, setTempWeightLb] = useState<number | null>(null);
   const inputRefs = useRef<{ [key: string]: TextInput | null }>({});
   const userRef = useRef<any>(null);
-  const navigation = useNavigation();
-  const { setAuthenticated, isAuthenticated } = useStore();
+  const { setAuthenticated } = useStore();
   const debouncedPatch = useRef<{ [key: string]: (...args: any[]) => void }>(
     {}
   );
 
   const mixpanel = useMixpanel();
 
-  function floatFeetToFtIn(floatFeet: number) {
-    const ft = Math.floor(floatFeet);
-    const inch = Math.round((floatFeet - ft) * 12);
-    return { ft, inch };
-  }
+  // function floatFeetToFtIn(floatFeet: number) {
+  //   const ft = Math.floor(floatFeet);
+  //   const inch = Math.round((floatFeet - ft) * 12);
+  //   return { ft, inch };
+  // }
   const {
     height_unit_preference,
     setHeightUnitPreference,
@@ -146,7 +143,7 @@ export default function AccountSettingsScreen() {
         }
         setWeightUnitPreference(data.weight_unit_preference ?? "metric");
         // --- End hydration ---
-      } catch (e) {
+      } catch {
         setUser(null);
         userRef.current = null;
       } finally {
@@ -231,7 +228,7 @@ export default function AccountSettingsScreen() {
               console.error("[PATCH] Error updating:", e);
             }
           }, 1000);
-        } catch (e) {
+        } catch {
           Alert.alert("Error", "Failed to update profile");
           setLocalValues((prev) => ({
             ...prev,
@@ -259,6 +256,7 @@ export default function AccountSettingsScreen() {
 
   // When field loses focus, update the user state
   const handleFieldBlur = (field: string) => {
+    console.log("[HANDLE FIELD BLUR] Field:", field);
     setFocusedField(null);
     // Update the user state with the latest data
     setUser(userRef.current);
@@ -317,61 +315,61 @@ export default function AccountSettingsScreen() {
     setWeightUnitPreference(newUnit);
   };
 
-  const onHeightFtChange = (v: string) => {
-    const ft = Number(v.replace(/[^0-9]/g, ""));
-    setHeightFt(ft);
-  };
+  // const onHeightFtChange = (v: string) => {
+  //   const ft = Number(v.replace(/[^0-9]/g, ""));
+  //   setHeightFt(ft);
+  // };
 
-  const onHeightInChange = (v: string) => {
-    let inch = Number(v.replace(/[^0-9]/g, ""));
-    if (inch > 11) inch = 11;
-    setHeightIn(inch);
-  };
+  // const onHeightInChange = (v: string) => {
+  //   let inch = Number(v.replace(/[^0-9]/g, ""));
+  //   if (inch > 11) inch = 11;
+  //   setHeightIn(inch);
+  // };
 
-  const handleMultiFieldChange = (fields: Record<string, any>) => {
-    setLocalValues((prev) => ({ ...prev, ...fields }));
-    // Use specific field key for debouncing to avoid conflicts
-    if (fields.height !== undefined) {
-      getDebouncedPatch("height")(fields);
-    } else if (fields.weight !== undefined) {
-      getDebouncedPatch("weight")(fields);
-    }
-  };
-  const onHeightBlur = () => {
-    let patchObj: Record<string, any> = {};
-    if (height_unit_preference === "imperial") {
-      const ft = Number(heightFt) || 0;
-      const inch = Number(heightIn) || 0;
-      const floatFeet = ft + inch / 12;
-      patchObj = {
-        height: floatFeet,
-        height_unit_preference: "imperial",
-      };
-    } else {
-      const cm = Number(heightCm) || 0;
-      patchObj = {
-        height: cm,
-        height_unit_preference: "metric",
-      };
-    }
-    handleMultiFieldChange(patchObj);
-  };
+  // const handleMultiFieldChange = (fields: Record<string, any>) => {
+  //   setLocalValues((prev) => ({ ...prev, ...fields }));
+  //   // Use specific field key for debouncing to avoid conflicts
+  //   if (fields.height !== undefined) {
+  //     getDebouncedPatch("height")(fields);
+  //   } else if (fields.weight !== undefined) {
+  //     getDebouncedPatch("weight")(fields);
+  //   }
+  // };
+  // const onHeightBlur = () => {
+  //   let patchObj: Record<string, any> = {};
+  //   if (height_unit_preference === "imperial") {
+  //     const ft = Number(heightFt) || 0;
+  //     const inch = Number(heightIn) || 0;
+  //     const floatFeet = ft + inch / 12;
+  //     patchObj = {
+  //       height: floatFeet,
+  //       height_unit_preference: "imperial",
+  //     };
+  //   } else {
+  //     const cm = Number(heightCm) || 0;
+  //     patchObj = {
+  //       height: cm,
+  //       height_unit_preference: "metric",
+  //     };
+  //   }
+  //   handleMultiFieldChange(patchObj);
+  // };
 
-  const onWeightBlur = () => {
-    let patchObj: Record<string, any> = {};
-    if (weight_unit_preference === "imperial") {
-      patchObj = {
-        weight: Number(weightLb) || 0,
-        weight_unit_preference: "imperial",
-      };
-    } else {
-      patchObj = {
-        weight: Number(weightKg) || 0,
-        weight_unit_preference: "metric",
-      };
-    }
-    handleMultiFieldChange(patchObj);
-  };
+  // const onWeightBlur = () => {
+  //   let patchObj: Record<string, any> = {};
+  //   if (weight_unit_preference === "imperial") {
+  //     patchObj = {
+  //       weight: Number(weightLb) || 0,
+  //       weight_unit_preference: "imperial",
+  //     };
+  //   } else {
+  //     patchObj = {
+  //       weight: Number(weightKg) || 0,
+  //       weight_unit_preference: "metric",
+  //     };
+  //   }
+  //   handleMultiFieldChange(patchObj);
+  // };
   const handleDeleteAccount = () => {
     Alert.alert(
       "Delete Account",

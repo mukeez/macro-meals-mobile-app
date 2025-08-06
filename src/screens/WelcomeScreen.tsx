@@ -1,11 +1,11 @@
 // src/screens/WelcomeScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../components/CustomTouchableOpacityButton';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
-import { RootStackParamList } from '../types/navigation';
+
 
 
 

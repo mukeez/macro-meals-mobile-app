@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
-import { IMAGE_CONSTANTS } from '../constants/imageConstants';
-import { RootStackParamList } from '../types/navigation';
 import FavoritesService, { FavoriteMeal } from '../services/favoritesService';
 
 const FavoritesScreen: React.FC = () => {
@@ -135,6 +132,7 @@ const FavoritesScreen: React.FC = () => {
             
             {favorites.map((meal, index) => (
               <TouchableOpacity
+                id={`favorite-${index}`}
                 key={meal.id}
                 onPress={() => navigateToMealDetails(meal)}
                 className="flex-row bg-white rounded-xl mb-4 px-3 py-5 shadow-sm"

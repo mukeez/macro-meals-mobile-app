@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Text, TouchableOpacity, TextInput, Platform, Image } from 'react-native'
+import { View, Text, TextInput, Image } from 'react-native'
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants'
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore'
 

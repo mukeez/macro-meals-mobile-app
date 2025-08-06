@@ -8,8 +8,6 @@ type SectionItemProps = {
   rightComponent?: React.ReactNode;
 };
 
-const ICON_COLOR = "#009688";
-
 const SectionItem: React.FC<SectionItemProps> = ({
   title,
   image,

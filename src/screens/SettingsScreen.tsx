@@ -3,12 +3,8 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
-  Image,
   Linking,
-  Platform,
-  Switch,
   Alert,
   Modal,
 } from "react-native";
@@ -18,12 +14,10 @@ import useStore from "../store/useStore";
 import { Picker } from "@react-native-picker/picker";
 import { authService } from "../services/authService";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
 import { RootStackParamList } from "../types/navigation";
 import { appConstants } from "../../constants/appConstants";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { deleteItemAsync } from "expo-secure-store";
 import ProfileSection from "src/components/ProfileSection";
 import SectionItem from "src/components/SectionItem";
 import { userService } from "../services/userService";
@@ -43,19 +37,15 @@ export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const preferences = useStore((state) => state.preferences);
   const token = useStore((state) => state.token);
-  const updatePreferences = useStore((state) => state.updatePreferences);
-  const logout = useStore((state) => state.logout);
+  // const updatePreferences = useStore((state) => state.updatePreferences);
   const setAuthenticated = useStore((state) => state.setAuthenticated);
-  const { getValue, debugLogAllValues } = useRemoteConfigContext();
+  const { getValue } = useRemoteConfigContext();
   const [showDrawer, setShowDrawer] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const mixpanel = useMixpanel();
-  let devMode = true;
-  devMode = getValue('dev_mode').asBoolean();
+  const _devMode = getValue('dev_mode').asBoolean();
 
   // Local state for settings
-  const [units, setUnits] = useState<string>("g/kcal");
+  const [_units, setUnits] = useState<string>("g/kcal");
   // const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [userData, setUserData] = useState({
     age: 0,
@@ -82,10 +72,6 @@ export const SettingsScreen: React.FC = () => {
   const [showUnitsModal, setShowUnitsModal] = useState(false);
   const [tempUnitPreference, setTempUnitPreference] = useState("metric");
 
-  const UNIT_OPTIONS = [
-    { label: "Metric", value: "metric" },
-    { label: "Imperial", value: "imperial" },
-  ];
 
   /**
    * Mock fetching user data on component mount
@@ -107,27 +93,7 @@ export const SettingsScreen: React.FC = () => {
     }
   }, [token]);
 
-  /**
-   * Handle changing the units system
-   * @param value - The new units value
-   */
-  const handleUnitsChange = async (value: string) => {
-    setUnits(value);
 
-    const newUnitSystem = value === "g/kcal" ? "Metric" : "Imperial";
-    updatePreferences({
-      unitSystem: newUnitSystem,
-    });
-
-    try {
-      await userService.updatePreferences({
-        unitSystem: newUnitSystem,
-      });
-    } catch (error) {
-      console.error("Error updating preferences:", error);
-      // You could add error handling UI here if needed
-    }
-  };
 
   /**
    * Handle unit preference change using the same pattern as account settings
@@ -172,9 +138,9 @@ export const SettingsScreen: React.FC = () => {
   /**
    * Handle going back to the previous screen
    */
-  const handleGoBack = () => {
-    navigation.goBack();
-  };
+  // const handleGoBack = () => {
+  //   navigation.goBack();
+  // };
 
   /**
    * Handle logout action
@@ -229,9 +195,9 @@ export const SettingsScreen: React.FC = () => {
    */
   const handleHelpSupport = () => setShowDrawer(true);
 
-  const handleModalSheet = () => {
-    navigation.navigate("PaymentScreen" as never);
-  };
+  // const handleModalSheet = () => {
+  //   navigation.navigate("PaymentScreen" as never);
+  // };
   const openEmail = () => {
     const { email } = appConstants();
 
@@ -247,7 +213,7 @@ export const SettingsScreen: React.FC = () => {
   /**
    * Handle navigation to feedback screen
    */
-  const handleSendFeedback = () => {
+  const _handleSendFeedback = () => {
     // Navigate to feedback screen
     Alert.alert("Feedback ", "Feedback coming soon!");
 
@@ -258,30 +224,6 @@ export const SettingsScreen: React.FC = () => {
     navigation.navigate("HealthGuidelinesScreen" as never);
   };
 
-  const handleDeleteAccount = async () => {
-    Alert.alert(
-      "Delete Account",
-      "Are you sure you want to delete your account? This action cannot be undone.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await authService.logout();
-              setAuthenticated(false, "", "");
-            } catch (error) {
-              console.error("Delete account error:", error);
-            }
-          },
-        },
-      ]
-    );
-  };
 
   return (
     <CustomSafeAreaView className="flex-1 bg-white">

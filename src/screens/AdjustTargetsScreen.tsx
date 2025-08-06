@@ -46,7 +46,7 @@ const AdjustTargetsScreen: React.FC = () => {
     try {
       const data = await fetchUserPreferences();
       setMacros(data);
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not load macro targets.");
     }
     setLoading(false);
@@ -88,7 +88,7 @@ const AdjustTargetsScreen: React.FC = () => {
       await updateMacros(updatedMacros);
       closeModal();
       await loadMacros(); // Refresh from backend after update
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not update macro target.");
     }
     setLoading(false);

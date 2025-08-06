@@ -4,32 +4,26 @@ import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   ActivityIndicator,
   Alert,
   Image,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Modal
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import useStore from '../store/useStore'; 
-import { paymentService } from '../services/paymentService';
 import { userService } from '../services/userService';
 import revenueCatService from '../services/revenueCatService';
-import CustomSafeAreaView from 'src/components/CustomSafeAreaView';
 import { IsProContext } from 'src/contexts/IsProContext';
-import Config from 'react-native-config';
 import BackButton from 'src/components/BackButton';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-type Profile = {
+type _Profile = {
   id: string;
   email: string;
   display_name?: string;
@@ -74,7 +68,7 @@ const getProductInfo = (offerings: any, planType: 'monthly' | 'yearly') => {
 
 const Pager = ()=>{
   const [currentPage, setCurrentPage] = useState(0);
-  const navigation = useNavigation<NavigationProp>();
+  const _navigation = useNavigation<NavigationProp>();
   const handleBackPress = ()=>{
     // Option 1: Logout user to reset authentication state and return to login
     const { logout } = useStore.getState();
@@ -174,15 +168,15 @@ const BenefitsPager = ()=>{
 const PaymentScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const profile = useStore((state) => state.profile);
-  const setStoreProfile = useStore((state) => state.setProfile);
-  const clearProfile = useStore((state) => state.clearProfile);
+  const _setStoreProfile = useStore((state) => state.setProfile);
+  const _clearProfile = useStore((state) => state.clearProfile);
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [isLoading, setIsLoading] = useState(false);
   const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const { setReadyForDashboard } = useContext(HasMacrosContext);
-  const [amount, setAmount] = useState(9.99);
+  const [_amount, setAmount] = useState(9.99);
 
-  const { isPro, setIsPro } = useContext(IsProContext);
+  const { setIsPro } = useContext(IsProContext);
   const [offerings, setOfferings] = useState<any>(null);
 
   // Get product information for current selected plan
@@ -398,10 +392,3 @@ const PaymentScreen = () => {
 }
 
 export default PaymentScreen
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'white',
-    }
-})

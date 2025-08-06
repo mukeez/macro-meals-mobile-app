@@ -1,7 +1,5 @@
-import useStore from "../store/useStore";
-import axiosInstance from "./axios";
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
+import axiosInstance from "./axios";
 
 class ScanService {
     async scanBarcode(barcode: string) {
@@ -25,25 +23,21 @@ class ScanService {
     }
 
     async scanImage(imageUri: string) {
-        try {
-            // Create FormData for image upload
-            const formData = new FormData();
-            formData.append('image', {
-                uri: imageUri,
-                type: 'image/jpeg',
-                name: 'food_image.jpg'
-            } as any);
+        // Create FormData for image upload
+        const formData = new FormData();
+        formData.append('image', {
+            uri: imageUri,
+            type: 'image/jpeg',
+            name: 'food_image.jpg'
+        } as any);
 
-            const response = await axiosInstance.post('/scan/image', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+        const response = await axiosInstance.post('/scan/image', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
 
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
+        return response.data;
     }
 }
 

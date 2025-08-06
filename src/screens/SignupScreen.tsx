@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -13,19 +12,13 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { CommonActions } from "@react-navigation/native";
-import useStore from "../store/useStore";
 import { authService } from "../services/authService";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import BackButton from "../components/BackButton";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MaterialIcons } from "@expo/vector-icons";
 import { RootStackParamList } from "../types/navigation";
 import { useMixpanel } from "@macro-meals/mixpanel";
-import { useGoalsFlowStore } from "../store/goalsFlowStore";
-import { OnboardingContext } from "src/contexts/OnboardingContext";
-import { HasMacrosContext } from "src/contexts/HasMacrosContext";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -34,22 +27,10 @@ type NavigationProp = NativeStackNavigationProp<
 
 export const SignupScreen: React.FC = () => {
   const [email, setEmail] = useState("");
-  const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
-  const { hasMacros, setHasMacros, setReadyForDashboard } =
-    React.useContext(HasMacrosContext);
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  // const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const mixpanel = useMixpanel();
 
@@ -62,9 +43,7 @@ export const SignupScreen: React.FC = () => {
     terms: "",
   });
 
-  const setAuthenticated = useStore((state) => state.setAuthenticated);
   const navigation = useNavigation<NavigationProp>();
-  const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
 
   const validateForm = () => {
     let isValid = true;

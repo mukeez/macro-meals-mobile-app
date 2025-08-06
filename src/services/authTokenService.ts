@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-let currentToken: string | null = null;
-let currentRefreshToken: string | null = null;
+let _currentToken: string | null = null;
+let _currentRefreshToken: string | null = null;
 
 export const authTokenService = {
     getToken: async () => {
@@ -25,20 +25,20 @@ export const authTokenService = {
     setToken: (token: string | null) => {
         if (token) {
             AsyncStorage.setItem('my_token', token);
-            currentToken = token;
+            _currentToken = token;
         } else {
             AsyncStorage.removeItem('my_token');
-            currentToken = null;
+            _currentToken = null;
         }
     },
     
     setRefreshToken: (refreshToken: string | null) => {
         if (refreshToken) {
             AsyncStorage.setItem('refresh_token', refreshToken);
-            currentRefreshToken = refreshToken;
+            _currentRefreshToken = refreshToken;
         } else {
             AsyncStorage.removeItem('refresh_token');
-            currentRefreshToken = null;
+            _currentRefreshToken = null;
         }
     },
     
@@ -49,12 +49,12 @@ export const authTokenService = {
     
     clearToken: async () => {
         await AsyncStorage.removeItem('my_token');
-        currentToken = null;
+        _currentToken = null;
     },
     
     clearRefreshToken: async () => {
         await AsyncStorage.removeItem('refresh_token');
-        currentRefreshToken = null;
+        _currentRefreshToken = null;
     },
     
     clearTokens: async () => {
@@ -70,8 +70,8 @@ export const authTokenService = {
                 AsyncStorage.getItem('my_token'),
                 AsyncStorage.getItem('refresh_token')
             ]);
-            currentToken = token;
-            currentRefreshToken = refreshToken;
+            _currentToken = token;
+            _currentRefreshToken = refreshToken;
             return token;
         } catch (error) {
             console.error('Error initializing auth tokens:', error);

@@ -61,7 +61,7 @@ function getStartDateByRange(range: string): Date {
 
 const format = (date: Date) => date.toISOString().split("T")[0];
 
-export const useProgressStore = create<ProgressState>((set, get) => ({
+export const useProgressStore = create<ProgressState>((set, _) => ({
   data: null,
   loading: false,
   selectedRange: "1w",
@@ -82,7 +82,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       
       const data = await getMealProgress(format(startDate), format(endDate));
       set({ data, loading: false });
-    } catch (e) {
+    } catch {
       set({ data: null, loading: false });
     }
   },
@@ -102,7 +102,7 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       const mappedPeriod = periodMap[period] || period;
       const data = await getMealByPeriod(mappedPeriod);
       set({ data, loading: false });
-    } catch (e) {
+    } catch {
       set({ data: null, loading: false });
     }
   },

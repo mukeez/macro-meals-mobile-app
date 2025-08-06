@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Dimensions, Text } from "react-native";
+import { View, Dimensions } from "react-native";
 import { StackedBarChart } from "react-native-chart-kit";
 
 type MacroData = {

@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
 
 
 
 export const HomeScreen: React.FC = () => {
-    const navigation = useNavigation<any>();
+  
 
     return (
         <CustomSafeAreaView className='flex-1' edges={['left', 'right']}>

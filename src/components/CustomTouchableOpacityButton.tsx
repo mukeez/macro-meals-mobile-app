@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Text, TouchableOpacity, ActivityIndicator } from "react-native";
 
 export default function CustomTouchableOpacityButton({
     title,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Platform, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, Modal, Image } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';

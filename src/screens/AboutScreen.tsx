@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  View,
   Text,
   ScrollView,
   TouchableOpacity,
@@ -20,7 +19,7 @@ export default function AboutScreen() {
     <CustomSafeAreaView className="flex-1 ">
       <Header title="About" />
       <ScrollView className="px-5 py-5" contentContainerStyle={{ paddingBottom: 60 }}>
-        {about.map(({ section, body }, idx) => (
+        {about.map(({ section, body }, _) => (
           <Section title={section} key={section}>
             {body.map((paragraph, pIdx) => {
               // Render contact links for the Contact Us section

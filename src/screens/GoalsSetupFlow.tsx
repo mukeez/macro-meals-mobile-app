@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useContext } from 'react'
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native'
 import CustomSafeAreaView from 'src/components/CustomSafeAreaView'
 import CustomPagerView from 'src/components/CustomPagerView'
@@ -31,15 +31,12 @@ export const GoalsSetupFlow =  () => {
   const navigation = useNavigation<NavigationProp>();
   const { 
     majorStep, 
-    setMajorStep, 
     subSteps, 
     setSubStep, 
-    completed, 
     markSubStepComplete,
     handleBackNavigation,
     gender, 
     dateOfBirth, 
-    location, 
     height_unit_preference,
     weight_unit_preference,
     heightFt, 
@@ -279,7 +276,7 @@ export const GoalsSetupFlow =  () => {
   };
 
   // Add a function to handle going to dashboard
-  const handleGoToDashboard = () => {
+  const _handleGoToDashboard = () => {
     setReadyForDashboard(true);
   };
 

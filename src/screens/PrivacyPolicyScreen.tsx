@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView } from "react-native";
+import { Text, ScrollView } from "react-native";
 import Section from "../components/Section";
 import { privacyPolicy } from "../constants/privacyPolicy";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
@@ -18,7 +18,7 @@ export default function PrivacyPolicyScreen() {
           collects, uses, and shares your personal information when you use our
           mobile application (“App”).
         </Text>
-        {privacyPolicy.map(({ title, paragraph }, idx) => (
+        {privacyPolicy.map(({ title, paragraph }, _) => (
           <Section title={title} key={title}>
             {paragraph.map((text, pIdx) => (
               <Text className="text-sm mb-2" key={pIdx}>

@@ -1,27 +1,16 @@
-import { View, Text, Image, Alert } from 'react-native'
-import React, { useState } from 'react'
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from 'src/types/navigation';
-import BackButton from 'src/components/BackButton';
+import React from 'react';
+import { View, Text } from 'react-native'
+
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
 import { QuestionSelector } from '../QuestionSelector';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
 export const GoalsGender: React.FC = () => {
-    const navigation = useNavigation<NavigationProp>();
     const gender = useGoalsFlowStore((state) => state.gender);
     const setGender = useGoalsFlowStore((state)=> state.setGender);
 
     // const isValid = !!gender;
-
-    const [selectedGender, setSelectedGender] = useState<string>('');
-
-
-    
   return (
 
         <View className="flex-1 h-full">

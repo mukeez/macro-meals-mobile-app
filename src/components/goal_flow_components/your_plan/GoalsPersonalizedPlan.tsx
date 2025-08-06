@@ -134,19 +134,19 @@ export const GoalsPersonalizedPlan: React.FC<{
   };
 
   // Get goal type text
-  const getGoalTypeText = () => {
-    if (!macroCalculationResponse?.goal_type) return 'achieve your goals';
-    switch (macroCalculationResponse.goal_type) {
-      case 'lose':
-        return 'lose weight';
-      case 'gain':
-        return 'gain weight';
-      case 'maintain':
-        return 'maintain your weight';
-      default:
-        return 'achieve your goals';
-    }
-  };
+  // const getGoalTypeText = () => {
+  //   if (!macroCalculationResponse?.goal_type) return 'achieve your goals';
+  //   switch (macroCalculationResponse.goal_type) {
+  //     case 'lose':
+  //       return 'lose weight';
+  //     case 'gain':
+  //       return 'gain weight';
+  //     case 'maintain':
+  //       return 'maintain your weight';
+  //     default:
+  //       return 'achieve your goals';
+  //   }
+  // };
 
   // Get weight change text
   const getWeightChangeText = () => {

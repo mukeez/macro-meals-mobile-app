@@ -10,7 +10,6 @@ import {
 import { FontAwesome5 } from "@expo/vector-icons";
 import MacroLegend from "src/components/MacroLegend";
 import MacroTableSection from "src/components/MacroTableSection";
-import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import { useProgressStore } from "src/store/useProgressStore";
 import VictoryStackedBarChart from "src/components/VictoryStackedBarChart";
 
@@ -168,7 +167,7 @@ const ProgressScreen = () => {
               </Text>
             </View>
           ) : (
-            <VictoryStackedBarChart data={macroBarData} timePeriod={selectedRange as any} />
+            <VictoryStackedBarChart data={macroBarData} />
           )}
         </View>
         <View className="flex-row justify-center mb-7 px-2">

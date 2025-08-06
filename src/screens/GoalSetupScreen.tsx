@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     View,
     Text,
@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView  from '../components/CustomSafeAreaView';
-import BackButton from 'src/components/BackButton';
 import { RootStackParamList } from 'src/types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { IMAGE_CONSTANTS } from 'src/constants/imageConstants';
@@ -33,7 +32,7 @@ export const GoalSetupScreen: React.FC = () => {
     const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
     const { getValue, debugLogAllValues } = useRemoteConfigContext();
     const { setReadyForDashboard } = useContext(HasMacrosContext);
-    const { isPro, setIsPro } = useContext(IsProContext);
+    const { setIsPro } = useContext(IsProContext);
     
     // Only allow dev_mode to bypass payment in non-production environments
     let devMode = false;
