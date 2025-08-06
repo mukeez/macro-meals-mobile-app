@@ -13,7 +13,8 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-target 'macromeals' do
+# Shared configuration for both targets
+def shared_pod_config(properties)
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
@@ -31,33 +32,41 @@ target 'macromeals' do
 
   config = use_native_modules!(config_command)
 
-  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
+  use_frameworks! :linkage => properties['ios.useFrameworks'].to_sym if properties['ios.useFrameworks']
   use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
+    :hermes_enabled => properties['expo.jsEngine'] == nil || properties['expo.jsEngine'] == 'hermes',
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/..",
-    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
+    :privacy_file_aggregation_enabled => properties['apple.privacyManifestAggregationEnabled'] != 'false',
+  )
+end
+
+target 'macromeals' do
+  shared_pod_config(podfile_properties)
+end
+
+target 'macromeals-stg' do
+  shared_pod_config(podfile_properties)
+end
+
+post_install do |installer|
+  react_native_post_install(
+    installer,
+    "../node_modules/react-native",
+    :mac_catalyst_enabled => false,
+    :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
   )
 
-  post_install do |installer|
-    react_native_post_install(
-      installer,
-      config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
-    )
-
-    # This is necessary for Xcode 14, because it signs resource bundles by default
-    # when building for devices.
-    installer.target_installation_results.pod_target_installation_results
-      .each do |pod_name, target_installation_result|
-      target_installation_result.resource_bundle_targets.each do |resource_bundle_target|
-        resource_bundle_target.build_configurations.each do |config|
-          config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-        end
+  # This is necessary for Xcode 14, because it signs resource bundles by default
+  # when building for devices.
+  installer.target_installation_results.pod_target_installation_results
+    .each do |pod_name, target_installation_result|
+    target_installation_result.resource_bundle_targets.each do |resource_bundle_target|
+      resource_bundle_target.build_configurations.each do |config|
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
       end
     end
   end
