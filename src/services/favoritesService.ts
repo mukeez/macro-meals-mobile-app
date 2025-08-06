@@ -22,6 +22,7 @@ export interface FavoriteMeal {
   meal_type: string;
   meal_time: string;
   logging_mode: string;
+  favorite: boolean;
 }
 
 const FAVORITES_STORAGE_KEY = '@macro_meals_favorites';

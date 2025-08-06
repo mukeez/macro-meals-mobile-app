@@ -389,6 +389,7 @@ export const EditMealScreen: React.FC = () => {
           meal_time: time.toISOString(),
           image: mealImage || IMAGE_CONSTANTS.mealIcon,
           restaurant: { name: 'custom', location: '' },
+          logging_mode: 'manual',
         };
         const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
         setIsFavorite(newFavoriteStatus);
