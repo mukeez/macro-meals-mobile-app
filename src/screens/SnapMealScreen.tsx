@@ -12,25 +12,15 @@ import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { scanService } from '../services/scanService';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 /**
  * SnapMealScreen component allows users to take photos of their meals
  * for AI analysis of nutritional content
  */
-type RootStackParamList = {
-    Dashboard: undefined;
-    Stats: undefined;
-    AddMeal: { barcodeData: string; analyzedData?: any };
-    AddMealScreen: { barcodeData?: string; analyzedData?: any };
-    MealList: undefined;
-    Profile: undefined;
-};
-
-type NavigationProp = StackNavigationProp<RootStackParamList>;
-
 const SnapMealScreen = () => {
-    const navigation = useNavigation<NavigationProp>();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
     const [permission, requestPermission] = useCameraPermissions();
 
@@ -72,18 +62,22 @@ const SnapMealScreen = () => {
             console.log('AI Scan Response:', data);
 
             if (data && data.items && data.items.length > 0) {
-                navigation.navigate('AddMealScreen', {
-                    analyzedData: {
+                navigation.navigate('ScannedMealBreakdownScreen', {
+                    meal: {
                         name: data.items[0].name,
-                        calories: data.items[0].calories,
-                        protein: data.items[0].protein,
-                        carbs: data.items[0].carbs,
-                        fat: data.items[0].fat,
-                        amount: data.items[0].amount,
-                        serving_unit: data.items[0].serving_unit,
-                        read_only: true,
-                        logging_mode: 'scanned',
-                        photo: photo.uri,
+                        macros: {
+                            calories: data.items[0].calories,
+                            protein: data.items[0].protein,
+                            carbs: data.items[0].carbs,
+                            fat: data.items[0].fat,
+                        },
+                        image: photo.uri,
+                        restaurant: {
+                            name: data.items[0].restaurant_name || '',
+                            location: data.items[0].restaurant_location || '',
+                        },
+                        items: data.items,
+                        detected_ingredients: data.detected_ingredients || [],
                     }
                 });
             } else {
@@ -176,7 +170,7 @@ const SnapMealScreen = () => {
                             onPress={() => {
                                 setIsAlertVisible(false);
                                 setScanError(false);
-                                navigation.navigate('AddMealScreen', {});
+                                navigation.navigate('ScannedMealBreakdownScreen', { meal: {} });
                             }}
                         >
                             <Text className="text-white font-semibold">Add Manually</Text>

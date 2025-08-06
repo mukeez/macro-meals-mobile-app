@@ -50,6 +50,7 @@ import { EmailVerificationScreen } from "src/screens/EmailVerificationScreen";
 import AddSearchedLoggedMealScreen from "src/screens/AddSearchedLoggedMealScreen";
 import HealthGuidelinesScreen from "src/screens/HealthGuidelinesScreen";
 import ManageSubscriptionsScreen from "src/screens/ManageSubscriptionsScreen";
+import ScannedMealBreakdownScreen from "./src/screens/ScannedMealBreakdown";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -305,6 +306,10 @@ const DashboardNavigator = () => {
       <Stack.Screen
         name="MealFinderBreakdownScreen"
         component={MealFinderBreakdownScreen}
+      />
+      <Stack.Screen
+        name="ScannedMealBreakdownScreen"
+        component={ScannedMealBreakdownScreen}
       />
       <Stack.Screen
         name="AISuggestedMealsDetailsScreen"
