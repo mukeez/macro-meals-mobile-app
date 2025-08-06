@@ -40,7 +40,7 @@ export default function NotificationsPreferences() {
         if (isMounted) {
           setToggles({ mealReminders: !!user.meal_reminder_preferences_set });
         }
-      } catch (e) {
+      } catch {
         if (isMounted) {
           Alert.alert("Error", "Could not load preferences.");
         }
@@ -64,7 +64,7 @@ export default function NotificationsPreferences() {
       await userService.updateProfile({
         meal_reminder_preferences_set: value,
       });
-    } catch (e) {
+    } catch {
       setToggles((prev) => ({ ...prev, mealReminders: !value }));
       Alert.alert("Error", "Could not update preference. Please try again.");
     } finally {

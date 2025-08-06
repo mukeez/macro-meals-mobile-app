@@ -6,28 +6,18 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Image,
 
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-  interpolateColor,
-} from "react-native-reanimated";
 import useStore from "../store/useStore";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
-import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import { CircularProgress } from "../components/CircularProgress";
 import { LinearProgress } from "../components/LinearProgress";
 import { RootStackParamList } from "../types/navigation";
 import { userService } from "../services/userService";
-import { mealService } from "../services/mealService";
-// import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
-import { appConstants } from "constants/appConstants";
 import { Image as ExpoImage } from 'expo-image';
 
 // type RootStackParamList = {
@@ -45,7 +35,7 @@ import { Profile } from '../store/useStore';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-interface TodayMeal {
+interface _TodayMeal {
   id: string;
   name: string;
   calories: number;
@@ -92,20 +82,14 @@ export const DashboardScreen: React.FC = () => {
     has_macros: undefined,
   });
 
-  const [username, setUsername] = useState("User");
-  const [progress, setProgress] = useState(0);
-
   const userId = useStore((state) => state.userId);
   const token = useStore((state) => state.token);
   const preferences = useStore((state) => state.preferences);
   const setStoreProfile = useStore((state) => state.setProfile);
-  const hasBeenPromptedForGoals = useStore((state) => state.hasBeenPromptedForGoals);
-  const setHasBeenPromptedForGoals = useStore((state) => state.setHasBeenPromptedForGoals);
   const setMacrosPreferences = useStore((state) => state.setMacrosPreferences);
   const loggedMeals = useStore((state) => state.loggedMeals);
   const refreshMeals = useStore((state) => state.refreshMeals);
   const hasLoggedFirstMeal = useStore((state) => state.hasLoggedFirstMeal);
-  const setUserFirstMealStatus = useStore((state) => state.setUserFirstMealStatus);
 
   // useEffect(() => {
   //     if (preferences.calories === 0 && preferences.protein === 0) {
@@ -132,7 +116,7 @@ export const DashboardScreen: React.FC = () => {
       //   userType: profileResponse.is_pro ? 'pro' : 'free',
       // });
       console.log('PROFILE RESPONSE', profileResponse)
-      setUsername(profileResponse.display_name || undefined);
+      // setUsername(profileResponse.display_name || undefined);
 
       const prefsResponse = await userService.getPreferences();
       console.log('PREFS RESPONSE', prefsResponse)
@@ -156,10 +140,10 @@ export const DashboardScreen: React.FC = () => {
 
       await fetchTodayProgress();
 
-      const totalCalories = macros.calories;
-      const progressPercentage =
-        totalCalories > 0 ? (todayProgress.calories / totalCalories) * 100 : 0;
-      setProgress(Math.min(100, progressPercentage));
+      // const totalCalories = macros.calories;
+      // const progressPercentage =
+      //   totalCalories > 0 ? (todayProgress.calories / totalCalories) * 100 : 0;
+      // setProgress(Math.min(100, progressPercentage));
       
       // Refresh meals from store
       await refreshMeals();
@@ -209,35 +193,6 @@ export const DashboardScreen: React.FC = () => {
     setIsLoading(true);
   };
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const animatedProgress = withTiming(progress, { duration: 1000 });
-    return {
-      borderColor: "#44A047",
-      borderWidth: 4,
-      borderRadius: 100,
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      transform: [{ rotate: `${(animatedProgress / 100) * 360}deg` }],
-      borderTopColor: "transparent",
-      borderRightColor: "transparent",
-      borderLeftColor: "#44A047",
-      borderBottomColor: "#44A047",
-    };
-  });
-
-  const baseCircleStyle = {
-    borderColor: "#d0e8d1",
-    borderWidth: 4,
-    borderRadius: 100,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  };
 
   if (isLoading) {
     return (
@@ -266,18 +221,18 @@ export const DashboardScreen: React.FC = () => {
     calories: Math.max(0, macros.calories - todayProgress.calories),
   };
 
-  const proteinProgress = Math.min(
-    100,
-    Math.round((todayProgress.protein / macros.protein) * 100) || 0
-  );
-  const carbsProgress = Math.min(
-    100,
-    Math.round((todayProgress.carbs / macros.carbs) * 100) || 0
-  );
-  const fatProgress = Math.min(
-    100,
-    Math.round((todayProgress.fat / macros.fat) * 100) || 0
-  );
+  // const proteinProgress = Math.min(
+  //   100,
+  //   Math.round((todayProgress.protein / macros.protein) * 100) || 0
+  // );
+  // const carbsProgress = Math.min(
+  //   100,
+  //   Math.round((todayProgress.carbs / macros.carbs) * 100) || 0
+  // );
+  // const fatProgress = Math.min(
+  //   100,
+  //   Math.round((todayProgress.fat / macros.fat) * 100) || 0
+  // );
 
   // Calculate today's total macros from loggedMeals
   const todayMealsSum = loggedMeals.reduce(
@@ -649,10 +604,6 @@ export const DashboardScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
   centerContainer: {
     flex: 1,
     justifyContent: "center",
@@ -679,220 +630,5 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: "white",
     fontWeight: "bold",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  logoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  logoBox: {
-    width: 40,
-    height: 40,
-    backgroundColor: "#19a28f",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoIcon: {
-    fontSize: 22,
-    color: "white",
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#19a28f",
-    marginLeft: 8,
-  },
-  profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#f1f1f1",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  profileText: {
-    fontSize: 24,
-  },
-  scrollView: {
-    flex: 1,
-    padding: 20,
-  },
-  greetingContainer: {
-    marginBottom: 24,
-  },
-  greeting: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  subGreeting: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 4,
-  },
-  progressContainer: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-  },
-  progressHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  progressTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  progressPercentage: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#19a28f",
-  },
-  macroCirclesContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 16,
-  },
-  macroItem: {
-    alignItems: "center",
-  },
-  macroCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#f1f1f1",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-    overflow: "hidden",
-  },
-  macroProgress: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    width: "100%",
-  },
-  macroInnerCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "white",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  macroValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  macroLabel: {
-    fontSize: 14,
-    color: "#666",
-  },
-  caloriesSummary: {
-    borderTopWidth: 1,
-    borderTopColor: "#eeeeee",
-    paddingTop: 16,
-    marginTop: 8,
-  },
-  caloriesRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  caloriesLabel: {
-    fontSize: 16,
-    color: "#666",
-  },
-  caloriesValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  remainingValue: {
-    color: "#19a28f",
-  },
-  actionButton: {
-    backgroundColor: "#19a28f",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  actionButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  findMealsButton: {
-    backgroundColor: "#f5a623",
-  },
-  mealLogButton: {
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  mealLogButtonText: {
-    color: "#333",
-    fontSize: 18,
-    fontWeight: "500",
-  },
-  bottomNav: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: "#eeeeee",
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-  },
-  navItem: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  navIcon: {
-    fontSize: 22,
-    marginBottom: 4,
-  },
-  navText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  navActiveText: {
-    fontSize: 12,
-    color: "#19a28f",
-    fontWeight: "bold",
-  },
-  baseCircle: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderWidth: 4,
-    borderRadius: 100,
-  },
-  progressCircle: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderWidth: 4,
-    borderRadius: 100,
   },
 });

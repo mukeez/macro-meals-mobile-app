@@ -3,11 +3,9 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   Image,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -19,13 +17,13 @@ import useStore from "../store/useStore";
 import { authService } from "../services/authService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // Import the mock service instead of the real one
-import { mockSocialAuth } from "../services/authMock";
+// import { mockSocialAuth } from "../services/authMock";
 import { OnboardingContext } from "../contexts/OnboardingContext";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
-import BackButton from "../components/BackButton";
+// import BackButton from "../components/BackButton";
 import { RootStackParamList } from "../types/navigation";
-import { MaterialIcons } from "@expo/vector-icons";
+// import { MaterialIcons } from "@expo/vector-icons";
 import { userService } from "../services/userService";
 import { HasMacrosContext } from "src/contexts/HasMacrosContext";
 import { useGoalsFlowStore } from "../store/goalsFlowStore";
@@ -50,7 +48,7 @@ type LoginScreenNavigationProp = StackNavigationProp<
 export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  // const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
@@ -58,13 +56,13 @@ export const LoginScreen: React.FC = () => {
     React.useContext(HasMacrosContext);
   const { setIsPro, isPro } = React.useContext(IsProContext);
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  // const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
   const mixpanel = useMixpanel();
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  // const togglePasswordVisibility = () => {
+  //   setShowPassword(!showPassword);
+  // };
 
   const [errors, setErrors] = useState({
     email: "",
@@ -252,52 +250,52 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-      // Use the mock service
-      const authData = await mockSocialAuth.googleSignIn();
-      setAuthenticated(true, authData.token, authData.user.id);
-    } catch (error) {
-      console.error("Google login error:", error);
-      Alert.alert("Login Failed", "Google login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleGoogleLogin = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     // Use the mock service
+  //     const authData = await mockSocialAuth.googleSignIn();
+  //     setAuthenticated(true, authData.token, authData.user.id);
+  //   } catch (error) {
+  //     console.error("Google login error:", error);
+  //     Alert.alert("Login Failed", "Google login failed. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
-  const handleAppleLogin = async () => {
-    setIsOnboardingCompleted(false);
-    try {
-      setIsLoading(true);
-      // Use the mock service
-      const authData = await mockSocialAuth.appleSignIn();
-      setAuthenticated(true, authData.token, authData.user.id);
-    } catch (error) {
-      console.error("Apple login error:", error);
-      Alert.alert("Login Failed", "Apple login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleAppleLogin = async () => {
+  //   setIsOnboardingCompleted(false);
+  //   try {
+  //     setIsLoading(true);
+  //     // Use the mock service
+  //     const authData = await mockSocialAuth.appleSignIn();
+  //     setAuthenticated(true, authData.token, authData.user.id);
+  //   } catch (error) {
+  //     console.error("Apple login error:", error);
+  //     Alert.alert("Login Failed", "Apple login failed. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
-  const handleFacebookLogin = async () => {
-    try {
-      setIsLoading(true);
-      // Use the mock service
-      const authData = await mockSocialAuth.facebookSignIn();
-      setAuthenticated(true, authData.token, authData.user.id);
-    } catch (error) {
-      console.error("Facebook login error:", error);
-      Alert.alert("Login Failed", "Facebook login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleFacebookLogin = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     // Use the mock service
+  //     const authData = await mockSocialAuth.facebookSignIn();
+  //     setAuthenticated(true, authData.token, authData.user.id);
+  //   } catch (error) {
+  //     console.error("Facebook login error:", error);
+  //     Alert.alert("Login Failed", "Facebook login failed. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
-  const handleSignUp = () => {
-    navigation.navigate("SignupScreen");
-  };
+  // const handleSignUp = () => {
+  //   navigation.navigate("SignupScreen");
+  // };
   return (
     <CustomSafeAreaView className="flex-1 bg-white" edges={["left", "right"]}>
       <KeyboardAvoidingView

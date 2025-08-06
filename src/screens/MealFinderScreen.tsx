@@ -13,7 +13,6 @@ import useStore from '../store/useStore';
 
 import { mealService } from '../services/mealService';
 import { Meal } from '../types';
-import { userService } from '../services/userService';
 
 
 interface MacroData {
@@ -134,8 +133,7 @@ const MealFinderScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'MealFinderScreen'>>();
   const macrosPreferences = useStore((state) => state.macrosPreferences);
   const token = useStore((state) => state.token);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [initializing, setInitializing] = useState<boolean>(false);
+  // const [initializing, setInitializing] = useState<boolean>(false);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<string>('Getting location...');
@@ -201,7 +199,7 @@ const MealFinderScreen: React.FC = () => {
   }, [macrosPreferences, consumed]);
 
     const fetchLocationAndSuggestions = async () => {
-      setInitializing(true);
+      // setInitializing(true);
       try {
         // 1. Get location
         const hasPermission = await locationService.requestPermissions();
@@ -221,7 +219,7 @@ const MealFinderScreen: React.FC = () => {
               },
             ]
           );
-          setInitializing(false);
+          // setInitializing(false);
           return;
         }
         const location = await locationService.getCurrentLocation();
@@ -232,6 +230,7 @@ const MealFinderScreen: React.FC = () => {
           );
           const shortAddress = address.split(',')[0].trim();
           setCurrentLocation(address);
+          console.log('MEAL FINDER - Current Location:', currentLocation);
           setSelectedLocation(shortAddress);
 
           // Skip if no coordinates
@@ -295,8 +294,6 @@ const MealFinderScreen: React.FC = () => {
         setCurrentLocation('Location unavailable');
         setSelectedLocation('Location unavailable');
         setMeals([]);
-      } finally {
-        setInitializing(false);
       }
     };
 

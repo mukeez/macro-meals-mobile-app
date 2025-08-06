@@ -15,7 +15,6 @@ import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import BackButton from "../components/BackButton";
 import { RootStackParamList } from "src/types/navigation";
-import { OnboardingContext } from "../contexts/OnboardingContext";
 
 type ForgotPasswordScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -29,7 +28,6 @@ type ForgotPasswordScreenNavigationProp = StackNavigationProp<
 export const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { setIsOnboardingCompleted } = React.useContext(OnboardingContext);
   const navigation = useNavigation<ForgotPasswordScreenNavigationProp>();
   const route = useRoute<ForgotPasswordScreenRouteProp>();
 
@@ -64,7 +62,7 @@ export const ForgotPasswordScreen: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await authService.forgotPassword(email);
+      await authService.forgotPassword(email);
       navigation.navigate("VerificationScreen", { email: email, source });
     } catch (error) {
       let errorMessage = "Invalid email. Please try again.";

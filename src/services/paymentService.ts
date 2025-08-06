@@ -1,7 +1,6 @@
-import useStore from "../store/useStore";
+
 import axiosInstance from "./axios";
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 
 export const paymentService = {
     getStripeConfig: async () => {
@@ -38,7 +37,7 @@ export const paymentService = {
         }
     },
 
-    cancelSubscription: async (subscriptionId: string,  cancel_at_period_end: boolean) => {
+    cancelSubscription: async (subscriptionId: string) => {
         try {
             const requestData = {
                 cancel_at_period_end: true,

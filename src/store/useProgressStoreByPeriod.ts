@@ -35,7 +35,7 @@ const PERIOD_MAP = {
   "all": "All"   // All time
 } as const;
 
-export const useProgressStoreByPeriod = create<ProgressStateByPeriod>((set, get) => ({
+export const useProgressStoreByPeriod = create<ProgressStateByPeriod>((set, _) => ({
   data: null,
   loading: false,
   selectedPeriod: "1w",

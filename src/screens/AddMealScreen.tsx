@@ -45,6 +45,7 @@ interface RouteParams {
         logging_mode?: string;
         hideImage?: boolean;
         photo?: string;
+        description?: string;
     };
     defaultDate?: string;
 }
@@ -69,8 +70,6 @@ export const AddMealScreen: React.FC = () => {
     const [carbs, setCarbs] = useState<string>('0');
     const [fats, setFats] = useState<string>('0');
     const [amount, setAmount] = useState<string>('1');
-    const userId = useStore((state) => state.userId);
-    const token = useStore((state) => state.token);
     const [loading, setLoading] = useState<boolean>(false);
     const [time, setTime] = useState<Date>(() => {
       if (analyzedData && analyzedData.meal_time) {
@@ -89,13 +88,13 @@ export const AddMealScreen: React.FC = () => {
     const [showServingUnitModal, setShowServingUnitModal] = useState(false);
     const [tempServingUnit, setTempServingUnit] = useState('grams');
     const [isFavorite, setIsFavorite] = useState(false);
-    const [mealDescription, setMealDescription] = useState('');
+    const [mealDescription, setMealDescription] = useState(''); 
     const [showMealTypeModal, setShowMealTypeModal] = useState(false);
     const [tempMealType, setTempMealType] = useState('breakfast');
     const [mealType, setMealType] = useState('breakfast');
     const [logging_mode, setLoggingMode] = useState('manual');
     const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
-    const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
+    // const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
     const [validationErrors, setValidationErrors] = useState<{
         calories: string;
         protein: string;
@@ -121,6 +120,7 @@ export const AddMealScreen: React.FC = () => {
             setMealType(analyzedData.meal_type || 'breakfast');
             setAmount(analyzedData.amount?.toString() || '1');
             setLoggingMode(analyzedData.logging_mode || 'manual');
+            setMealDescription(analyzedData.description || '');
 
             // Set the photo if available from SnapMealScreen
             if (analyzedData.photo) {
@@ -142,14 +142,15 @@ export const AddMealScreen: React.FC = () => {
     // Fetch favorite meals on component mount
     useEffect(() => {
         const fetchFavorites = async () => {
-            setLoadingFavorites(true);
+          //  setLoadingFavorites(true);
             try {
                 const favorites = await FavoritesService.getFavorites();
                 setFavoriteMeals(favorites);
             } catch (error) {
                 console.error('Error fetching favorites:', error);
             } finally {
-                setLoadingFavorites(false);
+                console.log('Favorites fetched');
+              //  setLoadingFavorites(false);
             }
         };
         fetchFavorites();
@@ -165,7 +166,7 @@ export const AddMealScreen: React.FC = () => {
     /**
      * Handles saving the meal to bookmarks
      */
-    const handleBookmark = (): void => {
+    const _handleBookmark = (): void => {
         // Implementation for bookmarking a meal
         console.log('Bookmark meal');
     };
@@ -197,7 +198,7 @@ export const AddMealScreen: React.FC = () => {
             fats: ''
         };
         
-        let isValid = true;
+       // let isValid = true;
         
         // const caloriesValue = parseInt(calories, 10) || 0;
         // const proteinValue = parseInt(protein, 10) || 0;
@@ -225,7 +226,7 @@ export const AddMealScreen: React.FC = () => {
         // }
         
         setValidationErrors(errors);
-        return isValid;
+        return true;
     };
 
     /**
@@ -317,10 +318,10 @@ export const AddMealScreen: React.FC = () => {
     /**
      * Saves the current meal as a template
      */
-    const handleSaveTemplate = (): void => {
-        // Implementation for saving a meal template
-        console.log('Save as template');
-    };
+    // const handleSaveTemplate = (): void => {
+    //     // Implementation for saving a meal template
+    //     console.log('Save as template');
+    // };
 
     /**
      * Handles adding a photo to the meal
@@ -400,7 +401,7 @@ export const AddMealScreen: React.FC = () => {
         } else {
           Alert.alert('Removed from favorites');
         }
-      } catch (error) {
+      } catch {
         Alert.alert('Error', 'Failed to update favorites');
       }
     };
@@ -709,6 +710,8 @@ export const AddMealScreen: React.FC = () => {
                             )}
                         </View>
                     </View>
+
+
 
                     {favoriteMeals.length > 0 && (
                         <>

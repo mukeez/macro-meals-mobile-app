@@ -10,11 +10,10 @@ import {
     Platform,
     ActivityIndicator,
     Modal,
-    SafeAreaView,
 } from 'react-native';
-import { MacroDisplay } from '../components/MacroDisplay';
+// import { MacroDisplay } from '../components/MacroDisplay';
 import { UserPreferences } from '../types';
-import { mealService } from '../services/mealService';
+// import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
 import { macroCalculationService } from "../services/macroCalculationService";
 import { useNavigation } from '@react-navigation/native';
@@ -25,7 +24,7 @@ export const MacroInputScreen: React.FC = () => {
     const preferences = useStore((state) => state.preferences);
     const updatePreferences = useStore((state) => state.updatePreferences);
     const setIsLoadingSuggestions = useStore((state) => state.setIsLoadingSuggestions);
-    const setSuggestedMeals = useStore((state) => state.setSuggestedMeals);
+    // const setSuggestedMeals = useStore((state) => state.setSuggestedMeals);
     const setSuggestionsError = useStore((state) => state.setSuggestionsError);
 
     const navigation = useNavigation<any>();

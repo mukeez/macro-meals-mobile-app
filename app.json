@@ -61,7 +61,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "./plugins/notifee-mod.js",
+      "./plugins/notifee-mod.cjs",
       "expo-secure-store",
       "expo-camera",
       [

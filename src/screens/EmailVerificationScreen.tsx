@@ -46,7 +46,7 @@ export const EmailVerificationScreen = () => {
 const { setIsOnboardingCompleted } = useContext(OnboardingContext);
 const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
 const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
-const { setIsPro, isPro } = React.useContext(IsProContext);
+  const { setIsPro } = React.useContext(IsProContext);
 const { email: routeEmail, password: routePassword } = route.params;
   const CELL_COUNT = 6;
   const [value, setValue] = useState("");
@@ -175,7 +175,7 @@ const { email: routeEmail, password: routePassword } = route.params;
 
     setIsLoading(true);
     try {
-      const data = await authService.resendEmailVerification({ email: routeEmail });
+      await authService.resendEmailVerification({ email: routeEmail });
       setCountdown(60);
       setCanResend(false);
       Alert.alert(

@@ -1,8 +1,8 @@
 
 import { API_CONFIG } from "config/api";
 import useStore from "../store/useStore";
-import { authTokenService } from "./authTokenService";
 import axiosInstance from "./axios";
+// import { authTokenService } from './authTokenService';
 
 // const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
 

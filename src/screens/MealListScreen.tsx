@@ -14,6 +14,7 @@ import { MealCard } from '../components/MealCard';
 import { MacroDisplay } from '../components/MacroDisplay';
 import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
+import { Meal } from '../types';
 
 type RootStackParamList = {
     MacroInput: undefined;

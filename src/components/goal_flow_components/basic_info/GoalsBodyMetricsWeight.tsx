@@ -3,18 +3,13 @@ import { View, Text, Switch, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useGoalsFlowStore } from 'src/store/goalsFlowStore';
 
-const heightsFt = [3, 4, 5, 6, 7, 8, 9];
-const heightsIn = Array.from({ length: 12 }, (_, i) => i);
-const heightsCm = Array.from({ length: 121 }, (_, i) => 100 + i); // 100cm to 220cm
+ // 100cm to 220cm
 const weightsLb = Array.from({ length: 321 }, (_, i) => 80 + i); // 80lb to 400lb
 const weightsKg = Array.from({ length: 221 }, (_, i) => 30 + i); // 30kg to 250kg
 
 export const GoalBodyMetricsWeight = () => {
   const {
     weight_unit_preference, setWeightUnitPreference,
-    heightFt, setHeightFt,
-    heightIn, setHeightIn,
-    heightCm, setHeightCm,
     weightLb, setWeightLb,
     weightKg, setWeightKg,
   } = useGoalsFlowStore();

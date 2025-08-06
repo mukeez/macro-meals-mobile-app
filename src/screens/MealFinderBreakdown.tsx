@@ -5,10 +5,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearProgress } from '../components/LinearProgress';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
-import SemiCircularProgress from '../components/SemiCircularProgress';
+// import SemiCircularProgress from '../components/SemiCircularProgress';
 import { RootStackParamList } from '../types/navigation';
-import { Ionicons } from '@expo/vector-icons';
-import FavoritesService, { FavoriteMeal } from '../services/favoritesService';
+// import { Ionicons } from '@expo/vector-icons';
+import FavoritesService from '../services/favoritesService';
 import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
 import { userService } from '../services/userService';
@@ -43,7 +43,7 @@ const macroColors = {
   Protein: '#6C5CE7',
 } as const;
 
-type MacroColorKey = keyof typeof macroColors;
+// type MacroColorKey = keyof typeof macroColors;
 
 const MealFinderBreakdownScreen: React.FC = () => {
   const route = useRoute();
@@ -52,9 +52,9 @@ const MealFinderBreakdownScreen: React.FC = () => {
   const token = useStore((state) => state.token);
   
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
-  const [matchPercent] = useState<number>(98);
+  // const [matchPercent] = useState<number>(98);
   const [isLogging, setIsLogging] = useState<boolean>(false);
-  const [userPreferences, setUserPreferences] = useState<any>(null);
+  // const [userPreferences, setUserPreferences] = useState<any>(null);
   const [macroBreakdown, setMacroBreakdown] = useState<MacroData[]>([]);
 
   // Check if meal is in favorites on component mount
@@ -75,7 +75,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
   const fetchUserPreferences = async () => {
     try {
       const preferences = await userService.getPreferences();
-      setUserPreferences(preferences);
+      // setUserPreferences(preferences);
       
       // Update macro breakdown with actual user targets
       const updatedMacroBreakdown: MacroData[] = [

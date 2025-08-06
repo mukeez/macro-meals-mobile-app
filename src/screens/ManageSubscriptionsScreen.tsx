@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomSafeAreaView from '../components/CustomSafeAreaView';
-import { paymentService } from '../services/paymentService';
-import { useMixpanel } from '@macro-meals/mixpanel';
+// import { paymentService } from '../services/paymentService';
+// import { useMixpanel } from '@macro-meals/mixpanel';
 import revenueCatService from '../services/revenueCatService';
 
 interface SubscriptionDetails {
@@ -36,10 +36,10 @@ const ManageSubscriptionsScreen: React.FC = () => {
   const navigation = useNavigation();
   const [subscription, setSubscription] = useState<SubscriptionDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [cancelling, setCancelling] = useState(false);
-  const [reactivating, setReactivating] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const mixpanel = useMixpanel();
+  // const [cancelling, setCancelling] = useState(false);
+  // const [reactivating, setReactivating] = useState(false);
+  // const [showCancelModal, setShowCancelModal] = useState(false);
+  // const mixpanel = useMixpanel();
 
 
   useEffect(() => {
@@ -152,10 +152,10 @@ const ManageSubscriptionsScreen: React.FC = () => {
     return planName || 'Subscription';
   };
 
-  const capitalizeFirstLetter = (str: string) => {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  };
+  // const capitalizeFirstLetter = (str: string) => {
+  //   if (!str) return str;
+  //   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  // };
 
   const getStatusDisplay = (status: string, cancelAtPeriodEnd: boolean) => {
     if (cancelAtPeriodEnd) {
@@ -202,7 +202,7 @@ const ManageSubscriptionsScreen: React.FC = () => {
     }
   };
 
-  const handleReactivateSubscription = async (subscription_id: string) => {
+  const handleReactivateSubscription = async (_subscription_id: string) => {
     // With RevenueCat, users need to resubscribe through the purchase flow
     Alert.alert(
       'Reactivate Subscription',
@@ -335,45 +335,30 @@ const ManageSubscriptionsScreen: React.FC = () => {
                 <TouchableOpacity
                   className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
                   onPress={() => handleReactivateSubscription(subscription?.subscription_id || '')}
-                  disabled={reactivating}
                 >
-                  {reactivating ? (
-                    <ActivityIndicator size="small" color="#19a28f" style={{ marginRight: 12 }} />
-                  ) : (
-                    <Text className="text-[#19a28f] text-left font-semibold text-base">
-                      Resubscribe
-                    </Text>
-                  )}
+                  <Text className="text-[#19a28f] text-left font-semibold text-base">
+                    Resubscribe
+                  </Text>
                 </TouchableOpacity>
               ) : !subscription?.has_subscription ? (
                 // Reactivate button for cancelled subscriptions (when has_subscription is false)
                 <TouchableOpacity
                   className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
                   onPress={() => handleReactivateSubscription(subscription?.subscription_id || '')}
-                  disabled={reactivating}
                 >
-                  {reactivating ? (
-                    <ActivityIndicator size="small" color="#19a28f" style={{ marginRight: 12 }} />
-                  ) : (
-                    <Text className="text-[#19a28f] text-left font-semibold text-base">
-                      Reactivate Subscription
-                    </Text>
-                  )}
+                  <Text className="text-[#19a28f] text-left font-semibold text-base">
+                    Reactivate Subscription
+                  </Text>
                 </TouchableOpacity>
               ) : subscription?.has_subscription ? (
                 // Cancel button for active subscriptions
                 <TouchableOpacity
                   className="pl-4 flex-row justify-start bg-white rounded-xl py-6"
                   onPress={handleCancelSubscription}
-                  disabled={cancelling}
                 >
-                  {cancelling ? (
-                    <ActivityIndicator size="small" color="#dc2626" style={{ marginRight: 12 }} />
-                  ) : (
-                    <Text className="text-punchRed text-left font-semibold text-base">
-                      Cancel Subscription
-                    </Text>
-                  )}
+                  <Text className="text-punchRed text-left font-semibold text-base">
+                    Cancel Subscription
+                  </Text>
                 </TouchableOpacity>
               ) : null}
             </View>

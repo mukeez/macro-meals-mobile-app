@@ -30,7 +30,6 @@ const CustomRuler: React.FC<CustomRulerProps> = ({
 }) => {
   const segmentsLength = max - min + 1;
   const snapSegment = segmentWidth + segmentSpacing;
-  const spacerWidth = (width - segmentWidth) / 2;
   const data = [...Array(segmentsLength).keys()].map(i => i + min);
 
   const scrollViewRef = useRef<ScrollView | null>(null);

@@ -20,7 +20,6 @@ import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import { mealService } from 'src/services/mealService';
 import useStore from '../store/useStore';
 import DiscoverCard from '../components/DiscoverCard';
-import { Meal } from '../types';
 
 // Interface for the search API response
 interface SearchMealResponse {
@@ -49,11 +48,6 @@ interface SearchMealResponse {
 }
 import { RootStackParamList } from '../types/navigation';
 
-const DUMMY_MEALS = [
-  { name: 'Brown rice', macros: { calories: 170, carbs: 12, fat: 10, protein: 10 } },
-  { name: 'Salmon and rice', macros: { calories: 170, carbs: 12, fat: 10, protein: 10 } },
-  { name: 'Salmon and fries', macros: { calories: 170, carbs: 12, fat: 10, protein: 10 } },
-];
 
 /**
  * ScanScreen component displays the various meal logging options:
@@ -67,7 +61,6 @@ const ScanScreenType: React.FC = () => {
     const [searchText, setSearchText] = useState('');
     const [searchResults, setSearchResults] = useState<SearchMealResponse['results']>([]);
     const [searchLoading, setSearchLoading] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [showGlobalSearch, setShowGlobalSearch] = useState(false);
     const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
     const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([]);
@@ -264,7 +257,7 @@ const ScanScreenType: React.FC = () => {
             } else {
                 try {
                     console.error('Error preparing meal data:', JSON.stringify(error));
-                } catch (e) {
+                } catch {
                     console.error('Error preparing meal data:', error);
                 }
             }

@@ -1,23 +1,22 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { DashboardScreen } from "../screens/DashboardScreen";
-import { StatsScreen } from "../screens/StatsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
 import { Image, View, Text, TouchableOpacity } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { CommonActions } from "@react-navigation/native";
-import MealLogScreen from "src/screens/MealLogScreen";
+
 import AddMeal from "src/screens/AddMeal";
 import ProgressScreen from "src/screens/ProgressScreen";
 
 const Tab = createBottomTabNavigator();
 
-const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
+const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
     return (
         <View className="flex-row items-center justify-between bg-white h-[90px] px-4 pb-6">
             {state.routes.map((route, index) => {
-                const { options } = descriptors[route.key];
+                //const { options } = descriptors[route.key];
                 const isFocused = state.index === index;
 
         const icon = [
@@ -117,7 +116,6 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigat
 };
 
 const CustomBottomTabs = () => {
-  console.log('🔍 CustomBottomTabs - Rendering CustomBottomTabs');
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}

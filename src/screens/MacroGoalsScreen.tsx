@@ -14,7 +14,7 @@ import Svg, { Circle, G } from 'react-native-svg';
 import useStore from '../store/useStore';
 import { macroCalculationService } from '../services/macroCalculationService';
 import { RootStackParamList } from '../types/navigation';
-import { MacroTargets, UserPreferences } from '../types';
+import { UserPreferences } from '../types';
 
 type MacroGoalsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MacroGoals'>;
 

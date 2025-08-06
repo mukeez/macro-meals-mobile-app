@@ -16,8 +16,8 @@ import {macroMealsCrashlytics} from '@macro-meals/crashlytics';
 import { OnboardingContext } from './src/contexts/OnboardingContext';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 import Constants from 'expo-constants';
-import { userService } from './src/services/userService';
-import { authService } from './src/services/authService';
+// import { userService } from './src/services/userService';
+// import { authService } from './src/services/authService';
 import { RemoteConfigProvider, useRemoteConfigContext } from '@macro-meals/remote-config-service';
 import { IsProContext } from 'src/contexts/IsProContext';
 import Config from 'react-native-config';
@@ -63,7 +63,7 @@ function RemoteConfigHandler() {
             });
             
             // Handle specific config updates here
-            lastUpdate.updatedKeys.forEach((key, index) => {
+            lastUpdate.updatedKeys.forEach((_key, _index) => {
                 
                 // Add your custom logic for specific keys here
                 // For example:

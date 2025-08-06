@@ -1,18 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import CustomSafeAreaView from '../../components/CustomSafeAreaView';
 import CustomTouchableOpacityButton from '../../components/CustomTouchableOpacityButton';
 import CustomScaffold from '../../components/CustomScaffold';
 import CustomPagerView from '../../components/CustomPagerView';
 import { onboardingItems, OnboardingItem } from '../../constants/onboarding';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OnboardingContext } from '../../contexts/OnboardingContext';
 
 
-type RootStackParamList = {
-    Auth: { screen: string };
-}
+
 
 export const OnboardingScreen: React.FC = () => {
     const {setIsOnboardingCompleted, setInitialAuthScreen} = React.useContext(OnboardingContext);

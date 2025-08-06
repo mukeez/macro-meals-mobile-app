@@ -225,7 +225,7 @@ const NotificationsScreen: React.FC = () => {
       <Header title="Notifications" />
       <FlatList
         data={flatListData}
-        keyExtractor={(item, idx) =>
+        keyExtractor={(item, _) =>
           item.type === "header" ? `header-${item.section}` : item.notif.id
         }
         renderItem={({ item }) =>

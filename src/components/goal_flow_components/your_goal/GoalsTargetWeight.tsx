@@ -9,7 +9,7 @@ const weightsLb = Array.from({ length: 321 }, (_, i) => i + 80); // 80-400 lbs
 const weightsKg = Array.from({ length: 146 }, (_, i) => i + 35); // 35-180 kg
 
 // Responsive dimensions
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 const isSmallScreen = screenWidth < 360;
 const isLargeScreen = screenWidth > 600;
 

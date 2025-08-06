@@ -1,5 +1,4 @@
-import { SuggestMealsRequest, SuggestMealsResponse, UserPreferences, Meal, LoggedMeal } from '../types';
-import { authTokenService } from './authTokenService';
+import { Meal, LoggedMeal } from '../types';
 import { userService } from './userService';
 import useStore from 'src/store/useStore';
 import axiosInstance from './axios';
@@ -7,19 +6,8 @@ import axiosInstance from './axios';
 /**
  * API configuration.
  */
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
-const API_ENDPOINTS = {
-    SUGGEST_MEALS: `${API_BASE_URL}/meals/suggest-meals`,
-    LOG_MEAL: `${API_BASE_URL}/meals/add`,
-    TODAY_MEALS: `${API_BASE_URL}/meals/today`,
-    DAILY_PROGRESS: `${API_BASE_URL}/meals/progress/today`,
-    DELETE_MEAL: `${API_BASE_URL}/meals/`,
-    MEAL_PROGRESS: `${API_BASE_URL}/meals/progress`,
-    MEALS: `${API_BASE_URL}/meals/logs`,
-    EDIT_MEAL: `${API_BASE_URL}/meals/{id}`,
-    SEARCH_MEAL: `${API_BASE_URL}/meals/search?query={query}`,
-    SEARCH_MEALS_API: `${API_BASE_URL}/products/search-meals-format?query={query}`
-};
+
+
 
 /**
  * Interface for meal data to be logged
@@ -66,44 +54,6 @@ interface DailyProgressResponse {
         fat: number;
     };
 }
-
-interface MealProgressResponse {
-  period_macros: [
-    {
-      period_label: string;
-      date: string,
-      calories: number,
-      protein: number;
-      carbs: number;
-      fat: number;
-    }
-  ];
-  average_macros: {
-    calories: number,
-    protein: number,
-    carbs: number,
-    fat: number
-  };
-  target_macros: {
-    calories: number,
-    protein: number,
-    carbs: number,
-    fat: number
-  };
-  comparison_percentage: {
-    calories: number,
-    protein: number,
-    carbs: number,
-    fat: number
-  };
-  start_date: string;
-  end_date: string;
-  period_type: string;
-  aggregation_period: string;
-  days_with_logs: number;
-  total_days: number;
-}
-
 /**
  * Interface for AI meal suggestions request
  */

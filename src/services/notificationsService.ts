@@ -1,7 +1,5 @@
-import useStore from "../store/useStore";
-import axiosInstance from "./axios";
 
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.macromealsapp.com/api/v1';
+import axiosInstance from "./axios";
 
 export const notificationService = {
   async getNotifications() {

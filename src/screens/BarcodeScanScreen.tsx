@@ -7,7 +7,6 @@ import {
     StatusBar,
     Alert,
     ActivityIndicator,
-    StyleSheet
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
@@ -33,9 +32,6 @@ const BarcodeScanScreen = () => {
     const [permission, requestPermission] = useCameraPermissions();
     const cameraRef = useRef<CameraView>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [flashMode, setFlashMode] = useState<'off' | 'torch'>('off');
-    const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>(null);
-    const [lastScanTime, setLastScanTime] = useState<number | null>(null);
     const scanInterval = 2500;
     const [isAlertVisible, setIsAlertVisible] = useState(false);
     const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -45,7 +41,7 @@ const BarcodeScanScreen = () => {
     const [scanError, setScanError] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
+        navigation.addListener('focus', () => {
             resetScanState();
         });
         return () => { cleanupScanState(); };
@@ -53,7 +49,6 @@ const BarcodeScanScreen = () => {
 
     const resetScanState = () => {
         setIsProcessing(false);
-        setLastScannedBarcode(null);
         setIsAlertVisible(false);
         processingRef.current = false;
         lastBarcodeRef.current = null;
@@ -213,7 +208,7 @@ const BarcodeScanScreen = () => {
         }
     };
 
-    const openGallery = async () => {
+    const _openGallery = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
             Alert.alert(
@@ -280,9 +275,7 @@ const BarcodeScanScreen = () => {
         }
     };
 
-    const toggleFlash = () => {
-        setFlashMode(current => current === 'off' ? 'torch' : 'off');
-    };
+
 
     if (!permission?.granted) {
         return (
@@ -313,7 +306,7 @@ const BarcodeScanScreen = () => {
                         ref={cameraRef}
                         style={{ flex: 1 }}
                         facing="back"
-                        enableTorch={flashMode === 'torch'}
+                        // enableTorch={flashMode === 'torch'}
                         barcodeScannerSettings={{
                             barcodeTypes: [
                                 'ean13', 'ean8', 'upc_e', 'upc_a',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, ImageSourcePropType } from 'react-native';
+import { Image, ImageSourcePropType, NativeSyntheticEvent, ImageErrorEventData } from 'react-native';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 
 interface RemoteImageProps {
@@ -8,7 +8,7 @@ interface RemoteImageProps {
   className?: string;
   resizeMode?: 'cover' | 'contain' | 'stretch' | 'repeat' | 'center';
   onLoad?: () => void;
-  onError?: (error: any) => void;
+  onError?: (error: NativeSyntheticEvent<ImageErrorEventData>) => void;
 }
 
 export const RemoteImage: React.FC<RemoteImageProps> = ({
@@ -20,9 +20,9 @@ export const RemoteImage: React.FC<RemoteImageProps> = ({
   onError
 }) => {
   const [hasError, setHasError] = useState(false);
-  const [currentUri, setCurrentUri] = useState(uri);
+  const [currentUri] = useState(uri);
 
-  const handleError = (error: any) => {
+  const handleError = (error: NativeSyntheticEvent<ImageErrorEventData>) => {
     console.log('RemoteImage error for URI:', uri, error);
     setHasError(true);
     onError?.(error);

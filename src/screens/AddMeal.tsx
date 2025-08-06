@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+// eslint-disable-next-line react-native/split-platform-components
 import { ScrollView, View, Text, Image, TouchableOpacity, Modal, Pressable, ActionSheetIOS, Platform, RefreshControl, ActivityIndicator, Alert } from "react-native";
 import { LinearProgress } from "../components/LinearProgress";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
@@ -9,7 +10,6 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types/navigation";
 import { Image as ExpoImage } from "expo-image";
-import { appConstants } from "constants/appConstants";
 import { DatePickerModal } from 'react-native-paper-dates';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { format, parseISO } from 'date-fns';
@@ -26,8 +26,8 @@ const FILTER_OPTIONS = [
 
 function getStartEndDates(range: string): { startDate: string; endDate: string } {
   const today = new Date();
-  let startDate = new Date(today);
-  let endDate = new Date(today);
+  const startDate = new Date(today);
+  const endDate = new Date(today);
   
   switch (range) {
     case "today":
@@ -83,19 +83,12 @@ const AddMeal: React.FC = () => {
     total_pages: 0
   });
   const macrosPreferences = useStore((state) => state.macrosPreferences);
-  const preferences = useStore((state) => state.preferences);
-  const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const token = useStore((state) => state.token);
   const deleteLoggedMeal = useStore((state) => state.deleteLoggedMeal);
   const fetchTodayProgress = useStore((state) => state.fetchTodayProgress);
   
   // State for consumed calories (same as DashboardScreen)
-  const [consumed, setConsumed] = useState({
-    protein: 0,
-    carbs: 0,
-    fat: 0,
-    calories: 0,
-  });
+
 
   // Use macrosPreferences for target values (same as DashboardScreen)
   const macros = {
@@ -129,7 +122,6 @@ const AddMeal: React.FC = () => {
   const [customPickerOpen, setCustomPickerOpen] = useState(false);
 
   // Accordion state for months and days
-  const [openMonths, setOpenMonths] = useState<string[]>([]); // month keys
   const [openDays, setOpenDays] = useState<{ [month: string]: string[] }>({}); // { monthKey: [dayKey, ...] }
 
   // Group meals by month and day
@@ -152,13 +144,7 @@ const AddMeal: React.FC = () => {
   }, [mealsByMonth]);
 
   // Toggle month accordion
-  const toggleMonth = (monthKey: string) => {
-    setOpenMonths(prev =>
-      prev.includes(monthKey)
-        ? prev.filter(m => m !== monthKey)
-        : [...prev, monthKey]
-    );
-  };
+
   // Toggle day accordion
   const toggleDay = (monthKey: string, dayKey: string) => {
     setOpenDays(prev => {
@@ -239,13 +225,13 @@ const AddMeal: React.FC = () => {
       if (!token) return;
       
       try {
-        const progressData = await mealService.getDailyProgress();
-        setConsumed({
-          protein: progressData.logged_macros.protein,
-          carbs: progressData.logged_macros.carbs,
-          fat: progressData.logged_macros.fat,
-          calories: progressData.logged_macros.calories,
-        });
+        await mealService.getDailyProgress();
+        // setConsumed({
+        //   protein: progressData.logged_macros.protein,
+        //   carbs: progressData.logged_macros.carbs,
+        //   fat: progressData.logged_macros.fat,
+        //   calories: progressData.logged_macros.calories,
+        // });
       } catch (error) {
         console.error('Error fetching consumed data:', error);
       }
@@ -441,7 +427,7 @@ const AddMeal: React.FC = () => {
                 <View className="flex-1 w-full py-1">
                   <Text className="text-textMediumGrey text-center">You haven't logged any meals yet.</Text>
                   <TouchableOpacity className="mt-4 py-2 px-4 border-t border-gray" onPress={() => {
-                    let defaultDate = new Date();
+                    const defaultDate = new Date();
                     if ((selectedRange as string) === 'yesterday') {
                       defaultDate.setDate(defaultDate.getDate() - 1);
                     }
@@ -719,7 +705,7 @@ const AddMeal: React.FC = () => {
                     <View className="flex-1 w-full py-1">
                       <Text className="text-textMediumGrey text-center">You haven't logged any meals yet.</Text>
                       <TouchableOpacity className="mt-4 py-2 px-4 border-t border-gray" onPress={() => {
-                        let defaultDate = new Date();
+                        const defaultDate = new Date();
                         if (selectedRange === 'yesterday') {
                           defaultDate.setDate(defaultDate.getDate() - 1);
                         }
@@ -888,7 +874,7 @@ const AddMeal: React.FC = () => {
                         <TouchableOpacity 
                           className="mt-4 py-4 px-4 border-t border-gray"
                           onPress={() => {
-                            let defaultDate = new Date();
+                            const defaultDate = new Date();
                             if (selectedRange === 'yesterday') {
                               defaultDate.setDate(defaultDate.getDate() - 1);
                             }

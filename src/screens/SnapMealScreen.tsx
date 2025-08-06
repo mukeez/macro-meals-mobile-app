@@ -7,13 +7,10 @@ import {
     SafeAreaView,
     Button,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
-import { CameraView, FlashMode, useCameraPermissions, CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import useStore from '../store/useStore';
-import * as FileSystem from 'expo-file-system';
 import { scanService } from '../services/scanService';
 import { StackNavigationProp } from '@react-navigation/stack';
 
@@ -38,14 +35,12 @@ const SnapMealScreen = () => {
     const [permission, requestPermission] = useCameraPermissions();
 
     const cameraRef = useRef<CameraView>(null);
-    const [facing, setFacing] = useState<CameraType>('back');
-    const [flashMode, setFlashMode] = useState<FlashMode>('off');
-    const token = useStore((state) => state.token);
+    const [facing] = useState<CameraType>('back');
 
-    const [showOverlay, setShowOverlay] = useState(true);
+    const [_showOverlay, setShowOverlay] = useState(true);
     const [loading, setLoading] = useState(false);
     const [scanError, setScanError] = useState(false);
-    const [isAlertVisible, setIsAlertVisible] = useState(false);
+    const [_isAlertVisible, setIsAlertVisible] = useState(false);
 
     useEffect(() => {
         const overlayTimer = setTimeout(() => {
@@ -70,8 +65,7 @@ const SnapMealScreen = () => {
 
             // Prepare the file for upload
             const fileUri = photo.uri;
-            const fileName = fileUri.split('/').pop() || 'meal.jpg';
-            const fileType = 'image/jpeg';
+
 
             // Send to API
             const data = await scanService.scanImage(fileUri);
@@ -96,64 +90,23 @@ const SnapMealScreen = () => {
                 setScanError(true);
                 setIsAlertVisible(true);
             }
-        } catch (error) {
+            } catch {
             setScanError(true);
-            setIsAlertVisible(true);
-            console.error('Error capturing or uploading photo:', error);
+            setIsAlertVisible(true);        
         } finally {
             setLoading(false);
         }
     };
 
-    /**
-     * Toggle flash mode (off -> on -> auto)
-     */
-    const toggleFlash = () => {
-        setFlashMode(current => {
-            switch (current) {
-                case 'off':
-                    return 'on';
-                case 'on':
-                    return 'auto';
-                default:
-                    return 'off';
-            }
-        });
-    };
 
-    /**
-     * Toggle between front and back camera
-     */
-    const toggleCameraFacing = () => {
-        setFacing(current => (
-            current === 'back' ? 'front' : 'back'
-        ));
-    };
 
-    /**
-     * Stub for opening the device gallery
-     */
-    const openGallery = () => {
-        // TODO: Implement gallery selection using expo-media-library
-        console.log('Open gallery');
-    };
+
 
     /**
      * Handle going back to previous screen
      */
     const handleBack = () => {
         navigation.goBack();
-    };
-
-    const getFlashIcon = () => {
-        switch (flashMode) {
-            case 'on':
-                return 'flash';
-            case 'auto':
-                return 'flash-auto';
-            default:
-                return 'flash-off';
-        }
     };
 
     if (!permission) {

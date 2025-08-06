@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Image, TouchableOpacity } from "react-native";
+import { Image, TouchableOpacity } from "react-native";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
 
 export default function BackButton({onPress}: {onPress: () => void}){

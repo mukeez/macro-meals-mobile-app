@@ -1,6 +1,5 @@
 // src/services/macroCalculationService.ts
 
-import { UserPreferences } from '../types';
 import axiosInstance from './axios';
 
 /**

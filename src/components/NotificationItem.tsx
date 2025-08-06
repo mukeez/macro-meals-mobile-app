@@ -17,7 +17,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   timeAgo,
   onPress,
   icon = "notifications",
-  read = false,
 }) => (
   <View className="px-3">
     <TouchableOpacity

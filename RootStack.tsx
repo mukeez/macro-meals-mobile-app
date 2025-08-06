@@ -1,5 +1,5 @@
-import React, { useEffect, useContext, useState } from "react";
-import { Platform } from "react-native";
+import React, { useEffect, useContext } from "react";
+// import { Platform } from "react-native";
 import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
 import Config from 'react-native-config';
 import { checkSubscriptionStatus } from './src/services/subscriptionChecker';
@@ -7,14 +7,14 @@ import { HasMacrosContext } from './src/contexts/HasMacrosContext';
 import { IsProContext } from './src/contexts/IsProContext';
 import MealFinderScreen from "src/screens/MealFinderScreen";
 import { WelcomeScreen } from "./src/screens/WelcomeScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
+// import SettingsScreen from "./src/screens/SettingsScreen";
 import ScanScreenType from "./src/screens/ScanScreenType";
 import BarcodeScanScreen from "./src/screens/BarcodeScanScreen";
 import SnapMealScreen from "./src/screens/SnapMealScreen";
 import MealLogScreen from "./src/screens/MealLogScreen";
-import { NearbyMealsScreen } from "./src/screens/NearbyMealsScreen";
+// import { NearbyMealsScreen } from "./src/screens/NearbyMealsScreen";
 import MealFinderBreakdownScreen from "./src/screens/MealFinderBreakdown";
-import { DashboardScreen } from "./src/screens/DashboardScreen";
+// import { DashboardScreen } from "./src/screens/DashboardScreen";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { SignupScreen } from "./src/screens/SignupScreen";
 import { OnboardingScreen } from "./src/screens/Onboarding/OnboardingScreen";
@@ -23,16 +23,16 @@ import MacroGoalsScreen from "./src/screens/MacroGoalsScreen";
 
 import { ForgotPasswordScreen } from "./src/screens/ForgotPasswordScreen";
 import { VerificationScreen } from "./src/screens/VerificationScreen";
-import { MealListScreen } from "./src/screens/MealListScreen";
+// import { MealListScreen } from "./src/screens/MealListScreen";
 import PaymentScreen from "./src/screens/PaymentScreen";
 import { createStackNavigator } from "@react-navigation/stack";
-import { useMixpanel } from "@macro-meals/mixpanel";
+// import { useMixpanel } from "@macro-meals/mixpanel";
 import "./src/globals.css";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RootStackParamList } from "./src/types/navigation";
 import { ResetPasswordScreen } from "./src/screens/ResetPassword";
 import CustomBottomTabs from "./src/navigation/BottomTabNavigation";
-import AddMeal from "./src/screens/AddMeal";
+// import AddMeal from "./src/screens/AddMeal";
 import NotificationsScreen from "./src/screens/NotificationsScreen";
 import NotificationsPreferences from "./src/screens/NotificationsPreferences";
 import AddMealScreen from "./src/screens/AddMealScreen";
@@ -250,13 +250,13 @@ const AuthNavigator = ({
 };
 
 const OnboardingNavigator = () => {
-  const handleGetStartedClick = async () => {
-    try {
-      await AsyncStorage.setItem("isOnboardingCompleted", "true");
-    } catch (error) {
-      console.error("Error saving onboarding status:", error);
-    }
-  };
+  // const handleGetStartedClick = async () => {
+  //   try {
+  //     await AsyncStorage.setItem("isOnboardingCompleted", "true");
+  //   } catch (error) {
+  //     console.error("Error saving onboarding status:", error);
+  //   }
+  // };
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

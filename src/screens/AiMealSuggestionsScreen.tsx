@@ -39,7 +39,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
   const [meals, setMeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [preferences, setPreferences] = useState<any>(null);
+  // const [preferences, setPreferences] = useState<any>(null);
   const macrosPreferences = useStore((state) => state.macrosPreferences);
   const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const [macroData, setMacroData] = useState<MacroData[]>(defaultMacroData);
@@ -73,14 +73,14 @@ const AiMealSuggestionsScreen: React.FC = () => {
         
         const result = await mealService.getAiMealSuggestions();
         setMeals(result.meals);
-        setPreferences(result.preferences);
+        // setPreferences(result.preferences);
         
         // Track AI meal suggestions viewed
         if (result.meals && result.meals.length > 0) {
           await trackAIMealSuggestedViewed();
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch meal suggestions');
+      } catch  {
+        setError('Failed to fetch meal suggestions');
       } finally {
         setLoading(false);
       }
@@ -119,7 +119,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
           { label: 'Carbs', value: progressData.logged_macros.carbs || 0, color: '#FFC107' },
           { label: 'Fat', value: progressData.logged_macros.fat || 0, color: '#FF69B4' },
         ]);
-      } catch (error) {
+      } catch {
         setMacroData(defaultMacroData);
       }
     };

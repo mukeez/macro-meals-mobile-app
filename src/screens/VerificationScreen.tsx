@@ -35,9 +35,7 @@ export const VerificationScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, "VerificationScreen">>();
   const { email: routeEmail, source } = route.params;
 
-  const [errors, setErrors] = useState({
-    email: "",
-  });
+
 
     const isDisabled = () => {
         return isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail);
