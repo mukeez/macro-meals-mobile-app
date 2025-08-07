@@ -240,6 +240,7 @@ const MealFinderScreen: React.FC = () => {
             return;
           }
 
+
           // 2. Fetch meal suggestions
           const requestBody = {
             calories: macrosPreferences?.calorie_target || 0,
@@ -274,6 +275,7 @@ const MealFinderScreen: React.FC = () => {
               distance: meal.distance,
               date: new Date().toISOString(),
               mealType: meal.meal_type || 'lunch',
+              matchScore: meal.match_score || 0,
             }));
             setMeals(mealList);
             setError(null);
@@ -376,6 +378,7 @@ const MealFinderScreen: React.FC = () => {
         distance: meal.distance,
         date: new Date().toISOString(),
         mealType: meal.meal_type || 'lunch',
+        matchScore: meal.match_score || 0,
       }));
       setMeals(mealList);
       setError(null);
@@ -406,18 +409,19 @@ const MealFinderScreen: React.FC = () => {
             <ScrollView className="pb-8">
                 <View className="flex-row items-center mt-4 mb-5 px-5 gap-2">
                 <Image source={IMAGE_CONSTANTS.locationGray} className="w-[40px] h-[40px] rounded-full" />
-                <TouchableOpacity onPress={openLocationSheet} className="flex-col flex-1" activeOpacity={0.7}>
+                <TouchableOpacity onPress={openLocationSheet} className="flex-col flex-1 items-start" activeOpacity={0.7}>
                     <Text className="text-sm font-medium text-[#222]">Current location</Text>
                     <View className="flex-row items-center">
-                    <Text className="text-base font-semibold text-[#222] mr-1">{selectedLocation}</Text>
+                    <Text className="mt-2 text-base font-semibold text-primary mr-1">{selectedLocation}</Text>
                     <Ionicons name="chevron-down" size={18} color="#222" />
                     </View>
-                    {locationLoading && <ActivityIndicator size="small" color="#19a28f" />}
+                    {/* {locationLoading && <ActivityIndicator size="small" color="#19a28f" />} */}
                 </TouchableOpacity>
                 </View>
                 {/* Macros Donut Row */}
                 <View className="flex-col items-start bg-white mt-3 px-5 pt-3 pb-10 mb-4">
-                <Text className="text-base text-black mt-2 text-center mb-4 font-medium">Remaining today</Text>
+                
+                <Text className="text-base text-black mt-2 text-center mb-4 font-semibold">Remaining today</Text>
                 <View className="flex-row w-full justify-between items-center">
                     {macroData.map((macro) => {
                       const target = macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 0;
@@ -456,7 +460,7 @@ const MealFinderScreen: React.FC = () => {
                 </View>
                 </View>
 
-                <Text className="text-base font-medium text-[#222] mx-5 my-5">Nearby Suggestions</Text>
+                <Text className="text-base font-semibold text-[#222] mx-5 my-5">Nearby Suggestions</Text>
                 {locationLoading ? (
                   <View className="flex items-center justify-center py-8">
                     <ActivityIndicator size="large" color="#19a28f" />
@@ -485,7 +489,7 @@ const MealFinderScreen: React.FC = () => {
                 <TouchableOpacity 
                     key={idx} 
                     onPress={() => navigation.navigate('MealFinderBreakdownScreen', { meal })}
-                    className="flex-row bg-white rounded-xl mx-5 mb-4 px-4 py-4 shadow-sm"
+                    className="flex-row bg-white rounded-xl mx-5 mb-6 px-4 py-4 shadow-sm"
                 >
                     <View className="flex-row items-center justify-center bg-cornflowerBlue h-[48px] w-[48px] rounded-full mr-3 flex-shrink-0">
                         <Image source={meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon} className="w-[20px] h-[20px] rounded-full" />
@@ -493,7 +497,14 @@ const MealFinderScreen: React.FC = () => {
                     
                     <View className="flex-1 gap-1 pr-2">
                         <View className="flex-col justify-start">
-                            <Text className="text-sm font-medium text-[#222] mb-1" numberOfLines={2} style={{ flexWrap: 'wrap' }}>{meal.name}</Text>
+                          <View className="flex-row items-start justify-between">
+                            <Text className="text-sm font-medium text-[#222] mb-1 flex-1 mr-2" numberOfLines={2}>{meal.name}</Text>
+                            {meal.matchScore && meal.matchScore > 0 && (
+                              <View className='bg-primary flex-row items-center justify-center rounded-2xl px-2.5 py-1.5 flex-shrink-0'>
+                                <Text className="text-xs font-medium text-white">{meal.matchScore}% match</Text>
+                              </View>
+                            )}
+                          </View>
                             <Text className="text-sm font-normal text-[#222] mb-1" numberOfLines={1} style={{ flexWrap: 'wrap' }}>{meal.restaurant.name}</Text>
                             {meal.restaurant?.location ? (
                               <Text 
