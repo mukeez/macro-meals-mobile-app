@@ -51,6 +51,7 @@ import AddSearchedLoggedMealScreen from "src/screens/AddSearchedLoggedMealScreen
 import HealthGuidelinesScreen from "src/screens/HealthGuidelinesScreen";
 import ManageSubscriptionsScreen from "src/screens/ManageSubscriptionsScreen";
 import ScannedMealBreakdownScreen from "./src/screens/ScannedMealBreakdown";
+import AIRecipeDetailsScreen from "./src/screens/AIRecipeDetailsScreen";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -297,6 +298,10 @@ const DashboardNavigator = () => {
       <Stack.Screen
         name="AiMealSuggestionsScreen"
         component={AiMealSuggestionsScreen}
+      />
+      <Stack.Screen
+        name="AIRecipeDetailsScreen"
+        component={AIRecipeDetailsScreen}
       />
       <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
       <Stack.Screen name="ManageSubscriptionsScreen" component={ManageSubscriptionsScreen} />
