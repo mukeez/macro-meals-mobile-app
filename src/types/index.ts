@@ -57,6 +57,7 @@ export interface Meal {
     serving_unit?: string;
     read_only?: boolean;
     meal_time?: string;
+    matchScore?: number;
 }
 
 /**

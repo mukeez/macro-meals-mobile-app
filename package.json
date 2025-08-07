@@ -2,7 +2,7 @@
   "name": "macro-meals",
   "license": "0BSD",
   "version": "1.0.0",
-  "type": "module",
+
   "main": "index.ts",
   "workspaces": [
     "packages/*"

@@ -36,6 +36,7 @@ class RevenueCatService {
       const environment = Config.ENVIRONMENT || 'development';
       const platform = Platform.OS as 'ios' | 'android';
       const apiKey = REVENUECAT_API_KEYS[platform]?.[environment as keyof typeof REVENUECAT_API_KEYS[typeof platform]];
+      console.log(`\n\n\n\n\n\n🔍 RevenueCat: API key: ${apiKey}\n\n\n\n\n\n`);
 
       console.log('🔍 RevenueCat: Initializing with config:', {
         environment,

@@ -23,7 +23,7 @@ export function LinearProgress({
     <View 
       className="rounded-lg overflow-hidden"
       style={{ 
-        width: width || 100, 
+        width: width, 
         height, 
         backgroundColor, 
         flex: width ? undefined : 1 
@@ -33,7 +33,7 @@ export function LinearProgress({
         <View
           className="rounded-lg"
           style={{
-            width: width ? (width * (percentage / 100)) : ((percentage / 100) * 100),
+            width: width ? (width * (percentage / 100)) : `${percentage}%`,
             height,
             backgroundColor: color,
             minWidth: 1, // Ensure minimum visibility
