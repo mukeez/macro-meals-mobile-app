@@ -140,6 +140,35 @@ export const mealService = {
         }
     },
 
+
+    getAiMealSuggestionsRecipes: async (): Promise<{ suggestions: any[], preferences: any }> => {
+        try {
+            // First fetch preferences from userService
+            const preferences = await userService.getPreferences();
+            
+            // Create request body with preferences data
+            const requestBody: AiMealSuggestionsRequest = {
+                calories: preferences.calorie_target,
+                carbs: preferences.carbs_target,
+                fat: preferences.fat_target,
+                protein: preferences.protein_target,
+                latitude: 0,
+                location: '',
+                longitude: 0,
+            };
+
+            console.log('requestBody', JSON.stringify(requestBody, null, 2));
+
+            // Fetch AI meal suggestions
+            const response = await axiosInstance.post('/meals/suggest-recipes', requestBody);
+            
+            return { suggestions: response.data.suggestions, preferences };
+        } catch (error) {
+            console.error('Error getting AI meal suggestions:', error);
+            throw error;
+        }
+    },
+
     /**
      * Fetches meal suggestions based on user macroAndLocation.
      *
