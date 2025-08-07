@@ -4,8 +4,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearProgress } from '../components/LinearProgress';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
-import CustomSafeAreaView from '../components/CustomSafeAreaView';
-// import SemiCircularProgress from '../components/SemiCircularProgress';
+import SemiCircularProgress from '../components/SemiCircularProgress';
 import { RootStackParamList } from '../types/navigation';
 // import { Ionicons } from '@expo/vector-icons';
 import FavoritesService from '../services/favoritesService';
@@ -35,7 +34,9 @@ interface Meal {
     name: string;
     location: string;
   };
+  matchScore?: number;
 }
+
 
 const macroColors = {
   Carbs: '#FFD600',
@@ -112,6 +113,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
         meal_time: new Date().toISOString(),
         logging_mode: 'meal_finder',
         favorite: isFavorite,
+        matchScore: meal.matchScore,
       };
       const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
       setIsFavorite(newFavoriteStatus);
@@ -185,7 +187,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
   };
 
   return (
-    <CustomSafeAreaView edges={['left', 'right']} className="flex-1 bg-white">
+    <View className="flex-1 bg-white">
       <View className="flex-1">
         <ScrollView 
           className="flex-1"
@@ -199,7 +201,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
               style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
             />
             {/* Back and Favorite buttons */}
-            <View style={{ position: 'absolute', top: 20, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ position: 'absolute', top: 50, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' }}>
               <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
                 <Text className="text-[22px]">‹</Text>
               </TouchableOpacity>
@@ -215,35 +217,35 @@ const MealFinderBreakdownScreen: React.FC = () => {
           </View>
 
           {/* Match Banner */}
-          <View className="mx-5 mt-5 mb-3 rounded-lg bg-[#E6F7F0] flex-row items-center px-4 py-3">
+          <View className="mx-5 mt-5 mb-3 rounded-lg bg-[#E3F7F5] flex-row items-center px-4 py-5">
             <Image source={IMAGE_CONSTANTS.check} className="w-5 h-5 mr-2" />
             <Text className="text-black text-sm font-medium">Great match, it fits your macro goals!</Text>
           </View>
 
           {/* Match Percentage - SemiCircularProgress */}
-          {/* <View className="items-center my-4">
+          <View className="items-center my-4">
             <View style={{ width: 200, height: 100, alignItems: 'center', justifyContent: 'center' }}>
               <SemiCircularProgress
-                size={200}
-                percent={matchPercent / 100}
-                color="#009688"
+                size={220}
+                percent={meal.matchScore ? meal.matchScore / 100 : 0}
+                color="#148a7d"
                 backgroundColor="#E0E0E0"
-                strokeWidth={16}
+                strokeWidth={14}
               />
               <View style={{ position: 'absolute', top: 20, left: 0, right: 0, alignItems: 'center' }}>
-                <Text className="text-4xl font-bold mt-2 text-[#009688]">{matchPercent}%</Text>
+                <Text className="text-[28px] font-bold mt-2 text-black">{meal.matchScore ? meal.matchScore : 0}%</Text>
                 <Text className="text-base text-[#222] font-medium">match</Text>
               </View>
             </View>
-          </View> */}
+          </View>
 
           {/* Macro Breakdown Card */}
           <View
-            className="mx-5 mt-4 mb-4 rounded-xl p-5"
+            className="mx-5 mt-7 mb-8 rounded-xl p-5"
             style={{
               backgroundColor: '#fff',
               shadowColor: '#000',
-              shadowOpacity: 0.2,
+              shadowOpacity: 0.1,
               shadowRadius: 5,
               shadowOffset: { width: 0, height: 1 },
               elevation: 2,
@@ -252,7 +254,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
             <Text className="text-lg font-semibold mb-5">Macro breakdown</Text>
             <View className="flex-row items-center justify-between mb-3">
               <Text className="text-base text-[#222] font-medium">Total calories</Text>
-              <Text className="text-base text-[#222] font-semibold">{meal.macros.calories} cal</Text>
+              <Text className="text-lg text-[#222] font-semibold">{meal.macros.calories} cal</Text>
             </View>
             {macroBreakdown.length > 0 ? macroBreakdown.map((macro: MacroData) => (
               <View key={macro.label} className="mb-5">
@@ -274,12 +276,13 @@ const MealFinderBreakdownScreen: React.FC = () => {
               </View>
             )}
           </View>
+          <View className="mt-12 mb-1 rounded-xl p-5"></View>
 
 
         </ScrollView>
 
         {/* Fixed Button at Bottom */}
-        <View className="absolute bottom-0 left-0 right-0 bg-white p-5 rounded-t-[20px] shadow-lg">
+        <View className="absolute bottom-5 left-0 right-0 bg-white p-5 rounded-t-[20px] shadow-lg">
           <TouchableOpacity
             className="w-full h-[56px] rounded-full bg-primary items-center justify-center"
             onPress={handleAddToLog}
@@ -293,7 +296,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </CustomSafeAreaView>
+    </View>
   );
 };
 
