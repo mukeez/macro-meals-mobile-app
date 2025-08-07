@@ -42,7 +42,6 @@ const AIRecipeDetailsScreen: React.FC = () => {
   const [macroBreakdown, setMacroBreakdown] = useState<MacroData[]>([]);
   const [tooltipData, setTooltipData] = useState<{ label: string; value: number; color: string } | null>(null);
   const token = useStore((state) => state.token);
-  const macrosPreferences = useStore((state) => state.macrosPreferences);
   
   // Animation values for pie chart
   const animatedValues = useRef({
