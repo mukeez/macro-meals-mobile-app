@@ -88,7 +88,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
       if (result.suggestions && result.suggestions.length > 0) {
         await trackAIRecipeViewed();
       }
-    } catch (err) {
+    } catch {
       setError('Failed to fetch recipe suggestions');
     } finally {
       setLoading(false);
@@ -143,7 +143,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
             <Text className="text-[22px]">‹</Text>
           </TouchableOpacity>
-          <Text className="text-[20px] font-semibold text-[#222] text-center">Suggested meals</Text>
+          <Text className="text-[20px] font-semibold text-[#222] text-center">AI Recipe suggestions</Text>
           <View style={{ width: 32 }} />
         </View>
         <ScrollView className="pb-8">
@@ -217,7 +217,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
                       className="flex-row bg-white rounded-xl mx-5 mb-4 p-4 shadow-sm"
                       onPress={() => handleRecipeSelect(recipe)}
                     >
-                      <Image source={IMAGE_CONSTANTS.sampleFood} className="w-[90px] h-[90px] rounded-lg mr-3" />
+                      <Image source={IMAGE_CONSTANTS.logo} className="w-[70px] h-[70px] rounded-lg mr-3" />
                       <View className="flex-col flex-1 justify-center mb-1">
                         <Text className="text-sm font-medium text-[#222] mb-3">{recipe.name}</Text>
                         {/* <Text className="text-sm text-[#666] mb-3 line-clamp-2">{recipe.description}</Text> */}

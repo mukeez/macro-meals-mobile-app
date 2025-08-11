@@ -489,7 +489,7 @@ const ScanScreenType: React.FC = () => {
                             />
                             <DiscoverCard
                                 icon={<Image source={IMAGE_CONSTANTS.wandIcon} className="w-6 h-6 object-fill" />}
-                                title="AI Meal suggestions"
+                                title="AI Recipe suggestions"
                                 description="Get personalized meal recommendations based on your remaining macros."
                                 onPress={handleMealSuggestions}
                             />

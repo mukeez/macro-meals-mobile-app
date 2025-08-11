@@ -227,7 +227,7 @@ const AIRecipeDetailsScreen: React.FC = () => {
           {/* Top Image */}
           <View style={{ height: SCREEN_HEIGHT * 0.4, width: '100%' }}>
             <Image
-              source={IMAGE_CONSTANTS.sampleFood}
+              source={IMAGE_CONSTANTS.logo}
               style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
             />
             {/* Back and Favorite buttons */}
