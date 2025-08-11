@@ -28,7 +28,6 @@ type APINotification = {
   body: string;
   status: string;
   delivered_at: string;
-  read_at?: string;
 };
 
 type Notification = {
@@ -102,38 +101,47 @@ const NotificationsScreen: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // To prevent marking as read multiple times
   const markedAsReadRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    async function fetchNotifs() {
-      try {
-        setLoading(true);
-        const data = await notificationService.getNotifications();
-        console.log("Fetched notifications:", data);
-
-        const apiNotifications: APINotification[] = Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const formatted: Notification[] = apiNotifications.map((n) => ({
-          id: n.id,
-          title: n.title,
-          body: n.body,
-          timeAgo: n.created_at ? getTimeAgo(new Date(n.created_at)) : "",
-          timestamp: n.created_at ? new Date(n.created_at) : new Date(),
-          read: !!n.read_at,
-        }));
-
+  const fetchNotifs = async (pageNum = 1) => {
+    try {
+      if (pageNum === 1) setLoading(true);
+      else setLoadingMore(true);
+      const data = await notificationService.getNotifications(pageNum, 20);
+      const apiNotifications: APINotification[] = Array.isArray(data?.results)
+        ? data.results
+        : [];
+      const formatted: Notification[] = apiNotifications.map((n) => ({
+        id: n.id,
+        title: n.title,
+        body: n.body,
+        timeAgo: n.created_at ? getTimeAgo(new Date(n.created_at)) : "",
+        timestamp: n.created_at ? new Date(n.created_at) : new Date(),
+        read: n.status === "read",
+      }));
+      if (pageNum === 1) {
         setNotifications(formatted);
-      } catch (e: any) {
-        setError(e?.message || "Could not fetch notifications.");
-        Alert.alert("Error", e?.message || "Could not fetch notifications.");
-      } finally {
-        setLoading(false);
+      } else {
+        setNotifications((prev) => [...prev, ...formatted]);
       }
+      setHasNext(data.pagination?.has_next ?? false);
+      setPage(pageNum);
+    } catch (e: any) {
+      console.error("ERROR fetching notifications:", e);
+      setError(e?.message || "Could not fetch notifications.");
+      Alert.alert("Error", e?.message || "Could not fetch notifications.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-    fetchNotifs();
+  };
+  useEffect(() => {
+    fetchNotifs(1);
   }, []);
 
   // FlatList wants a flat array, so group, then flatten with section headers
@@ -185,6 +193,7 @@ const NotificationsScreen: React.FC = () => {
     []
   );
 
+
   if (loading) {
     return (
       <CustomSafeAreaView>
@@ -225,9 +234,6 @@ const NotificationsScreen: React.FC = () => {
       <Header title="Notifications" />
       <FlatList
         data={flatListData}
-        keyExtractor={(item, _) =>
-          item.type === "header" ? `header-${item.section}` : item.notif.id
-        }
         renderItem={({ item }) =>
           item.type === "header" ? (
             <Text className="py-4 px-4 text-base font-sans-medium text-[#000000]">
@@ -235,7 +241,6 @@ const NotificationsScreen: React.FC = () => {
             </Text>
           ) : (
             <NotificationItem
-              key={item.notif.id}
               text={item.notif.title}
               body={item.notif.body}
               timeAgo={item.notif.timeAgo}
@@ -247,6 +252,13 @@ const NotificationsScreen: React.FC = () => {
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
         style={{ backgroundColor: "#F2F2F2", flex: 1 }}
         contentContainerStyle={{ paddingBottom: 60 }}
+        onEndReached={() => {
+          if (hasNext && !loadingMore) {
+            fetchNotifs(page + 1);
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore ? <ActivityIndicator className="my-4" /> : null}
       />
     </CustomSafeAreaView>
   );

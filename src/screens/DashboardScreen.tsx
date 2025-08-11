@@ -7,9 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
-
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import useStore from "../store/useStore";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
@@ -18,7 +17,7 @@ import { CircularProgress } from "../components/CircularProgress";
 import { LinearProgress } from "../components/LinearProgress";
 import { RootStackParamList } from "../types/navigation";
 import { userService } from "../services/userService";
-import { Image as ExpoImage } from 'expo-image';
+import { Image as ExpoImage } from "expo-image";
 
 // type RootStackParamList = {
 //     MacroInput: undefined;
@@ -31,7 +30,8 @@ import { Image as ExpoImage } from 'expo-image';
 // };
 
 // Use the Profile type from the store instead of defining a local one
-import { Profile } from '../store/useStore';
+import { Profile } from "../store/useStore";
+import axiosInstance from "src/services/axios";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -54,8 +54,10 @@ interface _TodayMeal {
 }
 
 export const DashboardScreen: React.FC = () => {
-  console.log('🔍 DashboardScreen - Rendering DashboardScreen');
+  console.log("🔍 DashboardScreen - Rendering DashboardScreen");
   const navigation = useNavigation<NavigationProp>();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const isFocused = useIsFocused();
 
   // State for user data
   const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +98,23 @@ export const DashboardScreen: React.FC = () => {
   //         navigation.navigate('MacroInput');
   //     }
   // }, [preferences]);
+ 
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await axiosInstance.get("/notifications/?status=unread");
+        const data = res.data;
+        const count =
+          data?.pagination?.total ??
+          (Array.isArray(data.results) ? data.results.length : 0);
+        setUnreadCount(count);
+      } catch (e) {
+        console.error("Error fetching unread notifications:", e);
+        setUnreadCount(0);
+      }
+    };
+    if (isFocused) fetchUnread();
+  }, [isFocused]);
 
   const fetchUserData = useCallback(async () => {
     setIsLoading(true);
@@ -115,11 +134,11 @@ export const DashboardScreen: React.FC = () => {
       //   email: profileResponse.email,
       //   userType: profileResponse.is_pro ? 'pro' : 'free',
       // });
-      console.log('PROFILE RESPONSE', profileResponse)
+      console.log("PROFILE RESPONSE", profileResponse);
       // setUsername(profileResponse.display_name || undefined);
 
       const prefsResponse = await userService.getPreferences();
-      console.log('PREFS RESPONSE', prefsResponse)
+      console.log("PREFS RESPONSE", prefsResponse);
 
       const macrosPreferences = {
         protein_target: prefsResponse.protein_target,
@@ -127,7 +146,7 @@ export const DashboardScreen: React.FC = () => {
         fat_target: prefsResponse.fat_target,
         calorie_target: prefsResponse.calorie_target,
       };
-      
+
       setMacros({
         protein: prefsResponse.protein_target,
         carbs: prefsResponse.carbs_target,
@@ -144,7 +163,7 @@ export const DashboardScreen: React.FC = () => {
       // const progressPercentage =
       //   totalCalories > 0 ? (todayProgress.calories / totalCalories) * 100 : 0;
       // setProgress(Math.min(100, progressPercentage));
-      
+
       // Refresh meals from store
       await refreshMeals();
       setIsLoading(false);
@@ -167,7 +186,16 @@ export const DashboardScreen: React.FC = () => {
         });
       }
     }
-  }, [userId, token, macros.calories, todayProgress.calories, preferences, setStoreProfile, setMacrosPreferences, fetchTodayProgress]);
+  }, [
+    userId,
+    token,
+    macros.calories,
+    todayProgress.calories,
+    preferences,
+    setStoreProfile,
+    setMacrosPreferences,
+    fetchTodayProgress,
+  ]);
 
   // Initial load
   useEffect(() => {
@@ -192,7 +220,6 @@ export const DashboardScreen: React.FC = () => {
   const handleRefresh = () => {
     setIsLoading(true);
   };
-
 
   if (isLoading) {
     return (
@@ -301,11 +328,22 @@ export const DashboardScreen: React.FC = () => {
                   {getGreeting(profile?.first_name)}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('NotificationsScreen')}>
-              <Image
-                source={IMAGE_CONSTANTS.notificationIcon}
-                className="w-[24px] h-[24px] object-fill"
-              />
+              <TouchableOpacity
+                onPress={() => navigation.navigate("NotificationsScreen")}
+              >
+                <View className="relative">
+                  <Image
+                    source={IMAGE_CONSTANTS.notificationIcon}
+                    className="w-[24px] h-[24px] object-fill"
+                  />
+                  {unreadCount > 0 && (
+                    <View className="absolute -top-2 -right-2 bg-red-600 rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">
+                      <Text className="text-xs text-white font-bold">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
             {profile.has_macros === false ||
@@ -352,8 +390,8 @@ export const DashboardScreen: React.FC = () => {
                   <CircularProgress
                     size={150}
                     strokeWidth={8}
-                                      consumed={todayProgress.calories.toString()}
-                  total={todayProgress.calories + remaining.calories}
+                    consumed={todayProgress.calories.toString()}
+                    total={todayProgress.calories + remaining.calories}
                     color="#44A047"
                     backgroundColor="#d0e8d1"
                     label="Consumed"
@@ -450,7 +488,7 @@ export const DashboardScreen: React.FC = () => {
                   <Text className="tracking-normal leading-5 text-[14px] font-medium text-center">
                     Your recently logged meals for the day will show up here
                   </Text>
-                  {!hasLoggedFirstMeal(profile.email || '') && (
+                  {!hasLoggedFirstMeal(profile.email || "") && (
                     <TouchableOpacity
                       className="bg-primary w-[144px] h-[40px] rounded-[200px] justify-center items-center mt-4"
                       onPress={handleAddMeal}
@@ -463,23 +501,44 @@ export const DashboardScreen: React.FC = () => {
                 </View>
               ) : (
                 loggedMeals.map((meal: any, index: number) => (
-                  <View key={index} className="flex-row items-start px-4 mt-3 pb-2">
+                  <View
+                    key={index}
+                    className="flex-row items-start px-4 mt-3 pb-2"
+                  >
                     {meal.photo_url ? (
                       <ExpoImage
-                        placeholder={IMAGE_CONSTANTS.blurhash} 
+                        placeholder={IMAGE_CONSTANTS.blurhash}
                         cachePolicy="disk"
                         contentFit="cover"
                         transition={300}
                         source={{ uri: meal.photo_url }}
-                        style={{ width: 90, height: 90, borderRadius: 8, marginRight: 8 }}
+                        style={{
+                          width: 90,
+                          height: 90,
+                          borderRadius: 8,
+                          marginRight: 8,
+                        }}
                         onLoad={() => {
-                          console.log('✅ ExpoImage loaded successfully for meal:', meal.name, meal.photo_url);
+                          console.log(
+                            "✅ ExpoImage loaded successfully for meal:",
+                            meal.name,
+                            meal.photo_url
+                          );
                         }}
                         onError={(error: any) => {
-                          console.log('❌ ExpoImage failed to load for meal:', meal.name, meal.photo_url, error);
+                          console.log(
+                            "❌ ExpoImage failed to load for meal:",
+                            meal.name,
+                            meal.photo_url,
+                            error
+                          );
                         }}
                         onLoadStart={() => {
-                          console.log('🔄 ExpoImage started loading for meal:', meal.name, meal.photo_url);
+                          console.log(
+                            "🔄 ExpoImage started loading for meal:",
+                            meal.name,
+                            meal.photo_url
+                          );
                         }}
                       />
                     ) : (
@@ -498,25 +557,27 @@ export const DashboardScreen: React.FC = () => {
                         >
                           {meal.name}
                         </Text>
-                        <TouchableOpacity onPress={() => {
-                                  navigation.navigate('EditMealScreen', {
-                                    analyzedData: {
-                                      id: meal.id,
-                                      name: meal.name,
-                                      calories: meal.macros?.calories || 0,
-                                      protein: meal.macros?.protein || 0,
-                                      carbs: meal.macros?.carbs || 0,
-                                      fat: meal.macros?.fat || 0,
-                                      meal_type: meal.mealType || 'lunch',
-                                      serving_unit: meal.serving_unit || 'grams',
-                                      amount: meal.amount,
-                                      logging_mode: meal.logging_mode,
-                                      meal_time: meal.meal_time || meal.date,
-                                      photo_url: meal.photo_url,
-                                      read_only: meal.read_only
-                                    }
-                                  });
-                                }}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            navigation.navigate("EditMealScreen", {
+                              analyzedData: {
+                                id: meal.id,
+                                name: meal.name,
+                                calories: meal.macros?.calories || 0,
+                                protein: meal.macros?.protein || 0,
+                                carbs: meal.macros?.carbs || 0,
+                                fat: meal.macros?.fat || 0,
+                                meal_type: meal.mealType || "lunch",
+                                serving_unit: meal.serving_unit || "grams",
+                                amount: meal.amount,
+                                logging_mode: meal.logging_mode,
+                                meal_time: meal.meal_time || meal.date,
+                                photo_url: meal.photo_url,
+                                read_only: meal.read_only,
+                              },
+                            });
+                          }}
+                        >
                           <View className="w-[24px] h-[24px] rounded-full justify-center items-center bg-grey">
                             <Image
                               source={IMAGE_CONSTANTS.editIcon}
@@ -534,15 +595,21 @@ export const DashboardScreen: React.FC = () => {
                         <Image
                           tintColor="#000000"
                           source={
-                            meal.logging_mode === 'manual' ? IMAGE_CONSTANTS.fireIcon :
-                            meal.logging_mode === 'barcode' ? IMAGE_CONSTANTS.scanBarcodeIcon :
-                            meal.logging_mode === 'scanned' ? IMAGE_CONSTANTS.scanMealIcon :
-                            IMAGE_CONSTANTS.fireIcon // default to fire icon
+                            meal.logging_mode === "manual"
+                              ? IMAGE_CONSTANTS.fireIcon
+                              : meal.logging_mode === "barcode"
+                              ? IMAGE_CONSTANTS.scanBarcodeIcon
+                              : meal.logging_mode === "scanned"
+                              ? IMAGE_CONSTANTS.scanMealIcon
+                              : IMAGE_CONSTANTS.fireIcon // default to fire icon
                           }
                           className="w-[12px] h-[12px] object-fill mr-1"
                         />
                         <Text className="text-sm text-textMediumGrey text-center font-medium">
-                          {meal.logging_mode ? meal.logging_mode.charAt(0).toUpperCase() + meal.logging_mode.slice(1) : 'Manual'}
+                          {meal.logging_mode
+                            ? meal.logging_mode.charAt(0).toUpperCase() +
+                              meal.logging_mode.slice(1)
+                            : "Manual"}
                         </Text>
                       </View>
 
@@ -554,9 +621,9 @@ export const DashboardScreen: React.FC = () => {
                               className="w-[10px] h-[10px] object-fill"
                             />
                           </View>
-                                                  <Text className="text-xsm text-black text-center font-medium">
-                          {meal.macros?.calories || 0} cal
-                        </Text>
+                          <Text className="text-xsm text-black text-center font-medium">
+                            {meal.macros?.calories || 0} cal
+                          </Text>
                         </View>
                         <View className="flex-row items-center gap-1">
                           <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
