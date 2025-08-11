@@ -14,6 +14,7 @@ import Header from "../components/Header";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { CircularProgress } from "../components/CircularProgress";
 import { fetchUserPreferences, updateMacros } from "src/services/macroService";
+import axios from "axios";
 
 type MacroKey = "protein" | "fat" | "carbs";
 type MacroResponse = {
@@ -42,15 +43,26 @@ const AdjustTargetsScreen: React.FC = () => {
   }, []);
 
   const loadMacros = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchUserPreferences();
-      setMacros(data);
-    } catch {
+  setLoading(true);
+  try {
+    const data = await fetchUserPreferences();
+    setMacros(data);
+  } catch (e: any) {
+    console.log("Error loading macros:", e);
+
+    if (axios.isAxiosError(e) && !e.response) {
+      Alert.alert("Network Error", "Please check your internet connection and try again.");
+    }
+    else if (axios.isAxiosError(e) && e.response) {
+      const message = e.response.data?.message || "Could not load macro targets.";
+      Alert.alert("Server Error", message);
+    }
+    else {
       Alert.alert("Error", "Could not load macro targets.");
     }
-    setLoading(false);
-  };
+  }
+  setLoading(false);
+};
 
   const openModal = (macro: {
     label: string;
