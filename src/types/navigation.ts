@@ -107,4 +107,5 @@ export type RootStackParamList = {
     HealthGuidelinesScreen: undefined;
     ManageSubscriptionsScreen: undefined;
     ScannedMealBreakdownScreen: { meal: any };
+    AIRecipeDetailsScreen: { recipe: any };
 };
