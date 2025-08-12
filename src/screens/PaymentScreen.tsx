@@ -341,7 +341,7 @@ const PaymentScreen = () => {
               <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
                e.preventDefault();
                setSelectedPlan('yearly');
-               setAmount(yearlyProductInfo?.price || 70.00);
+               setAmount(yearlyProductInfo?.price || 69.99);
               }}>
                 <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
                 <Text className="text-white text-xs font-medium justify-center items-center">30% savings</Text>
@@ -353,7 +353,7 @@ const PaymentScreen = () => {
                 </View>
                 <View className='mt-3'>
                   <Text className='font-medium text-[15px]'>
-                    {yearlyProductInfo?.pricePerPeriod || '£70.00/yr'}
+                    {yearlyProductInfo?.pricePerPeriod || '£69.99/yr'}
                   </Text>
                   {yearlyProductInfo?.originalPrice && (
                     <Text className='mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]'>
