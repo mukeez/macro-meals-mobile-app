@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -20,6 +21,7 @@ import { userService } from '../services/userService';
 import revenueCatService from '../services/revenueCatService';
 import { IsProContext } from 'src/contexts/IsProContext';
 import BackButton from 'src/components/BackButton';
+import Config from 'react-native-config';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -212,12 +214,17 @@ const PaymentScreen = () => {
       // Find the appropriate package based on selected plan
       let packageToPurchase;
       if (selectedPlan === 'monthly') {
-        packageToPurchase = currentOfferings.availablePackages.find(
-          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.monthly'
+        console.log('Platform: ', Platform.OS);
+        packageToPurchase = Platform.OS === 'ios' ? currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.IOS_PRODUCT_MONTHLY_ID
+        ) : currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.ANDROID_PRODUCT_MONTHLY_ID
         );
       } else {
-        packageToPurchase = currentOfferings.availablePackages.find(
-          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.annual'
+        packageToPurchase = Platform.OS === 'ios' ? currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.IOS_PRODUCT_YEARLY_ID
+        ) : currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.ANDROID_PRODUCT_YEARLY_ID
         );
       }
       

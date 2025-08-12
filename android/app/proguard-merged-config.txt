@@ -1,4 +1,4 @@
-# The proguard configuration file for the following section is /Users/mac/Dev/source/repo/react_native_projects/macro-meals-mobile-app/android/app/build/intermediates/aapt_proguard_file/stgRelease/processStgReleaseResources/aapt_rules.txt
+# The proguard configuration file for the following section is /Users/mac/Dev/source/repo/react_native_projects/macro-meals-mobile-app/android/app/build/intermediates/aapt_proguard_file/prodRelease/processProdReleaseResources/aapt_rules.txt
 -keep class androidx.camera.core.impl.MetadataHolderService { <init>(); }
 -keep class androidx.core.app.CoreComponentFactory { <init>(); }
 -keep class androidx.profileinstaller.ProfileInstallReceiver { <init>(); }
@@ -22,6 +22,9 @@
 -keep class app.notifee.core.NotificationReceiverActivity { <init>(); }
 -keep class app.notifee.core.RebootBroadcastReceiver { <init>(); }
 -keep class app.notifee.core.ReceiverService { <init>(); }
+-keep class com.amazon.device.iap.ResponseReceiver { <init>(); }
+-keep class com.android.billingclient.api.ProxyBillingActivity { <init>(); }
+-keep class com.android.billingclient.api.ProxyBillingActivityV2 { <init>(); }
 -keep class com.canhub.cropper.CropFileProvider { <init>(); }
 -keep class com.canhub.cropper.CropImageActivity { <init>(); }
 -keep class com.google.android.datatransport.runtime.backends.TransportBackendDiscovery { <init>(); }
@@ -45,6 +48,7 @@
 -keep class com.macromeals.app.MainActivity { <init>(); }
 -keep class com.macromeals.app.MainApplication { <init>(); }
 -keep class com.reactnativecommunity.webview.RNCWebViewFileProvider { <init>(); }
+-keep class com.revenuecat.purchases.amazon.purchasing.ProxyAmazonBillingActivity { <init>(); }
 -keep class expo.modules.filesystem.FileSystemFileProvider { <init>(); }
 -keep class expo.modules.imagepicker.fileprovider.ImagePickerFileProvider { <init>(); }
 -keep class expo.modules.location.services.LocationTaskService { <init>(); }
@@ -156,7 +160,7 @@
 -keep class com.reactnativecommunity.picker.TextViewImpl { <init>(android.content.Context, android.util.AttributeSet); }
 
 
-# End of content from /Users/mac/Dev/source/repo/react_native_projects/macro-meals-mobile-app/android/app/build/intermediates/aapt_proguard_file/stgRelease/processStgReleaseResources/aapt_rules.txt
+# End of content from /Users/mac/Dev/source/repo/react_native_projects/macro-meals-mobile-app/android/app/build/intermediates/aapt_proguard_file/prodRelease/processProdReleaseResources/aapt_rules.txt
 # The proguard configuration file for the following section is /Users/mac/Dev/source/repo/react_native_projects/macro-meals-mobile-app/android/app/build/intermediates/default_proguard_files/global/proguard-android.txt-8.8.2
 # This is a configuration file for ProGuard.
 # http://proguard.sourceforge.net/index.html#manual/usage.html
@@ -889,6 +893,116 @@
 -keep class expo.modules.location.taskConsumers.** { *; }
 
 # End of content from /Users/mac/.gradle/caches/8.13/transforms/76dae4b71b1483cefc214eeb32f8d884/transformed/expo.modules.location-18.1.6/proguard.txt
+# The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/c4c0529bec0dd851c9c87f525bce015c/transformed/purchases-hybrid-common-16.0.2/proguard.txt
+
+# End of content from /Users/mac/.gradle/caches/8.13/transforms/c4c0529bec0dd851c9c87f525bce015c/transformed/purchases-hybrid-common-16.0.2/proguard.txt
+# The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/16b2f19650247d92b20581bd9b61d939/transformed/purchases-store-amazon-9.1.2/proguard.txt
+-dontwarn com.amazon.**
+-keep class com.amazon.** {*;}
+-keepattributes *Annotation*
+-dontoptimize
+# End of content from /Users/mac/.gradle/caches/8.13/transforms/16b2f19650247d92b20581bd9b61d939/transformed/purchases-store-amazon-9.1.2/proguard.txt
+# The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/9e44457df2e7be71c58b0273a42c7079/transformed/purchases-9.1.2/proguard.txt
+-keep class com.revenuecat.** { *; }
+-keep class androidx.lifecycle.DefaultLifecycleObserver
+-dontwarn com.google.errorprone.annotations.CanIgnoreReturnValue
+-dontwarn com.google.errorprone.annotations.Immutable
+-dontwarn com.amazon.**
+-dontwarn coil.**
+# Adding temporarily to fix issue after adding kotlin serialization
+-dontwarn java.lang.ClassValue
+
+# START Keep kotlinx.serialization annotations.
+
+# Keep `Companion` object fields of serializable classes.
+# This avoids serializer lookup through `getDeclaredClasses` as done for named companion objects.
+-if @kotlinx.serialization.Serializable class **
+-keepclassmembers class <1> {
+    static <1>$Companion Companion;
+}
+
+# Keep `serializer()` on companion objects (both default and named) of serializable classes.
+-if @kotlinx.serialization.Serializable class ** {
+    static **$* *;
+}
+-keepclassmembers class <2>$<3> {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Keep `INSTANCE.serializer()` of serializable objects.
+-if @kotlinx.serialization.Serializable class ** {
+    public static ** INSTANCE;
+}
+-keepclassmembers class <1> {
+    public static <1> INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# Serializer for classes with named companion objects are retrieved using `getDeclaredClasses`.
+# If you have any, uncomment and replace classes with those containing named companion objects.
+#-keepattributes InnerClasses # Needed for `getDeclaredClasses`.
+#-if @kotlinx.serialization.Serializable class
+#com.example.myapplication.HasNamedCompanion, # <-- List serializable classes with named companions.
+#com.example.myapplication.HasNamedCompanion2
+#{
+#    static **$* *;
+#}
+#-keepnames class <1>$$serializer { # -keepnames suffices; class is kept when serializer() is kept.
+#    static <1>$$serializer INSTANCE;
+#}
+
+# Adding these because when target Android is 14 but compile version is lower than 14 there are r8 issues
+# https://github.com/RevenueCat/purchases-android/pull/1606
+-keep class kotlinx.serialization.internal.ClassValueParametrizedCache$initClassValue$1 { ** computeValue(java.lang.Class); }
+-keep class kotlinx.serialization.internal.ClassValueCache$initClassValue$1 { ** computeValue(java.lang.Class); }
+# END Keep kotlinx.serialization annotations.
+
+# The org.json package is part of the Android framework, so the classes are always available.
+# However, some apps add it to their classpath, either explicitly or transitively. When
+# this happens, it becomes susceptible to be shrunk. The following rule avoids that.
+-keep class org.json.* { *; }
+
+# End of content from /Users/mac/.gradle/caches/8.13/transforms/9e44457df2e7be71c58b0273a42c7079/transformed/purchases-9.1.2/proguard.txt
+# The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/91205902163737ff1cd18c328aac4676/transformed/billing-8.0.0/proguard.txt
+# Keep the AIDL interface
+-keep class com.android.vending.billing.** { *; }
+-keep class com.google.android.apps.play.billingtestcompanion.aidl.** { *; }
+
+-dontwarn javax.annotation.**
+-dontwarn org.checkerframework.**
+-dontwarn com.google.android.apps.common.proguard.UsedByReflection
+
+-keepnames class com.android.billingclient.api.ProxyBillingActivity
+-keepnames class com.android.billingclient.api.ProxyBillingActivityV2
+
+# Avoids Proguard warning at build time due to Protobuf use of sun.misc.Unsafe
+# and libcore.io.Memory which are available at runtime.
+-dontwarn libcore.io.Memory
+-dontwarn sun.misc.Unsafe
+
+
+# For Phenotype
+# An unused P/H transitive dependency: com.google.android.libraries.phenotype.registration.PhenotypeResourceReader is stripped out from all Granular normal deps and "can't find reference..." DepsVersionCompat test warning
+# is suppressed by ProGuard -dontwarn config.
+-dontwarn com.google.android.libraries.phenotype.registration.PhenotypeResourceReader
+-dontwarn com.google.android.apps.common.proguard.SideEffectFree
+
+# Uses reflection to determine if these classes are present and has a graceful
+# fallback if they aren't. The test failure it fixes appears to be caused by flogger.
+-dontwarn dalvik.system.VMStack
+-dontwarn com.google.common.flogger.backend.google.GooglePlatform
+-dontwarn com.google.common.flogger.backend.system.DefaultPlatform
+# We keep all fields for every generated proto file as the runtime uses
+# reflection over them that ProGuard cannot detect. Without this keep
+# rule, fields may be removed that would cause runtime failures.
+-keepclassmembers class * extends com.google.android.gms.internal.play_billing.zzfi {
+  <fields>;
+}
+
+# End of content from /Users/mac/.gradle/caches/8.13/transforms/91205902163737ff1cd18c328aac4676/transformed/billing-8.0.0/proguard.txt
 # The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/e2e53ddd5518f3313b0b7150805e0bc0/transformed/play-services-measurement-22.5.0/proguard.txt
 # We keep all fields for every generated proto file as the runtime uses
 # reflection over them that ProGuard cannot detect. Without this keep
@@ -1523,6 +1637,59 @@
 -assumenosideeffects class androidx.startup.StartupLogger { public static <methods>; }
 
 # End of content from /Users/mac/.gradle/caches/8.13/transforms/61f6cc8d00ab004385c6b912aecb8869/transformed/startup-runtime-1.1.1/proguard.txt
+# The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/85949e3261277496859fda472af9bcb5/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-common.pro
+# Keep `Companion` object fields of serializable classes.
+# This avoids serializer lookup through `getDeclaredClasses` as done for named companion objects.
+-if @kotlinx.serialization.Serializable class **
+-keepclassmembers class <1> {
+    static <1>$Companion Companion;
+}
+
+# Keep `serializer()` on companion objects (both default and named) of serializable classes.
+-if @kotlinx.serialization.Serializable class ** {
+    static **$* *;
+}
+-keepclassmembers class <2>$<3> {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Keep `INSTANCE.serializer()` of serializable objects.
+-if @kotlinx.serialization.Serializable class ** {
+    public static ** INSTANCE;
+}
+-keepclassmembers class <1> {
+    public static <1> INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# Don't print notes about potential mistakes or omissions in the configuration for kotlinx-serialization classes
+# See also https://github.com/Kotlin/kotlinx.serialization/issues/1900
+-dontnote kotlinx.serialization.**
+
+# Serialization core uses `java.lang.ClassValue` for caching inside these specified classes.
+# If there is no `java.lang.ClassValue` (for example, in Android), then R8/ProGuard will print a warning.
+# However, since in this case they will not be used, we can disable these warnings
+-dontwarn kotlinx.serialization.internal.ClassValueReferences
+
+# End of content from /Users/mac/.gradle/caches/8.13/transforms/85949e3261277496859fda472af9bcb5/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-common.pro
+# The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/85949e3261277496859fda472af9bcb5/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-r8.pro
+# Rule to save runtime annotations on serializable class.
+# If the R8 full mode is used, annotations are removed from classes-files.
+#
+# For the annotation serializer, it is necessary to read the `Serializable` annotation inside the serializer<T>() function - if it is present,
+# then `SealedClassSerializer` is used, if absent, then `PolymorphicSerializer'.
+#
+# When using R8 full mode, all interfaces will be serialized using `PolymorphicSerializer`.
+#
+# see https://github.com/Kotlin/kotlinx.serialization/issues/2050
+
+ -if @kotlinx.serialization.Serializable class **
+ -keep, allowshrinking, allowoptimization, allowobfuscation, allowaccessmodification class <1>
+
+# End of content from /Users/mac/.gradle/caches/8.13/transforms/85949e3261277496859fda472af9bcb5/transformed/rules/lib/META-INF/com.android.tools/r8/kotlinx-serialization-r8.pro
 # The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/9df054c4b9d231af6b2800fad8fb271f/transformed/firebase-components-18.0.0/proguard.txt
 -dontwarn com.google.firebase.components.Component$Instantiation
 -dontwarn com.google.firebase.components.Component$ComponentType
@@ -1630,6 +1797,23 @@
 
 
 # End of content from /Users/mac/.gradle/caches/8.13/transforms/0eca0d143fb166f7df742096d3b8eead/transformed/avif-1.1.1.14d8e3c4/proguard.txt
+# The proguard configuration file for the following section is /Users/mac/.gradle/caches/8.13/transforms/c478d458c86c6aa2a73921812f146b7c/transformed/rules/lib/META-INF/proguard/protobuf.pro
+# Recently Protobuf Javalite introduced a change that relies on reflection,
+# which doesn't work with Proguard. This rule keeps the reflection usages in
+# (shaded) Protobuf classes in Tink as-is.
+# The location of this file is determined by
+# - https://developer.android.com/studio/build/shrink-code#configuration-files
+# - https://docs.bazel.build/versions/master/be/java.html#java_library.resources
+# See also:
+# - https://github.com/google/tink/issues/361
+# - https://github.com/protocolbuffers/protobuf/issues/6463
+# WARNING: the shaded package name com.google.crypto.tink.shaded.protobuf must
+# be kept in sync with jar_jar_rules.txt.
+-keepclassmembers class * extends com.google.crypto.tink.shaded.protobuf.GeneratedMessageLite {
+  <fields>;
+}
+
+# End of content from /Users/mac/.gradle/caches/8.13/transforms/c478d458c86c6aa2a73921812f146b7c/transformed/rules/lib/META-INF/proguard/protobuf.pro
 # The proguard configuration file for the following section is <unknown>
 
 # End of content from <unknown>
