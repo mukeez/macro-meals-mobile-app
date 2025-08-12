@@ -18,8 +18,8 @@ const REVENUECAT_API_KEYS = {
 
 // Product IDs (you'll configure these in App Store Connect and Google Play Console)
 const PRODUCT_IDS = {
-  MONTHLY: 'com.macromeals.app.subscription.premium.monthly',
-  YEARLY: 'com.macromeals.app.subscription.premium.annual'
+  MONTHLY: Platform.OS === 'ios' ? Config.IOS_PRODUCT_MONTHLY_ID : Config.ANDROID_PRODUCT_MONTHLY_ID,  //'com.macromeals.app.subscription.premium.monthly' : 'com.macromeals.app.premium.monthly',
+  YEARLY: Platform.OS === 'ios' ? Config.IOS_PRODUCT_YEARLY_ID : Config.ANDROID_PRODUCT_YEARLY_ID //'com.macromeals.app.subscription.premium.annual' : 'com.macromeals.app.premium.annual'
 };
 
 // Entitlement ID from environment
@@ -72,18 +72,18 @@ class RevenueCatService {
       console.log('🔍 RevenueCat: Expected product IDs:', PRODUCT_IDS);
       
       // Try to get all available products
-      const products = await Purchases.getProducts(Object.values(PRODUCT_IDS));
-      console.log('🔍 RevenueCat: Available products from Store:', products);
+      // const products = await Purchases.getProducts(Object.values(PRODUCT_IDS));
+      // console.log('🔍 RevenueCat: Available products from Store:', products);
       
-      if (products.length === 0) {
-        console.error('❌ RevenueCat: No products found in App Store Connect!');
-        console.error('❌ RevenueCat: Make sure these products exist in App Store Connect:');
-        Object.entries(PRODUCT_IDS).forEach(([key, id]) => {
-          console.error(`   - ${key}: ${id}`);
-        });
-      } else {
-        console.log('✅ RevenueCat: Found products in App Store Connect:', products.map(p => p.identifier));
-      }
+      // if (products.length === 0) {
+      //   console.error('❌ RevenueCat: No products found in App Store Connect!');
+      //   console.error('❌ RevenueCat: Make sure these products exist in App Store Connect:');
+      //   Object.entries(PRODUCT_IDS).forEach(([key, id]) => {
+      //     console.error(`   - ${key}: ${id}`);
+      //   });
+      // } else {
+      //   console.log('✅ RevenueCat: Found products in App Store Connect:', products.map(p => p.identifier));
+      // }
     } catch (error) {
       console.error('❌ RevenueCat: Error testing product availability:', error);
     }
