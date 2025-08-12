@@ -1,6 +1,6 @@
 // src/screens/WelcomeScreen.tsx
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -17,8 +18,10 @@ import PagerView from 'react-native-pager-view';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import useStore from '../store/useStore'; 
 import { userService } from '../services/userService';
+import revenueCatService from '../services/revenueCatService';
 import { IsProContext } from 'src/contexts/IsProContext';
 import BackButton from 'src/components/BackButton';
+import Config from 'react-native-config';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -72,7 +75,12 @@ const Pager = ()=>{
     // Option 1: Logout user to reset authentication state and return to login
     const { logout } = useStore.getState();
     logout();
-
+    
+    // Option 2: Alternative - Use navigation reset (uncomment if you prefer this)
+    // navigation.reset({
+    //   index: 0,
+    //   routes: [{ name: 'Auth', params: { initialAuthScreen: 'LoginScreen' } }],
+    // });
   }
 
   return(
@@ -160,6 +168,7 @@ const BenefitsPager = ()=>{
 
 
 const PaymentScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
   const profile = useStore((state) => state.profile);
   const _setStoreProfile = useStore((state) => state.setProfile);
   const _clearProfile = useStore((state) => state.clearProfile);
@@ -177,13 +186,12 @@ const PaymentScreen = () => {
   const monthlyProductInfo = getProductInfo(offerings, 'monthly');
   const yearlyProductInfo = getProductInfo(offerings, 'yearly');
 
-  // Load platform-specific offerings when component mounts
+  // Load RevenueCat offerings when component mounts
   useEffect(() => {
     console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
     const loadOfferings = async () => {
       try {
-        const { platformPaymentService } = await import('../services/platformPaymentService');
-        const currentOfferings = await platformPaymentService.getOfferings();
+        const currentOfferings = await revenueCatService.getOfferings();
         setOfferings(currentOfferings);
       } catch (error) {
         console.error('Failed to load offerings:', error);
@@ -197,15 +205,35 @@ const PaymentScreen = () => {
     try {
       setIsLoading(true);
       
-      // Get platform-specific offerings
-      const { platformPaymentService } = await import('../services/platformPaymentService');
-      const currentOfferings = await platformPaymentService.getOfferings();
+      // Get RevenueCat offerings
+      const currentOfferings = await revenueCatService.getOfferings();
       if (!currentOfferings) {
         throw new Error('No subscription offerings available');
       }
       
-      // Purchase the subscription using platform-specific service
-      const customerInfo = await platformPaymentService.purchaseSubscription(selectedPlan as 'monthly' | 'yearly');
+      // Find the appropriate package based on selected plan
+      let packageToPurchase;
+      if (selectedPlan === 'monthly') {
+        console.log('Platform: ', Platform.OS);
+        packageToPurchase = Platform.OS === 'ios' ? currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.IOS_PRODUCT_MONTHLY_ID
+        ) : currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.ANDROID_PRODUCT_MONTHLY_ID
+        );
+      } else {
+        packageToPurchase = Platform.OS === 'ios' ? currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.IOS_PRODUCT_YEARLY_ID
+        ) : currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.ANDROID_PRODUCT_YEARLY_ID
+        );
+      }
+      
+      if (!packageToPurchase) {
+        throw new Error(`No package found for ${selectedPlan} plan`);
+      }
+      
+      // Purchase the package
+      const customerInfo = await revenueCatService.purchasePackage(packageToPurchase);
       console.log('🔍 PaymentScreen - Purchase completed, customerInfo:', JSON.stringify(customerInfo, null, 2));
       
       // Check if purchase was successful by verifying active entitlements
@@ -242,16 +270,16 @@ const PaymentScreen = () => {
               text: "Continue",
               onPress: () => {
                 // Force navigation to Dashboard using CommonActions
-                // navigation.dispatch(
-                //   CommonActions.reset({
-                //     index: 0,
-                //     routes: [
-                //       {
-                //         name: 'Dashboard',
-                //       },
-                //     ],
-                //   })
-                // );
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [
+                      {
+                        name: 'Dashboard',
+                      },
+                    ],
+                  })
+                );
               }
             }
           ]
