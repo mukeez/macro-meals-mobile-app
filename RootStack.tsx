@@ -214,6 +214,8 @@ const AuthNavigator = ({
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen name="TermsOfServiceScreen" component={TermsOfServiceScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen
         name="EmailVerificationScreen"
         component={EmailVerificationScreen}
