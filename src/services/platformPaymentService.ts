@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import revenueCatService from './revenueCatService';
-import { paymentService } from './paymentService';
+
 
 /**
  * Platform-specific payment service
