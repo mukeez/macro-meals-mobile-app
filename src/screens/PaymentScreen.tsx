@@ -1,6 +1,6 @@
 // src/screens/WelcomeScreen.tsx
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
@@ -17,7 +17,6 @@ import PagerView from 'react-native-pager-view';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import useStore from '../store/useStore'; 
 import { userService } from '../services/userService';
-import revenueCatService from '../services/revenueCatService';
 import { IsProContext } from 'src/contexts/IsProContext';
 import BackButton from 'src/components/BackButton';
 
@@ -73,12 +72,7 @@ const Pager = ()=>{
     // Option 1: Logout user to reset authentication state and return to login
     const { logout } = useStore.getState();
     logout();
-    
-    // Option 2: Alternative - Use navigation reset (uncomment if you prefer this)
-    // navigation.reset({
-    //   index: 0,
-    //   routes: [{ name: 'Auth', params: { initialAuthScreen: 'LoginScreen' } }],
-    // });
+
   }
 
   return(
@@ -166,7 +160,6 @@ const BenefitsPager = ()=>{
 
 
 const PaymentScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
   const profile = useStore((state) => state.profile);
   const _setStoreProfile = useStore((state) => state.setProfile);
   const _clearProfile = useStore((state) => state.clearProfile);
@@ -184,12 +177,13 @@ const PaymentScreen = () => {
   const monthlyProductInfo = getProductInfo(offerings, 'monthly');
   const yearlyProductInfo = getProductInfo(offerings, 'yearly');
 
-  // Load RevenueCat offerings when component mounts
+  // Load platform-specific offerings when component mounts
   useEffect(() => {
     console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
     const loadOfferings = async () => {
       try {
-        const currentOfferings = await revenueCatService.getOfferings();
+        const { platformPaymentService } = await import('../services/platformPaymentService');
+        const currentOfferings = await platformPaymentService.getOfferings();
         setOfferings(currentOfferings);
       } catch (error) {
         console.error('Failed to load offerings:', error);
@@ -203,30 +197,15 @@ const PaymentScreen = () => {
     try {
       setIsLoading(true);
       
-      // Get RevenueCat offerings
-      const currentOfferings = await revenueCatService.getOfferings();
+      // Get platform-specific offerings
+      const { platformPaymentService } = await import('../services/platformPaymentService');
+      const currentOfferings = await platformPaymentService.getOfferings();
       if (!currentOfferings) {
         throw new Error('No subscription offerings available');
       }
       
-      // Find the appropriate package based on selected plan
-      let packageToPurchase;
-      if (selectedPlan === 'monthly') {
-        packageToPurchase = currentOfferings.availablePackages.find(
-          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.monthly'
-        );
-      } else {
-        packageToPurchase = currentOfferings.availablePackages.find(
-          pkg => pkg.product.identifier === 'com.macromeals.app.subscription.premium.annual'
-        );
-      }
-      
-      if (!packageToPurchase) {
-        throw new Error(`No package found for ${selectedPlan} plan`);
-      }
-      
-      // Purchase the package
-      const customerInfo = await revenueCatService.purchasePackage(packageToPurchase);
+      // Purchase the subscription using platform-specific service
+      const customerInfo = await platformPaymentService.purchaseSubscription(selectedPlan as 'monthly' | 'yearly');
       console.log('🔍 PaymentScreen - Purchase completed, customerInfo:', JSON.stringify(customerInfo, null, 2));
       
       // Check if purchase was successful by verifying active entitlements
@@ -263,16 +242,16 @@ const PaymentScreen = () => {
               text: "Continue",
               onPress: () => {
                 // Force navigation to Dashboard using CommonActions
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [
-                      {
-                        name: 'Dashboard',
-                      },
-                    ],
-                  })
-                );
+                // navigation.dispatch(
+                //   CommonActions.reset({
+                //     index: 0,
+                //     routes: [
+                //       {
+                //         name: 'Dashboard',
+                //       },
+                //     ],
+                //   })
+                // );
               }
             }
           ]
