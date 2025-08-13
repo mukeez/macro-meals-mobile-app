@@ -1,6 +1,6 @@
 // src/screens/WelcomeScreen.tsx
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
@@ -168,7 +168,7 @@ const BenefitsPager = ()=>{
 
 
 const PaymentScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
+  // const navigation = useNavigation<NavigationProp>();
   const profile = useStore((state) => state.profile);
   const _setStoreProfile = useStore((state) => state.setProfile);
   const _clearProfile = useStore((state) => state.clearProfile);
@@ -270,16 +270,16 @@ const PaymentScreen = () => {
               text: "Continue",
               onPress: () => {
                 // Force navigation to Dashboard using CommonActions
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [
-                      {
-                        name: 'Dashboard',
-                      },
-                    ],
-                  })
-                );
+                // navigation.dispatch(
+                //   CommonActions.reset({
+                //     index: 0,
+                //     routes: [
+                //       {
+                //         name: 'Dashboard',
+                //       },
+                //     ],
+                //   })
+                // );
               }
             }
           ]
