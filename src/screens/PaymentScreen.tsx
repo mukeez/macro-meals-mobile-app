@@ -270,16 +270,16 @@ const PaymentScreen = () => {
               text: "Continue",
               onPress: () => {
                 // Force navigation to Dashboard using CommonActions
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [
-                      {
-                        name: 'Dashboard',
-                      },
-                    ],
-                  })
-                );
+                // navigation.dispatch(
+                //   CommonActions.reset({
+                //     index: 0,
+                //     routes: [
+                //       {
+                //         name: 'Dashboard',
+                //       },
+                //     ],
+                //   })
+                // );
               }
             }
           ]

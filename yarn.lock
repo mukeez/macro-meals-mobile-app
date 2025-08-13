@@ -7370,6 +7370,11 @@ react-native-screens@~4.11.1:
     react-native-is-edge-to-edge "^1.1.7"
     warn-once "^0.1.0"
 
+react-native-stallion@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/react-native-stallion/-/react-native-stallion-2.2.0.tgz#3cb696eb51a359664a63da38f4eec902489d8e2e"
+  integrity sha512-odbXYXxsYTMQLpt1w5J7ZjCgYrvVG+lsRGQrWb1bCgsEB1PA5Vs9BR5WfA4UPjYWcDfeaUyFQvAzGH1Rpj7iCA==
+
 react-native-svg@15.11.2:
   version "15.11.2"
   resolved "https://registry.yarnpkg.com/react-native-svg/-/react-native-svg-15.11.2.tgz#7540e8e1eabc4dcd3b1e35ada5a1d9f1b96d37c4"
