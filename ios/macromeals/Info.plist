@@ -37,6 +37,10 @@
 	<false/>
 	<key>LSMinimumSystemVersion</key>
 	<string>12.0</string>
+	<key>StallionProjectId</key>
+    <string>689b518a2035f9eddc59fab2</string>
+	<key>StallionAppToken</key>
+    <string>spb_cbR-Iqk9vOoC8OFzmwsnyGZO_0DyNzNpMEoTRZUbhw</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
