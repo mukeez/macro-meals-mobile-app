@@ -66,7 +66,7 @@ class MainActivity : ReactActivity() {
       super.invokeDefaultOnBackPressed()
   }
 
-  override fun getJSBundleFile(): String? {
+  fun getJSBundleFile(): String? {
     return Stallion.getJSBundleFile(applicationContext)
   }
 }
