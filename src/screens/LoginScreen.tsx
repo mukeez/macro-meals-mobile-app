@@ -141,6 +141,10 @@ export const LoginScreen: React.FC = () => {
         try {
           console.log(`\n\n\n\n\nUSER ID  ${profile.id}`);
           await revenueCatService.setUserID(profile.id);
+          await revenueCatService.setAttributes({
+            $email: profile.email,
+            $displayName: `${profile.first_name} ${profile.last_name}`,
+          });
           console.log('✅ RevenueCat user ID set after login:', profile.id);
           
           // Check subscription status from RevenueCat (source of truth)

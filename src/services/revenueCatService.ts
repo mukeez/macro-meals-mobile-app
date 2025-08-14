@@ -206,6 +206,16 @@ class RevenueCatService {
     }
   }
 
+  async setAttributes(attributes: { [key: string]: string }) {
+    try {
+      await Purchases.setAttributes(attributes);
+      console.log('✅ Attributes set successfully:', attributes);
+    } catch (error) {
+      console.error('❌ Failed to set attributes:', error);
+      throw error;    
+    }
+  }
+
   async logout() {
     try {
       await Purchases.logOut();
