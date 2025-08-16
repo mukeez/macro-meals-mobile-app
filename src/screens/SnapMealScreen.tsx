@@ -7,6 +7,7 @@ import {
     SafeAreaView,
     Button,
     ActivityIndicator,
+    Image,
 } from 'react-native';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
@@ -31,6 +32,7 @@ const SnapMealScreen = () => {
     const [loading, setLoading] = useState(false);
     const [scanError, setScanError] = useState(false);
     const [_isAlertVisible, setIsAlertVisible] = useState(false);
+    const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
     useEffect(() => {
         const overlayTimer = setTimeout(() => {
@@ -52,6 +54,9 @@ const SnapMealScreen = () => {
             const photo = await cameraRef.current.takePictureAsync({
                 quality: 0.8,
             });
+
+            // Set captured image to freeze camera preview
+            setCapturedImage(photo.uri);
 
             // Prepare the file for upload
             const fileUri = photo.uri;
@@ -83,12 +88,15 @@ const SnapMealScreen = () => {
             } else {
                 setScanError(true);
                 setIsAlertVisible(true);
+                setCapturedImage(null);
             }
             } catch {
             setScanError(true);
-            setIsAlertVisible(true);        
+            setIsAlertVisible(true);
+            setCapturedImage(null);        
         } finally {
             setLoading(false);
+            setCapturedImage(null);
         }
     };
 
@@ -125,12 +133,19 @@ const SnapMealScreen = () => {
         <SafeAreaView className="flex-1 bg-black">
             <StatusBar barStyle="light-content" backgroundColor="#000" />
             <View className="flex-1 relative">
-                <CameraView
-                    ref={cameraRef}
-                    style={{ flex: 1 }}
-                    facing={facing}
-                    // flashMode={flashMode}
-                />
+                {loading && capturedImage ? (
+                    <Image
+                        source={{ uri: capturedImage }}
+                        style={{ flex: 1, resizeMode: 'cover' }}
+                    />
+                ) : (
+                    <CameraView
+                        ref={cameraRef}
+                        style={{ flex: 1 }}
+                        facing={facing}
+                        // flashMode={flashMode}
+                    />
+                )}
                 {/* Header */}
                 <View className="absolute top-0 left-0 right-0 flex-row items-center justify-between pt-4 px-4 z-10">
                     <TouchableOpacity onPress={handleBack} className="p-1">
