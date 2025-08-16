@@ -5,8 +5,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import { RootStackParamList } from '../types/navigation';
 import FavoritesService from '../services/favoritesService';
-import { mealService } from '../services/mealService';
+import { MealFeedback, mealService } from '../services/mealService';
 import useStore from '../store/useStore';
+import { RateMacroMeals } from 'src/components/RateMacroMeals';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 // type MacroColorKey = keyof typeof macroColors;
@@ -18,10 +19,13 @@ const ScannedMealBreakdownScreen: React.FC = () => {
   const { meal = {} } = (route.params as { meal?: any }) || {};
 
   // Extract fields with fallback
+  console.log('Full meal object received:', JSON.stringify(meal, null, 2));
   const mealName = meal.name || 'Scanned meal';
   const mealImage = meal.image ? { uri: meal.image } : IMAGE_CONSTANTS.sampleFood;
   const macros = meal.macros || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const detectedIngredients = meal.detected_ingredients || [];
+  const scannedImage = meal.scannedImage || '';
+  console.log('Extracted scannedImage:', scannedImage);
 
   const token = useStore((state) => state.token);
   
@@ -116,6 +120,24 @@ const ScannedMealBreakdownScreen: React.FC = () => {
     }
   };
 
+  const handleOnLike = async () => {
+    try {
+      console.log('THE scanned image:', scannedImage);
+      await mealService.mealFeedback(scannedImage, mealName, { feedback: MealFeedback.ThumbUp, barcode: meal.barcode || '', mealImage: scannedImage });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to like meal. Please try again.');
+      console.error('Error liking meal:', error);
+    }
+  };
+  const handleOnDislike = async () => {
+    try {
+      await mealService.mealFeedback(scannedImage, mealName, { feedback: MealFeedback.ThumbDown, barcode: meal.barcode || '', mealImage: scannedImage });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to dislike meal. Please try again.');
+      console.error('Error disliking meal:', error);
+    }
+  };
+
   const toggleFavorite = async (): Promise<void> => {
     // Trigger animation
     Animated.sequence([
@@ -177,12 +199,12 @@ const ScannedMealBreakdownScreen: React.FC = () => {
             />
             {/* Back and Favorite buttons */}
             <View style={{ position: 'absolute', top: 50, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' }}>
-              <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
-                <Text className="text-[22px]">‹</Text>
+              <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row w-9 h-9 rounded-full justify-center items-center bg-[#F5F5F5]">
+                <Image source={IMAGE_CONSTANTS.backButton} className="w-2.5 h-5" />
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={toggleFavorite}
-                className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]"
+                className="w-9 h-9 rounded-full justify-center items-center bg-[#F5F5F5]"
               >
                 <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
                   <Image 
@@ -252,6 +274,8 @@ const ScannedMealBreakdownScreen: React.FC = () => {
               <Text className="text-xl font-bold text-kryptoniteGreen">{macros.calories}</Text>
             </View>
           </View>
+          <RateMacroMeals onLike={handleOnLike} onDislike={handleOnDislike} />
+          <View className="h-16 mb-14" />
         </ScrollView>
 
         {/* Fixed Button at Bottom */}

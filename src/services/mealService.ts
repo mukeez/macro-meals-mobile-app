@@ -67,6 +67,18 @@ interface AiMealSuggestionsRequest {
     protein: number;
 }
 
+export enum MealFeedback {
+    ThumbUp = 'thumbs_up',
+    ThumbDown = 'thumbs_down',
+}
+
+
+interface FeedbackRequest {
+    feedback: MealFeedback;
+    mealImage: string;
+    barcode: string;
+}
+
 /**
  * Service for meal-related API operations.
  */
@@ -273,6 +285,39 @@ export const mealService = {
             return response.data;
         } catch (error) {
             console.error('Error updating meal:', error);
+            throw error;
+        }
+    },
+
+
+    /**
+     * Log meal feedback
+     * @param mealId - The ID of the meal to log feedback for
+     * @param feedback - The feedback to log
+     * @returns Promise with the logged feedback
+     * @throws Error if the request fails
+     */
+    mealFeedback: async (mealImage: string, mealName: string, feedbackRequest: FeedbackRequest): Promise<void> => {
+        try {
+            const payload = { feedback: feedbackRequest.feedback, meal_image: mealImage,  meal_name: mealName};
+            console.log('Meal feedback request payload:', JSON.stringify(payload));
+            const response = await axiosInstance.post(`/meals/feedback`, payload);
+            return response.data;
+        } catch (error) {
+            console.error('Error logging meal feedback:', error);
+            throw error;
+        }
+    },
+
+
+    productFeedback: async (feedbackRequest: FeedbackRequest, productName: string): Promise<void> => {
+        try {
+            const payload = { feedback: feedbackRequest.feedback, barcode: feedbackRequest.barcode, product_name: productName, };
+            console.log('THE payload:', JSON.stringify(payload));   
+            const response = await axiosInstance.post(`/products/feedback`, payload);
+            return response.data;
+        } catch (error) {
+            console.error('Error logging product feedback:', error);
             throw error;
         }
     },
