@@ -78,6 +78,7 @@ const SnapMealScreen = () => {
                         },
                         items: data.items,
                         detected_ingredients: data.detected_ingredients || [],
+                        scanned_image: data.scanned_image,
                     }
                 });
             } else {
