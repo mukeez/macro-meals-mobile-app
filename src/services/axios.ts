@@ -63,7 +63,9 @@ axiosInstance.interceptors.response.use(
     // Handle network errors
     if (!error.response) {
       console.error('Network error:', error.message);
-      return Promise.reject(error);
+      // Create a user-friendly network error
+      const networkError = new Error('Oops! Something went wrong. Please check your internet connection and try again.');
+      return Promise.reject(networkError);
     }
 
     // Handle 401/403 errors

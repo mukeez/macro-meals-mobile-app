@@ -64,6 +64,7 @@ const ScanScreenType: React.FC = () => {
     const [showGlobalSearch, setShowGlobalSearch] = useState(false);
     const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
     const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([]);
+    const [networkError, setNetworkError] = useState<string | null>(null);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     
     const profile = useStore((state) => state?.profile) || null;
@@ -99,6 +100,14 @@ const ScanScreenType: React.FC = () => {
                         } catch (error) {
                             console.error('Error searching meals:', error);
                             console.error('Error details:', JSON.stringify(error, null, 2));
+                            
+                            // Check if it's a network error
+                            if (error instanceof Error && error.message.includes('internet connection')) {
+                                setNetworkError(error.message);
+                            } else {
+                                setNetworkError(null);
+                            }
+                            
                             setSearchResults([]);
                         } finally {
                             setSearchLoading(false);
@@ -219,6 +228,14 @@ const ScanScreenType: React.FC = () => {
             setGlobalSearchResults(results);
         } catch (error) {
             console.error('Error in global search:', error);
+            
+            // Check if it's a network error
+            if (error instanceof Error && error.message.includes('internet connection')) {
+                setNetworkError(error.message);
+            } else {
+                setNetworkError(null);
+            }
+            
             setGlobalSearchResults([]);
         } finally {
             setGlobalSearchLoading(false);
@@ -378,18 +395,35 @@ const ScanScreenType: React.FC = () => {
                             <View className="flex-1">
                                 {globalSearchResults.length === 0 ? (
                                     <>
-                                        <TouchableOpacity 
-                                            onPress={handleGlobalSearch}
-                                            disabled={globalSearchLoading}
-                                            className="items-center mt-10"
-                                        >
-                                            <Text className="text-center text-base text-gray-500">
-                                                No results found. 
-                                            </Text>
-                                            <Text className="text-primary font-medium text-base">
-                                                {globalSearchLoading ? 'Searching...' : `Search for "${searchText}" in all meals`}
-                                            </Text>
-                                        </TouchableOpacity>
+                                        {networkError ? (
+                                            <View className="items-center mt-10">
+                                                <Text className="text-center text-base text-red-500 px-4 mb-2">
+                                                    {networkError}
+                                                </Text>
+                                                <TouchableOpacity 
+                                                    onPress={handleGlobalSearch}
+                                                    disabled={globalSearchLoading}
+                                                    className="items-center"
+                                                >
+                                                    <Text className="text-primary font-medium text-base">
+                                                        Try again
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        ) : (
+                                            <TouchableOpacity 
+                                                onPress={handleGlobalSearch}
+                                                disabled={globalSearchLoading}
+                                                className="items-center mt-10"
+                                            >
+                                                <Text className="text-center text-base text-gray-500">
+                                                    No results found. 
+                                                </Text>
+                                                <Text className="text-primary font-medium text-base">
+                                                    {globalSearchLoading ? 'Searching...' : `Search for "${searchText}" in all meals`}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
                                         
                                         {globalSearchLoading && (
                                             <ActivityIndicator size="small" color="#19a28f" className="mt-4" />
@@ -455,7 +489,11 @@ const ScanScreenType: React.FC = () => {
                                 )}
                             </View>
                           ) : searchText && searchText.length > 0 && !searchLoading ? (
-                            <Text className="text-center text-base text-gray-500 mt-10">No results found</Text>
+                            networkError ? (
+                                <Text className="text-center text-base text-red-500 mt-10 px-4">{networkError}</Text>
+                            ) : (
+                                <Text className="text-center text-base text-gray-500 mt-10">No results found</Text>
+                            )
                           ) : null}
                         </View>
                     ) : (

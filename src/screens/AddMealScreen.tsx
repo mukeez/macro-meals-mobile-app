@@ -309,7 +309,7 @@ export const AddMealScreen: React.FC = () => {
             navigation.navigate('MainTabs');
         } catch (error) {
             console.error('Error adding meal:', error);
-            Alert.alert('Error', 'Failed to add meal');
+            Alert.alert('Error', `${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
