@@ -96,7 +96,6 @@ const SnapMealScreen = () => {
             setCapturedImage(null);        
         } finally {
             setLoading(false);
-            // Reset captured image after processing
             setCapturedImage(null);
         }
     };
