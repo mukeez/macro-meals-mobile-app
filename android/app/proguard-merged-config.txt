@@ -49,6 +49,8 @@
 -keep class com.macromeals.app.MainApplication { <init>(); }
 -keep class com.reactnativecommunity.webview.RNCWebViewFileProvider { <init>(); }
 -keep class com.revenuecat.purchases.amazon.purchasing.ProxyAmazonBillingActivity { <init>(); }
+-keep class com.stallion.utils.ProcessPhoenix { <init>(); }
+-keep class com.stallion.utils.StallionErrorActivity { <init>(); }
 -keep class expo.modules.filesystem.FileSystemFileProvider { <init>(); }
 -keep class expo.modules.imagepicker.fileprovider.ImagePickerFileProvider { <init>(); }
 -keep class expo.modules.location.services.LocationTaskService { <init>(); }

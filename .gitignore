@@ -241,3 +241,9 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# RN/Metro bundle artifacts
+tmp-bundle/
+stallion-temp-*/
+*.jsbundle
+*.hbc

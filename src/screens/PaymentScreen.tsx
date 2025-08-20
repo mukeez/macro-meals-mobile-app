@@ -189,6 +189,8 @@ const PaymentScreen = () => {
   // Load RevenueCat offerings when component mounts
   useEffect(() => {
     console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
+    const customerInfo =  revenueCatService.getCustomerInfo();
+    console.log(`\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(customerInfo, null, 2)} \n\n\n\n\n\n\n\n`);
     const loadOfferings = async () => {
       try {
         const currentOfferings = await revenueCatService.getOfferings();
@@ -233,8 +235,10 @@ const PaymentScreen = () => {
       }
       
       // Purchase the package
-      const customerInfo = await revenueCatService.purchasePackage(packageToPurchase);
-      console.log('🔍 PaymentScreen - Purchase completed, customerInfo:', JSON.stringify(customerInfo, null, 2));
+      const purchasePackage = await revenueCatService.purchasePackage(packageToPurchase);
+      console.log('🔍 PaymentScreen - Purchase completed, customerInfo:', JSON.stringify(purchasePackage, null, 2));
+      const customerInfo = await revenueCatService.getCustomerInfo();
+      console.log(`\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(customerInfo, null, 2)} \n\n\n\n\n\n\n\n`);
       
       // Check if purchase was successful by verifying active entitlements
       const entitlementId = 'MacroMeals Premium';
