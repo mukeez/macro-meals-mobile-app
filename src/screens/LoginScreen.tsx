@@ -30,6 +30,7 @@ import { useGoalsFlowStore } from "../store/goalsFlowStore";
 import { useMixpanel } from "@macro-meals/mixpanel";
 import { IsProContext } from "src/contexts/IsProContext";
 import revenueCatService from "../services/revenueCatService";
+import { sentryService } from "@macro-meals/sentry_service/src";
 // import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 
 // type RootStackParamList = {
@@ -136,6 +137,12 @@ export const LoginScreen: React.FC = () => {
         setIsOnboardingCompleted(true);
         setHasMacros(profile.has_macros);
         setReadyForDashboard(profile.has_macros);
+
+        sentryService.setUser({
+          id: profile.id,
+          email: profile.email,
+          name: `${profile.first_name} ${profile.last_name}`,
+        });
 
         // Set user ID in RevenueCat after successful login and check subscription status
         try {
