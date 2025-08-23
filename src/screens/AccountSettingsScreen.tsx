@@ -19,6 +19,7 @@ import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMixpanel } from "@macro-meals/mixpanel";
 import { Picker } from "@react-native-picker/picker";
+import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 import { useGoalsFlowStore } from "src/store/goalsFlowStore";
 import Header from "src/components/Header";
 import { useSyncBodyMetricToBackend } from "src/components/hooks/useBodyMetricsUpdate";
@@ -398,6 +399,11 @@ export default function AccountSettingsScreen() {
               });
               await authService.deleteUser();
               await authService.logout();
+              
+              // Clear user data from Crashlytics
+              await macroMealsCrashlytics.clearUserAttributes();
+              await macroMealsCrashlytics.setUserId('');
+              
               setAuthenticated(false, "", "");
             } catch (error) {
               console.error("Error during account deletion:", error);
@@ -618,7 +624,7 @@ export default function AccountSettingsScreen() {
                     >
                       <Picker.Item label="cm" value={null} style={{color: 'white'}} />
                       {Array.from({ length: 121 }, (_, i) => 100 + i).map(cm => (
-                        <Picker.Item key={cm} label={`${cm} cm`} style={{color: 'white'}} value={cm} />
+                        <Picker.Item key={cm} label={`${cm} cm`} style={{color: '#000000'}} value={cm} />
                       ))}
                     </Picker>
                     <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
@@ -646,7 +652,7 @@ export default function AccountSettingsScreen() {
                       >
                         <Picker.Item label="ft" value={null} style={{color: 'white'}} />
                         {[3, 4, 5, 6, 7, 8, 9].map(ft => (
-                          <Picker.Item key={ft} label={`${ft} ft`} style={{color: 'white'}} value={ft} />
+                          <Picker.Item key={ft} label={`${ft} ft`} style={{color: '#000000'}} value={ft} />
                         ))}
                       </Picker>
                       <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
@@ -672,7 +678,7 @@ export default function AccountSettingsScreen() {
                       >
                         <Picker.Item label="in" value={null} style={{color: 'white'}} />
                         {Array.from({ length: 12 }, (_, i) => i).map(inc => (
-                          <Picker.Item key={inc} label={`${inc} in`} style={{color: 'white'}} value={inc} />
+                          <Picker.Item key={inc} label={`${inc} in`} style={{color: '#000000'}} value={inc} />
                         ))}
                       </Picker>
                       <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
@@ -759,7 +765,7 @@ export default function AccountSettingsScreen() {
                     >
                       <Picker.Item label="kg" value={null} style={{color: 'white'}} />
                       {Array.from({ length: 221 }, (_, i) => 30 + i).map(kg => (
-                        <Picker.Item key={kg} label={`${kg} kg`} style={{color: 'white'}} value={kg} />
+                        <Picker.Item key={kg} label={`${kg} kg`} style={{color: '#000000'}} value={kg} />
                       ))}
                     </Picker>
                     <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
@@ -786,7 +792,7 @@ export default function AccountSettingsScreen() {
                     >
                       <Picker.Item label="lb" value={null} style={{color: 'white'}} />
                       {Array.from({ length: 321 }, (_, i) => 80 + i).map(lb => (
-                        <Picker.Item key={lb} label={`${lb} lb`} style={{color: 'white'}} value={lb} />
+                        <Picker.Item key={lb} label={`${lb} lb`} style={{color: '#000000'}} value={lb} />
                       ))}
                     </Picker>
                     <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>

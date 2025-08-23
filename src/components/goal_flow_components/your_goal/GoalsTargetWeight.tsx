@@ -120,19 +120,20 @@ export const GoalsTargetWeight: React.FC = () => {
                   style={{ 
                     width: getPickerWidth('imperial'), 
                     height: getPickerHeight(), 
-                    color: 'transparent',
-                    backgroundColor: 'transparent',
+                    color: '#000000',
+                    backgroundColor: '#FFFFFF',
                     borderWidth: Platform.OS === 'android' ? 1 : 0,
                     borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
                     borderRadius: Platform.OS === 'android' ? 4 : 0
                   }}
-                  itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                  itemStyle={{ fontSize: 18, color: '#000000' }}
                   onValueChange={handleWeightChange}
                   dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                  mode={Platform.OS === 'android' ? 'dialog' : undefined}
                 >
-                  <Picker.Item label="" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                  <Picker.Item label="" value={null} style={{color: '#000000'}} />
                   {weightsLb.map(lb => (
-                    <Picker.Item key={lb} label={`${lb} lb`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={lb} />
+                    <Picker.Item key={lb} label={`${lb} lb`} style={{color: '#000000'}} value={lb} />
                   ))}
                 </Picker>
               </View>
@@ -149,13 +150,14 @@ export const GoalsTargetWeight: React.FC = () => {
                     borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
                     borderRadius: Platform.OS === 'android' ? 4 : 0
                   }}
-                  itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                  itemStyle={{ fontSize: 18, color: '#000000' }}
                   onValueChange={handleWeightChange}
                   dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                  mode={Platform.OS === 'android' ? 'dialog' : undefined}
                 >
-                  <Picker.Item label="" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                  <Picker.Item label="" value={null} style={{color: '#000000'}} />
                   {weightsKg.map(kg => (
-                    <Picker.Item key={kg} label={`${kg} kg`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={kg} />
+                    <Picker.Item key={kg} label={`${kg} kg`} style={{color: '#000000'}} value={kg} />
                   ))}
                 </Picker>
               </View>

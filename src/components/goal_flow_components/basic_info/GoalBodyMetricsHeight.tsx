@@ -87,22 +87,22 @@ export const GoalBodyMetricsHeight = () => {
                   style={{ 
                     width: 100, 
                     height: 50, 
-                    color: 'black',
-                    backgroundColor: 'transparent',
+                    color: '#000000',
+                    backgroundColor: '#FFFFFF',
                     borderWidth: Platform.OS === 'android' ? 1 : 0,
                     borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
                     borderRadius: Platform.OS === 'android' ? 4 : 0
                   }}
-                  itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                  itemStyle={{ fontSize: 18, color: '#000000' }}
                   onValueChange={setHeightFt}
                   dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                  mode={Platform.OS === 'android' ? 'dialog' : undefined}
                 >
-                  <Picker.Item label="ft" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                  <Picker.Item label="ft" value={null} style={{color: '#000000'}} />
                   {heightsFt.map(ft => (
-                    <Picker.Item key={ft} label={`${ft} ft`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={ft} />
+                    <Picker.Item key={ft} label={`${ft} ft`} style={{color: '#000000'}} value={ft} />
                   ))}
                 </Picker>
-                <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
               </View>
               <View className={`${Platform.OS === 'ios' ? '' : 'border-b border-gray-100'}`}>
                 <Picker
@@ -110,22 +110,22 @@ export const GoalBodyMetricsHeight = () => {
                   style={{ 
                     width: 100, 
                     height: 50, 
-                    color: 'black',
-                    backgroundColor: 'transparent',
+                    color: '#000000',
+                    backgroundColor: '#FFFFFF',
                     borderWidth: Platform.OS === 'android' ? 1 : 0,
                     borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
                     borderRadius: Platform.OS === 'android' ? 4 : 0
                   }}
-                  itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                  itemStyle={{ fontSize: 18, color: '#000000' }}
                   onValueChange={setHeightIn}
                   dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                  mode={Platform.OS === 'android' ? 'dialog' : undefined}
                 >
-                  <Picker.Item label="in" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                  <Picker.Item label="in" value={null} style={{color: '#000000'}} />
                   {heightsIn.map(inc => (
-                    <Picker.Item key={inc} label={`${inc} in`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={inc} />
+                    <Picker.Item key={inc} label={`${inc} in`} style={{color: '#000000'}} value={inc} />
                   ))}
                 </Picker>
-                <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
               </View>
             </View>
           </View>
@@ -140,19 +140,20 @@ export const GoalBodyMetricsHeight = () => {
                 style={{ 
                   width: 140, 
                   height: 50, 
-                  color: 'black',
-                  backgroundColor: 'transparent',
+                  color: '#000000',
+                  backgroundColor: '#FFFFFF',
                   borderWidth: Platform.OS === 'android' ? 1 : 0,
                   borderColor: Platform.OS === 'android' ? '#6b7280' : 'transparent',
                   borderRadius: Platform.OS === 'android' ? 4 : 0
                 }}
-                itemStyle={{ fontSize: 18, color: Platform.OS === 'android' ? 'white' : 'black' }}
+                itemStyle={{ fontSize: 18, color: '#000000' }}
                 onValueChange={setHeightCm}
                 dropdownIconColor={Platform.OS === 'android' ? '#6b7280' : undefined}
+                mode={Platform.OS === 'android' ? 'dialog' : undefined}
               >
-                <Picker.Item label="cm" value={null} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} />
+                <Picker.Item label="cm" value={null} style={{color: '#000000'}} />
                 {heightsCm.map(cm => (
-                  <Picker.Item key={cm} label={`${cm} cm`} style={{color: Platform.OS === 'android' ? 'white' : 'black'}} value={cm} />
+                  <Picker.Item key={cm} label={`${cm} cm`} style={{color: '#000000'}} value={cm} />
                 ))}
               </Picker>
             </View>

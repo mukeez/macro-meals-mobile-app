@@ -15,6 +15,7 @@ import com.facebook.soloader.SoLoader
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
+import com.stallion.Stallion
 
 class MainApplication : Application(), ReactApplication {
 
@@ -34,6 +35,10 @@ class MainApplication : Application(), ReactApplication {
 
           override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
           override val isHermesEnabled: Boolean = BuildConfig.IS_HERMES_ENABLED
+
+          override fun getJSBundleFile(): String? {
+            return Stallion.getJSBundleFile(applicationContext)
+          }
       }
   )
 
