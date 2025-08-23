@@ -32,6 +32,8 @@ npm-debug.*
 .env.development
 .env.production
 .env.staging
+.env.test
+.env.local
 
 # iOS env files
 ios/.env*
@@ -50,11 +52,11 @@ android/app/debug.keystore
 android/app/release/
 android/app/*.keystore
 android/app/signing.properties
+android/app/upload-key.keystore
 android/build/
 android/gradle/
 android/.gradle/
 android/.kotlin/
-
 
 !ios/Podfile
 !ios/Podfile.lock
@@ -70,10 +72,16 @@ ios/*.hmap
 ios/*.ipa
 
 build/
+
 # Temporary files
 *~
 .*.swp
 *.log
+.temp/
+.cache/
+tmp/
+temp/
+stallion-temp-*/
 
 # IDEs and editors
 .idea/
@@ -83,11 +91,14 @@ build/
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
 
 # Misc
 coverage/
 .tmp/
-temp/
+*.lcov
+.nyc_output
 
 # Dependency directories
 jspm_packages/
@@ -108,13 +119,6 @@ bower_components/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env.test
-
-# Temporary files
-.temp/
-.cache/
-
 # Hermes files
 *.hermesc
 
@@ -122,78 +126,16 @@ bower_components/
 *.aab
 *.apk
 *.ipa
+*.dSYM.zip
+*.dSYM
 
 # Sourcemap files
 *.map
 
-# VSCode settings
-.vscode/
-# Expo
-.expo
-dist/
-web-build/
-.env
-.env.staging
-
-.cursorrules
-.cursor/
-credentials.json
-
-# Android signing config
-android/app/signing.properties
-android/app/upload-key.keystore
-
-# Additional build artifacts
-*.aab
-*.apk
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-node_modules/
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
+# RN/Metro bundle artifacts
+tmp-bundle/
+*.jsbundle
+*.hbc
 
 # Microbundle cache
 .rpt2_cache/
@@ -201,17 +143,7 @@ jspm_packages/
 .rts2_cache_es/
 .rts2_cache_umd/
 
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
 # parcel-bundler cache (https://parceljs.org/)
-.cache
 .parcel-cache
 
 # next.js build output

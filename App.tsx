@@ -27,6 +27,15 @@ import revenueCatService from './src/services/revenueCatService';
 import { withStallion } from 'react-native-stallion';
 import { useStallionUpdate, restart } from 'react-native-stallion';
 import StallionPopUp from 'src/components/StallionPopUp';
+import { sentryService, Sentry } from '@macro-meals/sentry_service';
+// Polyfill crypto.getRandomValues for Hermes before any Sentry/uuid usage in release
+import 'react-native-get-random-values';
+// Initialize Sentry via internal service (native enabled only in non-dev by default)
+sentryService.init({
+    dsn: (Config.SENTRY_DSN as string) || (Config as any).SENTRY_DNS || '',
+    environment: __DEV__ ? 'development' : 'production',
+    enableNativeInDev: false,
+});
 
 
 // Keep the splash screen visible while we fetch resources
@@ -427,4 +436,6 @@ export function App() {
     );
 }
 
-export default withStallion(App);
+const WrappedApp = withStallion(App);
+// Only wrap with Sentry in release
+export default __DEV__ ? WrappedApp : Sentry.wrap(WrappedApp);
