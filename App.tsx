@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import React, {useEffect, useState} from 'react';
-import { View, ActivityIndicator, Platform, NativeModules } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 // import firebase from '@react-native-firebase/app';
 import * as SplashScreen from 'expo-splash-screen';
