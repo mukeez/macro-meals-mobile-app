@@ -241,3 +241,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+tmp-bundle/
+.env.local
+
+.env.local
