@@ -180,6 +180,8 @@ const PaymentScreen = () => {
 
   const { setIsPro } = useContext(IsProContext);
   const [offerings, setOfferings] = useState<any>(null);
+  const [isCurrentlyInTrial, setIsCurrentlyInTrial] = useState(false);
+  const [hasUsedTrialBefore, setHasUsedTrialBefore] = useState(false);
 
   // Get product information for current selected plan
   const currentProductInfo = getProductInfo(offerings, selectedPlan as 'monthly' | 'yearly');
@@ -199,6 +201,29 @@ const PaymentScreen = () => {
     };
     
     loadOfferings();
+  }, []);
+
+  // Check current trial status when component mounts
+  useEffect(() => {
+    const checkCurrentTrialStatus = async () => {
+      try {
+        const trialStatus = await revenueCatService.checkTrialStatus();
+        setIsCurrentlyInTrial(trialStatus);
+        console.log('🔍 PaymentScreen - Current trial status:', trialStatus);
+        
+        // Also check if user has used a trial before
+        const customerInfo = await revenueCatService.getCustomerInfo();
+        const hasTrialHistory = customerInfo.entitlements.all['MacroMeals Premium']?.periodType === 'TRIAL';
+        setHasUsedTrialBefore(hasTrialHistory);
+        console.log('🔍 PaymentScreen - Has used trial before:', hasTrialHistory);
+      } catch (error) {
+        console.error('Failed to check trial status:', error);
+        setIsCurrentlyInTrial(false);
+        setHasUsedTrialBefore(false);
+      }
+    };
+    
+    checkCurrentTrialStatus();
   }, []);
 
   const handleTrialSubscription = async () => {
@@ -380,9 +405,11 @@ const PaymentScreen = () => {
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
                         <Text className="text-white font-semibold text-[17px]">
-                          {profile?.has_used_trial 
-                            ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` 
-                            : `Start ${currentProductInfo?.offerPeriodWithUnit || '7-Day'} Free Trial`
+                          {isCurrentlyInTrial 
+                            ? `Continue ${currentProductInfo?.offerPeriodWithUnit || '7-Day'} Free Trial`
+                            : hasUsedTrialBefore 
+                              ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` 
+                              : `Start ${currentProductInfo?.offerPeriodWithUnit || '7-Day'} Free Trial`
                           }
                         </Text>
                       )}

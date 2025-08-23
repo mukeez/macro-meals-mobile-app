@@ -225,6 +225,29 @@ class RevenueCatService {
       throw error;
     }
   }
+
+  async checkTrialStatus() {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      console.log('🔍 RevenueCat - Full customer info:', JSON.stringify(customerInfo, null, 2));
+      
+      const myEntitlement = customerInfo.entitlements.active['MacroMeals Premium']; // Use the correct entitlement ID
+      console.log('🔍 RevenueCat - MacroMeals Premium entitlement:', myEntitlement);
+      console.log('🔍 RevenueCat - All active entitlements:', Object.keys(customerInfo.entitlements.active));
+      console.log('🔍 RevenueCat - All entitlements (including expired):', Object.keys(customerInfo.entitlements.all));
+  
+      if (myEntitlement && myEntitlement.periodType === 'TRIAL') {
+        console.log('User is currently on a free trial.');
+        return true;
+      } else {
+        console.log('User is not currently on a free trial.');
+        return false;
+      }
+    } catch (e) {
+      console.error('Error fetching customer info:', e);
+      return false;
+    }
+  }
 }
 
 export const revenueCatService = new RevenueCatService();
