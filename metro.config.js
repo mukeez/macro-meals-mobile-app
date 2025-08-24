@@ -23,5 +23,19 @@ config.resolver.extraNodeModules = {
 // Platforms (keeps victory-native fallback happy)
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
+// Override the serializer to use Metro's default instead of Sentry's custom one
+config.serializer = {
+  // Use Metro's default serializer instead of Sentry's custom one
+  customSerializer: undefined,
+};
+
+// Sentry Metro configuration
+const sentryConfig = {
+  // Disable debug mode for production builds
+  debug: false,
+  // Suppress warnings during bundling
+  silent: true,
+};
+
 // Apply Sentry plugin then NativeWind
-module.exports = withNativeWind(withSentryConfig(config), { input: './src/globals.css' });
+module.exports = withNativeWind(withSentryConfig(config, sentryConfig), { input: './src/globals.css' });
