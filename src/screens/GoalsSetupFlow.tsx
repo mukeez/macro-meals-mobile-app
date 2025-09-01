@@ -143,7 +143,7 @@ export const GoalsSetupFlow =  () => {
         weightKg
       });
 
-      if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || !progressRate) {
+      if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || progressRate === undefined || progressRate === null) {
         console.error('Missing required fields:', {
           dateOfBirth: !!dateOfBirth,
           gender: !!gender,
