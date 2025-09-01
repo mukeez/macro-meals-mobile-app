@@ -208,6 +208,22 @@ export function App() {
             try {
                 await revenueCatService.initialize();
                 console.log('✅ RevenueCat initialized successfully');
+                
+                // Check if purchases need to be synced (one-time sync for returning users)
+                try {
+                    const hasSyncedPurchases = await AsyncStorage.getItem('has_synced_purchases');
+                    if (hasSyncedPurchases !== 'true') {
+                        console.log('🔄 Checking if purchases need to be synced...');
+                        await revenueCatService.syncPurchases();
+                        console.log('✅ Purchases synced successfully for returning user');
+                        await AsyncStorage.setItem('has_synced_purchases', 'true');
+                    } else {
+                        console.log('✅ Purchases already synced previously');
+                    }
+                } catch (syncError) {
+                    console.error('❌ Error during purchase sync check:', syncError);
+                    // Don't fail the app if sync fails
+                }
             } catch (error) {
                 console.error('❌ RevenueCat initialization failed:', error);
                 // Don't fail the app if RevenueCat fails to initialize
@@ -275,8 +291,8 @@ export function App() {
                         console.log('✅ RevenueCat user ID set:', profile.id);
                         
                         // Check subscription status from RevenueCat (source of truth)
-                        const { syncSubscriptionStatus } = await import('./src/services/subscriptionChecker');
-                        const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
+                        const subscriptionStatus = await revenueCatService.checkSubscriptionStatus();
+                        setIsPro(subscriptionStatus.isPro);
                         
                         console.log('🔍 App.tsx - RevenueCat subscription status:', subscriptionStatus);
                     } catch (error) {

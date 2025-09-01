@@ -141,15 +141,15 @@ export const GoalSetupScreen: React.FC = () => {
                     if (allCompleted) {
                         // Check subscription status from RevenueCat before routing
                         try {
-                            const { checkSubscriptionStatus } = await import('../services/subscriptionChecker');
-                            const subscriptionStatus = await checkSubscriptionStatus();
+                            const { revenueCatService } = await import('../services/revenueCatService');
+                            const subscriptionStatus = await revenueCatService.checkSubscriptionStatus();
                             
-                            console.log('🔍 GoalSetup - Subscription status check:', subscriptionStatus);
+                            console.log('🔍 GoalSetup - RevenueCat subscription status check:', subscriptionStatus);
                             setIsPro(subscriptionStatus.isPro);
                             
                             if (subscriptionStatus.isPro || devMode) {
-                                // User has subscription or dev mode - go to dashboard
-                                console.log('🔍 GoalSetup - User is pro or dev mode, going to dashboard');
+                                // User has active RevenueCat entitlements or dev mode - go to dashboard
+                                console.log('🔍 GoalSetup - User has active subscription or dev mode, going to dashboard');
                                 setHasBeenPromptedForGoals(false);
                                 setReadyForDashboard(true);
                                 return;
@@ -161,7 +161,7 @@ export const GoalSetupScreen: React.FC = () => {
                                 return;
                             }
                         } catch (error) {
-                            console.error('❌ GoalSetup - Failed to check subscription status:', error);
+                            console.error('❌ GoalSetup - Failed to check RevenueCat subscription status:', error);
                             // Fallback to payment screen if check fails
                             navigation.navigate('PaymentScreen');
                             setHasBeenPromptedForGoals(false);

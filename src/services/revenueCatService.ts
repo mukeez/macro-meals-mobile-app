@@ -248,6 +248,17 @@ class RevenueCatService {
       return false;
     }
   }
+
+  async syncPurchases() {
+    try {
+      const customerInfo = await Purchases.syncPurchases();
+      console.log('✅ Purchases synced successfully:', customerInfo);
+      return customerInfo;
+    } catch (error) {
+      console.error('❌ Error syncing purchases:', error);
+      throw error;
+    }
+  }
 }
 
 export const revenueCatService = new RevenueCatService();
