@@ -30,6 +30,7 @@ import StallionPopUp from 'src/components/StallionPopUp';
 import { sentryService, Sentry } from '@macro-meals/sentry_service';
 // Polyfill crypto.getRandomValues for Hermes before any Sentry/uuid usage in release
 import 'react-native-get-random-values';
+import { UpdateReminderModal } from './src/components/UpdateReminderModal';
 // Initialize Sentry via internal service (native enabled only in non-dev by default)
 sentryService.init({
     dsn: (Config.SENTRY_DSN as string) || (Config as any).SENTRY_DNS || '',
@@ -124,6 +125,7 @@ export function App() {
     const [readyForDashboard, setReadyForDashboard] = useState(false);
     const { isRestartRequired } = useStallionUpdate();
     const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [showUpdateReminder, setShowUpdateReminder] = useState(false);
 
     useEffect(() => {
         if (isRestartRequired) setShowUpdateModal(true);
@@ -330,6 +332,11 @@ export function App() {
                 
                 // Mark session validation as complete
                 setIsSessionValidated(true);
+                
+                // Check for app updates after initialization
+                setTimeout(() => {
+                    setShowUpdateReminder(true);
+                }, 2000); // Check after 2 seconds to allow Remote Config to load
             } catch (error) {
                 console.error('Error initializing app:', error);
             } finally {
@@ -407,6 +414,21 @@ export function App() {
                         max_meals_per_day: '10',
                         subscription_enabled: 'true',
                         dev_mode: __DEV__ ? 'true' : 'false',
+                        // Version checking defaults (semantic versioning)
+                        ios_min_supported_build: '1.0.0',
+                        ios_latest_build: '1.0.0',
+                        android_min_supported_version_code: '1.0.0',
+                        android_latest_version_code: '1.0.0',
+                        update_message: 'A new version is available.',
+                        update_title: 'Update Available',
+                        update_description: 'A new version is available with bug fixes and improvements.',
+                        update_url_ios: 'https://apps.apple.com/app/idXXXXXXXX',
+                        update_url_android: 'https://play.google.com/store/apps/details?id=com.macromeals.app',
+                        app_version: Constants.expoConfig?.version || '1.0.0',
+                        build_number: Platform.select({
+                            ios: Constants.expoConfig?.ios?.buildNumber,
+                            android: Constants.expoConfig?.android?.versionCode?.toString()
+                        }) || '1',
                     }}
                     settings={{
                         minimumFetchIntervalMillis: 30000, // 30 seconds minimum fetch interval
@@ -417,6 +439,15 @@ export function App() {
                             console.error('[REMOTE CONFIG] Update error:', error);
                         } else {
                             console.log('[REMOTE CONFIG] Config updated successfully:', event.updatedKeys);
+                            
+                            // Check for version updates when config changes
+                            if (event.updatedKeys.some(key => 
+                                key.includes('ios_') || 
+                                key.includes('android_') || 
+                                key.includes('update_')
+                            )) {
+                                setShowUpdateReminder(true);
+                            }
                         }
                     }}
                 >
@@ -435,6 +466,11 @@ export function App() {
                                         isOnboardingCompleted={isOnboardingCompleted} 
                                         initialAuthScreen={initialAuthScreen}
                                         isAuthenticated={isAuthenticated}
+                                    />
+                                    {/* Update Reminder Modal - must be inside RemoteConfigProvider */}
+                                    <UpdateReminderModal 
+                                        isVisible={showUpdateReminder}
+                                        onClose={() => setShowUpdateReminder(false)}
                                     />
                                 </NavigationContainer>
                             </IsProContext.Provider>

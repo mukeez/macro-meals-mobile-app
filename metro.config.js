@@ -1,6 +1,5 @@
 // metro.config.js
 const { getDefaultConfig } = require('expo/metro-config');
-const { withSentryConfig } = require('@sentry/react-native/metro');
 const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 
@@ -23,5 +22,5 @@ config.resolver.extraNodeModules = {
 // Platforms (keeps victory-native fallback happy)
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
-// Apply Sentry plugin then NativeWind
-module.exports = withNativeWind(withSentryConfig(config), { input: './src/globals.css' });
+// Apply NativeWind - let Expo handle Sentry through the plugin system
+module.exports = withNativeWind(config, { input: './src/globals.css' });
