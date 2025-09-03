@@ -3,7 +3,7 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useContext, useEffect, useState } from "react";
 import { IsProContext } from "src/contexts/IsProContext";
-import revenueCatService from '../services/revenueCatService';
+import revenueCatService from "../services/revenueCatService";
 import {
   KeyboardAvoidingView,
   View,
@@ -29,6 +29,7 @@ import useStore from "../store/useStore";
 import { OnboardingContext } from "src/contexts/OnboardingContext";
 import { HasMacrosContext } from "src/contexts/HasMacrosContext";
 import { useGoalsFlowStore } from "src/store/goalsFlowStore";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type VerificationScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -43,11 +44,11 @@ export const EmailVerificationScreen = () => {
   const route =
     useRoute<RouteProp<RootStackParamList, "EmailVerificationScreen">>();
   const setAuthenticated = useStore((state) => state.setAuthenticated);
-const { setIsOnboardingCompleted } = useContext(OnboardingContext);
-const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
-const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+  const { setIsOnboardingCompleted } = useContext(OnboardingContext);
+  const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
+  const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
   const { setIsPro } = React.useContext(IsProContext);
-const { email: routeEmail, password: routePassword } = route.params;
+  const { email: routeEmail, password: routePassword } = route.params;
   const CELL_COUNT = 6;
   const [value, setValue] = useState("");
   const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
@@ -73,6 +74,17 @@ const { email: routeEmail, password: routePassword } = route.params;
     };
   }, [countdown]);
 
+  const mixpanel = useMixpanel();
+
+  useEffect(() => {
+    mixpanel?.track({
+      name: "email_verification_screen_viewed",
+      properties: {
+        platform: Platform.OS,
+      },
+    });
+  }, [mixpanel]);
+
   const isDisabled = () => {
     return (
       isLoading ||
@@ -81,6 +93,18 @@ const { email: routeEmail, password: routePassword } = route.params;
       value.length !== CELL_COUNT
     );
   };
+
+  useEffect(() => {
+    if (value.length === CELL_COUNT) {
+      mixpanel?.track({
+        name: "verification_code_entered",
+        properties: {
+          code_length: value.length,
+          platform: Platform.OS,
+        },
+      });
+    }
+  }, [value, mixpanel]);
 
   const handleVerifyEmail = async () => {
     if (!routeEmail) {
@@ -97,81 +121,116 @@ const { email: routeEmail, password: routePassword } = route.params;
       email: routeEmail,
       otp: value,
     };
-     try {
-        const data = await authService.verifyEmail(params);
+    try {
+      const data = await authService.verifyEmail(params);
 
-        if (data.verified) {
+      if (data.verified) {
+        mixpanel?.track({
+          name: "verification_successful",
+          properties: { platform: Platform.OS },
+        });
 
-            const loginData = await authService.login({ email: routeEmail, password: routePassword });
+        const loginData = await authService.login({
+          email: routeEmail,
+          password: routePassword,
+        });
 
-            const token = loginData.access_token;
-            const loginUserId = loginData.user.id;
+        const token = loginData.access_token;
+        const loginUserId = loginData.user.id;
 
-            // Store tokens first so axios interceptor can use them
-            await Promise.all([
-                AsyncStorage.setItem('my_token', token),
-                AsyncStorage.setItem('refresh_token', loginData.refresh_token),
-                AsyncStorage.setItem('user_id', loginUserId),
-                AsyncStorage.setItem('isOnboardingCompleted', 'true')
-            ]);
+        // Store tokens first so axios interceptor can use them
+        await Promise.all([
+          AsyncStorage.setItem("my_token", token),
+          AsyncStorage.setItem("refresh_token", loginData.refresh_token),
+          AsyncStorage.setItem("user_id", loginUserId),
+          AsyncStorage.setItem("isOnboardingCompleted", "true"),
+        ]);
 
-            console.log('Tokens stored successfully:', {
-                hasAccessToken: !!token,
-                hasRefreshToken: !!loginData.refresh_token,
-                userId: loginUserId
-            });
+        console.log("Tokens stored successfully:", {
+          hasAccessToken: !!token,
+          hasRefreshToken: !!loginData.refresh_token,
+          userId: loginUserId,
+        });
 
-            // Then get profile using the stored token
-            const profile = await userService.getProfile();
-            // Update FCM token on backend after successful verification
-            try {
-                const fcmToken = await AsyncStorage.getItem('fcm_token');
-                if (fcmToken) {
-                    await userService.updateFCMToken(fcmToken);
-                    console.log('FCM token updated on backend after email verification');
-                }
-            } catch (error) {
-                console.log('Could not update FCM token on backend:', error);
-            }
-            
-            resetSteps();
-            setIsOnboardingCompleted(true);
-            setHasMacros(profile.has_macros);
-            setReadyForDashboard(profile.has_macros);
-            setAuthenticated(true, token, loginUserId);
-            
-            // Set user ID in RevenueCat and check subscription status
-            try {
-                await revenueCatService.setUserID(profile.id);
-                console.log('✅ RevenueCat user ID set after email verification:', profile.id);
-                
-                // Check subscription status from RevenueCat (source of truth)
-                const { syncSubscriptionStatus } = await import('../services/subscriptionChecker');
-                const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
-                
-                console.log('🔍 EmailVerification - RevenueCat subscription status:', subscriptionStatus);
-            } catch (error) {
-                console.error('❌ Failed to set RevenueCat user ID or check subscription after verification:', error);
-                // Fallback to backend isPro value if RevenueCat fails
-                setIsPro(!!profile.is_pro);
-            }
-        } else {
-            setError("Invalid verification code. Please try again.");
-            Alert.alert("Error", "Invalid verification code");
+        // Then get profile using the stored token
+        const profile = await userService.getProfile();
+        // Update FCM token on backend after successful verification
+        try {
+          const fcmToken = await AsyncStorage.getItem("fcm_token");
+          if (fcmToken) {
+            await userService.updateFCMToken(fcmToken);
+            console.log(
+              "FCM token updated on backend after email verification"
+            );
+          }
+        } catch (error) {
+          console.log("Could not update FCM token on backend:", error);
         }
+
+        resetSteps();
+        setIsOnboardingCompleted(true);
+        setHasMacros(profile.has_macros);
+        setReadyForDashboard(profile.has_macros);
+        setAuthenticated(true, token, loginUserId);
+
+        // Set user ID in RevenueCat and check subscription status
+        try {
+          await revenueCatService.setUserID(profile.id);
+          console.log(
+            "✅ RevenueCat user ID set after email verification:",
+            profile.id
+          );
+
+          // Check subscription status from RevenueCat (source of truth)
+          const { syncSubscriptionStatus } = await import(
+            "../services/subscriptionChecker"
+          );
+          const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
+
+          console.log(
+            "🔍 EmailVerification - RevenueCat subscription status:",
+            subscriptionStatus
+          );
+        } catch (error) {
+          console.error(
+            "❌ Failed to set RevenueCat user ID or check subscription after verification:",
+            error
+          );
+          // Fallback to backend isPro value if RevenueCat fails
+          setIsPro(!!profile.is_pro);
+        }
+      } else {
+        mixpanel?.track({
+          name: "verification_failed",
+          properties: { error_type: "invalid_code", platform: Platform.OS },
+        });
+        setError("Invalid verification code. Please try again.");
+        Alert.alert("Error", "Invalid verification code");
+      }
     } catch (err) {
-        setError(
-            err instanceof Error
-                ? `${err.message}: Code does not exist. Please try again`
-                : "Code does not exist. Please try again"
-        );
+      mixpanel?.track({
+        name: "verification_failed",
+        properties: { error_type: "invalid_code", platform: Platform.OS },
+      });
+      setError(
+        err instanceof Error
+          ? `${err.message}: Code does not exist. Please try again`
+          : "Code does not exist. Please try again"
+      );
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   const handleResendCode = async () => {
     if (!canResend || !routeEmail) return;
+
+    mixpanel?.track({
+      name: "resend_code_clicked",
+      properties: {
+        platform: Platform.OS,
+      },
+    });
 
     setIsLoading(true);
     try {

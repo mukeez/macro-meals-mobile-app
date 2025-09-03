@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityBu
 import { MaterialIcons } from "@expo/vector-icons";
 import { RootStackParamList } from "../types/navigation";
 import { useMixpanel } from "@macro-meals/mixpanel";
+import DeviceInfo from 'react-native-device-info';
+
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -42,6 +44,18 @@ export const SignupScreen: React.FC = () => {
     referralCode: "",
     terms: "",
   });
+
+  useEffect(() => {
+  if (mixpanel) {
+    mixpanel.track({
+      name: "signup_screen_viewed",
+      properties: {
+        platform: Platform.OS,
+        app_version: DeviceInfo.getVersion(),
+      }
+    });
+  }
+}, [mixpanel]);
 
   const navigation = useNavigation<NavigationProp>();
 
@@ -99,6 +113,17 @@ export const SignupScreen: React.FC = () => {
   if (!validateForm()) {
     return;
   }
+  //tracking signup attempt
+  if (mixpanel) {
+    mixpanel.track({
+      name: "signup_attempted",
+      properties: {
+        email_domain: email.split("@")[1] || "",
+        has_referral_code: !!referralCode.trim(),
+        platform: Platform.OS,
+      }
+    });
+  }
 
   setIsLoading(true);
 
@@ -120,7 +145,7 @@ export const SignupScreen: React.FC = () => {
     if (mixpanel) {
       mixpanel.identify(userId);
       mixpanel.track({
-        name: "user_signed_up",
+        name: "signup_successful",
         properties: {
           signup_method: "email",
           platform: Platform.OS,
@@ -163,6 +188,17 @@ export const SignupScreen: React.FC = () => {
         errorMessage = error.message;
       }
     }
+    // tracking signup failed
+      if (mixpanel) {
+        mixpanel.track({
+          name: "signup_failed",
+          properties: {
+            email_domain: email.split("@")[1] || "",
+            error_type: errorMessage,
+            platform: Platform.OS,
+          }
+        });
+      }
 
     Alert.alert("Signup Failed", errorMessage);
   } finally {

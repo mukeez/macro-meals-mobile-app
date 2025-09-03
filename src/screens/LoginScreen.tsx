@@ -60,9 +60,12 @@ export const LoginScreen: React.FC = () => {
   const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
   const mixpanel = useMixpanel();
 
-  // const togglePasswordVisibility = () => {
-  //   setShowPassword(!showPassword);
-  // };
+  useEffect(() => {
+    mixpanel?.track({
+      name: "sign_in_screen_viewed",
+      properties: { platform: Platform.OS },
+    });
+  }, [mixpanel]);
 
   const [errors, setErrors] = useState({
     email: "",
@@ -87,7 +90,14 @@ export const LoginScreen: React.FC = () => {
       Alert.alert("Error", "Please enter both email and password");
       return;
     }
-
+    // tracking sign in attempted
+    mixpanel?.track({
+      name: "sign_in_attempted",
+      properties: {
+        email_domain: email.split("@")[1] || "",
+        platform: Platform.OS,
+      },
+    });
     setIsLoading(true);
 
     try {
@@ -141,15 +151,23 @@ export const LoginScreen: React.FC = () => {
         try {
           console.log(`\n\n\n\n\nUSER ID  ${profile.id}`);
           await revenueCatService.setUserID(profile.id);
-          console.log('✅ RevenueCat user ID set after login:', profile.id);
-          
+          console.log("✅ RevenueCat user ID set after login:", profile.id);
+
           // Check subscription status from RevenueCat (source of truth)
-          const { syncSubscriptionStatus } = await import('../services/subscriptionChecker');
+          const { syncSubscriptionStatus } = await import(
+            "../services/subscriptionChecker"
+          );
           const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
-          
-          console.log('🔍 LoginScreen - RevenueCat subscription status:', subscriptionStatus);
+
+          console.log(
+            "🔍 LoginScreen - RevenueCat subscription status:",
+            subscriptionStatus
+          );
         } catch (error) {
-          console.error('❌ Failed to set RevenueCat user ID or check subscription after login:', error);
+          console.error(
+            "❌ Failed to set RevenueCat user ID or check subscription after login:",
+            error
+          );
           // Fallback to backend isPro value if RevenueCat fails
           setIsPro(!!profile.is_pro);
         }
@@ -187,7 +205,7 @@ export const LoginScreen: React.FC = () => {
 
         // Track successful login
         mixpanel?.track({
-          name: "user_logged_in",
+          name: "sign_in_successful",
           properties: {
             login_method: "email",
             has_macros: profile.has_macros,
@@ -200,14 +218,19 @@ export const LoginScreen: React.FC = () => {
 
         // Add a small delay to ensure context updates have propagated
         setTimeout(() => {
-          console.log("🔍 LoginScreen - Setting authenticated state after delay");
+          console.log(
+            "🔍 LoginScreen - Setting authenticated state after delay"
+          );
           setAuthenticated(true, token, userId);
         }, 100);
       } catch (profileError: any) {
         // Check if this is the email verification required error
         const errorDetail = profileError?.response?.data?.detail;
-        if (errorDetail && typeof errorDetail === 'string' && 
-            errorDetail.toLowerCase().includes('email verification required')) {
+        if (
+          errorDetail &&
+          typeof errorDetail === "string" &&
+          errorDetail.toLowerCase().includes("email verification required")
+        ) {
           // Route to email verification screen
           await authService.resendEmailVerification({
             email,
@@ -243,11 +266,26 @@ export const LoginScreen: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
+      mixpanel?.track({
+        name: "sign_in_failed",
+        properties: {
+          email_domain: email.split("@")[1] || "",
+          error_type: errorMessage,
+          platform: Platform.OS,
+        },
+      });
 
       Alert.alert("Login Failed", errorMessage, [{ text: "OK" }]);
     } finally {
       setIsLoading(false);
     }
+  };
+  const handleForgotPassword = () => {
+    mixpanel?.track({
+      name: "forgot_password_clicked",
+      properties: { platform: Platform.OS },
+    });
+    (navigation as any).navigate("ForgotPasswordScreen");
   };
 
   // const handleGoogleLogin = async () => {
@@ -401,12 +439,7 @@ export const LoginScreen: React.FC = () => {
                   {errors.password}
                 </Text>
               ) : null}
-              <TouchableOpacity
-                className="mb-4"
-                onPress={() =>
-                  (navigation as any).navigate("ForgotPasswordScreen")
-                }
-              >
+              <TouchableOpacity className="mb-4" onPress={handleForgotPassword}>
                 <Text className="text-[14px] text-primary font-medium">
                   Forgot Password?
                 </Text>
