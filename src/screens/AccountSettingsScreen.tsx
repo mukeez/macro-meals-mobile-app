@@ -19,7 +19,7 @@ import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMixpanel } from "@macro-meals/mixpanel";
 import { Picker } from "@react-native-picker/picker";
-import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
+import { macroMealsCrashlytics } from "@macro-meals/crashlytics";
 import { useGoalsFlowStore } from "src/store/goalsFlowStore";
 import Header from "src/components/Header";
 import { useSyncBodyMetricToBackend } from "src/components/hooks/useBodyMetricsUpdate";
@@ -69,7 +69,18 @@ export default function AccountSettingsScreen() {
   );
 
   const mixpanel = useMixpanel();
-
+  useEffect(() => {
+    if (_user && _user.id) {
+      mixpanel?.track({
+        name: "account_settings_screen_viewed",
+        properties: {
+          user_id: _user.id,
+          email: _user.email,
+          is_pro: _user.is_pro,
+        },
+      });
+    }
+  }, [_user]);
   // function floatFeetToFtIn(floatFeet: number) {
   //   const ft = Math.floor(floatFeet);
   //   const inch = Math.round((floatFeet - ft) * 12);
@@ -216,6 +227,14 @@ export default function AccountSettingsScreen() {
           patch[field] = value;
           console.log("[PATCH] Sending to backend:", patch);
           await userService.updateProfile(patch);
+          mixpanel?.track({
+            name: "account_field_updated",
+            properties: {
+              user_id: userRef.current?.id,
+              field: field,
+              new_value: value,
+            },
+          });
           console.log("[PATCH] Backend update successful");
           // Update Mixpanel user properties
           updateMixpanelUserProperties(patch);
@@ -265,6 +284,14 @@ export default function AccountSettingsScreen() {
 
   const handleHeightUnitChange = (newUnit: "imperial" | "metric") => {
     if (newUnit === height_unit_preference) return;
+    mixpanel?.track({
+      name: "height_unit_toggled",
+      properties: {
+        user_id: _user?.id,
+        from_unit: height_unit_preference,
+        to_unit: newUnit,
+      },
+    });
     if (
       newUnit === "imperial" &&
       typeof heightCm === "number" &&
@@ -295,6 +322,14 @@ export default function AccountSettingsScreen() {
 
   const handleWeightUnitChange = (newUnit: "imperial" | "metric") => {
     if (newUnit === weight_unit_preference) return;
+    mixpanel?.track({
+      name: "weight_unit_toggled",
+      properties: {
+        user_id: _user?.id,
+        from_unit: weight_unit_preference,
+        to_unit: newUnit,
+      },
+    });
     if (newUnit === "imperial") {
       if (typeof weightKg === "number" && !isNaN(weightKg)) {
         const lbs = Math.round(weightKg * 2.20462);
@@ -372,11 +407,30 @@ export default function AccountSettingsScreen() {
   //   handleMultiFieldChange(patchObj);
   // };
   const handleDeleteAccount = () => {
+    mixpanel?.track({
+      name: "delete_account_clicked",
+      properties: {
+        user_id: userRef.current?.id,
+        email: userRef.current?.email,
+      },
+    });
     Alert.alert(
       "Delete Account",
       "Are you sure you want to delete your account? This action cannot be undone.",
       [
-        { text: "Cancel", style: "cancel" },
+        {
+          text: "Cancel",
+          style: "cancel",
+          onPress: () => {
+            mixpanel?.track({
+              name: "delete_account_cancelled",
+              properties: {
+                user_id: userRef.current?.id,
+                email: userRef.current?.email,
+              },
+            });
+          },
+        },
         {
           text: "Delete",
           style: "destructive",
@@ -384,7 +438,7 @@ export default function AccountSettingsScreen() {
             try {
               // Track account deletion in Mixpanel
               mixpanel?.track({
-                name: "account_deleted",
+                name: "delete_account_confirmed",
                 properties: {
                   user_id: userRef.current?.id,
                   email: userRef.current?.email,
@@ -399,11 +453,11 @@ export default function AccountSettingsScreen() {
               });
               await authService.deleteUser();
               await authService.logout();
-              
+
               // Clear user data from Crashlytics
               await macroMealsCrashlytics.clearUserAttributes();
-              await macroMealsCrashlytics.setUserId('');
-              
+              await macroMealsCrashlytics.setUserId("");
+
               setAuthenticated(false, "", "");
             } catch (error) {
               console.error("Error during account deletion:", error);
@@ -557,19 +611,37 @@ export default function AccountSettingsScreen() {
           <View className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]">
             <Text className="flex-1 text-base text-[#222]">Height Unit</Text>
             <View className="flex-row items-center justify-end">
-              <Text className={`text-base mr-3 ${height_unit_preference === 'imperial' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>ft/in</Text>
+              <Text
+                className={`text-base mr-3 ${
+                  height_unit_preference === "imperial"
+                    ? "text-black font-semibold"
+                    : "font-normal text-gray-500"
+                }`}
+              >
+                ft/in
+              </Text>
               <Switch
-                value={height_unit_preference === 'metric'}
-                onValueChange={v => handleHeightUnitChange(v ? 'metric' : 'imperial')}
-                trackColor={{ false: '#009688', true: '#009688' }}
+                value={height_unit_preference === "metric"}
+                onValueChange={(v) =>
+                  handleHeightUnitChange(v ? "metric" : "imperial")
+                }
+                trackColor={{ false: "#009688", true: "#009688" }}
                 thumbColor="#ffffff"
                 ios_backgroundColor="#009688"
               />
-              <Text className={`text-base ml-3 ${height_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>cm</Text>
+              <Text
+                className={`text-base ml-3 ${
+                  height_unit_preference === "metric"
+                    ? "text-black font-semibold"
+                    : "font-normal text-gray-500"
+                }`}
+              >
+                cm
+              </Text>
             </View>
           </View>
           {/* Height Value */}
-          {Platform.OS === 'ios' ? (
+          {Platform.OS === "ios" ? (
             <TouchableOpacity
               className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]"
               onPress={() => {
@@ -584,10 +656,13 @@ export default function AccountSettingsScreen() {
               <Text className="flex-1 text-base text-[#222]">Height</Text>
               <View className="flex-row items-center">
                 <Text className="text-base text-[#222]">
-                  {height_unit_preference === "metric" 
-                    ? (heightCm ? `${heightCm} cm` : "-")
-                    : (heightFt && heightIn !== null ? `${heightFt}' ${heightIn}"` : "-")
-                  }
+                  {height_unit_preference === "metric"
+                    ? heightCm
+                      ? `${heightCm} cm`
+                      : "-"
+                    : heightFt && heightIn !== null
+                    ? `${heightFt}' ${heightIn}"`
+                    : "-"}
                 </Text>
                 {updating.height && (
                   <ActivityIndicator
@@ -606,82 +681,141 @@ export default function AccountSettingsScreen() {
                   <View className="border-b border-gray-100">
                     <Picker
                       selectedValue={heightCm}
-                      style={{ 
-                        width: 140, 
-                        height: 50, 
-                        color: 'black',
-                        backgroundColor: 'transparent',
+                      style={{
+                        width: 140,
+                        height: 50,
+                        color: "black",
+                        backgroundColor: "transparent",
                         borderWidth: 1,
-                        borderColor: '#6b7280',
-                        borderRadius: 4
+                        borderColor: "#6b7280",
+                        borderRadius: 4,
                       }}
-                      itemStyle={{ fontSize: 18, color: 'white' }}
+                      itemStyle={{ fontSize: 18, color: "white" }}
                       onValueChange={(value) => {
                         setHeightCm(value);
                         // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
                       }}
                       dropdownIconColor="#6b7280"
                     >
-                      <Picker.Item label="cm" value={null} style={{color: 'white'}} />
-                      {Array.from({ length: 121 }, (_, i) => 100 + i).map(cm => (
-                        <Picker.Item key={cm} label={`${cm} cm`} style={{color: '#000000'}} value={cm} />
-                      ))}
+                      <Picker.Item
+                        label="cm"
+                        value={null}
+                        style={{ color: "white" }}
+                      />
+                      {Array.from({ length: 121 }, (_, i) => 100 + i).map(
+                        (cm) => (
+                          <Picker.Item
+                            key={cm}
+                            label={`${cm} cm`}
+                            style={{ color: "#000000" }}
+                            value={cm}
+                          />
+                        )
+                      )}
                     </Picker>
-                    <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                    <Text
+                      style={{
+                        width: "100%",
+                        height: 60,
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                      }}
+                    >
+                      {" "}
+                    </Text>
                   </View>
                 ) : (
                   <View className="flex-row gap-4">
                     <View className="border-b border-gray-100">
                       <Picker
                         selectedValue={heightFt}
-                        style={{ 
-                          width: 100, 
-                          height: 50, 
-                          color: 'black',
-                          backgroundColor: 'transparent',
+                        style={{
+                          width: 100,
+                          height: 50,
+                          color: "black",
+                          backgroundColor: "transparent",
                           borderWidth: 1,
-                          borderColor: '#6b7280',
-                          borderRadius: 4
+                          borderColor: "#6b7280",
+                          borderRadius: 4,
                         }}
-                        itemStyle={{ fontSize: 18, color: 'white' }}
+                        itemStyle={{ fontSize: 18, color: "white" }}
                         onValueChange={(value) => {
                           setHeightFt(value);
                           // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
                         }}
                         dropdownIconColor="#6b7280"
                       >
-                        <Picker.Item label="ft" value={null} style={{color: 'white'}} />
-                        {[3, 4, 5, 6, 7, 8, 9].map(ft => (
-                          <Picker.Item key={ft} label={`${ft} ft`} style={{color: '#000000'}} value={ft} />
+                        <Picker.Item
+                          label="ft"
+                          value={null}
+                          style={{ color: "white" }}
+                        />
+                        {[3, 4, 5, 6, 7, 8, 9].map((ft) => (
+                          <Picker.Item
+                            key={ft}
+                            label={`${ft} ft`}
+                            style={{ color: "#000000" }}
+                            value={ft}
+                          />
                         ))}
                       </Picker>
-                      <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                      <Text
+                        style={{
+                          width: "100%",
+                          height: 60,
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                        }}
+                      >
+                        {" "}
+                      </Text>
                     </View>
                     <View className="border-b border-gray-100">
                       <Picker
                         selectedValue={heightIn}
-                        style={{ 
-                          width: 100, 
-                          height: 50, 
-                          color: 'black',
-                          backgroundColor: 'transparent',
+                        style={{
+                          width: 100,
+                          height: 50,
+                          color: "black",
+                          backgroundColor: "transparent",
                           borderWidth: 1,
-                          borderColor: '#6b7280',
-                          borderRadius: 4
+                          borderColor: "#6b7280",
+                          borderRadius: 4,
                         }}
-                        itemStyle={{ fontSize: 18, color: 'white' }}
+                        itemStyle={{ fontSize: 18, color: "white" }}
                         onValueChange={(value) => {
                           setHeightIn(value);
                           // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
                         }}
                         dropdownIconColor="#6b7280"
                       >
-                        <Picker.Item label="in" value={null} style={{color: 'white'}} />
-                        {Array.from({ length: 12 }, (_, i) => i).map(inc => (
-                          <Picker.Item key={inc} label={`${inc} in`} style={{color: '#000000'}} value={inc} />
+                        <Picker.Item
+                          label="in"
+                          value={null}
+                          style={{ color: "white" }}
+                        />
+                        {Array.from({ length: 12 }, (_, i) => i).map((inc) => (
+                          <Picker.Item
+                            key={inc}
+                            label={`${inc} in`}
+                            style={{ color: "#000000" }}
+                            value={inc}
+                          />
                         ))}
                       </Picker>
-                      <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                      <Text
+                        style={{
+                          width: "100%",
+                          height: 60,
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                        }}
+                      >
+                        {" "}
+                      </Text>
                     </View>
                   </View>
                 )}
@@ -699,19 +833,37 @@ export default function AccountSettingsScreen() {
           <View className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]">
             <Text className="flex-1 text-base text-[#222]">Weight Unit</Text>
             <View className="flex-row items-center justify-end">
-              <Text className={`text-base mr-3 ${weight_unit_preference === 'imperial' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>lbs</Text>
+              <Text
+                className={`text-base mr-3 ${
+                  weight_unit_preference === "imperial"
+                    ? "text-black font-semibold"
+                    : "font-normal text-gray-500"
+                }`}
+              >
+                lbs
+              </Text>
               <Switch
-                value={weight_unit_preference === 'metric'}
-                onValueChange={v => handleWeightUnitChange(v ? 'metric' : 'imperial')}
-                trackColor={{ false: '#009688', true: '#009688' }}
+                value={weight_unit_preference === "metric"}
+                onValueChange={(v) =>
+                  handleWeightUnitChange(v ? "metric" : "imperial")
+                }
+                trackColor={{ false: "#009688", true: "#009688" }}
                 thumbColor="#ffffff"
                 ios_backgroundColor="#009688"
               />
-              <Text className={`text-base ml-3 ${weight_unit_preference === 'metric' ? 'text-black font-semibold' : 'font-normal text-gray-500'}`}>kg</Text>
+              <Text
+                className={`text-base ml-3 ${
+                  weight_unit_preference === "metric"
+                    ? "text-black font-semibold"
+                    : "font-normal text-gray-500"
+                }`}
+              >
+                kg
+              </Text>
             </View>
           </View>
           {/* Weight Value */}
-          {Platform.OS === 'ios' ? (
+          {Platform.OS === "ios" ? (
             <TouchableOpacity
               className="flex-row items-center min-h-[56px] px-4 border-b border-[#f0f0f0]"
               onPress={() => {
@@ -725,10 +877,13 @@ export default function AccountSettingsScreen() {
               <Text className="flex-1 text-base text-[#222]">Weight</Text>
               <View className="flex-row items-center">
                 <Text className="text-base text-[#222]">
-                  {weight_unit_preference === "metric" 
-                    ? (weightKg ? `${weightKg} kg` : "-")
-                    : (weightLb ? `${weightLb} lb` : "-")
-                  }
+                  {weight_unit_preference === "metric"
+                    ? weightKg
+                      ? `${weightKg} kg`
+                      : "-"
+                    : weightLb
+                    ? `${weightLb} lb`
+                    : "-"}
                 </Text>
                 {updating.weight && (
                   <ActivityIndicator
@@ -747,55 +902,97 @@ export default function AccountSettingsScreen() {
                   <View className="border-b border-gray-100">
                     <Picker
                       selectedValue={weightKg}
-                      style={{ 
-                        width: 140, 
-                        height: 50, 
-                        color: 'black',
-                        backgroundColor: 'transparent',
+                      style={{
+                        width: 140,
+                        height: 50,
+                        color: "black",
+                        backgroundColor: "transparent",
                         borderWidth: 1,
-                        borderColor: '#6b7280',
-                        borderRadius: 4
+                        borderColor: "#6b7280",
+                        borderRadius: 4,
                       }}
-                      itemStyle={{ fontSize: 18, color: 'white' }}
+                      itemStyle={{ fontSize: 18, color: "white" }}
                       onValueChange={(value) => {
                         setWeightKg(value);
                         // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
                       }}
                       dropdownIconColor="#6b7280"
                     >
-                      <Picker.Item label="kg" value={null} style={{color: 'white'}} />
-                      {Array.from({ length: 221 }, (_, i) => 30 + i).map(kg => (
-                        <Picker.Item key={kg} label={`${kg} kg`} style={{color: '#000000'}} value={kg} />
-                      ))}
+                      <Picker.Item
+                        label="kg"
+                        value={null}
+                        style={{ color: "white" }}
+                      />
+                      {Array.from({ length: 221 }, (_, i) => 30 + i).map(
+                        (kg) => (
+                          <Picker.Item
+                            key={kg}
+                            label={`${kg} kg`}
+                            style={{ color: "#000000" }}
+                            value={kg}
+                          />
+                        )
+                      )}
                     </Picker>
-                    <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                    <Text
+                      style={{
+                        width: "100%",
+                        height: 60,
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                      }}
+                    >
+                      {" "}
+                    </Text>
                   </View>
                 ) : (
                   <View className="border-b border-gray-100">
                     <Picker
                       selectedValue={weightLb}
-                      style={{ 
-                        width: 120, 
-                        height: 50, 
-                        color: 'black',
-                        backgroundColor: 'transparent',
+                      style={{
+                        width: 120,
+                        height: 50,
+                        color: "black",
+                        backgroundColor: "transparent",
                         borderWidth: 1,
-                        borderColor: '#6b7280',
-                        borderRadius: 4
+                        borderColor: "#6b7280",
+                        borderRadius: 4,
                       }}
-                      itemStyle={{ fontSize: 18, color: 'white' }}
+                      itemStyle={{ fontSize: 18, color: "white" }}
                       onValueChange={(value) => {
                         setWeightLb(value);
                         // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
                       }}
                       dropdownIconColor="#6b7280"
                     >
-                      <Picker.Item label="lb" value={null} style={{color: 'white'}} />
-                      {Array.from({ length: 321 }, (_, i) => 80 + i).map(lb => (
-                        <Picker.Item key={lb} label={`${lb} lb`} style={{color: '#000000'}} value={lb} />
-                      ))}
+                      <Picker.Item
+                        label="lb"
+                        value={null}
+                        style={{ color: "white" }}
+                      />
+                      {Array.from({ length: 321 }, (_, i) => 80 + i).map(
+                        (lb) => (
+                          <Picker.Item
+                            key={lb}
+                            label={`${lb} lb`}
+                            style={{ color: "#000000" }}
+                            value={lb}
+                          />
+                        )
+                      )}
                     </Picker>
-                    <Text style={{width: '100%', height: 60, position: 'absolute', bottom: 0, left: 0}}>{' '}</Text>
+                    <Text
+                      style={{
+                        width: "100%",
+                        height: 60,
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                      }}
+                    >
+                      {" "}
+                    </Text>
                   </View>
                 )}
                 {updating.weight && (
@@ -899,7 +1096,7 @@ export default function AccountSettingsScreen() {
         )}
 
         {/* Height Picker Modal - iOS Only */}
-        {showHeightPicker && Platform.OS === 'ios' && (
+        {showHeightPicker && Platform.OS === "ios" && (
           <Modal
             visible={showHeightPicker}
             transparent={true}
@@ -923,10 +1120,12 @@ export default function AccountSettingsScreen() {
                   minWidth: 320,
                 }}
               >
-                <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 20 }}>
+                <Text
+                  style={{ fontSize: 18, fontWeight: "bold", marginBottom: 20 }}
+                >
                   Select Height
                 </Text>
-                
+
                 {height_unit_preference === "metric" ? (
                   <Picker
                     selectedValue={tempHeightCm}
@@ -934,34 +1133,40 @@ export default function AccountSettingsScreen() {
                     onValueChange={(value) => setTempHeightCm(value)}
                   >
                     <Picker.Item label="Select cm" value={null} />
-                    {Array.from({ length: 121 }, (_, i) => 100 + i).map(cm => (
-                      <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
-                    ))}
+                    {Array.from({ length: 121 }, (_, i) => 100 + i).map(
+                      (cm) => (
+                        <Picker.Item key={cm} label={`${cm} cm`} value={cm} />
+                      )
+                    )}
                   </Picker>
                 ) : (
-                  <View style={{ flexDirection: 'row', gap: 20 }}>
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={{ marginBottom: 10, fontWeight: '600' }}>Feet</Text>
+                  <View style={{ flexDirection: "row", gap: 20 }}>
+                    <View style={{ alignItems: "center" }}>
+                      <Text style={{ marginBottom: 10, fontWeight: "600" }}>
+                        Feet
+                      </Text>
                       <Picker
                         selectedValue={tempHeightFt}
                         style={{ width: 100, height: 180 }}
                         onValueChange={(value) => setTempHeightFt(value)}
                       >
                         <Picker.Item label="ft" value={null} />
-                        {[3, 4, 5, 6, 7, 8, 9].map(ft => (
+                        {[3, 4, 5, 6, 7, 8, 9].map((ft) => (
                           <Picker.Item key={ft} label={`${ft}`} value={ft} />
                         ))}
                       </Picker>
                     </View>
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={{ marginBottom: 10, fontWeight: '600' }}>Inches</Text>
+                    <View style={{ alignItems: "center" }}>
+                      <Text style={{ marginBottom: 10, fontWeight: "600" }}>
+                        Inches
+                      </Text>
                       <Picker
                         selectedValue={tempHeightIn}
                         style={{ width: 100, height: 180 }}
                         onValueChange={(value) => setTempHeightIn(value)}
                       >
                         <Picker.Item label="in" value={null} />
-                        {Array.from({ length: 12 }, (_, i) => i).map(inc => (
+                        {Array.from({ length: 12 }, (_, i) => i).map((inc) => (
                           <Picker.Item key={inc} label={`${inc}`} value={inc} />
                         ))}
                       </Picker>
@@ -982,10 +1187,17 @@ export default function AccountSettingsScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      if (height_unit_preference === "metric" && tempHeightCm !== null) {
+                      if (
+                        height_unit_preference === "metric" &&
+                        tempHeightCm !== null
+                      ) {
                         setHeightCm(tempHeightCm);
                         // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
-                      } else if (height_unit_preference === "imperial" && tempHeightFt !== null && tempHeightIn !== null) {
+                      } else if (
+                        height_unit_preference === "imperial" &&
+                        tempHeightFt !== null &&
+                        tempHeightIn !== null
+                      ) {
                         setHeightFt(tempHeightFt);
                         setHeightIn(tempHeightIn);
                         // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
@@ -1011,7 +1223,7 @@ export default function AccountSettingsScreen() {
         )}
 
         {/* Weight Picker Modal - iOS Only */}
-        {showWeightPicker && Platform.OS === 'ios' && (
+        {showWeightPicker && Platform.OS === "ios" && (
           <Modal
             visible={showWeightPicker}
             transparent={true}
@@ -1035,10 +1247,12 @@ export default function AccountSettingsScreen() {
                   minWidth: 280,
                 }}
               >
-                <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 20 }}>
+                <Text
+                  style={{ fontSize: 18, fontWeight: "bold", marginBottom: 20 }}
+                >
                   Select Weight
                 </Text>
-                
+
                 {weight_unit_preference === "metric" ? (
                   <Picker
                     selectedValue={tempWeightKg}
@@ -1046,7 +1260,7 @@ export default function AccountSettingsScreen() {
                     onValueChange={(value) => setTempWeightKg(value)}
                   >
                     <Picker.Item label="Select kg" value={null} />
-                    {Array.from({ length: 221 }, (_, i) => 30 + i).map(kg => (
+                    {Array.from({ length: 221 }, (_, i) => 30 + i).map((kg) => (
                       <Picker.Item key={kg} label={`${kg} kg`} value={kg} />
                     ))}
                   </Picker>
@@ -1057,7 +1271,7 @@ export default function AccountSettingsScreen() {
                     onValueChange={(value) => setTempWeightLb(value)}
                   >
                     <Picker.Item label="Select lb" value={null} />
-                    {Array.from({ length: 321 }, (_, i) => 80 + i).map(lb => (
+                    {Array.from({ length: 321 }, (_, i) => 80 + i).map((lb) => (
                       <Picker.Item key={lb} label={`${lb} lb`} value={lb} />
                     ))}
                   </Picker>
@@ -1076,10 +1290,16 @@ export default function AccountSettingsScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
-                      if (weight_unit_preference === "metric" && tempWeightKg !== null) {
+                      if (
+                        weight_unit_preference === "metric" &&
+                        tempWeightKg !== null
+                      ) {
                         setWeightKg(tempWeightKg);
                         // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
-                      } else if (weight_unit_preference === "imperial" && tempWeightLb !== null) {
+                      } else if (
+                        weight_unit_preference === "imperial" &&
+                        tempWeightLb !== null
+                      ) {
                         setWeightLb(tempWeightLb);
                         // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
                       }

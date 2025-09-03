@@ -11,6 +11,7 @@ import {
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import Header from "../components/Header";
 import { userService } from "../services/userService";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type TogglesState = {
   mealReminders?: boolean;
@@ -30,6 +31,18 @@ export default function NotificationsPreferences() {
     mealReminders: false,
   });
   const [showDetails, setShowDetails] = useState(false);
+  const mixpanel = useMixpanel();
+
+  useEffect(() => {
+    if (!loading.initial && typeof toggles.mealReminders !== "undefined") {
+      mixpanel?.track({
+        name: "notifications_screen_viewed",
+        properties: {
+          meal_reminders_enabled: toggles.mealReminders,
+        },
+      });
+    }
+  }, [loading.initial, toggles.mealReminders]);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,6 +76,13 @@ export default function NotificationsPreferences() {
     try {
       await userService.updateProfile({
         meal_reminder_preferences_set: value,
+      });
+      mixpanel?.track({
+        name: "notification_toggle_changed",
+        properties: {
+          notification: "meal_reminders",
+          enabled: value,
+        },
       });
     } catch {
       setToggles((prev) => ({ ...prev, mealReminders: !value }));
