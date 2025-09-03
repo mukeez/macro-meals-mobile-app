@@ -21,6 +21,7 @@ import {
   useBlurOnFulfill,
   useClearByFocusCell,
 } from "react-native-confirmation-code-field";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type VerificationScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -35,11 +36,18 @@ export const VerificationScreen: React.FC = () => {
   const route = useRoute<RouteProp<RootStackParamList, "VerificationScreen">>();
   const { email: routeEmail, source } = route.params;
 
+  const mixpanel = useMixpanel();
 
+  useEffect(() => {
+    mixpanel?.track({
+      name: "password_verification_screen_viewed",
+      properties: { platform: Platform.OS },
+    });
+  }, [mixpanel]);
 
-    const isDisabled = () => {
-        return isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail);
-    }
+  const isDisabled = () => {
+    return isLoading || !routeEmail || !/\S+@\S+\.\S+/.test(routeEmail);
+  };
 
   const CELL_COUNT = 6;
   const [value, setValue] = useState("");
@@ -74,6 +82,13 @@ export const VerificationScreen: React.FC = () => {
       );
       return;
     }
+    mixpanel?.track({
+      name: "password_verification_submitted",
+      properties: {
+        email_domain: routeEmail.split("@")[1] || "",
+        platform: Platform.OS,
+      },
+    });
 
     setIsLoading(true);
     const params = {
@@ -87,6 +102,13 @@ export const VerificationScreen: React.FC = () => {
       const session_token = data.session_token;
       console.log("The session token is", session_token);
       if (session_token) {
+        mixpanel?.track({
+          name: "password_verification_successful",
+          properties: {
+            email_domain: routeEmail.split("@")[1] || "",
+            platform: Platform.OS,
+          },
+        });
         navigation.navigate("ResetPassword", {
           email: routeEmail,
           session_token: session_token,
@@ -97,6 +119,14 @@ export const VerificationScreen: React.FC = () => {
         Alert.alert("Error", "Invalid verification code");
       }
     } catch (error) {
+      mixpanel?.track({
+        name: "password_verification_failed",
+        properties: {
+          email_domain: routeEmail.split("@")[1] || "",
+          error_type: error instanceof Error ? error.message : "unknown_error",
+          platform: Platform.OS,
+        },
+      });
       setError(
         error instanceof Error
           ? `${error.message}: Code does not exist. Please try again`
@@ -109,6 +139,11 @@ export const VerificationScreen: React.FC = () => {
 
   const handleResendCode = async () => {
     if (!canResend) return;
+
+    mixpanel?.track({
+      name: "password_verification_resend_requested",
+      properties: { platform: Platform.OS },
+    });
 
     setIsLoading(true);
     try {
@@ -196,18 +231,17 @@ export const VerificationScreen: React.FC = () => {
             />
           </View>
           <View className="mt-2 items-center">
-          {!canResend ? (
-            <Text className="text-textMediumGrey">
-              Resend code in {countdown}s
-            </Text>
-          ) : (
-            <TouchableOpacity onPress={handleResendCode} disabled={isLoading}>
-              <Text className="text-primary font-semibold">Resend code</Text>
-            </TouchableOpacity>
-          )}
+            {!canResend ? (
+              <Text className="text-textMediumGrey">
+                Resend code in {countdown}s
+              </Text>
+            ) : (
+              <TouchableOpacity onPress={handleResendCode} disabled={isLoading}>
+                <Text className="text-primary font-semibold">Resend code</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-        </View>
-        
       </KeyboardAvoidingView>
     </CustomSafeAreaView>
   );
