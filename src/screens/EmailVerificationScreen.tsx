@@ -123,6 +123,12 @@ const { email: routeEmail, password: routePassword } = route.params;
 
             // Then get profile using the stored token
             const profile = await userService.getProfile();
+            
+            // Store the profile in the store for future use
+            const { setProfile } = useStore.getState();
+            setProfile(profile);
+            console.log('✅ Profile stored in store after email verification:', profile);
+            
             // Update FCM token on backend after successful verification
             try {
                 const fcmToken = await AsyncStorage.getItem('fcm_token');

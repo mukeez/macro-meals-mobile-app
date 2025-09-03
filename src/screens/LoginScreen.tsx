@@ -123,6 +123,11 @@ export const LoginScreen: React.FC = () => {
           id: profile.id,
         });
 
+        // Store the profile in the store for future use
+        const { setProfile } = useStore.getState();
+        setProfile(profile);
+        console.log('✅ Profile stored in store after login:', profile);
+
         // Reset steps before setting other states
         resetSteps();
 

@@ -70,11 +70,6 @@ function RemoteConfigHandler() {
 
     useEffect(() => {
         if (lastUpdate && lastUpdate.updatedKeys.length > 0) {
-            console.log('[REMOTE CONFIG] 🔄 Config update received in handler:', {
-                updatedKeys: lastUpdate.updatedKeys,
-                totalUpdatedKeys: lastUpdate.updatedKeys.length,
-                timestamp: new Date().toISOString()
-            });
             
             // Handle specific config updates here
             lastUpdate.updatedKeys.forEach((_key, _index) => {
@@ -215,9 +210,7 @@ export function App() {
                 try {
                     const hasSyncedPurchases = await AsyncStorage.getItem('has_synced_purchases');
                     if (hasSyncedPurchases !== 'true') {
-                        console.log('🔄 Checking if purchases need to be synced...');
                         await revenueCatService.syncPurchases();
-                        console.log('✅ Purchases synced successfully for returning user');
                         await AsyncStorage.setItem('has_synced_purchases', 'true');
                     } else {
                         console.log('✅ Purchases already synced previously');
@@ -236,8 +229,6 @@ export function App() {
                 const onboardingCompleted = await AsyncStorage.getItem('isOnboardingCompleted');
                 setIsOnboardingCompleted(onboardingCompleted === 'true');
 
-                // Don't set authentication state yet - wait for session validation
-                console.log('Starting session validation without clearing tokens...');
                 setHasMacros(false);
                 setIsPro(false);
                 setReadyForDashboard(false);
