@@ -1,6 +1,6 @@
 // src/screens/WelcomeScreen.tsx
 import React, { useEffect, useState, useContext } from "react";
-import { useNavigation, CommonActions } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types/navigation";
 import { HasMacrosContext } from "src/contexts/HasMacrosContext";
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -20,8 +21,8 @@ import { userService } from "../services/userService";
 import revenueCatService from "../services/revenueCatService";
 import { IsProContext } from "src/contexts/IsProContext";
 import BackButton from "src/components/BackButton";
+import Config from "react-native-config";
 import { useMixpanel } from "@macro-meals/mixpanel/src";
-import { Platform } from "react-native";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -38,14 +39,6 @@ type _Profile = {
   meal_reminder_preferences_set?: boolean;
   is_active?: boolean;
 };
-const mixpanel = useMixpanel();
-
-useEffect(() => {
-  mixpanel?.track({
-    name: "paywall_viewed",
-    properties: { platform: Platform.OS },
-  });
-}, [mixpanel]);
 
 // Helper function to get product information from RevenueCat offerings
 const getProductInfo = (offerings: any, planType: "monthly" | "yearly") => {
@@ -222,7 +215,7 @@ const BenefitsPager = () => {
 };
 
 const PaymentScreen = () => {
-  const navigation = useNavigation<NavigationProp>();
+  // const navigation = useNavigation<NavigationProp>();
   const profile = useStore((state) => state.profile);
   const _setStoreProfile = useStore((state) => state.setProfile);
   const _clearProfile = useStore((state) => state.clearProfile);
@@ -236,7 +229,9 @@ const PaymentScreen = () => {
 
   const { setIsPro } = useContext(IsProContext);
   const [offerings, setOfferings] = useState<any>(null);
-
+  const [isCurrentlyInTrial, setIsCurrentlyInTrial] = useState(false);
+  const [hasUsedTrialBefore, setHasUsedTrialBefore] = useState(false);
+  const mixpanel = useMixpanel();
   // Get product information for current selected plan
   const currentProductInfo = getProductInfo(
     offerings,
@@ -245,9 +240,23 @@ const PaymentScreen = () => {
   const monthlyProductInfo = getProductInfo(offerings, "monthly");
   const yearlyProductInfo = getProductInfo(offerings, "yearly");
 
+  useEffect(() => {
+    mixpanel?.track({
+      name: "paywall_viewed",
+      properties: { platform: Platform.OS },
+    });
+  }, [mixpanel]);
   // Load RevenueCat offerings when component mounts
   useEffect(() => {
     console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
+    const customerInfo = revenueCatService.getCustomerInfo();
+    console.log(
+      `\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(
+        customerInfo,
+        null,
+        2
+      )} \n\n\n\n\n\n\n\n`
+    );
     const loadOfferings = async () => {
       try {
         const currentOfferings = await revenueCatService.getOfferings();
@@ -258,6 +267,34 @@ const PaymentScreen = () => {
     };
 
     loadOfferings();
+  }, []);
+
+  // Check current trial status when component mounts
+  useEffect(() => {
+    const checkCurrentTrialStatus = async () => {
+      try {
+        const trialStatus = await revenueCatService.checkTrialStatus();
+        setIsCurrentlyInTrial(trialStatus);
+        console.log("🔍 PaymentScreen - Current trial status:", trialStatus);
+
+        // Also check if user has used a trial before
+        const customerInfo = await revenueCatService.getCustomerInfo();
+        const hasTrialHistory =
+          customerInfo.entitlements.all["MacroMeals Premium"]?.periodType ===
+          "TRIAL";
+        setHasUsedTrialBefore(hasTrialHistory);
+        console.log(
+          "🔍 PaymentScreen - Has used trial before:",
+          hasTrialHistory
+        );
+      } catch (error) {
+        console.error("Failed to check trial status:", error);
+        setIsCurrentlyInTrial(false);
+        setHasUsedTrialBefore(false);
+      }
+    };
+
+    checkCurrentTrialStatus();
   }, []);
 
   const handleTrialSubscription = async () => {
@@ -283,17 +320,27 @@ const PaymentScreen = () => {
       // Find the appropriate package based on selected plan
       let packageToPurchase;
       if (selectedPlan === "monthly") {
-        packageToPurchase = currentOfferings.availablePackages.find(
-          (pkg) =>
-            pkg.product.identifier ===
-            "com.macromeals.app.subscription.premium.monthly"
-        );
+        console.log("Platform: ", Platform.OS);
+        packageToPurchase =
+          Platform.OS === "ios"
+            ? currentOfferings.availablePackages.find(
+                (pkg) =>
+                  pkg.product.identifier === Config.IOS_PRODUCT_MONTHLY_ID
+              )
+            : currentOfferings.availablePackages.find(
+                (pkg) =>
+                  pkg.product.identifier === Config.ANDROID_PRODUCT_MONTHLY_ID
+              );
       } else {
-        packageToPurchase = currentOfferings.availablePackages.find(
-          (pkg) =>
-            pkg.product.identifier ===
-            "com.macromeals.app.subscription.premium.annual"
-        );
+        packageToPurchase =
+          Platform.OS === "ios"
+            ? currentOfferings.availablePackages.find(
+                (pkg) => pkg.product.identifier === Config.IOS_PRODUCT_YEARLY_ID
+              )
+            : currentOfferings.availablePackages.find(
+                (pkg) =>
+                  pkg.product.identifier === Config.ANDROID_PRODUCT_YEARLY_ID
+              );
       }
 
       if (!packageToPurchase) {
@@ -301,12 +348,20 @@ const PaymentScreen = () => {
       }
 
       // Purchase the package
-      const customerInfo = await revenueCatService.purchasePackage(
+      const purchasePackage = await revenueCatService.purchasePackage(
         packageToPurchase
       );
       console.log(
         "🔍 PaymentScreen - Purchase completed, customerInfo:",
-        JSON.stringify(customerInfo, null, 2)
+        JSON.stringify(purchasePackage, null, 2)
+      );
+      const customerInfo = await revenueCatService.getCustomerInfo();
+      console.log(
+        `\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(
+          customerInfo,
+          null,
+          2
+        )} \n\n\n\n\n\n\n\n`
       );
 
       // Check if purchase was successful by verifying active entitlements
@@ -330,6 +385,7 @@ const PaymentScreen = () => {
             platform: Platform.OS,
           },
         });
+
         // Update local state
         setHasBeenPromptedForGoals(false);
         setReadyForDashboard(true);
@@ -354,16 +410,16 @@ const PaymentScreen = () => {
               text: "Continue",
               onPress: () => {
                 // Force navigation to Dashboard using CommonActions
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [
-                      {
-                        name: "Dashboard",
-                      },
-                    ],
-                  })
-                );
+                // navigation.dispatch(
+                //   CommonActions.reset({
+                //     index: 0,
+                //     routes: [
+                //       {
+                //         name: 'Dashboard',
+                //       },
+                //     ],
+                //   })
+                // );
               },
             },
           ]
@@ -460,7 +516,7 @@ const PaymentScreen = () => {
               onPress={(e) => {
                 e.preventDefault();
                 setSelectedPlan("yearly");
-                setAmount(yearlyProductInfo?.price || 70.0);
+                setAmount(yearlyProductInfo?.price || 69.99);
                 mixpanel?.track({
                   name: "subscription_plan_selected",
                   properties: {
@@ -490,7 +546,7 @@ const PaymentScreen = () => {
                 </View>
                 <View className="mt-3">
                   <Text className="font-medium text-[15px]">
-                    {yearlyProductInfo?.pricePerPeriod || "£70.00/yr"}
+                    {yearlyProductInfo?.pricePerPeriod || "£69.99/yr"}
                   </Text>
                   {yearlyProductInfo?.originalPrice && (
                     <Text className="mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]">
@@ -520,7 +576,11 @@ const PaymentScreen = () => {
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text className="text-white font-semibold text-[17px]">
-                    {profile?.has_used_trial
+                    {isCurrentlyInTrial
+                      ? `Continue ${
+                          currentProductInfo?.offerPeriodWithUnit || "7-Day"
+                        } Free Trial`
+                      : hasUsedTrialBefore
                       ? `Subscribe to ${
                           selectedPlan === "monthly" ? "Monthly" : "Yearly"
                         } plan`
