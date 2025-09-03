@@ -13,6 +13,7 @@ import { Image as ExpoImage } from "expo-image";
 import { DatePickerModal } from 'react-native-paper-dates';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { format, parseISO } from 'date-fns';
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -74,6 +75,10 @@ const AddMeal: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const mixpanel = useMixpanel();
+  useEffect(() => {
+    mixpanel?.track({ name: "meals_page_viewed" });
+  }, []);
   const [pagination, setPagination] = useState({
     has_next: false,
     has_previous: false,
@@ -136,6 +141,17 @@ const AddMeal: React.FC = () => {
       grouped[monthKey][dayKey].push(meal);
     });
     return grouped;
+  }, [meals]);
+
+  useEffect(() => {
+    if (meals.length > 0) {
+      mixpanel?.track({
+        name: "meals_day_summary_displayed",
+        properties: {
+          days_displayed: Object.keys(mealsByMonth).length,
+        },
+      });
+    }
   }, [meals]);
 
   // Keep all accordions closed initially
@@ -262,6 +278,10 @@ const AddMeal: React.FC = () => {
             try {
               setLoading(true);
               await mealService.deleteMeal(mealId);
+              mixpanel?.track({
+                name: "meal_deleted",
+                properties: { meal_id: mealId },
+              });
               // Remove meal from store immediately
               deleteLoggedMeal(mealId);
               // Refresh the meals list
@@ -292,6 +312,7 @@ const AddMeal: React.FC = () => {
   ].filter(section => section.meals.length > 0); // Only show sections that have meals
 
   const showFilterSheet = () => {
+    mixpanel?.track({ name: "meals_filter_icon_clicked" });
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
@@ -355,7 +376,8 @@ const AddMeal: React.FC = () => {
             </View>
             
             <View className="flex-1 items-end">
-              <TouchableOpacity onPress={showFilterSheet}>
+              <TouchableOpacity onPress={
+                showFilterSheet}>
                 <Image source={IMAGE_CONSTANTS.filterIcon} className="w-7 h-7" />
               </TouchableOpacity>
             </View>
@@ -554,6 +576,13 @@ const AddMeal: React.FC = () => {
                                             <View className="flex-row items-center gap-3">
                                               <TouchableOpacity
                                                 onPress={() => {
+                                                  mixpanel?.track({
+                                                    name: "edit_meal_from_meals_clicked",
+                                                    properties: {
+                                                      meal_id: meal.id,
+                                                      selected_date: meal.meal_time,
+                                                    },
+                                                  });
                                                   navigation.navigate('EditMealScreen', {
                                                     analyzedData: {
                                                       id: meal.id,

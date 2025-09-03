@@ -12,6 +12,7 @@ import MacroLegend from "src/components/MacroLegend";
 import MacroTableSection from "src/components/MacroTableSection";
 import { useProgressStore } from "src/store/useProgressStore";
 import VictoryStackedBarChart from "src/components/VictoryStackedBarChart";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 const macroColors = {
   calories: "#ffffff",
@@ -26,7 +27,6 @@ const dateRanges = [
   { label: "3m", value: "3m" },
   { label: "6m", value: "6m" },
   { label: "1y", value: "1y" },
-
 ];
 
 interface MacroBarData {
@@ -43,6 +43,7 @@ const ProgressScreen = () => {
   const { data, loading, selectedRange, setSelectedRange, fetchDataByPeriod } =
     useProgressStore();
   const [refreshing, setRefreshing] = useState(false);
+  const mixpanel = useMixpanel();
 
   useEffect(() => {
     console.log(`ProgressScreen: Fetching data for period: ${selectedRange}`);
@@ -56,12 +57,30 @@ const ProgressScreen = () => {
     setRefreshing(false);
   }, [fetchDataByPeriod, selectedRange]);
 
+  useEffect(() => {
+    if (data && macroBarData.length > 0) {
+      mixpanel?.track({
+        name: "progression_screen_viewed",
+        properties: {
+          entry_point: "app_tab",
+          default_period: selectedRange,
+          start_date: data?.start_date,
+          end_date: data?.end_date,
+          chart_points_count: macroBarData.length,
+        },
+      });
+    }
+  }, [data, selectedRange]);
   // Process real API data only - no dummy data fallback
   let macroBarData: MacroBarData[] = [];
   let hasNonZeroData = false;
-  
+
   try {
-    if (data && Array.isArray(data.period_macros) && data.period_macros.length > 0) {
+    if (
+      data &&
+      Array.isArray(data.period_macros) &&
+      data.period_macros.length > 0
+    ) {
       macroBarData = data.period_macros.map((periodData, index) => {
         return {
           day: index + 1, // Use index + 1 for chart positioning
@@ -75,23 +94,36 @@ const ProgressScreen = () => {
       });
 
       // Check if we have any non-zero values
-      hasNonZeroData = macroBarData.some(day => 
-        day.protein > 0 || day.carbs > 0 || day.fat > 0 || day.calories > 0
+      hasNonZeroData = macroBarData.some(
+        (day) =>
+          day.protein > 0 || day.carbs > 0 || day.fat > 0 || day.calories > 0
       );
 
       // Debug logging
-      console.log('ProgressScreen: Processed macroBarData:', macroBarData.map(d => ({
-        date: d.date,
-        period_label: d.period_label,
-        day: d.day,
-        protein: d.protein,
-        carbs: d.carbs,
-        fat: d.fat,
-        calories: d.calories
-      })));
+      console.log(
+        "ProgressScreen: Processed macroBarData:",
+        macroBarData.map((d) => ({
+          date: d.date,
+          period_label: d.period_label,
+          day: d.day,
+          protein: d.protein,
+          carbs: d.carbs,
+          fat: d.fat,
+          calories: d.calories,
+        }))
+      );
     }
   } catch (err) {
-    console.error('Error processing macro data:', err);
+    mixpanel?.track({
+      name: "progress_data_fetch_failed",
+      properties: {
+        error_type: "server",
+        period: selectedRange,
+        start_date: data?.start_date,
+        end_date: data?.end_date,
+      },
+    });
+    console.error("Error processing macro data:", err);
     macroBarData = [];
   }
 
@@ -99,19 +131,19 @@ const ProgressScreen = () => {
     ? Math.round(Number(data.average_macros.calories))
     : 0;
 
-  const avg = data?.average_macros 
+  const avg = data?.average_macros
     ? {
         protein: Math.round(Number(data.average_macros.protein)) || 0,
         carbs: Math.round(Number(data.average_macros.carbs)) || 0,
-        fat: Math.round(Number(data.average_macros.fat)) || 0
+        fat: Math.round(Number(data.average_macros.fat)) || 0,
       }
     : { protein: 0, carbs: 0, fat: 0 };
 
-  const goal = data?.target_macros 
+  const goal = data?.target_macros
     ? {
         protein: Math.round(Number(data.target_macros.protein)) || 0,
         carbs: Math.round(Number(data.target_macros.carbs)) || 0,
-        fat: Math.round(Number(data.target_macros.fat)) || 0
+        fat: Math.round(Number(data.target_macros.fat)) || 0,
       }
     : { protein: 0, carbs: 0, fat: 0 };
 
@@ -122,13 +154,46 @@ const ProgressScreen = () => {
     const end = new Date(data.end_date);
     dateRange = `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
   }
+  useEffect(() => {
+    if (!loading && hasNonZeroData && macroBarData.length > 0) {
+      mixpanel?.track({
+        name: "progress_chart_rendered",
+        properties: {
+          period: selectedRange,
+          start_date: data?.start_date,
+          end_date: data?.end_date,
+          chart_points_count: macroBarData.length,
+          total_days_covered: macroBarData.length,
+          data_source: "local",
+        },
+      });
+    }
+  }, [loading, hasNonZeroData, macroBarData.length, selectedRange, data]);
+  useEffect(() => {
+    if (!loading && !hasNonZeroData && data) {
+      mixpanel?.track({
+        name: "progress_chart_empty_state_shown",
+        properties: {
+          period: selectedRange,
+          start_date: data?.start_date,
+          end_date: data?.end_date,
+        },
+      });
+    }
+  }, [loading, hasNonZeroData, selectedRange, data]);
 
   return (
-    <ScrollView className="bg-white"
+    <ScrollView
+      className="bg-white"
       contentContainerStyle={{ paddingBottom: 56 }}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" colors={["#fff"]} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#fff"
+          colors={["#fff"]}
+        />
       }
     >
       <View className="bg-primaryLight pb-8">
@@ -163,7 +228,8 @@ const ProgressScreen = () => {
           ) : !hasNonZeroData ? (
             <View className="flex-1 h-[250px] my-2 justify-center items-center">
               <Text className="text-white text-sm text-center">
-                No macro data available for this period.{"\n"}Log your meals to see your progress!
+                No macro data available for this period.{"\n"}Log your meals to
+                see your progress!
               </Text>
             </View>
           ) : (
@@ -174,7 +240,19 @@ const ProgressScreen = () => {
           {dateRanges.map((r) => (
             <TouchableOpacity
               key={r.value}
-              onPress={() => setSelectedRange(r.value)}
+              onPress={() => {
+                mixpanel?.track({
+                  name: "progress_period_selected",
+                  properties: {
+                    from_period: selectedRange,
+                    to_period: r.value,
+                    start_date: data?.start_date,
+                    end_date: data?.end_date,
+                    chart_points_count: macroBarData.length,
+                  },
+                });
+                setSelectedRange(r.value);
+              }}
               className={`
                 px-4 py-1.5 mx-3 rounded-full bg-white
                 ${selectedRange === r.value ? "opacity-100" : "opacity-70"}
@@ -190,7 +268,10 @@ const ProgressScreen = () => {
 
         {/* Overlapping Cards */}
         <View className="absolute bottom-[-40px] left-0 right-0">
-          <View className="flex-row px-4" style={{ transform: [{ translateY: 50 }] }}>
+          <View
+            className="flex-row px-4"
+            style={{ transform: [{ translateY: 50 }] }}
+          >
             <View className="flex-1 bg-[#C4E7E3] mx-1 rounded-2xl items-center py-6 shadow-lg">
               <View
                 className="w-12 h-12 rounded-full justify-center items-center mb-3"
