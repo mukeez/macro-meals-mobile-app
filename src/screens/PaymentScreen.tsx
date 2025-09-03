@@ -571,7 +571,7 @@ const PaymentScreen = () => {
             </View>
           </View>
         </View>
-      </View>
+
 
       {/* </CustomSafeAreaView> */}
     </>
