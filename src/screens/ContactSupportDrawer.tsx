@@ -10,16 +10,25 @@ import {
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 const { height } = Dimensions.get("window");
 
 type ContactSupportDrawerProps = {
   onClose: () => void;
 };
+const mixpanel = useMixpanel();
 const subject = encodeURIComponent("Support Request");
 const body = encodeURIComponent("Hello Macro Meals,\n\nI need help with ...");
 
 const mailtoUrl = `mailto:support@macromealsapp.com?subject=${subject}&body=${body}`;
+const handleSupportEmail = () => {
+  mixpanel?.track({
+    name: "contact_support_email_opened",
+    properties: {},
+  });
+  Linking.openURL(mailtoUrl);
+};
 
 export default function ContactSupportDrawer({
   onClose,
@@ -84,7 +93,7 @@ export default function ContactSupportDrawer({
             <TouchableOpacity
               className="my-5 flex-row items-center justify-start bg-[#009688] w-3/5 rounded-3xl px-4 py-3"
               activeOpacity={0.85}
-              onPress={() => Linking.openURL(mailtoUrl)}
+              onPress={handleSupportEmail}
             >
               <Ionicons name="paper-plane" size={17} color="white" />
               <Text className="text-white font-semibold text-sm ml-2">

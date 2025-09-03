@@ -42,7 +42,7 @@ export const SettingsScreen: React.FC = () => {
   const { getValue } = useRemoteConfigContext();
   const [showDrawer, setShowDrawer] = useState(false);
   const mixpanel = useMixpanel();
-  const _devMode = getValue('dev_mode').asBoolean();
+  const _devMode = getValue("dev_mode").asBoolean();
 
   // Local state for settings
   const [_units, setUnits] = useState<string>("g/kcal");
@@ -72,7 +72,6 @@ export const SettingsScreen: React.FC = () => {
   const [showUnitsModal, setShowUnitsModal] = useState(false);
   const [tempUnitPreference, setTempUnitPreference] = useState("metric");
 
-
   /**
    * Mock fetching user data on component mount
    */
@@ -88,12 +87,24 @@ export const SettingsScreen: React.FC = () => {
     };
     fetchUserData();
 
+    useEffect(() => {
+      if (userData.id) {
+        mixpanel?.track({
+          name: "profile_screen_viewed",
+          properties: {
+            user_id: userData.id,
+            email: userData.email,
+            is_pro: userData.is_pro,
+            entry_point: "app_tab",
+          },
+        });
+      }
+    }, [userData.id]);
+
     if (preferences.unitSystem) {
       setUnits(preferences.unitSystem === "Metric" ? "g/kcal" : "oz/cal");
     }
   }, [token]);
-
-
 
   /**
    * Handle unit preference change using the same pattern as account settings
@@ -193,12 +204,25 @@ export const SettingsScreen: React.FC = () => {
   /**
    * Handle navigation to help screen
    */
-  const handleHelpSupport = () => setShowDrawer(true);
+  const handleHelpSupport = () => {
+    mixpanel?.track({
+      name: "contact_support_clicked",
+      properties: {
+        // Add user_id/email if available
+      },
+    });
+    setShowDrawer(true);
+  };
 
   // const handleModalSheet = () => {
   //   navigation.navigate("PaymentScreen" as never);
   // };
   const openEmail = () => {
+    mixpanel?.track({
+      name: "submit_feedback_email_opened",
+      properties: {},
+    });
+
     const { email } = appConstants();
 
     let url = `mailto:${email.to}`;
@@ -223,7 +247,6 @@ export const SettingsScreen: React.FC = () => {
   const handleHealthGuidelines = () => {
     navigation.navigate("HealthGuidelinesScreen" as never);
   };
-
 
   return (
     <CustomSafeAreaView className="flex-1 bg-white">
@@ -304,19 +327,21 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => {}}
           />
-          {
-                            Config.ENVIRONMENT !== 'production' ? (
-              <SectionItem
-            title="Payment"
-            image={IMAGE_CONSTANTS.restoreIcon}
-            rightComponent={
-              <Text className="text-xl text-gray-400 ml-1">›</Text>
-            }
-            onPress={() => { navigation.navigate('PaymentScreen') }}
-          />
-            ): (<></>)
-          }
-          
+          {Config.ENVIRONMENT !== "production" ? (
+            <SectionItem
+              title="Payment"
+              image={IMAGE_CONSTANTS.restoreIcon}
+              rightComponent={
+                <Text className="text-xl text-gray-400 ml-1">›</Text>
+              }
+              onPress={() => {
+                navigation.navigate("PaymentScreen");
+              }}
+            />
+          ) : (
+            <></>
+          )}
+
           <SectionItem
             title="Manage Subscription"
             image={IMAGE_CONSTANTS.restoreIcon}
@@ -358,6 +383,10 @@ export const SettingsScreen: React.FC = () => {
               <Text className="text-xl text-gray-400 ml-1">›</Text>
             }
             onPress={() => {
+              mixpanel?.track({
+                name: "submit_feedback_clicked",
+                properties: {},
+              });
               openEmail();
             }}
           />
