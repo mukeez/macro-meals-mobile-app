@@ -20,7 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import useStore from '../store/useStore';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from 'src/types/navigation';
-import { mealService } from '../services/mealService';
+import { MealFeedback, mealService } from '../services/mealService';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import * as ImagePicker from 'expo-image-picker';
@@ -46,6 +46,7 @@ interface RouteParams {
         hideImage?: boolean;
         photo?: string;
         description?: string;
+        scanned_image?: string;
     };
     defaultDate?: string;
 }
@@ -53,6 +54,7 @@ interface RouteParams {
 import { FavoriteMeal } from '../services/favoritesService';
 import { FavouriteIcon } from 'src/components/FavouriteIcon';
 import { SERVING_UNITS } from 'constants/serving_units';
+import { RateMacroMeals } from 'src/components/RateMacroMeals';
 
 /**
  * Screen for adding a new meal to the log
@@ -309,11 +311,29 @@ export const AddMealScreen: React.FC = () => {
             navigation.navigate('MainTabs');
         } catch (error) {
             console.error('Error adding meal:', error);
-            Alert.alert('Error', 'Failed to add meal');
+            Alert.alert('Error', `${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setLoading(false);
         }
     };
+
+    const handleOnLike = async () => {
+        try {
+          console.log('THE BarCode:', barcodeData);
+          await mealService.productFeedback({ feedback: MealFeedback.ThumbUp, barcode: barcodeData || '', mealImage: mealImage || '' }, mealName);
+        } catch (error) {
+          Alert.alert('Error', 'Failed to like meal. Please try again.');
+          console.error('Error liking meal:', error);
+        }
+      };
+      const handleOnDislike = async () => {
+        try {
+          await mealService.productFeedback({ feedback: MealFeedback.ThumbDown, barcode: barcodeData || '', mealImage: mealImage || '' }, mealName);
+        } catch (error) {
+          Alert.alert('Error', 'Failed to dislike meal. Please try again.');
+          console.error('Error disliking meal:', error);
+        }
+      };
 
     /**
      * Saves the current meal as a template
@@ -434,16 +454,6 @@ export const AddMealScreen: React.FC = () => {
                 </TouchableOpacity>
                 <Text className="text-lg font-semibold text-[#1a1a1a]">Add Meal</Text>
                 <FavouriteIcon isFavourite={isFavorite} onPress={toggleFavorite} />
-                {/* <TouchableOpacity
-                  onPress={toggleFavorite}
-                  className={`p-1 ${!mealName.trim() ? 'opacity-50' : ''}`}
-                  disabled={!mealName.trim()}
-                >
-                  <Image
-                    source={isFavorite ? IMAGE_CONSTANTS.star : IMAGE_CONSTANTS.starIcon}
-                    className="w-6 h-6"
-                  />
-                </TouchableOpacity> */}
             </View>
 
             <KeyboardAvoidingView 
@@ -485,7 +495,7 @@ export const AddMealScreen: React.FC = () => {
                         </View>
                     )}
 
-                    <View className="mb-4">
+                    <View className={`${analyzedData?.hideImage ? 'mt-10' : ''} mb-4`}>
                         <Text className="text-base font-medium mb-2">Meal Name</Text>
                         <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
                             <TextInput
@@ -709,8 +719,10 @@ export const AddMealScreen: React.FC = () => {
                                 </TouchableOpacity>
                             )}
                         </View>
+
                     </View>
 
+                   
 
 
                     {favoriteMeals.length > 0 && (
@@ -737,6 +749,10 @@ export const AddMealScreen: React.FC = () => {
                         </>
                     )}
 
+{
+                        analyzedData?.hideImage ?
+                        <RateMacroMeals onLike={handleOnLike} onDislike={handleOnDislike} />: null
+                    }
 
 
                     {/* <TouchableOpacity
@@ -746,7 +762,7 @@ export const AddMealScreen: React.FC = () => {
                         <Text className="text-[#333] text-base font-medium">Save as Template</Text>
                     </TouchableOpacity> */}
                 </ScrollView>
-
+    
                 <View className="mx-5 border-t border-gray">
                     <TouchableOpacity
                         className={`bg-primaryLight mt-1 mb-3 rounded-full py-5 items-center ${!mealName.trim() ? 'opacity-50' : ''}`}
@@ -760,6 +776,8 @@ export const AddMealScreen: React.FC = () => {
                         )}
                     </TouchableOpacity>
                 </View>
+                
+                
             </KeyboardAvoidingView>
 
             {Platform.OS === 'ios' ? (

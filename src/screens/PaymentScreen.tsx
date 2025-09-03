@@ -1,9 +1,9 @@
 // src/screens/WelcomeScreen.tsx
-import React, { useEffect, useState, useContext } from "react";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../types/navigation";
-import { HasMacrosContext } from "src/contexts/HasMacrosContext";
+import React, { useEffect, useState, useContext } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+import { HasMacrosContext } from 'src/contexts/HasMacrosContext';
 
 import {
   ActivityIndicator,
@@ -13,16 +13,17 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
-import PagerView from "react-native-pager-view";
-import { IMAGE_CONSTANTS } from "../constants/imageConstants";
-import useStore from "../store/useStore";
-import { userService } from "../services/userService";
-import revenueCatService from "../services/revenueCatService";
-import { IsProContext } from "src/contexts/IsProContext";
-import BackButton from "src/components/BackButton";
-import Config from "react-native-config";
+} from 'react-native';
+import PagerView from 'react-native-pager-view';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import useStore from '../store/useStore'; 
+import { userService } from '../services/userService';
+import revenueCatService from '../services/revenueCatService';
+import { IsProContext } from 'src/contexts/IsProContext';
+import BackButton from 'src/components/BackButton';
+import Config from 'react-native-config';
 import { useMixpanel } from "@macro-meals/mixpanel/src";
+
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -232,6 +233,7 @@ const PaymentScreen = () => {
   const [isCurrentlyInTrial, setIsCurrentlyInTrial] = useState(false);
   const [hasUsedTrialBefore, setHasUsedTrialBefore] = useState(false);
   const mixpanel = useMixpanel();
+
   // Get product information for current selected plan
   const currentProductInfo = getProductInfo(
     offerings,
@@ -249,14 +251,8 @@ const PaymentScreen = () => {
   // Load RevenueCat offerings when component mounts
   useEffect(() => {
     console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
-    const customerInfo = revenueCatService.getCustomerInfo();
-    console.log(
-      `\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(
-        customerInfo,
-        null,
-        2
-      )} \n\n\n\n\n\n\n\n`
-    );
+    const customerInfo =  revenueCatService.getCustomerInfo();
+    console.log(`\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(customerInfo, null, 2)} \n\n\n\n\n\n\n\n`);
     const loadOfferings = async () => {
       try {
         const currentOfferings = await revenueCatService.getOfferings();
@@ -275,25 +271,19 @@ const PaymentScreen = () => {
       try {
         const trialStatus = await revenueCatService.checkTrialStatus();
         setIsCurrentlyInTrial(trialStatus);
-        console.log("🔍 PaymentScreen - Current trial status:", trialStatus);
-
+        console.log('🔍 PaymentScreen - Current trial status:', trialStatus);
+        
         // Also check if user has used a trial before
         const customerInfo = await revenueCatService.getCustomerInfo();
-        const hasTrialHistory =
-          customerInfo.entitlements.all["MacroMeals Premium"]?.periodType ===
-          "TRIAL";
+        const hasTrialHistory = customerInfo.entitlements.all['MacroMeals Premium']?.periodType === 'TRIAL';
         setHasUsedTrialBefore(hasTrialHistory);
-        console.log(
-          "🔍 PaymentScreen - Has used trial before:",
-          hasTrialHistory
-        );
+        console.log('🔍 PaymentScreen - Has used trial before:', hasTrialHistory);
       } catch (error) {
-        console.error("Failed to check trial status:", error);
+        console.error('Failed to check trial status:', error);
         setIsCurrentlyInTrial(false);
         setHasUsedTrialBefore(false);
       }
     };
-
     checkCurrentTrialStatus();
   }, []);
 
@@ -319,28 +309,19 @@ const PaymentScreen = () => {
 
       // Find the appropriate package based on selected plan
       let packageToPurchase;
-      if (selectedPlan === "monthly") {
-        console.log("Platform: ", Platform.OS);
-        packageToPurchase =
-          Platform.OS === "ios"
-            ? currentOfferings.availablePackages.find(
-                (pkg) =>
-                  pkg.product.identifier === Config.IOS_PRODUCT_MONTHLY_ID
-              )
-            : currentOfferings.availablePackages.find(
-                (pkg) =>
-                  pkg.product.identifier === Config.ANDROID_PRODUCT_MONTHLY_ID
-              );
+      if (selectedPlan === 'monthly') {
+        console.log('Platform: ', Platform.OS);
+        packageToPurchase = Platform.OS === 'ios' ? currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.IOS_PRODUCT_MONTHLY_ID
+        ) : currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.ANDROID_PRODUCT_MONTHLY_ID
+        );
       } else {
-        packageToPurchase =
-          Platform.OS === "ios"
-            ? currentOfferings.availablePackages.find(
-                (pkg) => pkg.product.identifier === Config.IOS_PRODUCT_YEARLY_ID
-              )
-            : currentOfferings.availablePackages.find(
-                (pkg) =>
-                  pkg.product.identifier === Config.ANDROID_PRODUCT_YEARLY_ID
-              );
+        packageToPurchase = Platform.OS === 'ios' ? currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.IOS_PRODUCT_YEARLY_ID
+        ) : currentOfferings.availablePackages.find(
+          pkg => pkg.product.identifier === Config.ANDROID_PRODUCT_YEARLY_ID
+        );
       }
 
       if (!packageToPurchase) {
@@ -348,22 +329,11 @@ const PaymentScreen = () => {
       }
 
       // Purchase the package
-      const purchasePackage = await revenueCatService.purchasePackage(
-        packageToPurchase
-      );
-      console.log(
-        "🔍 PaymentScreen - Purchase completed, customerInfo:",
-        JSON.stringify(purchasePackage, null, 2)
-      );
+      const purchasePackage = await revenueCatService.purchasePackage(packageToPurchase);
+      console.log('🔍 PaymentScreen - Purchase completed, customerInfo:', JSON.stringify(purchasePackage, null, 2));
       const customerInfo = await revenueCatService.getCustomerInfo();
-      console.log(
-        `\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(
-          customerInfo,
-          null,
-          2
-        )} \n\n\n\n\n\n\n\n`
-      );
-
+      console.log(`\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(customerInfo, null, 2)} \n\n\n\n\n\n\n\n`);
+      
       // Check if purchase was successful by verifying active entitlements
       const entitlementId = "MacroMeals Premium";
       const hasActiveEntitlement =
@@ -420,8 +390,8 @@ const PaymentScreen = () => {
                 //     ],
                 //   })
                 // );
-              },
-            },
+              }
+            }
           ]
         );
       } else {
@@ -531,6 +501,20 @@ const PaymentScreen = () => {
                 <Text className="text-white text-xs font-medium justify-center items-center">
                   30% savings
                 </Text>
+                </View>
+               
+                
+              </TouchableOpacity>
+
+
+              <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
+               e.preventDefault();
+               setSelectedPlan('yearly');
+               setAmount(yearlyProductInfo?.price || 69.99);
+              }}>
+                <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
+                <Text className="text-white text-xs font-medium justify-center items-center">30% savings</Text>
+
               </View>
               <View className="w-full pl-3 pt-6 pb-3">
                 <View className="flex-row items-center justify-between gap-2">
@@ -544,9 +528,9 @@ const PaymentScreen = () => {
                     />
                   )}
                 </View>
-                <View className="mt-3">
-                  <Text className="font-medium text-[15px]">
-                    {yearlyProductInfo?.pricePerPeriod || "£69.99/yr"}
+                <View className='mt-3'>
+                  <Text className='font-medium text-[15px]'>
+                    {yearlyProductInfo?.pricePerPeriod || '£69.99/yr'}
                   </Text>
                   {yearlyProductInfo?.originalPrice && (
                     <Text className="mt-1 font-medium text-[13px] text-decoration-line: line-through text-[#4F4F4F]">
@@ -558,39 +542,33 @@ const PaymentScreen = () => {
                   Billed {yearlyProductInfo?.period || "yearly"} after free
                   trial.
                 </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          <Text className="mt-4 text-[12px] text-[#4F4F4F] text-center">
-            You can change plans or cancel anytime
-          </Text>
-          <View className="w-full mt-6 mb-2">
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleTrialSubscription}
-              disabled={isLoading}
-              className={isLoading ? "opacity-70" : "mt-5"}
-            >
-              <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text className="text-white font-semibold text-[17px]">
-                    {isCurrentlyInTrial
-                      ? `Continue ${
-                          currentProductInfo?.offerPeriodWithUnit || "7-Day"
-                        } Free Trial`
-                      : hasUsedTrialBefore
-                      ? `Subscribe to ${
-                          selectedPlan === "monthly" ? "Monthly" : "Yearly"
-                        } plan`
-                      : `Start ${
-                          currentProductInfo?.offerPeriodWithUnit || "7-Day"
-                        } Free Trial`}
-                  </Text>
-                )}
-              </View>
-            </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </View>
+            <Text className='mt-4 text-[12px] text-[#4F4F4F] text-center'>You can change plans or cancel anytime</Text>
+            <View className="w-full mt-6 mb-2">
+            <TouchableOpacity 
+                    activeOpacity={0.8}
+                    onPress={handleTrialSubscription}
+                    disabled={isLoading}
+                    className={isLoading ? 'opacity-70' : 'mt-5'}
+                  >
+                    <View className="bg-primaryLight h-[56px] w-full flex-row items-center justify-center rounded-[100px]">
+                      {isLoading ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Text className="text-white font-semibold text-[17px]">
+                          {isCurrentlyInTrial 
+                            ? `Continue ${currentProductInfo?.offerPeriodWithUnit || '7-Day'} Free Trial`
+                            : hasUsedTrialBefore 
+                              ? `Subscribe to ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'} plan` 
+                              : `Start ${currentProductInfo?.offerPeriodWithUnit || '7-Day'} Free Trial`
+                          }
+                        </Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -600,4 +578,5 @@ const PaymentScreen = () => {
   );
 };
 
-export default PaymentScreen;
+export default PaymentScreen
+

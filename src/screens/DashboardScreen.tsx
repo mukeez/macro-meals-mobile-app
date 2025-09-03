@@ -414,6 +414,7 @@ export const DashboardScreen: React.FC = () => {
                     Carbs
                   </Text>
                   <LinearProgress
+                    width={100}
                     progress={(todayMealsSum.carbs / macros.carbs) * 100}
                     color="#FFC107"
                   />
@@ -426,6 +427,7 @@ export const DashboardScreen: React.FC = () => {
                     Fats
                   </Text>
                   <LinearProgress
+                    width={100}
                     progress={(todayMealsSum.fat / macros.fat) * 100}
                     color="#FF69B4"
                   />
@@ -438,6 +440,7 @@ export const DashboardScreen: React.FC = () => {
                     Protein
                   </Text>
                   <LinearProgress
+                    width={100}
                     progress={(todayMealsSum.protein / macros.protein) * 100}
                     color="#6A5ACD"
                   />

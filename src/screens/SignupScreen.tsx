@@ -384,9 +384,20 @@ export const SignupScreen: React.FC = () => {
                   className="text-base text-primary font-medium"
                   onPress={() => navigation.navigate("TermsOfServiceScreen")}
                 >
-                  Terms of Service and Privacy Policy
+                  Terms of Service
+                </Text>
+                <Text className="text-base font-medium"
+                >
+                   {" and " }
+                </Text>
+                <Text
+                  className="text-base text-primary font-medium"
+                  onPress={() => navigation.navigate("PrivacyPolicy")}
+                >
+                  Privacy Policy
                 </Text>
               </Text>
+              
             </View>
           </View>
         </ScrollView>

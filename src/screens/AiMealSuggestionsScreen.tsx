@@ -11,7 +11,7 @@ import { useMixpanel } from '@macro-meals/mixpanel';
 
 type RootStackParamList = {
   AddMeal: { analyzedData?: any };
-  AISuggestedMealsDetailsScreen: { meal: any };
+  AIRecipeDetailsScreen: { recipe: any };
 };
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'AddMeal'>;
@@ -20,6 +20,17 @@ interface MacroData {
   label: 'Protein' | 'Carbs' | 'Fat';
   value: number;
   color: string;
+}
+
+interface Recipe {
+  name: string;
+  description: string;
+  ingredients: string[];
+  recipe: string[];
+  protein: number;
+  carbs: number;
+  fat: number;
+  calories: number;
 }
 
 const macroTypeToPreferenceKey = {
@@ -36,62 +47,60 @@ const defaultMacroData: MacroData[] = [
 
 const AiMealSuggestionsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [meals, setMeals] = useState<any[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // const [preferences, setPreferences] = useState<any>(null);
   const macrosPreferences = useStore((state) => state.macrosPreferences);
   const todayProgress = useStore((state) => state.todayProgress) || { protein: 0, carbs: 0, fat: 0, calories: 0 };
   const [macroData, setMacroData] = useState<MacroData[]>(defaultMacroData);
   const mixpanel = useMixpanel();
 
-  const trackAIMealSuggestedViewed = async () => {
+  const trackAIRecipeViewed = async () => {
     if (!mixpanel) return;
     
     const signupTime = mixpanel.getSuperProperty('signup_time');
     const properties: Record<string, any> = {};
 
-    const firstAISuggestionViewed = mixpanel.getSuperProperty('first_ai_meal_suggested_viewed');
-    if (!firstAISuggestionViewed) {
+    const firstAIRecipeViewed = mixpanel.getSuperProperty('first_ai_recipe_viewed');
+    if (!firstAIRecipeViewed) {
       const now = new Date();
-      const timeToFirstSuggestion = signupTime ? 
+      const timeToFirstRecipe = signupTime ? 
         (now.getTime() - new Date(signupTime).getTime()) / 1000 : 0;
-      properties.time_to_first_ai_meal_suggestion_seconds = timeToFirstSuggestion;
-      mixpanel.register({ first_ai_meal_suggested_viewed: true });
+      properties.time_to_first_ai_recipe_seconds = timeToFirstRecipe;
+      mixpanel.register({ first_ai_recipe_viewed: true });
     }
 
     mixpanel.track({
-      name: 'ai_meal_suggested_viewed',
+      name: 'ai_recipe_viewed',
       properties
     });
   };
 
-    const fetchMeals = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const result = await mealService.getAiMealSuggestions();
-        setMeals(result.meals);
-        // setPreferences(result.preferences);
-        
-        // Track AI meal suggestions viewed
-        if (result.meals && result.meals.length > 0) {
-          await trackAIMealSuggestedViewed();
-        }
-      } catch  {
-        setError('Failed to fetch meal suggestions');
-      } finally {
-        setLoading(false);
+  const fetchRecipes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await mealService.getAiMealSuggestionsRecipes();
+      setRecipes(result.suggestions);
+      
+      // Track AI recipe suggestions viewed
+      if (result.suggestions && result.suggestions.length > 0) {
+        await trackAIRecipeViewed();
       }
-    };
-
-  const handleRetry = () => {
-    fetchMeals();
+    } catch {
+      setError('Failed to fetch recipe suggestions');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleMealSelect = (meal: any) => {
-    navigation.navigate('AISuggestedMealsDetailsScreen', { meal });
+  const handleRetry = () => {
+    fetchRecipes();
+  };
+
+  const handleRecipeSelect = (recipe: Recipe) => {
+    navigation.navigate('AIRecipeDetailsScreen', { recipe });
   };
 
   // Update macroData when todayProgress changes
@@ -106,7 +115,7 @@ const AiMealSuggestionsScreen: React.FC = () => {
   }, [todayProgress]);
 
   useEffect(() => {
-    fetchMeals();
+    fetchRecipes();
   }, []);
 
   useEffect(() => {
@@ -134,28 +143,27 @@ const AiMealSuggestionsScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
             <Text className="text-[22px]">‹</Text>
           </TouchableOpacity>
-          <Text className="text-[20px] font-semibold text-[#222] text-center">Suggested meals</Text>
+          <Text className="text-[20px] font-semibold text-[#222] text-center">AI Recipe suggestions</Text>
           <View style={{ width: 32 }} />
         </View>
-          <ScrollView className="pb-8">
-            {/* Macros Donut Row */}
-            <View className="flex-col bg-white items-start mt-3 px-5 pt-3 pb-10 mb-4">
-              <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
-              <View className="flex-row w-full justify-between items-center">
-                {macroData.map((macro, index) => {
-                  const target = macrosPreferences?.[macroTypeToPreferenceKey[macro.label]] || 0;
-                  const consumed = macro.value;
-                  const remaining = Math.max(0, target - consumed);
-                  // Match MealFinderScreen: donut shows remaining, empties as you consume
-                  return (
+        <ScrollView className="pb-8">
+          {/* Macros Donut Row */}
+          <View className="flex-col bg-white items-start mt-3 px-5 pt-3 pb-10 mb-4">
+            <Text className="text-lg text-black mt-2 text-center mb-3 font-medium">Remaining today</Text>
+            <View className="flex-row w-full justify-between items-center">
+              {macroData.map((macro, index) => {
+                const target = macrosPreferences?.[macroTypeToPreferenceKey[macro.label]] || 0;
+                const consumed = macro.value;
+                const remaining = Math.max(0, target - consumed);
+                return (
                   <View key={`${macro.label}-${index}`}>
                     <View className="h-[100px] w-[100px] relative">
                       <CircularProgress
                         size={100}
                         strokeWidth={12}
                         textSize={16}
-                          consumed={`${remaining}g`}
-                          total={target}
+                        consumed={`${remaining}g`}
+                        total={target}
                         color={macro.color}
                         backgroundColor="#d0e8d1"
                         label={macro.label}
@@ -164,60 +172,58 @@ const AiMealSuggestionsScreen: React.FC = () => {
                       <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
                     </View>
                   </View>
-                  );
-                })}
-              </View>
+                );
+              })}
             </View>
-           
-            {/* Info Card */}
-            <View className="bg-[#0088D140]  flex-row px-8 mt-5 justify-center items-center rounded-xl mx-5 p-4 mb-[18px]">
-              <Image source={IMAGE_CONSTANTS.magicWandAltIcon} className="w-[32px] h-[32px] ml-2 mr-3" />
-              <Text className="text-[#222] text-[15px] text-left">
-                Tailored to your preferences and macro goals, these meals are ordered for maximum effectiveness in reaching your target.
-              </Text>
+          </View>
+         
+          {/* Info Card */}
+          <View className="bg-[#0088D140] flex-row px-8 mt-5 justify-center items-center rounded-xl mx-5 p-4 mb-[18px]">
+            <Image source={IMAGE_CONSTANTS.magicWandAltIcon} className="w-[32px] h-[32px] ml-2 mr-3" />
+            <Text className="text-[#222] text-[15px] text-left">
+              Personalized recipes tailored to your dietary preferences and macro goals, designed to help you reach your targets effectively.
+            </Text>
+          </View>
+          
+          <Text className="text-base font-bold text-[#222] mx-5 mb-2.5">✨ Suggested recipes</Text>
+          
+          {loading ? (
+            <View className="flex items-center justify-center py-8">
+              <ActivityIndicator size="large" color="#19a28f" />
+              <Text className="text-[#888] mt-2">Finding recipe suggestions...</Text>
             </View>
-            <Text className="text-base font-bold text-[#222] mx-5 mb-2.5">✨ Suggested meals</Text>
-            {loading ? (
-              <View className="flex items-center justify-center py-8">
-                <ActivityIndicator size="large" color="#19a28f" />
-                <Text className="text-[#888] mt-2">Finding meal suggestions...</Text>
-              </View>
-            ) : (
-              <>
-                {error ? (
-                  <View className="flex items-center justify-center py-8">
-                    <Image source={IMAGE_CONSTANTS.warningIcon} className="w-[48px] h-[48px] mb-3 opacity-50" />
-                    <Text className="text-[#888] text-center text-base">Unable to load meal suggestions</Text>
-                    <Text className="text-[#888] text-center text-sm mt-1">Please check your connection and try again</Text>
+          ) : (
+            <>
+              {error ? (
+                <View className="flex items-center justify-center py-8">
+                  <Image source={IMAGE_CONSTANTS.warningIcon} className="w-[48px] h-[48px] mb-3 opacity-50" />
+                  <Text className="text-[#888] text-center text-base">Unable to load recipe suggestions</Text>
+                  <Text className="text-[#888] text-center text-sm mt-1">Please check your connection and try again</Text>
+                  <TouchableOpacity 
+                    onPress={handleRetry} 
+                    className="mt-4 px-6 py-2 bg-primaryLight rounded-full"
+                  >
+                    <Text className="text-white font-medium">Retry</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {recipes.length === 0 && (
+                    <Text className="text-center text-[#888] mt-6">No recipe suggestions found.</Text>
+                  )}
+                  {recipes.map((recipe, idx) => (
                     <TouchableOpacity 
-                      onPress={handleRetry} 
-                      className="mt-4 px-6 py-2 bg-primaryLight rounded-full"
+                      key={idx} 
+                      className="flex-row bg-white rounded-xl mx-5 mb-4 p-4 shadow-sm"
+                      onPress={() => handleRecipeSelect(recipe)}
                     >
-                      <Text className="text-white font-medium">Retry</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <>
-                    {meals.length === 0 && (
-              <Text className="text-center text-[#888] mt-6">No meal suggestions found.</Text>
-            )}
-                    {meals.map((meal, idx) => (
-              <TouchableOpacity 
-                key={idx} 
-                className="flex-row bg-white rounded-xl mx-5 mb-4 p-2.5 shadow-sm"
-                onPress={() => handleMealSelect(meal)}
-              >
-                <Image source={IMAGE_CONSTANTS.sampleFood} className="w-[90px] h-[90px] rounded-lg mr-2.5" />
-                <View className='absolute flex items-center justify-center ml-2 py-1 px-1 rounded-lg bg-primary mt-3 left-2 top-2'>
-                    <Text className='text-[10px] text-white text-center font-medium'>High in protein</Text>
-                  </View>
-                <View className="flex-col flex-1 w-full">
-                  <View className='right-2 flex-row items-center justify-between w-full'>
-                  </View>
-                  <Text className="text-sm font-medium text-[#222] mt-1 mb-0.5">{meal.name}</Text>
-                  <Text className="text-sm font-semibold text-[#222] mb-0.5">{meal.restaurant.name}</Text>
-                  <View className="flex-row items-center gap-2 mt-2">
-                        <View className="flex-row items-center justify-center gap-1">
+                      <Image source={IMAGE_CONSTANTS.logo} className="w-[70px] h-[70px] rounded-lg mr-3" />
+                      <View className="flex-col flex-1 justify-center mb-1">
+                        <Text className="text-sm font-medium text-[#222] mb-3">{recipe.name}</Text>
+                        {/* <Text className="text-sm text-[#666] mb-3 line-clamp-2">{recipe.description}</Text> */}
+                        
+                        <View className="flex-row items-center gap-2">
+                          <View className="flex-row items-center justify-center gap-1">
                             <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
                               <Image
                                 source={IMAGE_CONSTANTS.caloriesIcon}
@@ -225,55 +231,45 @@ const AiMealSuggestionsScreen: React.FC = () => {
                               />
                             </View>
                             <Text className="text-xs text-black text-center font-medium">
-                              {meal.macros.calories} cal
-                            </Text>
-                    </View>
-                    <View className="flex-row items-center gap-1">
-                          <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
-                            <Text className="text-white text-[10px] text-center font-medium">
-                              C
+                              {recipe.calories} cal
                             </Text>
                           </View>
-                          <Text className="text-xs text-textMediumGrey text-center font-medium">
-                            {meal.macros.carbs}g
-                          </Text>
-                        </View>
+                          
+                          <View className="flex-row items-center gap-1">
+                            <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
+                              <Text className="text-white text-[10px] text-center font-medium">C</Text>
+                            </View>
+                            <Text className="text-xs text-textMediumGrey text-center font-medium">
+                              {recipe.carbs}g
+                            </Text>
+                          </View>
 
-                        <View className="flex-row items-center gap-1">
-                          <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
-                            <Text className="text-white text-[10px] text-center font-medium">
-                              F
+                          <View className="flex-row items-center gap-1">
+                            <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
+                              <Text className="text-white text-[10px] text-center font-medium">F</Text>
+                            </View>
+                            <Text className="text-xs text-textMediumGrey text-center font-medium">
+                              {recipe.fat}g
                             </Text>
                           </View>
-                          <Text className="text-xs text-textMediumGrey text-center font-medium">
-                            {meal.macros.fat}g
-                          </Text>
-                        </View>
 
-                        <View className="flex-row items-center gap-1">
-                          <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
-                            <Text className="text-white text-[10px] text-center font-medium">
-                              P
+                          <View className="flex-row items-center gap-1">
+                            <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
+                              <Text className="text-white text-[10px] text-center font-medium">P</Text>
+                            </View>
+                            <Text className="text-xs text-textMediumGrey text-center font-medium">
+                              {recipe.protein}g
                             </Text>
                           </View>
-                          <Text className="text-xs text-textMediumGrey text-center font-medium">
-                            {meal.macros.protein}g
-                          </Text>
                         </View>
-                  </View>
-                  {/* {meal.restaurant && (
-                    <Text className="text-xs text-[#888] mt-0.5">
-                      {meal.restaurant.name} • {meal.restaurant.location}
-                    </Text>
-                  )} */}
-                </View>
-              </TouchableOpacity>
-            ))}
-                    </>
-                  )}
-                  </>
-                )}
-          </ScrollView>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              )}
+            </>
+          )}
+        </ScrollView>
       </View>
     </CustomSafeAreaView>
   );

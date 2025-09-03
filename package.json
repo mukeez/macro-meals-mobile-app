@@ -2,7 +2,6 @@
   "name": "macro-meals",
   "license": "0BSD",
   "version": "1.0.0",
-
   "main": "index.ts",
   "workspaces": [
     "packages/*"
@@ -31,7 +30,11 @@
     "android:prod:apk": "cd android && ENVFILE=.env.production ./gradlew assembleProdRelease",
     "android:prod:bundle": "cd android && ENVFILE=.env.production ./gradlew bundleProdRelease",
     "android:prod": "ENVFILE=.env.production NODE_ENV=production expo run:android --variant prodRelease",
-    "android:prod:debug": "ENVFILE=.env.production NODE_ENV=production expo run:android --variant prodDebug"
+    "android:prod:debug": "ENVFILE=.env.production NODE_ENV=production expo run:android --variant prodDebug",
+    "stallion:publish:android:prod": "stallion publish-bundle --upload-path=emit-labs/macro-meals/macro-meals-releases --platform=android --release-note=\"Android production release\"",
+    "stallion:publish:ios:prod": "stallion publish-bundle --upload-path=emit-labs/macro-meals/macro-meals-releases --platform=ios --release-note=\"iOS production release\"",
+    "android:prod:bundle:publish": "yarn android:prod:bundle && yarn stallion:publish:android:prod",
+    "ios:prod:bundle:publish": "yarn ios:prod && yarn stallion:publish:ios:prod"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -41,6 +44,7 @@
     "@macro-meals/mixpanel": "file:./packages/mixpanel",
     "@macro-meals/push-notifications": "file:./packages/push_notifications",
     "@macro-meals/remote-config-service": "file:./packages/remote_config_service",
+    "@macro-meals/sentry-service": "file:./packages/sentry_service",
     "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/datetimepicker": "8.4.1",
@@ -55,6 +59,7 @@
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/native-stack": "^7.3.13",
     "@react-navigation/stack": "^7.2.9",
+    "@sentry/react-native": "^6.20.0",
     "@shopify/flash-list": "1.7.6",
     "@shopify/react-native-skia": "2.0.0-next.4",
     "@supabase/supabase-js": "^2.49.7",
@@ -85,6 +90,7 @@
     "react-native-device-info": "^14.0.4",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-get-random-values": "^1.11.0",
     "react-native-modalize": "^2.1.1",
     "react-native-pager-view": "6.7.1",
     "react-native-paper": "^5.14.5",
@@ -95,6 +101,7 @@
     "react-native-ruler-picker": "^0.2.2",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
+    "react-native-stallion": "^2.2.0",
     "react-native-svg": "15.11.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-webview": "13.13.5",
@@ -107,6 +114,7 @@
     "@babel/plugin-transform-react-jsx": "^7.27.1",
     "@babel/preset-typescript": "^7.27.0",
     "@react-native-community/cli": "^18.0.0",
+    "@react-native/metro-config": "^0.81.0",
     "@types/lodash": "^4.17.17",
     "@types/react": "~19.0.10",
     "@types/react-native": "^0.73.0",

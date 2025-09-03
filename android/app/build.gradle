@@ -22,6 +22,10 @@ def signingProperties = new Properties()
 def signingPropertiesFile = rootProject.file("app/signing.properties")
 if (signingPropertiesFile.exists()) {
     signingProperties.load(new FileInputStream(signingPropertiesFile))
+    println "✅ Loaded signing properties from: ${signingPropertiesFile.absolutePath}"
+} else {
+    println "⚠️  Signing properties file not found: ${signingPropertiesFile.absolutePath}"
+    println "   Using default debug signing for all builds"
 }
 
 /**
@@ -101,10 +105,10 @@ def enableProguardInReleaseBuilds = true
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 android {
     ndkVersion rootProject.ext.ndkVersion
 
-    buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace 'com.macromeals.app'
@@ -114,8 +118,8 @@ android {
         applicationId 'com.macromeals.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 15
-        versionName "1.0.3"
+        versionCode 24
+        versionName "1.0.7"
         
         // Enable multidex
         multiDexEnabled true
@@ -138,7 +142,7 @@ android {
         }
         stg {
             dimension "environment"
-            applicationIdSuffix ".stg"
+            // applicationIdSuffix ".stg"
             versionNameSuffix "-stg"
             resValue "string", "app_name", "Macro Meals [STG]"
             buildConfigField "String", "ENVIRONMENT", "\"staging\""
@@ -158,10 +162,8 @@ android {
         }
     }
 
-    dexOptions {
-        javaMaxHeapSize "4g"
-        preDexLibraries true
-    }
+    // dexOptions removed as it's obsolete in Android Gradle Plugin 8.0+
+    // The AndroidGradle plugin optimizes dexing automatically
 
     signingConfigs {
         debug {
@@ -172,9 +174,9 @@ android {
         }
         release {
             storeFile file('upload-key.keystore')
-            storePassword signingProperties.getProperty('UPLOAD_STORE_PASSWORD')
-            keyAlias 'upload'
-            keyPassword signingProperties.getProperty('UPLOAD_KEY_PASSWORD')
+            storePassword signingProperties.getProperty('UPLOAD_STORE_PASSWORD', '')
+            keyAlias signingProperties.getProperty('UPLOAD_KEY_ALIAS', 'upload')
+            keyPassword signingProperties.getProperty('UPLOAD_KEY_PASSWORD', '')
         }
     }
     buildTypes {
@@ -190,6 +192,14 @@ android {
             ndk {
                 abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
             }
+        }
+    }
+    
+    // Override signing config for staging builds to use debug signing
+    android.applicationVariants.all { variant ->
+        if (variant.name.contains('Stg') && variant.name.contains('Release')) {
+            variant.buildType.signingConfig = signingConfigs.debug
+            println "🔧 Using debug signing for staging build: ${variant.name}"
         }
     }
 
@@ -336,5 +346,28 @@ tasks.whenTaskAdded { task ->
                 task.dependsOn otherTask
             }
         }
+    }
+}
+
+apply plugin: "io.sentry.android.gradle"
+sentry {
+    // Enables or disables the automatic configuration of Native Symbols
+    // for Sentry. This executes sentry-cli automatically so
+    // you don't need to do it manually.
+    // Default is disabled.
+    uploadNativeSymbols = true
+    // Enables or disables the automatic upload of the app's native source code to Sentry.
+    // This executes sentry-cli with the --include-sources param automatically so
+    // you don't need to do it manually.
+    // This option has an effect only when [uploadNativeSymbols] is enabled.
+    // Default is disabled.
+    includeNativeSources = true
+    // `@sentry/react-native` ships with compatible `sentry-android`
+    // This option would install the latest version that ships with the SDK or SAGP (Sentry Android Gradle Plugin)
+    // which might be incompatible with the React Native SDK
+    // Enable auto-installation of Sentry components (sentry-android SDK and okhttp, timber and fragment integrations).
+    // Default is enabled.
+    autoInstallation {
+      enabled = false
     }
 }

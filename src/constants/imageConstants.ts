@@ -79,6 +79,9 @@ export const IMAGE_CONSTANTS = {
     galleryIcon: require('../../assets/gallery-icon.png'),
     chevronDownIcon: require('../../assets/chevron-down-icon.png'),
     chevronUpIcon: require('../../assets/chevron-up-icon.png'),
+    logo: require('../../assets/icon.png'),
+    dislikeLightIcon: require('../../assets/dislike-light-icon.png'),
+    likeLightIcon: require('../../assets/like-light-icon.png'),
     blurhash: '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[',
 
 }

@@ -24,6 +24,20 @@ import Config from 'react-native-config';
 import { validateSession, SessionValidationResult } from './src/services/sessionService';
 import { debugService } from './src/services/debugService';
 import revenueCatService from './src/services/revenueCatService';
+import { withStallion } from 'react-native-stallion';
+import { useStallionUpdate, restart } from 'react-native-stallion';
+import StallionPopUp from 'src/components/StallionPopUp';
+import { sentryService, Sentry } from '@macro-meals/sentry_service';
+// Polyfill crypto.getRandomValues for Hermes before any Sentry/uuid usage in release
+import 'react-native-get-random-values';
+import { UpdateReminderModal } from './src/components/UpdateReminderModal';
+// Initialize Sentry via internal service (native enabled only in non-dev by default)
+sentryService.init({
+    dsn: (Config.SENTRY_DSN as string) || (Config as any).SENTRY_DNS || '',
+    environment: __DEV__ ? 'development' : 'production',
+    enableNativeInDev: false,
+});
+
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -99,7 +113,7 @@ function RemoteConfigHandler() {
     return null;
 }
 
-export default function App() {
+export function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSessionValidated, setIsSessionValidated] = useState(false);
     const { setAuthenticated, isAuthenticated } = useStore();
@@ -109,6 +123,13 @@ export default function App() {
     const [hasMacros, setHasMacros] = useState(false);
     const [isPro, setIsPro] = useState(false);
     const [readyForDashboard, setReadyForDashboard] = useState(false);
+    const { isRestartRequired } = useStallionUpdate();
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [showUpdateReminder, setShowUpdateReminder] = useState(false);
+
+    useEffect(() => {
+        if (isRestartRequired) setShowUpdateModal(true);
+    }, [isRestartRequired]);
     console.log('MIXPANEL_TOKEN', Config.MIXPANEL_TOKEN);
     console.log('🔍 Current environment:', Config.ENVIRONMENT);
     console.log('🎨 App icon should be:', Config.ENVIRONMENT === 'development' ? 'dev' : Config.ENVIRONMENT === 'staging' ? 'stg' : 'prod');
@@ -295,6 +316,11 @@ export default function App() {
                 
                 // Mark session validation as complete
                 setIsSessionValidated(true);
+                
+                // Check for app updates after initialization
+                setTimeout(() => {
+                    setShowUpdateReminder(true);
+                }, 2000); // Check after 2 seconds to allow Remote Config to load
             } catch (error) {
                 console.error('Error initializing app:', error);
             } finally {
@@ -358,54 +384,94 @@ export default function App() {
     }
 
     return (
-        <MixpanelProvider config={{
+        <>
+            <MixpanelProvider config={{
                             token: Config.MIXPANEL_TOKEN as string,
-        }}>
-            <RemoteConfigProvider
-                defaults={{
-                    // Add your default remote config values here
-                    feature_flags: '{}',
-                    app_settings: '{}',
-                    maintenance_mode: 'false',
-                    welcome_message: 'Welcome to Macro Meals!',
-                    max_meals_per_day: '10',
-                    subscription_enabled: 'true',
-                    dev_mode: __DEV__ ? 'true' : 'false',
-                }}
-                settings={{
-                    minimumFetchIntervalMillis: 30000, // 30 seconds minimum fetch interval
-                }}
-                enableRealTimeUpdates={true}
-                onConfigUpdate={(event, error) => {
-                    if (error) {
-                        console.error('[REMOTE CONFIG] Update error:', error);
-                    } else {
-                        console.log('[REMOTE CONFIG] Config updated successfully:', event.updatedKeys);
-                    }
-                }}
-            >
-                <OnboardingContext.Provider value={{ setIsOnboardingCompleted, setInitialAuthScreen }} >
-                    <HasMacrosContext.Provider value={{ 
-                        hasMacros, 
-                        setHasMacros,
-                        readyForDashboard,
-                        setReadyForDashboard 
-                    }}>
-                        <IsProContext.Provider value={{ isPro, setIsPro }}>
-                            <NavigationContainer>
-                                <MixpanelIdentifier />
-                                <RemoteConfigHandler />
-                                <RootStack 
-                                    isOnboardingCompleted={isOnboardingCompleted} 
-                                    initialAuthScreen={initialAuthScreen}
-                                    isAuthenticated={isAuthenticated}
-                                />
-                            </NavigationContainer>
-                        </IsProContext.Provider>
-                    </HasMacrosContext.Provider>
-                </OnboardingContext.Provider>
-            </RemoteConfigProvider>
-        </MixpanelProvider>
+            }}>
+                <RemoteConfigProvider
+                    defaults={{
+                        // Add your default remote config values here
+                        feature_flags: '{}',
+                        app_settings: '{}',
+                        maintenance_mode: 'false',
+                        welcome_message: 'Welcome to Macro Meals!',
+                        max_meals_per_day: '10',
+                        subscription_enabled: 'true',
+                        dev_mode: __DEV__ ? 'true' : 'false',
+                        // Version checking defaults (semantic versioning)
+                        ios_min_supported_build: '1.0.0',
+                        ios_latest_build: '1.0.0',
+                        android_min_supported_version_code: '1.0.0',
+                        android_latest_version_code: '1.0.0',
+                        update_message: 'A new version is available.',
+                        update_title: 'Update Available',
+                        update_description: 'A new version is available with bug fixes and improvements.',
+                        update_url_ios: 'https://apps.apple.com/app/idXXXXXXXX',
+                        update_url_android: 'https://play.google.com/store/apps/details?id=com.macromeals.app',
+                        app_version: Constants.expoConfig?.version || '1.0.0',
+                        build_number: Platform.select({
+                            ios: Constants.expoConfig?.ios?.buildNumber,
+                            android: Constants.expoConfig?.android?.versionCode?.toString()
+                        }) || '1',
+                    }}
+                    settings={{
+                        minimumFetchIntervalMillis: 30000, // 30 seconds minimum fetch interval
+                    }}
+                    enableRealTimeUpdates={true}
+                    onConfigUpdate={(event, error) => {
+                        if (error) {
+                            console.error('[REMOTE CONFIG] Update error:', error);
+                        } else {
+                            console.log('[REMOTE CONFIG] Config updated successfully:', event.updatedKeys);
+                            
+                            // Check for version updates when config changes
+                            if (event.updatedKeys.some(key => 
+                                key.includes('ios_') || 
+                                key.includes('android_') || 
+                                key.includes('update_')
+                            )) {
+                                setShowUpdateReminder(true);
+                            }
+                        }
+                    }}
+                >
+                    <OnboardingContext.Provider value={{ setIsOnboardingCompleted, setInitialAuthScreen }} >
+                        <HasMacrosContext.Provider value={{ 
+                            hasMacros, 
+                            setHasMacros,
+                            readyForDashboard,
+                            setReadyForDashboard 
+                        }}>
+                            <IsProContext.Provider value={{ isPro, setIsPro }}>
+                                <NavigationContainer>
+                                    <MixpanelIdentifier />
+                                    <RemoteConfigHandler />
+                                    <RootStack 
+                                        isOnboardingCompleted={isOnboardingCompleted} 
+                                        initialAuthScreen={initialAuthScreen}
+                                        isAuthenticated={isAuthenticated}
+                                    />
+                                    {/* Update Reminder Modal - must be inside RemoteConfigProvider */}
+                                    <UpdateReminderModal 
+                                        isVisible={showUpdateReminder}
+                                        onClose={() => setShowUpdateReminder(false)}
+                                    />
+                                </NavigationContainer>
+                            </IsProContext.Provider>
+                        </HasMacrosContext.Provider>
+                    </OnboardingContext.Provider>
+                </RemoteConfigProvider>
+                {/* Stallion update modal */}
+                <StallionPopUp
+                    isOpen={showUpdateModal}
+                    onClose={() => setShowUpdateModal(false)}
+                    onRestart={() => restart()}
+                />
+            </MixpanelProvider>
+        </>
     );
 }
 
+const WrappedApp = withStallion(App);
+// Only wrap with Sentry in release
+export default __DEV__ ? WrappedApp : Sentry.wrap(WrappedApp);

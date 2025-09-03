@@ -18,8 +18,8 @@ const REVENUECAT_API_KEYS = {
 
 // Product IDs (you'll configure these in App Store Connect and Google Play Console)
 const PRODUCT_IDS = {
-  MONTHLY: 'com.macromeals.app.subscription.premium.monthly',
-  YEARLY: 'com.macromeals.app.subscription.premium.annual'
+  MONTHLY: Platform.OS === 'ios' ? Config.IOS_PRODUCT_MONTHLY_ID : Config.ANDROID_PRODUCT_MONTHLY_ID,  //'com.macromeals.app.subscription.premium.monthly' : 'com.macromeals.app.premium.monthly',
+  YEARLY: Platform.OS === 'ios' ? Config.IOS_PRODUCT_YEARLY_ID : Config.ANDROID_PRODUCT_YEARLY_ID //'com.macromeals.app.subscription.premium.annual' : 'com.macromeals.app.premium.annual'
 };
 
 // Entitlement ID from environment
@@ -72,18 +72,18 @@ class RevenueCatService {
       console.log('🔍 RevenueCat: Expected product IDs:', PRODUCT_IDS);
       
       // Try to get all available products
-      const products = await Purchases.getProducts(Object.values(PRODUCT_IDS));
-      console.log('🔍 RevenueCat: Available products from Store:', products);
+      // const products = await Purchases.getProducts(Object.values(PRODUCT_IDS));
+      // console.log('🔍 RevenueCat: Available products from Store:', products);
       
-      if (products.length === 0) {
-        console.error('❌ RevenueCat: No products found in App Store Connect!');
-        console.error('❌ RevenueCat: Make sure these products exist in App Store Connect:');
-        Object.entries(PRODUCT_IDS).forEach(([key, id]) => {
-          console.error(`   - ${key}: ${id}`);
-        });
-      } else {
-        console.log('✅ RevenueCat: Found products in App Store Connect:', products.map(p => p.identifier));
-      }
+      // if (products.length === 0) {
+      //   console.error('❌ RevenueCat: No products found in App Store Connect!');
+      //   console.error('❌ RevenueCat: Make sure these products exist in App Store Connect:');
+      //   Object.entries(PRODUCT_IDS).forEach(([key, id]) => {
+      //     console.error(`   - ${key}: ${id}`);
+      //   });
+      // } else {
+      //   console.log('✅ RevenueCat: Found products in App Store Connect:', products.map(p => p.identifier));
+      // }
     } catch (error) {
       console.error('❌ RevenueCat: Error testing product availability:', error);
     }
@@ -206,6 +206,16 @@ class RevenueCatService {
     }
   }
 
+  async setAttributes(attributes: { [key: string]: string }) {
+    try {
+      await Purchases.setAttributes(attributes);
+      console.log('✅ Attributes set successfully:', attributes);
+    } catch (error) {
+      console.error('❌ Failed to set attributes:', error);
+      throw error;    
+    }
+  }
+
   async logout() {
     try {
       await Purchases.logOut();
@@ -213,6 +223,29 @@ class RevenueCatService {
     } catch (error) {
       console.error('❌ Failed to logout:', error);
       throw error;
+    }
+  }
+
+  async checkTrialStatus() {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      console.log('🔍 RevenueCat - Full customer info:', JSON.stringify(customerInfo, null, 2));
+      
+      const myEntitlement = customerInfo.entitlements.active['MacroMeals Premium']; // Use the correct entitlement ID
+      console.log('🔍 RevenueCat - MacroMeals Premium entitlement:', myEntitlement);
+      console.log('🔍 RevenueCat - All active entitlements:', Object.keys(customerInfo.entitlements.active));
+      console.log('🔍 RevenueCat - All entitlements (including expired):', Object.keys(customerInfo.entitlements.all));
+  
+      if (myEntitlement && myEntitlement.periodType === 'TRIAL') {
+        console.log('User is currently on a free trial.');
+        return true;
+      } else {
+        console.log('User is not currently on a free trial.');
+        return false;
+      }
+    } catch (e) {
+      console.error('Error fetching customer info:', e);
+      return false;
     }
   }
 }
