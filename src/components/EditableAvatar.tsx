@@ -1,3 +1,4 @@
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 import React, { useState } from "react";
 import {
   View,
@@ -22,17 +23,26 @@ const EditableAvatar: React.FC<EditableAvatarProps> = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [avatarVersion, setAvatarVersion] = useState(0);
+  const [justUploaded, setJustUploaded] = useState(false);
   const profile = useStore((state) => state.profile);
   console.log("profile is:", profile);
   const setProfile = useStore((state) => state.setProfile);
+  const mixpanel = useMixpanel();
 
   const handleAvatarEdit = async () => {
-    console.log("[EditableAvatar] Avatar edit pressed");
+    mixpanel?.track({
+      name: "avatar_edit_clicked",
+      properties: {
+        user_id: profile?.id,
+        email: profile?.email,
+      },
+    });
     await handleEditAvatar((newProfile: any) => {
       console.log("[EditableAvatar] setProfile called with:", newProfile);
       setProfile(newProfile);
     }, setIsProcessing);
     setAvatarVersion((v) => v + 1);
+    setJustUploaded(true);
   };
 
   const avatarUrl = profile?.avatar_url
@@ -59,13 +69,31 @@ const EditableAvatar: React.FC<EditableAvatarProps> = ({
           backgroundColor: "#eee",
         }}
         onError={(e) => {
-          console.log(
-            "[EditableAvatar] Image load error:",
-            e.nativeEvent.error
-          );
+          if (justUploaded) {
+            mixpanel?.track({
+              name: "avatar_upload_failed",
+              properties: {
+                user_id: profile?.id,
+                email: profile?.email,
+                error_message: e.nativeEvent.error,
+                attempted_url: avatarUrl,
+              },
+            });
+            setJustUploaded(false);
+          }
         }}
         onLoad={() => {
-          console.log("[EditableAvatar] Image loaded successfully!");
+          if (justUploaded) {
+            mixpanel?.track({
+              name: "avatar_upload_success",
+              properties: {
+                user_id: profile?.id,
+                email: profile?.email,
+                avatar_url: avatarUrl,
+              },
+            });
+            setJustUploaded(false);
+          }
         }}
       />
       <View
