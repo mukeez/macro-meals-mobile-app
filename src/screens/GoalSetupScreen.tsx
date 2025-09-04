@@ -19,7 +19,8 @@ import { HasMacrosContext } from '../contexts/HasMacrosContext';
 import { IsProContext } from '../contexts/IsProContext';
 import { useContext } from 'react';
 import Config from 'react-native-config';
-
+import { useMixpanel } from '@macro-meals/mixpanel/src';
+import { Platform } from "react-native";
 
 
 
@@ -39,7 +40,14 @@ export const GoalSetupScreen: React.FC = () => {
     const { getValue, debugLogAllValues } = useRemoteConfigContext();
     const { setReadyForDashboard } = useContext(HasMacrosContext);
     const { setIsPro } = useContext(IsProContext);
-    
+    const mixpanel = useMixpanel();
+
+React.useEffect(() => {
+  mixpanel?.track({
+    name: "onboarding_welcome_viewed",
+    properties: { platform: Platform.OS },
+  });
+}, [mixpanel]);
     // Only allow dev_mode to bypass payment in non-production environments
     let devMode = false;
     try {
@@ -72,6 +80,7 @@ export const GoalSetupScreen: React.FC = () => {
         // Also log all available values
         debugLogAllValues();
     }, [getValue, debugLogAllValues]);
+    
     return (
         <CustomSafeAreaView className="flex-1 bg-white" edges={['left', 'right']}>
             <ScrollView className="relative flex-1 mx-4" contentContainerStyle={{ flexGrow: 1 }}>

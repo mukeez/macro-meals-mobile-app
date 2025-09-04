@@ -3,7 +3,7 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useContext, useEffect, useState } from "react";
 import { IsProContext } from "src/contexts/IsProContext";
-import revenueCatService from '../services/revenueCatService';
+import revenueCatService from "../services/revenueCatService";
 import {
   KeyboardAvoidingView,
   View,
@@ -44,11 +44,11 @@ export const EmailVerificationScreen = () => {
   const route =
     useRoute<RouteProp<RootStackParamList, "EmailVerificationScreen">>();
   const setAuthenticated = useStore((state) => state.setAuthenticated);
-const { setIsOnboardingCompleted } = useContext(OnboardingContext);
-const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
-const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
+  const { setIsOnboardingCompleted } = useContext(OnboardingContext);
+  const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
+  const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
   const { setIsPro } = React.useContext(IsProContext);
-const { email: routeEmail, password: routePassword } = route.params;
+  const { email: routeEmail, password: routePassword } = route.params;
   const CELL_COUNT = 6;
   const [value, setValue] = useState("");
   const ref = useBlurOnFulfill({ value, cellCount: CELL_COUNT });
@@ -121,8 +121,8 @@ const { email: routeEmail, password: routePassword } = route.params;
       email: routeEmail,
       otp: value,
     };
-     try {
-        const data = await authService.verifyEmail(params);
+    try {
+      const data = await authService.verifyEmail(params);
 
         if (data.verified) {
           mixpanel?.track({
@@ -211,9 +211,9 @@ const { email: routeEmail, password: routePassword } = route.params;
               : "Code does not exist. Please try again"
       );
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+ };
 
   const handleResendCode = async () => {
     if (!canResend || !routeEmail) return;
@@ -326,4 +326,4 @@ const { email: routeEmail, password: routePassword } = route.params;
       </KeyboardAvoidingView>
     </CustomSafeAreaView>
   );
-};
+}

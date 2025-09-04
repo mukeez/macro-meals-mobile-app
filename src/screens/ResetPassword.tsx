@@ -18,6 +18,7 @@ import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityBu
 import { MaterialIcons } from "@expo/vector-icons";
 import { RootStackParamList } from "src/types/navigation";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type ResetPasswordScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -44,6 +45,14 @@ export const ResetPasswordScreen: React.FC = () => {
     confirmPassword: false,
   });
   const navigation = useNavigation<ResetPasswordScreenNavigationProp>();
+  const mixpanel = useMixpanel();
+
+  React.useEffect(() => {
+    mixpanel?.track({
+      name: "reset_password_screen_viewed",
+      properties: { platform: Platform.OS },
+    });
+  }, [mixpanel]);
 
   // Validation logic
   React.useEffect(() => {
@@ -68,6 +77,13 @@ export const ResetPasswordScreen: React.FC = () => {
   }, [password, confirmPassword]);
 
   const handleResetPassword = async () => {
+    mixpanel?.track({
+      name: "reset_password_attempted",
+      properties: {
+        email_domain: routeEmail?.split("@")[1] || "",
+        platform: Platform.OS,
+      },
+    });
     setIsLoading(true);
     const resetPasswordData = {
       email: routeEmail,
@@ -75,71 +91,83 @@ export const ResetPasswordScreen: React.FC = () => {
       session_token: routeSessionToken,
       password: password,
     };
-    
+
     console.log("Sending reset password data:", {
       email: resetPasswordData.email,
-      otp: resetPasswordData.otp ? `${resetPasswordData.otp.substring(0, 2)}****` : 'undefined',
-      session_token: resetPasswordData.session_token ? `${resetPasswordData.session_token.substring(0, 10)}...` : 'undefined',
-      password: resetPasswordData.password ? `${resetPasswordData.password.substring(0, 3)}...` : 'undefined',
+      otp: resetPasswordData.otp
+        ? `${resetPasswordData.otp.substring(0, 2)}****`
+        : "undefined",
+      session_token: resetPasswordData.session_token
+        ? `${resetPasswordData.session_token.substring(0, 10)}...`
+        : "undefined",
+      password: resetPasswordData.password
+        ? `${resetPasswordData.password.substring(0, 3)}...`
+        : "undefined",
     });
-    
+
     try {
       const response = await authService.resetPassword(resetPasswordData);
-      console.log("response", response);
+      mixpanel?.track({
+        name: "reset_password_successful",
+        properties: {
+          email_domain: routeEmail?.split("@")[1] || "",
+          platform: Platform.OS,
+        },
+      });
       if (source === "settings") {
-        navigation.navigate('MainTabs', { screen: 'Settings' });
+        navigation.navigate("MainTabs", { screen: "Settings" });
       } else {
         navigation.navigate("LoginScreen");
       }
     } catch (error) {
-      console.error("Password reset error:", error);
-      
       // Log the full error response for debugging
-      if (error && typeof error === 'object' && 'response' in error) {
+      if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as any;
         console.log("Full error response:", {
           status: axiosError.response?.status,
           statusText: axiosError.response?.statusText,
           data: axiosError.response?.data,
-          headers: axiosError.response?.headers
+          headers: axiosError.response?.headers,
         });
-        
+
         // Log the detail structure specifically
         if (axiosError.response?.data?.detail) {
           console.log("Detail structure:", {
             type: typeof axiosError.response.data.detail,
             isArray: Array.isArray(axiosError.response.data.detail),
             value: axiosError.response.data.detail,
-            firstElement: Array.isArray(axiosError.response.data.detail) ? axiosError.response.data.detail[0] : null
+            firstElement: Array.isArray(axiosError.response.data.detail)
+              ? axiosError.response.data.detail[0]
+              : null,
           });
         }
       }
-      
+
       // Extract error message from Axios error response
       let errorMessage = "Failed to reset password. Please try again.";
-      
-      if (error && typeof error === 'object' && 'response' in error) {
+
+      if (error && typeof error === "object" && "response" in error) {
         const axiosError = error as any;
-        
+
         // Handle nested detail structure (array of objects)
         if (axiosError.response?.data?.detail) {
           const detail = axiosError.response.data.detail;
           if (Array.isArray(detail) && detail.length > 0) {
             // If detail is an array, extract the first error message
             const firstError = detail[0];
-            if (typeof firstError === 'object' && firstError.msg) {
+            if (typeof firstError === "object" && firstError.msg) {
               errorMessage = firstError.msg;
-            } else if (typeof firstError === 'string') {
+            } else if (typeof firstError === "string") {
               errorMessage = firstError;
-            } else if (firstError && typeof firstError === 'object') {
+            } else if (firstError && typeof firstError === "object") {
               // Try to find any string value in the object
               const values = Object.values(firstError);
-              const stringValue = values.find(val => typeof val === 'string');
+              const stringValue = values.find((val) => typeof val === "string");
               if (stringValue) {
                 errorMessage = stringValue as string;
               }
             }
-          } else if (typeof detail === 'string') {
+          } else if (typeof detail === "string") {
             errorMessage = detail;
           }
         } else if (axiosError.response?.data?.message) {
@@ -150,7 +178,14 @@ export const ResetPasswordScreen: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+      mixpanel?.track({
+        name: "reset_password_failed",
+        properties: {
+          email_domain: routeEmail?.split("@")[1] || "",
+          error_type: errorMessage,
+          platform: Platform.OS,
+        },
+      });
       Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import CustomTouchableOpacityButton from "../components/CustomTouchableOpacityButton";
 import BackButton from "../components/BackButton";
 import { RootStackParamList } from "src/types/navigation";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type ForgotPasswordScreenRouteProp = RouteProp<
   RootStackParamList,
@@ -34,6 +35,14 @@ export const ForgotPasswordScreen: React.FC = () => {
   const source = route.params?.source ?? "Forgot";
   const [errors, setErrors] = useState({ email: "" });
   const [touched, setTouched] = useState(false);
+  const mixpanel = useMixpanel();
+
+  useEffect(() => {
+    mixpanel?.track({
+      name: "forgot_password_screen_viewed",
+      properties: { platform: Platform.OS },
+    });
+  }, [mixpanel]);
 
   // Validation function for email
   const validateEmail = (text: string) => {
@@ -58,11 +67,24 @@ export const ForgotPasswordScreen: React.FC = () => {
     if (emailError) {
       return;
     }
-
+    mixpanel?.track({
+      name: "send_reset_code_attempted",
+      properties: {
+        email_domain: email.split("@")[1] || "",
+        platform: Platform.OS,
+      },
+    });
     setIsLoading(true);
 
     try {
       await authService.forgotPassword(email);
+      mixpanel?.track({
+        name: "send_reset_code_successful",
+        properties: {
+          email_domain: email.split("@")[1] || "",
+          platform: Platform.OS,
+        },
+      });
       navigation.navigate("VerificationScreen", { email: email, source });
     } catch (error) {
       let errorMessage = "Invalid email. Please try again.";
@@ -79,6 +101,14 @@ export const ForgotPasswordScreen: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
+      mixpanel?.track({
+        name: "send_reset_code_failed",
+        properties: {
+          email_domain: email.split("@")[1] || "",
+          error_type: errorMessage,
+          platform: Platform.OS,
+        },
+      });
 
       Alert.alert("Forgot Password Failed", errorMessage, [{ text: "OK" }]);
     } finally {
@@ -88,6 +118,14 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   const headerText =
     source === "settings" ? "Reset your password" : "Forgot your password?";
+
+const handleBackToSignIn = () => {
+  mixpanel?.track({
+    name: "back_to_sign_in_clicked",
+    properties: { platform: Platform.OS },
+  });
+  navigation.goBack();
+};
 
   return (
     <CustomSafeAreaView
@@ -100,7 +138,7 @@ export const ForgotPasswordScreen: React.FC = () => {
       >
         <ScrollView className="flex-1 relative p-6">
           <View className="flex-row items-center justify-start mb-3">
-            <BackButton onPress={() => navigation.goBack()} />
+            <BackButton onPress={handleBackToSignIn} />
           </View>
           <Text className="text-3xl font-medium text-black mb-2">
             {headerText}

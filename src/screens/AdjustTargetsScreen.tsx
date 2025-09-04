@@ -15,6 +15,7 @@ import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { CircularProgress } from "../components/CircularProgress";
 import { fetchUserPreferences, updateMacros } from "src/services/macroService";
 import axios from "axios";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type MacroKey = "protein" | "fat" | "carbs";
 type MacroResponse = {
@@ -36,6 +37,7 @@ const AdjustTargetsScreen: React.FC = () => {
   const [selectedMacro, setSelectedMacro] = useState<any>(null);
   const [inputValue, setInputValue] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
+  const mixpanel = useMixpanel();
 
   // Fetch macros on mount
   useEffect(() => {
@@ -43,32 +45,49 @@ const AdjustTargetsScreen: React.FC = () => {
   }, []);
 
   const loadMacros = async () => {
-  setLoading(true);
-  try {
-    const data = await fetchUserPreferences();
-    setMacros(data);
-  } catch (e: any) {
-    console.log("Error loading macros:", e);
+    setLoading(true);
+    try {
+      const data = await fetchUserPreferences();
+      setMacros(data);
+    } catch (e: any) {
+      console.log("Error loading macros:", e);
 
-    if (axios.isAxiosError(e) && !e.response) {
-      Alert.alert("Network Error", "Please check your internet connection and try again.");
+      if (axios.isAxiosError(e) && !e.response) {
+        Alert.alert(
+          "Network Error",
+          "Please check your internet connection and try again."
+        );
+      } else if (axios.isAxiosError(e) && e.response) {
+        const message =
+          e.response.data?.message || "Could not load macro targets.";
+        Alert.alert("Server Error", message);
+      } else {
+        Alert.alert("Error", "Could not load macro targets.");
+      }
     }
-    else if (axios.isAxiosError(e) && e.response) {
-      const message = e.response.data?.message || "Could not load macro targets.";
-      Alert.alert("Server Error", message);
+    setLoading(false);
+  };
+  useEffect(() => {
+    if (macros) {
+      mixpanel?.track({
+        name: "adjust_targets_screen_viewed",
+        properties: {},
+      });
     }
-    else {
-      Alert.alert("Error", "Could not load macro targets.");
-    }
-  }
-  setLoading(false);
-};
+  }, [macros]);
 
   const openModal = (macro: {
     label: string;
     key: MacroKey;
     suffix: string;
   }) => {
+    mixpanel?.track({
+      name: "targets_field_updated",
+      properties: {
+        field: macro.key,
+        label: macro.label,
+      },
+    });
     setSelectedMacro(macro);
     setInputValue(macros?.[macro.key]?.toString() ?? "");
     setInputError(null);
@@ -98,6 +117,13 @@ const AdjustTargetsScreen: React.FC = () => {
         [selectedMacro.key]: num,
       };
       await updateMacros(updatedMacros);
+      mixpanel?.track({
+        name: "targets_saved",
+        properties: {
+          updated_field: selectedMacro.key,
+          new_value: num,
+        },
+      });
       closeModal();
       await loadMacros(); // Refresh from backend after update
     } catch {
