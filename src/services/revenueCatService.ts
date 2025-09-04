@@ -38,14 +38,14 @@ class RevenueCatService {
       const environment = Config.ENVIRONMENT || 'development';
       const platform = Platform.OS as 'ios' | 'android';
       const apiKey = REVENUECAT_API_KEYS[platform]?.[environment as keyof typeof REVENUECAT_API_KEYS[typeof platform]];
-      console.log(`\n\n\n\n\n\n🔍 RevenueCat: API key: ${apiKey}\n\n\n\n\n\n`);
+      // console.log(`\n\n\n\n\n\n🔍 RevenueCat: API key: ${apiKey}\n\n\n\n\n\n`);
 
-      console.log('🔍 RevenueCat: Initializing with config:', {
-        environment,
-        platform,
-        apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT_FOUND',
-        userId
-      });
+      // console.log('🔍 RevenueCat: Initializing with config:', {
+      //   environment,
+      //   platform,
+      //   apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT_FOUND',
+      //   userId
+      // });
 
       if (!apiKey) {
         throw new Error(`No RevenueCat API key found for ${platform} ${environment}`);
@@ -117,7 +117,7 @@ class RevenueCatService {
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
       
       // Check if the entitlement was granted
-      const hasEntitlement = customerInfo.entitlements.active[ENTITLEMENT_ID] !== undefined;
+      const hasEntitlement = customerInfo.entitlements.active['MacroMeals Premium'] !== undefined;
       
       console.log('✅ Purchase successful:', {
         hasEntitlement,
@@ -162,22 +162,30 @@ class RevenueCatService {
   }> {
     try {
       const customerInfo = await this.getCustomerInfo();
+
       
-      // Use the entitlement ID from environment
-      const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] !== undefined;
+      // Check for any active entitlements (more robust than checking specific ID)
+      const isPro = Object.keys(customerInfo.entitlements.active).length > 0;
       const hasActiveSubscription = Object.keys(customerInfo.entitlements.active).length > 0;
       
       let subscriptionType: string | undefined;
       let expirationDate: Date | undefined;
 
+      console.log('🔍 CUSTOMER INFO FROM APP>TSX:', JSON.stringify(customerInfo, null, 2));
+
       if (isPro) {
-        const proEntitlement = customerInfo.entitlements.active[ENTITLEMENT_ID];
-        subscriptionType = proEntitlement.productIdentifier;
-        expirationDate = proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : undefined;
+        // Find the active entitlement (it might be using a different identifier than ENTITLEMENT_ID)
+        const activeEntitlements = Object.values(customerInfo.entitlements.active);
+        const proEntitlement = activeEntitlements[0]; // Get the first active entitlement
+        
+        if (proEntitlement) {
+          subscriptionType = proEntitlement.productIdentifier;
+          expirationDate = proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : undefined;
+        }
       }
 
       console.log('🔍 RevenueCat: Subscription status check:', {
-        entitlementId: ENTITLEMENT_ID,
+        configuredEntitlementId: ENTITLEMENT_ID,
         isPro,
         hasActiveSubscription,
         activeEntitlements: Object.keys(customerInfo.entitlements.active),
