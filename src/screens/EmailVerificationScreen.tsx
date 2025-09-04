@@ -29,6 +29,7 @@ import useStore from "../store/useStore";
 import { OnboardingContext } from "src/contexts/OnboardingContext";
 import { HasMacrosContext } from "src/contexts/HasMacrosContext";
 import { useGoalsFlowStore } from "src/store/goalsFlowStore";
+import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 type VerificationScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -73,6 +74,17 @@ const { email: routeEmail, password: routePassword } = route.params;
     };
   }, [countdown]);
 
+  const mixpanel = useMixpanel();
+
+  useEffect(() => {
+    mixpanel?.track({
+      name: "email_verification_screen_viewed",
+      properties: {
+        platform: Platform.OS,
+      },
+    });
+  }, [mixpanel]);
+
   const isDisabled = () => {
     return (
       isLoading ||
@@ -81,6 +93,18 @@ const { email: routeEmail, password: routePassword } = route.params;
       value.length !== CELL_COUNT
     );
   };
+
+  useEffect(() => {
+    if (value.length === CELL_COUNT) {
+      mixpanel?.track({
+        name: "verification_code_entered",
+        properties: {
+          code_length: value.length,
+          platform: Platform.OS,
+        },
+      });
+    }
+  }, [value, mixpanel]);
 
   const handleVerifyEmail = async () => {
     if (!routeEmail) {
@@ -101,32 +125,39 @@ const { email: routeEmail, password: routePassword } = route.params;
         const data = await authService.verifyEmail(params);
 
         if (data.verified) {
+          mixpanel?.track({
+            name: "verification_successful",
+            properties: { platform: Platform.OS },
+          });
 
-            const loginData = await authService.login({ email: routeEmail, password: routePassword });
+          const loginData = await authService.login({
+            email: routeEmail,
+            password: routePassword,
+          });
 
-            const token = loginData.access_token;
-            const loginUserId = loginData.user.id;
+          const token = loginData.access_token;
+          const loginUserId = loginData.user.id;
 
-            // Store tokens first so axios interceptor can use them
-            await Promise.all([
-                AsyncStorage.setItem('my_token', token),
-                AsyncStorage.setItem('refresh_token', loginData.refresh_token),
-                AsyncStorage.setItem('user_id', loginUserId),
-                AsyncStorage.setItem('isOnboardingCompleted', 'true')
-            ]);
+          // Store tokens first so axios interceptor can use them
+          await Promise.all([
+              AsyncStorage.setItem('my_token', token),
+              AsyncStorage.setItem('refresh_token', loginData.refresh_token),
+              AsyncStorage.setItem('user_id', loginUserId),
+              AsyncStorage.setItem('isOnboardingCompleted', 'true')
+          ]);
 
-            console.log('Tokens stored successfully:', {
-                hasAccessToken: !!token,
-                hasRefreshToken: !!loginData.refresh_token,
-                userId: loginUserId
-            });
+          console.log('Tokens stored successfully:', {
+              hasAccessToken: !!token,
+              hasRefreshToken: !!loginData.refresh_token,
+              userId: loginUserId
+          });
 
-            // Then get profile using the stored token
-            const profile = await userService.getProfile();
-            
-            // Store the profile in the store for future use
-            const { setProfile } = useStore.getState();
-            setProfile(profile);
+          // Then get profile using the stored token
+          const profile = await userService.getProfile();
+          
+          // Store the profile in the store for future use
+          const { setProfile } = useStore.getState();
+          setProfile(profile);
             console.log('✅ Profile stored in store after email verification:', profile);
             
             // Update FCM token on backend after successful verification
@@ -162,15 +193,23 @@ const { email: routeEmail, password: routePassword } = route.params;
                 setIsPro(!!profile.is_pro);
             }
         } else {
-            setError("Invalid verification code. Please try again.");
-            Alert.alert("Error", "Invalid verification code");
+          mixpanel?.track({
+            name: "verification_failed",
+            properties: { error_type: "invalid_code", platform: Platform.OS },
+          });
+          setError("Invalid verification code. Please try again.");
+          Alert.alert("Error", "Invalid verification code");
         }
     } catch (err) {
-        setError(
-            err instanceof Error
-                ? `${err.message}: Code does not exist. Please try again`
-                : "Code does not exist. Please try again"
-        );
+      mixpanel?.track({
+        name: "verification_failed",
+        properties: { error_type: "invalid_code", platform: Platform.OS },
+      });
+      setError(
+          err instanceof Error
+              ? `${err.message}: Code does not exist. Please try again`
+              : "Code does not exist. Please try again"
+      );
     } finally {
         setIsLoading(false);
     }
@@ -178,6 +217,13 @@ const { email: routeEmail, password: routePassword } = route.params;
 
   const handleResendCode = async () => {
     if (!canResend || !routeEmail) return;
+
+    mixpanel?.track({
+      name: "resend_code_clicked",
+      properties: {
+        platform: Platform.OS,
+      },
+    });
 
     setIsLoading(true);
     try {
