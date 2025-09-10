@@ -153,7 +153,7 @@ export const SignupScreen: React.FC = () => {
           has_referral_code: !!referralCode.trim(),
         },
       });
-      mixpanel.register({ signup_time: signUpTime });
+      mixpanel?.register({ signup_time: signUpTime });
     }
 
     navigation.navigate("EmailVerificationScreen", {

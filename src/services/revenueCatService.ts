@@ -24,6 +24,8 @@ const PRODUCT_IDS = {
 
 // Entitlement ID from environment
 const ENTITLEMENT_ID = Config.REVENUECAT_ENTITLEMENT_ID || 'entld5ce0325c7';
+console.log('🔍 RevenueCat: ENTITLEMENT_ID configured as:', ENTITLEMENT_ID);
+console.log('🔍 RevenueCat: Config.REVENUECAT_ENTITLEMENT_ID from env:', Config.REVENUECAT_ENTITLEMENT_ID);
 
 class RevenueCatService {
   private isInitialized = false;
@@ -36,14 +38,14 @@ class RevenueCatService {
       const environment = Config.ENVIRONMENT || 'development';
       const platform = Platform.OS as 'ios' | 'android';
       const apiKey = REVENUECAT_API_KEYS[platform]?.[environment as keyof typeof REVENUECAT_API_KEYS[typeof platform]];
-      console.log(`\n\n\n\n\n\n🔍 RevenueCat: API key: ${apiKey}\n\n\n\n\n\n`);
+      // console.log(`\n\n\n\n\n\n🔍 RevenueCat: API key: ${apiKey}\n\n\n\n\n\n`);
 
-      console.log('🔍 RevenueCat: Initializing with config:', {
-        environment,
-        platform,
-        apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT_FOUND',
-        userId
-      });
+      // console.log('🔍 RevenueCat: Initializing with config:', {
+      //   environment,
+      //   platform,
+      //   apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT_FOUND',
+      //   userId
+      // });
 
       if (!apiKey) {
         throw new Error(`No RevenueCat API key found for ${platform} ${environment}`);
@@ -115,7 +117,7 @@ class RevenueCatService {
       const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
       
       // Check if the entitlement was granted
-      const hasEntitlement = customerInfo.entitlements.active[ENTITLEMENT_ID] !== undefined;
+      const hasEntitlement = customerInfo.entitlements.active['MacroMeals Premium'] !== undefined;
       
       console.log('✅ Purchase successful:', {
         hasEntitlement,
@@ -160,25 +162,41 @@ class RevenueCatService {
   }> {
     try {
       const customerInfo = await this.getCustomerInfo();
+
       
-      // Use the entitlement ID from environment
-      const isPro = customerInfo.entitlements.active[ENTITLEMENT_ID] !== undefined;
+      // Check for any active entitlements (more robust than checking specific ID)
+      const isPro = Object.keys(customerInfo.entitlements.active).length > 0;
       const hasActiveSubscription = Object.keys(customerInfo.entitlements.active).length > 0;
       
       let subscriptionType: string | undefined;
       let expirationDate: Date | undefined;
 
+      console.log('🔍 CUSTOMER INFO FROM APP>TSX:', JSON.stringify(customerInfo, null, 2));
+
       if (isPro) {
-        const proEntitlement = customerInfo.entitlements.active[ENTITLEMENT_ID];
-        subscriptionType = proEntitlement.productIdentifier;
-        expirationDate = proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : undefined;
+        // Find the active entitlement (it might be using a different identifier than ENTITLEMENT_ID)
+        const activeEntitlements = Object.values(customerInfo.entitlements.active);
+        const proEntitlement = activeEntitlements[0]; // Get the first active entitlement
+        
+        if (proEntitlement) {
+          subscriptionType = proEntitlement.productIdentifier;
+          expirationDate = proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : undefined;
+        }
       }
 
       console.log('🔍 RevenueCat: Subscription status check:', {
-        entitlementId: ENTITLEMENT_ID,
+        configuredEntitlementId: ENTITLEMENT_ID,
         isPro,
         hasActiveSubscription,
-        activeEntitlements: Object.keys(customerInfo.entitlements.active)
+        activeEntitlements: Object.keys(customerInfo.entitlements.active),
+        allEntitlements: Object.keys(customerInfo.entitlements.all),
+        activeSubscriptions: customerInfo.activeSubscriptions,
+        originalAppUserId: customerInfo.originalAppUserId,
+        allPurchaseDates: customerInfo.allPurchaseDates,
+        allExpirationDates: customerInfo.allExpirationDates,
+        subscriptionsByProductIdentifier: Object.keys(customerInfo.subscriptionsByProductIdentifier),
+        fullActiveEntitlements: customerInfo.entitlements.active,
+        fullAllEntitlements: customerInfo.entitlements.all
       });
 
       return {
@@ -246,6 +264,230 @@ class RevenueCatService {
     } catch (e) {
       console.error('Error fetching customer info:', e);
       return false;
+    }
+  }
+
+  async syncPurchases(): Promise<CustomerInfo> {
+    try {
+      await Purchases.syncPurchases();
+      console.log('✅ Purchases synced successfully');
+      
+      // Get customer info after syncing
+      const customerInfo = await this.getCustomerInfo();
+      console.log('✅ Customer info after sync:', {
+        originalAppUserId: customerInfo.originalAppUserId,
+        activeEntitlements: Object.keys(customerInfo.entitlements.active),
+        allEntitlements: Object.keys(customerInfo.entitlements.all)
+      });
+      
+      return customerInfo;
+    } catch (error) {
+      console.error('❌ Error syncing purchases:', error);
+      throw error;
+    }
+  }
+  
+
+  async checkForExistingSubscription(email: string): Promise<{
+    hasSubscription: boolean;
+    customerInfo: any;
+    entitlements: any;
+  }> {
+    try {
+      console.log('🔍 RevenueCat: Checking for existing subscription by email:', email);
+      
+      // Get current customer info before setting email
+      const customerInfoBefore = await this.getCustomerInfo();
+      console.log('🔍 RevenueCat: Customer info BEFORE setting email:', {
+        originalAppUserId: customerInfoBefore.originalAppUserId,
+        activeEntitlements: Object.keys(customerInfoBefore.entitlements.active),
+        allEntitlements: Object.keys(customerInfoBefore.entitlements.all)
+      });
+      
+      // Set email as an attribute to help RevenueCat find the customer
+      await Purchases.setAttributes({
+        $email: email
+      });
+      
+      console.log('🔍 RevenueCat: Email attribute set, waiting for RevenueCat to process...');
+      
+      // Wait a moment for RevenueCat to process the attribute
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Get customer info after setting email
+      const customerInfo = await this.getCustomerInfo();
+      
+      console.log('🔍 RevenueCat: Customer info after setting email:', {
+        originalAppUserId: customerInfo.originalAppUserId,
+        activeEntitlements: Object.keys(customerInfo.entitlements.active),
+        allEntitlements: Object.keys(customerInfo.entitlements.all),
+        activeSubscriptions: customerInfo.activeSubscriptions,
+        allPurchaseDates: customerInfo.allPurchaseDates,
+        allExpirationDates: customerInfo.allExpirationDates,
+        subscriptionsByProductIdentifier: customerInfo.subscriptionsByProductIdentifier,
+        firstSeen: customerInfo.firstSeen,
+        originalPurchaseDate: customerInfo.originalPurchaseDate,
+        allPurchasedProductIdentifiers: customerInfo.allPurchasedProductIdentifiers
+      });
+      
+      // Check if there are any active entitlements
+      const hasActiveEntitlements = Object.keys(customerInfo.entitlements.active).length > 0;
+      const hasAnyEntitlements = Object.keys(customerInfo.entitlements.all).length > 0;
+      
+      console.log('🔍 RevenueCat: Subscription check results:', {
+        hasActiveEntitlements,
+        hasAnyEntitlements,
+        activeEntitlements: customerInfo.entitlements.active,
+        allEntitlements: customerInfo.entitlements.all,
+        hasAnyPurchaseHistory: Object.keys(customerInfo.allPurchaseDates).length > 0,
+        hasAnyExpirationHistory: Object.keys(customerInfo.allExpirationDates).length > 0,
+        hasAnyProductIdentifiers: customerInfo.allPurchasedProductIdentifiers.length > 0
+      });
+      
+      // If no subscription found with current method, try alternative approach
+      if (!hasActiveEntitlements) {
+        console.log('🔍 RevenueCat: No subscription found with email attribute method, trying alternative approach...');
+        
+        // Try to sync purchases again to see if it helps
+        try {
+          await Purchases.syncPurchases();
+          console.log('🔍 RevenueCat: Synced purchases after setting email attribute');
+          
+          // Get customer info again after sync
+          const customerInfoAfterSync = await this.getCustomerInfo();
+          console.log('🔍 RevenueCat: Customer info after sync:', {
+            originalAppUserId: customerInfoAfterSync.originalAppUserId,
+            activeEntitlements: Object.keys(customerInfoAfterSync.entitlements.active),
+            allEntitlements: Object.keys(customerInfoAfterSync.entitlements.all),
+            hasAnyPurchaseHistory: Object.keys(customerInfoAfterSync.allPurchaseDates).length > 0
+          });
+          
+          // Check if sync helped
+          const hasActiveEntitlementsAfterSync = Object.keys(customerInfoAfterSync.entitlements.active).length > 0;
+          if (hasActiveEntitlementsAfterSync) {
+            console.log('✅ RevenueCat: Found subscription after sync!');
+            return {
+              hasSubscription: true,
+              customerInfo: customerInfoAfterSync,
+              entitlements: customerInfoAfterSync.entitlements.active
+            };
+          }
+          
+          // If still no subscription found, try one more approach - check if there are any entitlements at all
+          const hasAnyEntitlementsAfterSync = Object.keys(customerInfoAfterSync.entitlements.all).length > 0;
+          if (hasAnyEntitlementsAfterSync) {
+            console.log('🔍 RevenueCat: Found entitlements in "all" but not "active" - subscription may be expired');
+            console.log('🔍 RevenueCat: All entitlements:', customerInfoAfterSync.entitlements.all);
+            
+            // Check if any of the entitlements are for the correct product
+            const entitlementKeys = Object.keys(customerInfoAfterSync.entitlements.all);
+            for (const key of entitlementKeys) {
+              const entitlement = customerInfoAfterSync.entitlements.all[key];
+              console.log(`🔍 RevenueCat: Entitlement "${key}":`, {
+                isActive: entitlement.isActive,
+                expirationDate: entitlement.expirationDate,
+                productIdentifier: entitlement.productIdentifier,
+                periodType: entitlement.periodType
+              });
+            }
+          } else {
+            // If no entitlements found at all, try restorePurchases as a last resort
+            console.log('🔍 RevenueCat: No entitlements found, trying restorePurchases as last resort...');
+            try {
+              const restoredCustomerInfo = await Purchases.restorePurchases();
+              console.log('🔍 RevenueCat: Restore purchases result:', {
+                originalAppUserId: restoredCustomerInfo.originalAppUserId,
+                activeEntitlements: Object.keys(restoredCustomerInfo.entitlements.active),
+                allEntitlements: Object.keys(restoredCustomerInfo.entitlements.all)
+              });
+              
+              const hasActiveEntitlementsAfterRestore = Object.keys(restoredCustomerInfo.entitlements.active).length > 0;
+              if (hasActiveEntitlementsAfterRestore) {
+                console.log('✅ RevenueCat: Found subscription after restore purchases!');
+                return {
+                  hasSubscription: true,
+                  customerInfo: restoredCustomerInfo,
+                  entitlements: restoredCustomerInfo.entitlements.active
+                };
+              }
+            } catch (restoreError) {
+              console.error('❌ RevenueCat: Error during restore purchases:', restoreError);
+            }
+          }
+        } catch (syncError) {
+          console.error('❌ RevenueCat: Error during sync after setting email:', syncError);
+        }
+      }
+      
+      return {
+        hasSubscription: hasActiveEntitlements,
+        customerInfo,
+        entitlements: customerInfo.entitlements.active
+      };
+    } catch (error) {
+      console.error('❌ Failed to check for existing subscription:', error);
+      return {
+        hasSubscription: false,
+        customerInfo: null,
+        entitlements: {}
+      };
+    }
+  }
+
+  async linkExistingSubscription(userId: string, email: string): Promise<{
+    success: boolean;
+    customerInfo?: any;
+    entitlements?: any;
+    error?: string;
+  }> {
+    try {
+      console.log('🔍 RevenueCat: Linking existing subscription to new user ID:', userId);
+      
+      // Step 1: Set email as attribute
+      await Purchases.setAttributes({
+        $email: email
+      });
+      
+      // Step 2: Set the new user ID
+      await Purchases.logIn(userId);
+      
+      // Step 3: Sync purchases to link the subscription
+      await Purchases.syncPurchases();
+      
+      // Step 4: Get updated customer info
+      const customerInfo = await this.getCustomerInfo();
+      
+      console.log('🔍 RevenueCat: Customer info after linking:', {
+        originalAppUserId: customerInfo.originalAppUserId,
+        activeEntitlements: Object.keys(customerInfo.entitlements.active),
+        allEntitlements: Object.keys(customerInfo.entitlements.all)
+      });
+      
+      // Check if linking was successful
+      const hasActiveSubscription = Object.keys(customerInfo.entitlements.active).length > 0;
+      
+      if (hasActiveSubscription) {
+        console.log('✅ RevenueCat: Successfully linked existing subscription to new user ID');
+        return {
+          success: true,
+          customerInfo,
+          entitlements: customerInfo.entitlements
+        };
+      } else {
+        console.log('⚠️ RevenueCat: Linking completed but no active entitlements found');
+        return {
+          success: false,
+          customerInfo,
+          entitlements: customerInfo.entitlements,
+          error: 'No active entitlements found after linking'
+        };
+      }
+    } catch (error) {
+      console.error('❌ RevenueCat: Error linking existing subscription:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   }
 }

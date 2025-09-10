@@ -79,16 +79,12 @@ export function RootStack({
   if (isInitialized) {
     try {
       // Only allow dev_mode to bypass payment in non-production environments
-              const currentEnv = Config.ENVIRONMENT;
-      console.log('🔍 RootStack - Current environment:', currentEnv);
+      const currentEnv = Config.ENVIRONMENT;
       
       if (currentEnv !== 'production') {
         const devModeValue = getValue('dev_mode');
-        console.log('🔍 RootStack - Raw dev_mode value:', devModeValue);
         devMode = devModeValue.asBoolean();
-        console.log('🔍 RootStack - Parsed dev_mode value:', devMode);
       } else {
-        console.log('🔍 RootStack - Production environment detected, ignoring dev_mode remote config');
         devMode = false;
       }
     } catch (error) {
@@ -96,7 +92,7 @@ export function RootStack({
       devMode = false;
     }
   } else {
-    console.log('🔍 RootStack - Remote config not initialized yet, dev_mode defaults to false');
+    console.log('⚠️ RootStack - Remote config not initialized yet, dev_mode defaults to false');
     // Only enable dev mode bypass if explicitly configured
     // This prevents automatic bypass in development
   }
@@ -104,69 +100,69 @@ export function RootStack({
   // Simplified routing logic - App.tsx handles session validation
   const shouldShowLogin = !isAuthenticated;
   
-  console.log("🔍 RootStack Routing Decision:", {
-    isOnboardingCompleted,
-    isAuthenticated,
-    initialAuthScreen,
-    hasMacros,
-    isPro,
-    readyForDashboard,
-    devMode,
-    shouldShowOnboarding: !isOnboardingCompleted,
-    shouldShowAuth: shouldShowLogin,
-    shouldShowDashboard: hasMacros && readyForDashboard && (isPro || devMode),
-    shouldShowPayment: hasMacros && readyForDashboard && !isPro && !devMode,
-    shouldShowGoalSetup: !(hasMacros && readyForDashboard)
-  });
+  // console.log("🔍 RootStack Routing Decision:", {
+  //   isOnboardingCompleted,
+  //   isAuthenticated,
+  //   initialAuthScreen,
+  //   hasMacros,
+  //   isPro,
+  //   readyForDashboard,
+  //   devMode,
+  //   shouldShowOnboarding: !isOnboardingCompleted,
+  //   shouldShowAuth: shouldShowLogin,
+  //   shouldShowDashboard: hasMacros && readyForDashboard && (isPro || devMode),
+  //   shouldShowPayment: hasMacros && readyForDashboard && !isPro && !devMode,
+  //   shouldShowGoalSetup: !(hasMacros && readyForDashboard)
+  // });
 
   // Add immediate debugging for the routing condition
-  const shouldShowDashboard = hasMacros && readyForDashboard && (isPro || devMode);
-  const shouldShowPayment = hasMacros && readyForDashboard && !isPro && !devMode;
+  // const shouldShowDashboard = hasMacros && readyForDashboard && (isPro || devMode);
+  // const shouldShowPayment = hasMacros && readyForDashboard && !isPro && !devMode;
   
-  console.log("🔍 RootStack - Routing Conditions:", {
-    hasMacros,
-    readyForDashboard,
-    isPro,
-    devMode,
-    hasMacrosAndReady: hasMacros && readyForDashboard,
-    shouldShowDashboard,
-    shouldShowPayment,
-    finalDecision: shouldShowDashboard ? "DASHBOARD" : shouldShowPayment ? "PAYMENT" : "GOAL_SETUP"
-  });
+  // console.log("🔍 RootStack - Routing Conditions:", {
+  //   hasMacros,
+  //   readyForDashboard,
+  //   isPro,
+  //   devMode,
+  //   hasMacrosAndReady: hasMacros && readyForDashboard,
+  //   shouldShowDashboard,
+  //   shouldShowPayment,
+  //   finalDecision: shouldShowDashboard ? "DASHBOARD" : shouldShowPayment ? "PAYMENT" : "GOAL_SETUP"
+  // });
 
   // Add specific logging for isPro routing
-  if (hasMacros && readyForDashboard) {
-    if (isPro) {
-      console.log("🔍 RootStack - User is PRO, routing to Dashboard");
-    } else if (devMode) {
-      console.log("🔍 RootStack - User is not PRO but dev mode is enabled, routing to Dashboard");
-    } else {
-      console.log("🔍 RootStack - User is not PRO and dev mode is disabled, routing to PaymentScreen");
-    }
-  }
+  // if (hasMacros && readyForDashboard) {
+  //   if (isPro) {
+  //     console.log("🔍 RootStack - User is PRO, routing to Dashboard");
+  //   } else if (devMode) {
+  //     console.log("🔍 RootStack - User is not PRO but dev mode is enabled, routing to Dashboard");
+  //   } else {
+  //     console.log("🔍 RootStack - User is not PRO and dev mode is disabled, routing to PaymentScreen");
+  //   }
+  // }
 
   // Log dev mode bypass if applicable
-  if (devMode && hasMacros && readyForDashboard && !isPro) {
-    console.log("🛠️ DEV MODE: Bypassing payment screen, routing to dashboard");
-  }
+  // if (devMode && hasMacros && readyForDashboard && !isPro) {
+  //   console.log("🛠️ DEV MODE: Bypassing payment screen, routing to dashboard");
+  // }
 
   // Log which screen will be rendered
-  let currentScreen = '';
-  if (!isOnboardingCompleted) {
-    currentScreen = 'OnboardingNav';
-  } else if (!isAuthenticated) {
-    currentScreen = 'Auth';
-  } else if (hasMacros && readyForDashboard) {
-    if (isPro || devMode) {
-      currentScreen = 'Dashboard';
-    } else {
-      currentScreen = 'PaymentScreen';
-    }
-  } else {
-    currentScreen = 'GoalSetupNav';
-  }
+  // let currentScreen = '';
+  // if (!isOnboardingCompleted) {
+  //   currentScreen = 'OnboardingNav';
+  // } else if (!isAuthenticated) {
+  //   currentScreen = 'Auth';
+  // } else if (hasMacros && readyForDashboard) {
+  //   if (isPro || devMode) {
+  //     currentScreen = 'Dashboard';
+  //   } else {
+  //     currentScreen = 'PaymentScreen';
+  //   }
+  // } else {
+  //   currentScreen = 'GoalSetupNav';
+  // }
   
-  console.log('🔍 RootStack - Rendering screen:', currentScreen);
+  // console.log('🔍 RootStack - Rendering screen:', currentScreen);
   
 
 
@@ -199,7 +195,6 @@ const AuthNavigator = ({
   route: { params?: { initialAuthScreen: string } };
 }) => {
   const initialScreen = route.params?.initialAuthScreen || "LoginScreen";
-  console.log("THIS IS THE INITIAL SCREEN", initialScreen);
   return (
     <Stack.Navigator
       screenOptions={{ headerShown: false }}
@@ -251,7 +246,6 @@ const GoalSetupNavigator = () => {
 };
 
 const DashboardNavigator = () => {
-  console.log('🔍 DashboardNavigator - Rendering DashboardNavigator');
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={CustomBottomTabs} />

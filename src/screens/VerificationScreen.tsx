@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -37,12 +37,16 @@ export const VerificationScreen: React.FC = () => {
   const { email: routeEmail, source } = route.params;
 
   const mixpanel = useMixpanel();
+  const eventsFired = useRef(false);
 
   useEffect(() => {
-    mixpanel?.track({
-      name: "password_verification_screen_viewed",
-      properties: { platform: Platform.OS },
-    });
+    if (mixpanel && !eventsFired.current) {
+      eventsFired.current = true;
+      mixpanel.track({
+        name: "password_verification_screen_viewed",
+        properties: { platform: Platform.OS },
+      });
+    }
   }, [mixpanel]);
 
   const isDisabled = () => {
