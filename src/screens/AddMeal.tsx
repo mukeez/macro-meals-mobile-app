@@ -348,15 +348,31 @@ const AddMeal: React.FC = () => {
             <View className="flex-1"></View>
             
             <View className="flex-row items-center">
-                          <TouchableOpacity onPress={() => {
-              const currentIndex = FILTER_OPTIONS.findIndex(opt => opt.value === selectedRange);
-              const prevIndex = currentIndex > 0 ? currentIndex - 1 : FILTER_OPTIONS.length - 1;
-              const newRange = FILTER_OPTIONS[prevIndex].value;
-              setSelectedRange(newRange);
-              if (newRange === 'custom') {
-                setCustomPickerOpen(true);
-              }
-            }}>
+              <TouchableOpacity
+                onPress={() => {
+                  const currentIndex = FILTER_OPTIONS.findIndex(
+                    (opt) => opt.value === selectedRange
+                  );
+                  const prevIndex =
+                    currentIndex > 0
+                      ? currentIndex - 1
+                      : FILTER_OPTIONS.length - 1;
+                  const newRange = FILTER_OPTIONS[prevIndex].value;
+                  setSelectedRange(newRange);
+                  if (newRange === "custom") {
+                    mixpanel?.track({
+                      name: "custom_date_picker_opened",
+                      properties: {
+                        current_view_period: selectedRange,
+                        prefilled_start_date: customRange.startDate,
+                        prefilled_end_date: customRange.endDate,
+                        entry_point: "meals_page",
+                      },
+                    });
+                    setCustomPickerOpen(true);
+                  }
+                }}
+              >
                 <Text className="text-white text-2xl font-bold">‹</Text>
               </TouchableOpacity>
               
@@ -975,6 +991,20 @@ const AddMeal: React.FC = () => {
         onConfirm={({ startDate, endDate }) => {
           setCustomPickerOpen(false);
           setCustomRange({ startDate, endDate });
+          mixpanel?.track({
+            name: "custom_date_range_selected",
+            properties: {
+              date_range_start: startDate?.toISOString() ?? null,
+              date_range_end: endDate?.toISOString() ?? null,
+              total_days:
+                startDate && endDate
+                  ? Math.ceil(
+                      (endDate.getTime() - startDate.getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    ) + 1
+                  : null,
+            },
+          });
         }}
         validRange={{ endDate: new Date() }}
       />

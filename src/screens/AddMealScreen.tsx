@@ -109,7 +109,14 @@ export const AddMealScreen: React.FC = () => {
     fats: "",
   });
   const mixpanel = useMixpanel();
-
+  useEffect(() => {
+    mixpanel?.track({
+      name: "manual_entry_opened",
+      properties: {
+        entry_point: "add_meal",
+      },
+    });
+  }, []);
   // Initialize form with analyzed data if available
   React.useEffect(() => {
     if (analyzedData) {
@@ -162,9 +169,14 @@ export const AddMealScreen: React.FC = () => {
    * Handles going back to the previous screen
    */
   const handleGoBack = (): void => {
+    mixpanel?.track({
+      name: "manual_back_to_add_meal",
+      properties: {
+        gesture_type: "button",
+      },
+    });
     navigation.goBack();
   };
-
 
   /**
    * Handles saving the meal to bookmarks
@@ -179,6 +191,13 @@ export const AddMealScreen: React.FC = () => {
    * @param meal - The favorite meal to add
    */
   const handleQuickAdd = (meal: FavoriteMeal): void => {
+    mixpanel?.track({
+      name: "manual_favorite_selected",
+      properties: {
+        favorite_meal_id: meal.id,
+        replaced_existing: Boolean(mealName),
+      },
+    });
     setMealName(meal.name);
     setCalories(meal.macros.calories.toString());
     setProtein(meal.macros.protein.toString());
@@ -235,6 +254,20 @@ export const AddMealScreen: React.FC = () => {
    * Adds the current meal to the log
    */
   const handleAddMealLog = async (): Promise<void> => {
+    mixpanel?.track({
+      name: "add_to_log_from_manual_submitted",
+      properties: {
+        meal_id: mealName,
+        meal_type: tempMealType,
+        time_of_day: time.toISOString(),
+        calories: parseInt(calories, 10) || 0,
+        protein_g: parseInt(protein, 10) || 0,
+        carbs_g: parseInt(carbs, 10) || 0,
+        fats_g: parseInt(fats, 10) || 0,
+        amount: parseInt(noOfServings, 10) || 1,
+        serving_unit: servingUnit,
+      },
+    });
     setLoading(true);
     try {
       if (!mealName.trim()) {
@@ -292,8 +325,19 @@ export const AddMealScreen: React.FC = () => {
 
       // Send the request
       await mealService.logMeal(mealRequest);
-      mixpanel?.track({ name: "meal_saved_from_meals" });
-
+      mixpanel?.track({
+        name: "meal_saved_from_meals",
+        properties: {
+          meal_name: mealName ?? null,
+          target_date: mealRequest.meal_time,
+          meal_type: mealRequest.meal_type,
+          calories: mealRequest.calories,
+          protein_g: mealRequest.protein,
+          carbs_g: mealRequest.carbs,
+          fats_g: mealRequest.fat,
+          serving_size_g: mealRequest.amount,
+        },
+      });
       // Set first meal status for this user
       const userEmail = useStore.getState().profile?.email;
       if (userEmail) {
@@ -391,7 +435,13 @@ export const AddMealScreen: React.FC = () => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setMealImage(result.assets[0].uri);
-        mixpanel?.track({ name: "meal_picture_uploaded" });
+        mixpanel?.track({
+          name: "manual_photo_uploaded",
+          properties: {
+            file_type: result.assets[0].type ?? "image",
+            file_size: result.assets[0].fileSize ?? null,
+          },
+        });
       }
     } catch (error) {
       console.error("Error picking image:", error);
@@ -444,6 +494,12 @@ export const AddMealScreen: React.FC = () => {
       };
       const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
       setIsFavorite(newFavoriteStatus);
+      mixpanel?.track({
+        name: "favorite_toggled_in_manual",
+        properties: {
+          favorite_state: newFavoriteStatus,
+        },
+      });
       if (newFavoriteStatus) {
         Alert.alert("Added to favorites");
       } else {
@@ -542,7 +598,19 @@ export const AddMealScreen: React.FC = () => {
             <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
               <TextInput
                 value={mealName}
-                onChangeText={setMealName}
+                onChangeText={(text) => {
+                  if (text !== mealName) {
+                    mixpanel?.track({
+                      name: "manual_field_updated",
+                      properties: {
+                        field_name: "meal_name",
+                        old_value: mealName,
+                        new_value: text,
+                      },
+                    });
+                  }
+                  setMealName(text);
+                }}
                 className="flex-1 text-base"
                 placeholder="Enter meal name"
                 editable={!loading}
@@ -622,6 +690,16 @@ export const AddMealScreen: React.FC = () => {
                   keyboardType="numeric"
                   value={calories}
                   onChangeText={(text) => {
+                    if (text !== calories) {
+                      mixpanel?.track({
+                        name: "manual_field_updated",
+                        properties: {
+                          field_name: "calories",
+                          old_value: calories,
+                          new_value: text,
+                        },
+                      });
+                    }
                     setCalories(text);
                     if (validationErrors.calories) {
                       setValidationErrors((prev) => ({
@@ -660,9 +738,22 @@ export const AddMealScreen: React.FC = () => {
                   keyboardType="numeric"
                   value={protein}
                   onChangeText={(text) => {
+                    if (text !== protein) {
+                      mixpanel?.track({
+                        name: "manual_field_updated",
+                        properties: {
+                          field_name: "protein",
+                          old_value: protein,
+                          new_value: text,
+                        },
+                      });
+                    }
                     setProtein(text);
                     if (validationErrors.protein) {
-                      setValidationErrors((prev) => ({ ...prev, protein: "" }));
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        protein: "",
+                      }));
                     }
                   }}
                   placeholder="0"
@@ -695,9 +786,22 @@ export const AddMealScreen: React.FC = () => {
                   keyboardType="numeric"
                   value={carbs}
                   onChangeText={(text) => {
+                    if (text !== carbs) {
+                      mixpanel?.track({
+                        name: "manual_field_updated",
+                        properties: {
+                          field_name: "carbs",
+                          old_value: carbs,
+                          new_value: text,
+                        },
+                      });
+                    }
                     setCarbs(text);
                     if (validationErrors.carbs) {
-                      setValidationErrors((prev) => ({ ...prev, carbs: "" }));
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        carbs: "",
+                      }));
                     }
                   }}
                   placeholder="0"
@@ -726,9 +830,22 @@ export const AddMealScreen: React.FC = () => {
                   keyboardType="numeric"
                   value={fats}
                   onChangeText={(text) => {
+                    if (text !== fats) {
+                      mixpanel?.track({
+                        name: "manual_field_updated",
+                        properties: {
+                          field_name: "fats",
+                          old_value: fats,
+                          new_value: text,
+                        },
+                      });
+                    }
                     setFats(text);
                     if (validationErrors.fats) {
-                      setValidationErrors((prev) => ({ ...prev, fats: "" }));
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        fats: "",
+                      }));
                     }
                   }}
                   placeholder="0"
@@ -759,6 +876,17 @@ export const AddMealScreen: React.FC = () => {
                   onChangeText={(text) => {
                     // Remove any non-numeric characters
                     const cleanText = text.replace(/[^0-9]/g, "");
+                    // Fire Mixpanel event if value is changing
+                    if (cleanText !== amount) {
+                      mixpanel?.track({
+                        name: "manual_field_updated",
+                        properties: {
+                          field_name: "amount",
+                          old_value: amount,
+                          new_value: cleanText,
+                        },
+                      });
+                    }
                     // Allow empty string or valid numbers
                     if (cleanText === "") {
                       setAmount("");
