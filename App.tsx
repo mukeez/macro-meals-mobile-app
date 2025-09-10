@@ -70,11 +70,6 @@ function RemoteConfigHandler() {
 
     useEffect(() => {
         if (lastUpdate && lastUpdate.updatedKeys.length > 0) {
-            console.log('[REMOTE CONFIG] 🔄 Config update received in handler:', {
-                updatedKeys: lastUpdate.updatedKeys,
-                totalUpdatedKeys: lastUpdate.updatedKeys.length,
-                timestamp: new Date().toISOString()
-            });
             
             // Handle specific config updates here
             lastUpdate.updatedKeys.forEach((_key, _index) => {
@@ -104,9 +99,9 @@ function RemoteConfigHandler() {
 
     useEffect(() => {
         if (isInitialized) {
-            console.log('[REMOTE CONFIG] ✅ Service initialized successfully in handler', {
-                timestamp: new Date().toISOString()
-            });
+            // console.log('[REMOTE CONFIG] ✅ Service initialized successfully in handler', {
+            //     timestamp: new Date().toISOString()
+            // });
         }
     }, [isInitialized]);
 
@@ -130,9 +125,9 @@ export function App() {
     useEffect(() => {
         if (isRestartRequired) setShowUpdateModal(true);
     }, [isRestartRequired]);
-    console.log('MIXPANEL_TOKEN', Config.MIXPANEL_TOKEN);
-    console.log('🔍 Current environment:', Config.ENVIRONMENT);
-    console.log('🎨 App icon should be:', Config.ENVIRONMENT === 'development' ? 'dev' : Config.ENVIRONMENT === 'staging' ? 'stg' : 'prod');
+    // console.log('MIXPANEL_TOKEN', Config.MIXPANEL_TOKEN);
+    // console.log('🔍 Current environment:', Config.ENVIRONMENT);
+    // console.log('🎨 App icon should be:', Config.ENVIRONMENT === 'development' ? 'dev' : Config.ENVIRONMENT === 'staging' ? 'stg' : 'prod');
 
     useEffect(() => {
         async function initializeApp() {
@@ -184,7 +179,6 @@ export function App() {
                     if (permission) {
                         // Get FCM token only after permissions are granted
                         const token = await pushNotifications.getFCMToken();
-                        console.log('THIS IS \n\n\n\n\nFCM TOKEN:', token);
                         await pushNotifications.intializeMessaging();
                         
                         // Check for initial notification (app opened from notification)
@@ -210,6 +204,20 @@ export function App() {
             try {
                 await revenueCatService.initialize();
                 console.log('✅ RevenueCat initialized successfully');
+                
+                // Check if purchases need to be synced (one-time sync for returning users)
+                try {
+                    const hasSyncedPurchases = await AsyncStorage.getItem('has_synced_purchases');
+                    if (hasSyncedPurchases !== 'true') {
+                        await revenueCatService.syncPurchases();
+                        await AsyncStorage.setItem('has_synced_purchases', 'true');
+                    } else {
+                        console.log('✅ Purchases already synced previously');
+                    }
+                } catch (syncError) {
+                    console.error('❌ Error during purchase sync check:', syncError);
+                    // Don't fail the app if sync fails
+                }
             } catch (error) {
                 console.error('❌ RevenueCat initialization failed:', error);
                 // Don't fail the app if RevenueCat fails to initialize
@@ -220,8 +228,6 @@ export function App() {
                 const onboardingCompleted = await AsyncStorage.getItem('isOnboardingCompleted');
                 setIsOnboardingCompleted(onboardingCompleted === 'true');
 
-                // Don't set authentication state yet - wait for session validation
-                console.log('Starting session validation without clearing tokens...');
                 setHasMacros(false);
                 setIsPro(false);
                 setReadyForDashboard(false);
@@ -239,22 +245,22 @@ export function App() {
                 await debugService.checkAuthValues();
 
                 // Enhanced session validation
-                console.log('🔍 App.tsx - Starting enhanced session validation...');
-                console.log('🔍 App.tsx - Current state before validation:', {
-                    isAuthenticated,
-                    hasMacros,
-                    isPro,
-                    readyForDashboard,
-                    isOnboardingCompleted
-                });
+                // console.log('🔍 App.tsx - Starting enhanced session validation...');
+                // console.log('🔍 App.tsx - Current state before validation:', {
+                //     isAuthenticated,
+                //     hasMacros,
+                //     isPro,
+                //     readyForDashboard,
+                //     isOnboardingCompleted
+                // });
                 const sessionValidation: SessionValidationResult = await validateSession();
                 
-                console.log('🔍 App.tsx - Session validation result:', {
-                    isValid: sessionValidation.isValid,
-                    isComplete: sessionValidation.isComplete,
-                    hasUser: !!sessionValidation.user,
-                    error: sessionValidation.error
-                });
+                // console.log('🔍 App.tsx - Session validation result:', {
+                //     isValid: sessionValidation.isValid,
+                //     isComplete: sessionValidation.isComplete,
+                //     hasUser: !!sessionValidation.user,
+                //     error: sessionValidation.error
+                // });
 
                 if (sessionValidation.isValid && sessionValidation.user) {
                     const profile = sessionValidation.user;
@@ -274,13 +280,11 @@ export function App() {
                     // Set user ID in RevenueCat after successful authentication
                     try {
                         await revenueCatService.setUserID(profile.id);
-                        console.log('✅ RevenueCat user ID set:', profile.id);
                         
                         // Check subscription status from RevenueCat (source of truth)
-                        const { syncSubscriptionStatus } = await import('./src/services/subscriptionChecker');
-                        const subscriptionStatus = await syncSubscriptionStatus(setIsPro);
+                        const subscriptionStatus = await revenueCatService.checkSubscriptionStatus();
+                        setIsPro(subscriptionStatus.isPro);
                         
-                        console.log('🔍 App.tsx - RevenueCat subscription status:', subscriptionStatus);
                     } catch (error) {
                         console.error('❌ Failed to set RevenueCat user ID or check subscription:', error);
                         // Fallback to backend isPro value if RevenueCat fails
@@ -360,21 +364,6 @@ export function App() {
         isSessionValidated
     });
 
-    // Periodic FCM token refresh
-    // useEffect(() => {
-    //     if (isAuthenticated) {
-    //         const refreshInterval = setInterval(async () => {
-    //             try {
-    //                 await authService.refreshAndUpdateFCMToken();
-    //             } catch (error) {
-    //                 console.log('Error during periodic FCM token refresh:', error);
-    //             }
-    //         }, 24 * 60 * 60 * 1000); // Refresh every 24 hours
-
-    //         return () => clearInterval(refreshInterval);
-    //     }
-    // }, [isAuthenticated]);
-
     if (isLoading || !isSessionValidated) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -422,7 +411,6 @@ export function App() {
                         if (error) {
                             console.error('[REMOTE CONFIG] Update error:', error);
                         } else {
-                            console.log('[REMOTE CONFIG] Config updated successfully:', event.updatedKeys);
                             
                             // Check for version updates when config changes
                             if (event.updatedKeys.some(key => 

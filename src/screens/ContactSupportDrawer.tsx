@@ -11,28 +11,27 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import CustomSafeAreaView from "../components/CustomSafeAreaView";
 import { IMAGE_CONSTANTS } from "../constants/imageConstants";
 import { useMixpanel } from "@macro-meals/mixpanel/src";
-
 const { height } = Dimensions.get("window");
-
 type ContactSupportDrawerProps = {
   onClose: () => void;
 };
-const mixpanel = useMixpanel();
+
 const subject = encodeURIComponent("Support Request");
 const body = encodeURIComponent("Hello Macro Meals,\n\nI need help with ...");
-
 const mailtoUrl = `mailto:support@macromealsapp.com?subject=${subject}&body=${body}`;
-const handleSupportEmail = () => {
-  mixpanel?.track({
-    name: "contact_support_email_opened",
-    properties: {},
-  });
-  Linking.openURL(mailtoUrl);
-};
 
 export default function ContactSupportDrawer({
   onClose,
 }: ContactSupportDrawerProps) {
+  const mixpanel = useMixpanel();
+  
+  const handleSupportEmail = () => {
+    mixpanel?.track({
+      name: "contact_support_email_opened",
+      properties: {},
+    });
+    Linking.openURL(mailtoUrl);
+  };
   return (
     <CustomSafeAreaView>
       <View
@@ -52,13 +51,13 @@ export default function ContactSupportDrawer({
           </View>
           <View className="mt-8">
             <Text className="text-4xl font-bold text-[#FFFFFF] opacity-50">
-              Hi there 👋
+              Hi there 
+
             </Text>
             <Text className="text-white text-4xl mb-12 font-bold">
               How can we help?
             </Text>
           </View>
-
           <View
             className="absolute left-0 right-0 mx-6 rounded-xl bg-white p-6"
             style={{
@@ -74,7 +73,6 @@ export default function ContactSupportDrawer({
             <Text className="text-base font-bold text-gray-900 my-2">
               Start a conversation
             </Text>
-
             <View className="items-center my-2">
               <Text className="text-[#737376] text-sm text-center">
                 Our usual reply time

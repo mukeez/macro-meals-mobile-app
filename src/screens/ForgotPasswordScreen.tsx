@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -36,12 +36,16 @@ export const ForgotPasswordScreen: React.FC = () => {
   const [errors, setErrors] = useState({ email: "" });
   const [touched, setTouched] = useState(false);
   const mixpanel = useMixpanel();
+  const eventsFired = useRef(false);
 
   useEffect(() => {
-    mixpanel?.track({
-      name: "forgot_password_screen_viewed",
-      properties: { platform: Platform.OS },
-    });
+    if (mixpanel && !eventsFired.current) {
+      eventsFired.current = true;
+      mixpanel.track({
+        name: "forgot_password_screen_viewed",
+        properties: { platform: Platform.OS },
+      });
+    }
   }, [mixpanel]);
 
   // Validation function for email

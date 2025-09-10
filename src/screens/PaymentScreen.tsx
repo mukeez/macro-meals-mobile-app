@@ -546,6 +546,17 @@ const PaymentScreen = () => {
               </TouchableOpacity>
             </View>
             <Text className='mt-4 text-[12px] text-[#4F4F4F] text-center'>You can change plans or cancel anytime</Text>
+            {/* {__DEV__ && (
+              <TouchableOpacity className='mt-2 px-2 py-2 rounded-lg bg-gloomyPurple' onPress={() => {
+                revenueCatService.restorePurchases();
+              }}>
+                <View>
+                  <Text className="text-white font-semibold text-[17px]">
+                    Restore Subscription
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )} */}
             <View className="w-full mt-6 mb-2">
             <TouchableOpacity 
                     activeOpacity={0.8}
@@ -571,9 +582,6 @@ const PaymentScreen = () => {
             </View>
           </View>
         </View>
-      </View>
-
-      {/* </CustomSafeAreaView> */}
     </>
   );
 };

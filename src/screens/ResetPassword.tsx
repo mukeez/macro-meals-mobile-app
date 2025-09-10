@@ -106,7 +106,7 @@ export const ResetPasswordScreen: React.FC = () => {
     });
 
     try {
-      const response = await authService.resetPassword(resetPasswordData);
+      await authService.resetPassword(resetPasswordData);
       mixpanel?.track({
         name: "reset_password_successful",
         properties: {
