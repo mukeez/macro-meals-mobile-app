@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -42,6 +42,7 @@ export const SettingsScreen: React.FC = () => {
   const { getValue } = useRemoteConfigContext();
   const [showDrawer, setShowDrawer] = useState(false);
   const mixpanel = useMixpanel();
+  const eventsFired = useRef(false);
   const _devMode = getValue("dev_mode").asBoolean();
 
   // Local state for settings
@@ -73,7 +74,7 @@ export const SettingsScreen: React.FC = () => {
   const [tempUnitPreference, setTempUnitPreference] = useState("metric");
 
   /**
-   * Mock fetching user data on component mount
+   * Fetch user data on component mount
    */
   useEffect(() => {
     const fetchUserData = async () => {
@@ -87,24 +88,29 @@ export const SettingsScreen: React.FC = () => {
     };
     fetchUserData();
 
-    useEffect(() => {
-      if (userData.id) {
-        mixpanel?.track({
-          name: "profile_screen_viewed",
-          properties: {
-            user_id: userData.id,
-            email: userData.email,
-            is_pro: userData.is_pro,
-            entry_point: "app_tab",
-          },
-        });
-      }
-    }, [userData.id]);
-
     if (preferences.unitSystem) {
       setUnits(preferences.unitSystem === "Metric" ? "g/kcal" : "oz/cal");
     }
   }, [token]);
+
+  /**
+   * Consolidated mixpanel tracking - fire only once
+   */
+  useEffect(() => {
+    if (userData.id && mixpanel && !eventsFired.current) {
+      eventsFired.current = true;
+      
+      mixpanel.track({
+        name: "profile_screen_viewed",
+        properties: {
+          user_id: userData.id,
+          email: userData.email,
+          is_pro: userData.is_pro,
+          entry_point: "app_tab",
+        },
+      });
+    }
+  }, [userData.id, mixpanel]);
 
   /**
    * Handle unit preference change using the same pattern as account settings

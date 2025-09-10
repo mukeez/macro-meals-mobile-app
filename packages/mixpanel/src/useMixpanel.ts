@@ -8,9 +8,16 @@ import { validateEvent } from './utils/validation';
 export const useMixpanel = ()=> {
     const mixpanel = useContext(MixpanelContext);
     
+    // Always return the same structure to maintain hook consistency
     if (!mixpanel){
-        console.warn('[MIXPANEL] ⚠️  useMixpanel called but mixpanel is not available');
-        return null;
+        return {
+            track: () => {}, // No-op function
+            identify: () => {},
+            setUserProperties: () => {},
+            reset: () => {},
+            register: () => {},
+            isInitialized: false
+        };
     }
     
     return {
@@ -117,7 +124,8 @@ export const useMixpanel = ()=> {
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error tracking screen:', error);
             }
-        }
+        },
+        isInitialized: true
     }
     
 }

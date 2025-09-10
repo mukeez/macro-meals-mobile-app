@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -33,7 +33,7 @@ import { Image as ExpoImage } from "expo-image";
 // Use the Profile type from the store instead of defining a local one
 import { Profile } from "../store/useStore";
 import axiosInstance from "src/services/axios";
-import { useMixpanel } from "@macro-meals/mixpanel/src";
+import { useMixpanel } from "@macro-meals/mixpanel";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -95,18 +95,91 @@ export const DashboardScreen: React.FC = () => {
   const refreshMeals = useStore((state) => state.refreshMeals);
   const hasLoggedFirstMeal = useStore((state) => state.hasLoggedFirstMeal);
   const mixpanel = useMixpanel();
+  const eventsFired = useRef(false);
 
+  // Calculate today's total macros from loggedMeals
+  const todayMealsSum = loggedMeals.reduce(
+    (acc: any, meal: any) => ({
+      carbs: acc.carbs + (meal.macros?.carbs || 0),
+      fat: acc.fat + (meal.macros?.fat || 0),
+      protein: acc.protein + (meal.macros?.protein || 0),
+    }),
+    { carbs: 0, fat: 0, protein: 0 }
+  );
+
+  // Consolidated mixpanel tracking useEffect - fire only once
   useEffect(() => {
-    if (profile && !isLoading && !error) {
-      mixpanel?.track({
-        name: "dashboard_viewed",
-        properties: {
-          user_id: profile?.id,
-          platform: Platform.OS,
-        },
-      });
+    if (!isLoading && !error && profile?.id && mixpanel && !eventsFired.current) {
+      eventsFired.current = true;
+      
+      // Dashboard viewed tracking
+      if (profile) {
+        mixpanel.track({
+          name: "dashboard_viewed",
+          properties: {
+            user_id: profile?.id,
+            platform: Platform.OS,
+          },
+        });
+      }
+
+      // Greeting displayed tracking
+      if (profile?.first_name) {
+        mixpanel.track({
+          name: "greeting_displayed",
+          properties: {
+            user_id: profile?.id,
+            platform: Platform.OS,
+            first_name: profile?.first_name,
+          },
+        });
+      }
+
+      // Macro summary displayed tracking
+      if (macros && todayProgress) {
+        mixpanel.track({
+          name: "macro_summary_displayed",
+          properties: {
+            user_id: profile?.id,
+            platform: Platform.OS,
+            calorie_target: macros.calories,
+            protein_target: macros.protein,
+            carbs_target: macros.carbs,
+            fat_target: macros.fat,
+          },
+        });
+      }
+
+      // Recently uploaded section viewed tracking
+      if (loggedMeals !== undefined) {
+        mixpanel.track({
+          name: "recently_uploaded_section_viewed",
+          properties: {
+            user_id: profile?.id,
+            platform: Platform.OS,
+            meal_count: loggedMeals.length,
+          },
+        });
+      }
+
+      // Macro breakdown displayed tracking
+      if (macros && todayMealsSum) {
+        mixpanel.track({
+          name: "macro_breakdown_displayed",
+          properties: {
+            user_id: profile?.id,
+            platform: Platform.OS,
+            carbs: todayMealsSum.carbs,
+            carbs_goal: macros.carbs,
+            fat: todayMealsSum.fat,
+            fat_goal: macros.fat,
+            protein: todayMealsSum.protein,
+            protein_goal: macros.protein,
+          },
+        });
+      }
     }
-  }, [profile, isLoading, error, mixpanel]);
+  }, [isLoading, error, profile, macros, todayProgress, loggedMeals, todayMealsSum, mixpanel]);
 
   // useEffect(() => {
   //     if (preferences.calories === 0 && preferences.protein === 0) {
@@ -217,38 +290,7 @@ export const DashboardScreen: React.FC = () => {
     fetchUserData();
   }, [fetchUserData]);
 
-  useEffect(() => {
-    if (profile?.first_name && !isLoading && !error) {
-      mixpanel?.track({
-        name: "greeting_displayed",
-        properties: {
-          user_id: profile?.id,
-          platform: Platform.OS,
-          greeting: getGreeting(profile.first_name),
-        },
-      });
-    }
-  }, [profile?.first_name, isLoading, error, mixpanel]);
 
-  useEffect(() => {
-    if (!isLoading && !error && macros && todayProgress) {
-      mixpanel?.track({
-        name: "macro_summary_displayed",
-        properties: {
-          user_id: profile?.id,
-          platform: Platform.OS,
-          calories_goal: macros.calories,
-          calories_remaining: Math.max(
-            0,
-            macros.calories - todayProgress.calories
-          ),
-          protein_goal: macros.protein,
-          carbs_goal: macros.carbs,
-          fat_goal: macros.fat,
-        },
-      });
-    }
-  }, [isLoading, error, macros, todayProgress, profile?.id, mixpanel]);
 
   // No longer need useFocusEffect since we're using state management
 
@@ -290,18 +332,6 @@ export const DashboardScreen: React.FC = () => {
     setIsLoading(true);
   };
 
-  useEffect(() => {
-    if (!isLoading && !error && loggedMeals !== undefined) {
-      mixpanel?.track({
-        name: "recently_uploaded_section_viewed",
-        properties: {
-          user_id: profile?.id,
-          platform: Platform.OS,
-          meals_count: loggedMeals.length,
-        },
-      });
-    }
-  }, [isLoading, error, loggedMeals, profile?.id, mixpanel]);
 
   if (isLoading) {
     return (
@@ -343,33 +373,7 @@ export const DashboardScreen: React.FC = () => {
   //   Math.round((todayProgress.fat / macros.fat) * 100) || 0
   // );
 
-  // Calculate today's total macros from loggedMeals
-  const todayMealsSum = loggedMeals.reduce(
-    (acc: any, meal: any) => ({
-      carbs: acc.carbs + (meal.macros?.carbs || 0),
-      fat: acc.fat + (meal.macros?.fat || 0),
-      protein: acc.protein + (meal.macros?.protein || 0),
-    }),
-    { carbs: 0, fat: 0, protein: 0 }
-  );
-  useEffect(() => {
-    if (!isLoading && !error && macros && todayMealsSum) {
-      mixpanel?.track({
-        name: "macro_breakdown_displayed",
-        properties: {
-          user_id: profile?.id,
-          platform: Platform.OS,
-          carbs: todayMealsSum.carbs,
-          carbs_goal: macros.carbs,
-          fat: todayMealsSum.fat,
-          fat_goal: macros.fat,
-          protein: todayMealsSum.protein,
-          protein_goal: macros.protein,
-        },
-      });
-    }
-  }, [isLoading, error, macros, todayMealsSum, profile?.id, mixpanel]);
-
+  
   function formatDate(date: Date) {
     const options: Intl.DateTimeFormatOptions = {
       weekday: "short",

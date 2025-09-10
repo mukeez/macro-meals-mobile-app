@@ -1,5 +1,5 @@
 // src/screens/LoginScreen.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -60,12 +60,16 @@ export const LoginScreen: React.FC = () => {
   // const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const resetSteps = useGoalsFlowStore((state) => state.resetSteps);
   const mixpanel = useMixpanel();
+  const eventsFired = useRef(false);
 
   useEffect(() => {
-    mixpanel?.track({
-      name: "sign_in_screen_viewed",
-      properties: { platform: Platform.OS },
-    });
+    if (mixpanel && !eventsFired.current) {
+      eventsFired.current = true;
+      mixpanel.track({
+        name: "sign_in_screen_viewed",
+        properties: { platform: Platform.OS },
+      });
+    }
   }, [mixpanel]);
 
   const [errors, setErrors] = useState({
