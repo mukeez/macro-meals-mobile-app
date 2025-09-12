@@ -68,6 +68,20 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(networkError);
     }
 
+    // Handle 502 Bad Gateway errors
+    if (error.response?.status === 502) {
+      console.error('502 Bad Gateway error:', error.message);
+      const badGatewayError = new Error('Unable to connect to server. Please try again later.');
+      return Promise.reject(badGatewayError);
+    }
+
+    // Handle other 5xx server errors
+    if (error.response?.status >= 500 && error.response?.status < 600) {
+      console.error(`${error.response.status} Server error:`, error.message);
+      const serverError = new Error('Server is temporarily unavailable. Please try again later.');
+      return Promise.reject(serverError);
+    }
+
     // Handle 401/403 errors
     if (error.response?.status === 401 || error.response?.status === 403) {
       // Don't handle auth errors for login/register endpoints
