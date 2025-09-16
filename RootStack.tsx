@@ -1,12 +1,12 @@
 import React, { useContext } from "react";
-import { useRemoteConfigContext } from '@macro-meals/remote-config-service';
-import Config from 'react-native-config';
+import { useRemoteConfigContext } from "@macro-meals/remote-config-service";
+import Config from "react-native-config";
 
-import { HasMacrosContext } from './src/contexts/HasMacrosContext';
-import { IsProContext } from './src/contexts/IsProContext';
+import { HasMacrosContext } from "./src/contexts/HasMacrosContext";
+import { IsProContext } from "./src/contexts/IsProContext";
 import MealFinderScreen from "src/screens/MealFinderScreen";
 import { WelcomeScreen } from "./src/screens/WelcomeScreen";
-// import SettingsScreen from "./src/screens/SettingsScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
 import ScanScreenType from "./src/screens/ScanScreenType";
 import BarcodeScanScreen from "./src/screens/BarcodeScanScreen";
 import SnapMealScreen from "./src/screens/SnapMealScreen";
@@ -51,6 +51,7 @@ import HealthGuidelinesScreen from "src/screens/HealthGuidelinesScreen";
 import ManageSubscriptionsScreen from "src/screens/ManageSubscriptionsScreen";
 import ScannedMealBreakdownScreen from "./src/screens/ScannedMealBreakdown";
 import AIRecipeDetailsScreen from "./src/screens/AIRecipeDetailsScreen";
+import { AdjustGoalsFlow } from "src/screens/AdjustGoals";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -66,40 +67,44 @@ export function RootStack({
   // Get values from context instead of props for better reactivity
   const { hasMacros, readyForDashboard } = useContext(HasMacrosContext);
   const { isPro } = useContext(IsProContext);
-  
+
   // Note: Subscription status is now handled in App.tsx during session validation
   // This prevents race conditions and ensures proper routing on first load
-  
 
   // Get dev mode from remote config (ignored in production)
   const { getValue, isInitialized } = useRemoteConfigContext();
   let devMode = false;
-  
+
   // Only try to get dev_mode if remote config is initialized
   if (isInitialized) {
     try {
       // Only allow dev_mode to bypass payment in non-production environments
       const currentEnv = Config.ENVIRONMENT;
-      
-      if (currentEnv !== 'production') {
-        const devModeValue = getValue('dev_mode');
+
+      if (currentEnv !== "production") {
+        const devModeValue = getValue("dev_mode");
         devMode = devModeValue.asBoolean();
       } else {
         devMode = false;
       }
     } catch (error) {
-      console.log('🔍 RootStack - Could not get dev_mode from remote config, defaulting to false:', error);
+      console.log(
+        "🔍 RootStack - Could not get dev_mode from remote config, defaulting to false:",
+        error
+      );
       devMode = false;
     }
   } else {
-    console.log('⚠️ RootStack - Remote config not initialized yet, dev_mode defaults to false');
+    console.log(
+      "⚠️ RootStack - Remote config not initialized yet, dev_mode defaults to false"
+    );
     // Only enable dev mode bypass if explicitly configured
     // This prevents automatic bypass in development
   }
-  
+
   // Simplified routing logic - App.tsx handles session validation
   const shouldShowLogin = !isAuthenticated;
-  
+
   // console.log("🔍 RootStack Routing Decision:", {
   //   isOnboardingCompleted,
   //   isAuthenticated,
@@ -118,7 +123,7 @@ export function RootStack({
   // Add immediate debugging for the routing condition
   // const shouldShowDashboard = hasMacros && readyForDashboard && (isPro || devMode);
   // const shouldShowPayment = hasMacros && readyForDashboard && !isPro && !devMode;
-  
+
   // console.log("🔍 RootStack - Routing Conditions:", {
   //   hasMacros,
   //   readyForDashboard,
@@ -161,10 +166,8 @@ export function RootStack({
   // } else {
   //   currentScreen = 'GoalSetupNav';
   // }
-  
-  // console.log('🔍 RootStack - Rendering screen:', currentScreen);
-  
 
+  // console.log('🔍 RootStack - Rendering screen:', currentScreen);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -177,7 +180,7 @@ export function RootStack({
           initialParams={{ initialAuthScreen: initialAuthScreen }}
         />
       ) : hasMacros && readyForDashboard ? (
-        (isPro || devMode) ? (
+        isPro || devMode ? (
           <Stack.Screen name="Dashboard" component={DashboardNavigator} />
         ) : (
           <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
@@ -209,7 +212,10 @@ const AuthNavigator = ({
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
-      <Stack.Screen name="TermsOfServiceScreen" component={TermsOfServiceScreen} />
+      <Stack.Screen
+        name="TermsOfServiceScreen"
+        component={TermsOfServiceScreen}
+      />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen
         name="EmailVerificationScreen"
@@ -249,6 +255,7 @@ const DashboardNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={CustomBottomTabs} />
+      <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
       <Stack.Screen name="BarcodeScanScreen" component={BarcodeScanScreen} />
       <Stack.Screen name="AddMealScreen" component={AddMealScreen} />
       <Stack.Screen name="EditMealScreen" component={EditMealScreen} />
@@ -271,7 +278,10 @@ const DashboardNavigator = () => {
         component={AIRecipeDetailsScreen}
       />
       <Stack.Screen name="ScanScreenType" component={ScanScreenType} />
-      <Stack.Screen name="ManageSubscriptionsScreen" component={ManageSubscriptionsScreen} />
+      <Stack.Screen
+        name="ManageSubscriptionsScreen"
+        component={ManageSubscriptionsScreen}
+      />
       <Stack.Screen name="MacroGoals" component={MacroGoalsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsPreferences} />
       <Stack.Screen name="MealFinderScreen" component={MealFinderScreen} />
@@ -296,7 +306,10 @@ const DashboardNavigator = () => {
       />
       <Stack.Screen name="AdjustTargets" component={AdjustTargetsScreen} />
       <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
-      <Stack.Screen name="HealthGuidelinesScreen" component={HealthGuidelinesScreen} />
+      <Stack.Screen
+        name="HealthGuidelinesScreen"
+        component={HealthGuidelinesScreen}
+      />
       <Stack.Screen
         name="TermsOfServiceScreen"
         component={TermsOfServiceScreen}
@@ -307,6 +320,8 @@ const DashboardNavigator = () => {
       />
       <Stack.Screen name="VerificationScreen" component={VerificationScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
+      <Stack.Screen name="AdjustGoalsFlow" component={AdjustGoalsFlow} />
     </Stack.Navigator>
   );
 };

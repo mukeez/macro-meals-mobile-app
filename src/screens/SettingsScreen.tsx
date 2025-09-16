@@ -26,6 +26,7 @@ import EditableAvatar from "src/components/EditableAvatar";
 import { useMixpanel } from "@macro-meals/mixpanel";
 import { useRemoteConfigContext } from "@macro-meals/remote-config-service";
 import Config from "react-native-config";
+import { useGoalsFlowStore } from "src/store/goalsFlowStore";
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -99,7 +100,7 @@ export const SettingsScreen: React.FC = () => {
   useEffect(() => {
     if (userData.id && mixpanel && !eventsFired.current) {
       eventsFired.current = true;
-      
+
       mixpanel.track({
         name: "profile_screen_viewed",
         properties: {
@@ -307,6 +308,17 @@ export const SettingsScreen: React.FC = () => {
             }
             onPress={() => {
               navigation.navigate("AdjustTargets");
+            }}
+          />
+          <SectionItem
+            title="Adjust goals"
+            image={IMAGE_CONSTANTS.fireIcon}
+            rightComponent={
+              <Text className="text-xl text-gray-400 ml-1">›</Text>
+            }
+            onPress={() => {
+              useGoalsFlowStore.getState().resetToHeightMetrics();
+              navigation.navigate("AdjustGoalsFlow");
             }}
           />
           <SectionItem
