@@ -1,50 +1,64 @@
-import React, { useContext } from 'react'
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native'
-import CustomSafeAreaView from 'src/components/CustomSafeAreaView'
-import CustomPagerView from 'src/components/CustomPagerView'
-import GoalsGender from 'src/components/goal_flow_components/basic_info/GoalsGender'
-import { useNavigation } from '@react-navigation/native'
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { RootStackParamList } from 'src/types/navigation'
-import { useGoalsFlowStore } from 'src/store/goalsFlowStore'
-import useStore from 'src/store/useStore'
-import { IMAGE_CONSTANTS } from 'src/constants/imageConstants'
-import BackButton from 'src/components/BackButton'
-import { GoalsDateOfBirth } from 'src/components/goal_flow_components/basic_info/GoalsDateOfBirth'
-import { LinearProgress } from 'src/components/LinearProgress'
+import React, { useContext } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Image,
+} from "react-native";
+import CustomSafeAreaView from "src/components/CustomSafeAreaView";
+import CustomPagerView from "src/components/CustomPagerView";
+import GoalsGender from "src/components/goal_flow_components/basic_info/GoalsGender";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "src/types/navigation";
+import { useGoalsFlowStore } from "src/store/goalsFlowStore";
+import useStore from "src/store/useStore";
+import { IMAGE_CONSTANTS } from "src/constants/imageConstants";
+import BackButton from "src/components/BackButton";
+import { GoalsDateOfBirth } from "src/components/goal_flow_components/basic_info/GoalsDateOfBirth";
+import { LinearProgress } from "src/components/LinearProgress";
 // import { GoalsLocation } from 'src/components/goal_flow_components/basic_info/GoalsLocation'
-import { GoalBodyMetricsHeight } from 'src/components/goal_flow_components/basic_info/GoalBodyMetricsHeight'
-import { GoalBodyMetricsWeight } from 'src/components/goal_flow_components/basic_info/GoalsBodyMetricsWeight'
-import { GoalDailyActivityLevel } from 'src/components/goal_flow_components/basic_info/GoalsDailyActivityLevel'
-import { GoalsDietryPreference } from 'src/components/goal_flow_components/basic_info/GoalsDietryPreference'
-import { GoalsFitnessGoal } from 'src/components/goal_flow_components/your_goal/GoalsFitnessGoal'
-import { GoalsTargetWeight } from 'src/components/goal_flow_components/your_goal/GoalsTargetWeight'
-import { GoalsProgressRate } from 'src/components/goal_flow_components/your_goal/GoalsProgressRate'
-import { GoalsPersonalizedPlan } from 'src/components/goal_flow_components/your_plan/GoalsPersonalizedPlan'
-import { HasMacrosContext } from '../contexts/HasMacrosContext'
-import { userService } from 'src/services/userService';
-import { setupMacros } from 'src/services/macroService';
+import { GoalBodyMetricsHeight } from "src/components/goal_flow_components/basic_info/GoalBodyMetricsHeight";
+import { GoalBodyMetricsWeight } from "src/components/goal_flow_components/basic_info/GoalsBodyMetricsWeight";
+import { GoalDailyActivityLevel } from "src/components/goal_flow_components/basic_info/GoalsDailyActivityLevel";
+import { GoalsDietryPreference } from "src/components/goal_flow_components/basic_info/GoalsDietryPreference";
+import { GoalsFitnessGoal } from "src/components/goal_flow_components/your_goal/GoalsFitnessGoal";
+import { GoalsTargetWeight } from "src/components/goal_flow_components/your_goal/GoalsTargetWeight";
+import { GoalsProgressRate } from "src/components/goal_flow_components/your_goal/GoalsProgressRate";
+import { GoalsPersonalizedPlan } from "src/components/goal_flow_components/your_plan/GoalsPersonalizedPlan";
+import { HasMacrosContext } from "../contexts/HasMacrosContext";
+import { userService } from "src/services/userService";
+import { setupMacros } from "src/services/macroService";
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'GoalsSetupFlow'>;
+type NavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "GoalsSetupFlow"
+>;
 
-export const GoalsSetupFlow =  () => {
+type GoalsSetupFlowRouteParams = {
+  startFrom?: string;
+};
+
+export const GoalsSetupFlow = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { 
-    majorStep, 
-    subSteps, 
-    setSubStep, 
+  const {
+    majorStep,
+    subSteps,
+    setSubStep,
     markSubStepComplete,
     handleBackNavigation,
-    gender, 
-    dateOfBirth, 
+    gender,
+    dateOfBirth,
     height_unit_preference,
     weight_unit_preference,
-    heightFt, 
-    heightIn, 
-    heightCm, 
-    weightLb, 
-    weightKg, 
-    dailyActivityLevel, 
+    heightFt,
+    heightIn,
+    heightCm,
+    weightLb,
+    weightKg,
+    dailyActivityLevel,
     dietryPreference,
     fitnessGoal,
     targetWeight,
@@ -53,17 +67,31 @@ export const GoalsSetupFlow =  () => {
     setPreferences,
     macroTargets,
     setMacroTargets,
+    resetToHeightMetrics,
   } = useGoalsFlowStore();
 
   const [isLoading, setIsLoading] = React.useState(false);
-  const [macroCalculationResponse, setMacroCalculationResponse] = React.useState<any>(null);
+  const [macroCalculationResponse, setMacroCalculationResponse] =
+    React.useState<any>(null);
   const token = useStore((state) => state.token);
   const { setHasMacros, setReadyForDashboard } = useContext(HasMacrosContext);
-  const [hasStartedCalculation, setHasStartedCalculation] = React.useState(false);
+  const [hasStartedCalculation, setHasStartedCalculation] =
+    React.useState(false);
 
-  const majorSteps = ['Basic info', 'Your goal', 'Your plan'];
+  const route = useRoute();
+  const { startFrom } =
+    (route.params as GoalsSetupFlowRouteParams || {}) 
+
+  const majorSteps = ["Basic info", "Your goal", "Your plan"];
   const subStepCounts = [6, 3, 1];
-  const isLastStepOfSecondMajor = majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
+  const isLastStepOfSecondMajor =
+    majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
+
+ React.useEffect(() => {
+  if (startFrom === "height_metrics") {
+    resetToHeightMetrics();
+  }
+}, [startFrom]);
 
   React.useEffect(() => {
     if (isLastStepOfSecondMajor && !hasStartedCalculation) {
@@ -73,19 +101,22 @@ export const GoalsSetupFlow =  () => {
         try {
           // Validate token first
           if (!token) {
-            console.error('No auth token available');
-            Alert.alert('Error', 'Please log in again');
+            console.error("No auth token available");
+            Alert.alert("Error", "Please log in again");
             return;
           }
 
-          console.log('Starting preferences fetch with token:', token.substring(0, 10) + '...');
+          console.log(
+            "Starting preferences fetch with token:",
+            token.substring(0, 10) + "..."
+          );
 
           // Fetch preferences first
           const data = await userService.getPreferences();
-          console.log('Preferences fetched successfully:', data);
-          
+          console.log("Preferences fetched successfully:", data);
+
           if (data.detail === "Not Found") {
-            console.error('Preferences not found');
+            console.error("Preferences not found");
             // Continue with macro calculation even if preferences aren't found
           } else {
             setPreferences(data);
@@ -99,17 +130,17 @@ export const GoalsSetupFlow =  () => {
           }
 
           // Then calculate macros
-          console.log('Starting macro calculation...');
+          console.log("Starting macro calculation...");
           await calculateMacros();
         } catch (error: any) {
-          console.error('Error in fetchDataAndCalculateMacros:', error);
-          console.error('Full error details:', {
+          console.error("Error in fetchDataAndCalculateMacros:", error);
+          console.error("Full error details:", {
             message: error.message,
             stack: error.stack,
-            name: error.name
+            name: error.name,
           });
-          if (!error.message?.includes('Failed to calculate macros')) {
-            Alert.alert('Error', 'Failed to fetch your preferences');
+          if (!error.message?.includes("Failed to calculate macros")) {
+            Alert.alert("Error", "Failed to fetch your preferences");
           }
         } finally {
           setIsLoading(false);
@@ -122,11 +153,11 @@ export const GoalsSetupFlow =  () => {
   const calculateMacros = async () => {
     try {
       if (!token) {
-        throw new Error('No auth token available');
+        throw new Error("No auth token available");
       }
 
       // Validate required fields
-      console.log('Validating fields for macro calculation with:', {
+      console.log("Validating fields for macro calculation with:", {
         dateOfBirth,
         gender,
         dailyActivityLevel,
@@ -140,82 +171,93 @@ export const GoalsSetupFlow =  () => {
         heightIn,
         heightCm,
         weightLb,
-        weightKg
+        weightKg,
       });
 
-      if (!dateOfBirth || !gender || !dailyActivityLevel || !dietryPreference || !fitnessGoal || !targetWeight || progressRate === undefined || progressRate === null) {
-        console.error('Missing required fields:', {
+      if (
+        !dateOfBirth ||
+        !gender ||
+        !dailyActivityLevel ||
+        !dietryPreference ||
+        !fitnessGoal ||
+        !targetWeight ||
+        progressRate === undefined ||
+        progressRate === null
+      ) {
+        console.error("Missing required fields:", {
           dateOfBirth: !!dateOfBirth,
           gender: !!gender,
           dailyActivityLevel: !!dailyActivityLevel,
           dietryPreference: !!dietryPreference,
           fitnessGoal: !!fitnessGoal,
           targetWeight: !!targetWeight,
-          progressRate: !!progressRate
+          progressRate: !!progressRate,
         });
-        throw new Error('Missing required fields');
+        throw new Error("Missing required fields");
       }
 
       // Calculate height (convert feet + inches to decimal feet for imperial)
       let heightValue = 0;
-      if (height_unit_preference === 'imperial') {
+      if (height_unit_preference === "imperial") {
         if (heightFt === null || heightIn === null) {
-          console.error('Missing imperial height measurement - need both feet and inches');
-          throw new Error('Missing height measurement');
+          console.error(
+            "Missing imperial height measurement - need both feet and inches"
+          );
+          throw new Error("Missing height measurement");
         }
-        heightValue = heightFt + (heightIn / 12); // Convert to decimal feet
+        heightValue = heightFt + heightIn / 12; // Convert to decimal feet
         heightValue = parseFloat(heightValue.toFixed(2)); // Round to 2 decimal places
-        console.log('[GoalsFlow] Height calculation (imperial):', { 
-          heightFt, 
-          heightIn, 
+        console.log("[GoalsFlow] Height calculation (imperial):", {
+          heightFt,
+          heightIn,
           calculatedHeightValue: heightValue,
-          calculation: `${heightFt} + (${heightIn} / 12) = ${heightValue}`
+          calculation: `${heightFt} + (${heightIn} / 12) = ${heightValue}`,
         });
       } else {
         if (heightCm === null) {
-          console.error('Missing metric height measurement');
-          throw new Error('Missing height measurement');
+          console.error("Missing metric height measurement");
+          throw new Error("Missing height measurement");
         }
         heightValue = heightCm;
-        console.log('[GoalsFlow] Height calculation (metric):', { 
-          heightCm, 
+        console.log("[GoalsFlow] Height calculation (metric):", {
+          heightCm,
           calculatedHeightValue: heightValue,
-          calculation: `Using heightCm directly: ${heightCm}`
+          calculation: `Using heightCm directly: ${heightCm}`,
         });
       }
 
       // Calculate weight (pass as is for both units)
       let weightValue = 0;
-      if (weight_unit_preference === 'imperial') {
+      if (weight_unit_preference === "imperial") {
         if (weightLb === null) {
-          console.error('Missing imperial weight measurement');
-          throw new Error('Missing weight measurement');
+          console.error("Missing imperial weight measurement");
+          throw new Error("Missing weight measurement");
         }
         weightValue = weightLb;
-        console.log('[GoalsFlow] Weight calculation (imperial):', { 
-          weightLb, 
+        console.log("[GoalsFlow] Weight calculation (imperial):", {
+          weightLb,
           calculatedWeightValue: weightValue,
-          calculation: `Using weightLb directly: ${weightLb}`
+          calculation: `Using weightLb directly: ${weightLb}`,
         });
       } else {
         if (weightKg === null) {
-          console.error('Missing metric weight measurement');
-          throw new Error('Missing weight measurement');
+          console.error("Missing metric weight measurement");
+          throw new Error("Missing weight measurement");
         }
         weightValue = weightKg;
-        console.log('[GoalsFlow] Weight calculation (metric):', { 
-          weightKg, 
+        console.log("[GoalsFlow] Weight calculation (metric):", {
+          weightKg,
           calculatedWeightValue: weightValue,
-          calculation: `Using weightKg directly: ${weightKg}`
+          calculation: `Using weightKg directly: ${weightKg}`,
         });
       }
 
       // Map and format API fields
       const sexApi = gender?.toLowerCase(); // "male" or "female"
       const dobApi = (() => {
-        if (dateOfBirth && dateOfBirth.includes('/')) {
-          const [day, month, year] = dateOfBirth.split('/');
-          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        if (dateOfBirth && dateOfBirth.includes("/")) {
+          const [day, month, year] = dateOfBirth.split("/");
+          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
         }
         return dateOfBirth;
       })();
@@ -223,15 +265,16 @@ export const GoalsSetupFlow =  () => {
       const activityLevelMap: Record<string, string> = {
         "Not very active": "sedentary",
         "Lightly active": "sedentary",
-        "Active": "moderate",
-        "Very active": "active"
+        Active: "moderate",
+        "Very active": "active",
       };
-      const activityLevelApi = activityLevelMap[dailyActivityLevel] || "sedentary";
+      const activityLevelApi =
+        activityLevelMap[dailyActivityLevel] || "sedentary";
 
       const goalTypeMap: Record<string, string> = {
         "Lose weight": "lose",
         "Maintain weight": "maintain",
-        "Gain weight": "gain"
+        "Gain weight": "gain",
       };
       const goalTypeApi = goalTypeMap[fitnessGoal] || "maintain";
 
@@ -247,15 +290,18 @@ export const GoalsSetupFlow =  () => {
         target_weight: targetWeight,
         height_unit_preference: height_unit_preference, // Use height_unit_preference
         weight_unit_preference: weight_unit_preference, // Use weight_unit_preference
-        weight: weightValue
+        weight: weightValue,
       };
 
-      console.log('Making macro calculation API request with data:', requestData);
+      console.log(
+        "Making macro calculation API request with data:",
+        requestData
+      );
 
       const responseData = await setupMacros(requestData);
-      console.log('Macro calculation successful, response:', responseData);
+      console.log("Macro calculation successful, response:", responseData);
       setMacroCalculationResponse(responseData);
-      
+
       // Update macro targets with the response data
       setMacroTargets({
         carbs: responseData.carbs,
@@ -267,9 +313,12 @@ export const GoalsSetupFlow =  () => {
       // Set hasMacros to true after successful calculation
       setHasMacros(true);
     } catch (error: any) {
-      console.error('Error in calculateMacros:', error);
-      if (!error.message?.includes('No auth token')) {
-        Alert.alert('Error', 'Failed to calculate your macros. Please try again.');
+      console.error("Error in calculateMacros:", error);
+      if (!error.message?.includes("No auth token")) {
+        Alert.alert(
+          "Error",
+          "Failed to calculate your macros. Please try again."
+        );
       }
       throw error;
     }
@@ -296,23 +345,35 @@ export const GoalsSetupFlow =  () => {
   ];
 
   // Macro data for GoalsPersonalizedPlan
-  const macroData = React.useMemo(() => macroTargets
-    ? [
-        { type: 'Carbs', value: macroTargets.carbs, color: '#FFC107' },
-        { type: 'Fat', value: macroTargets.fat, color: '#E283E0' },
-        { type: 'Protein', value: macroTargets.protein, color: '#A59DFE' },
-      ]
-    : [], [macroTargets]);
+  const macroData = React.useMemo(
+    () =>
+      macroTargets
+        ? [
+            { type: "Carbs", value: macroTargets.carbs, color: "#FFC107" },
+            { type: "Fat", value: macroTargets.fat, color: "#E283E0" },
+            { type: "Protein", value: macroTargets.protein, color: "#A59DFE" },
+          ]
+        : [],
+    [macroTargets]
+  );
 
-  const yourPlanSubsteps = React.useMemo(() => [
-    <GoalsPersonalizedPlan 
-      isLoading={isLoading} 
-      key="plan" 
-      macroData={macroData} 
-      calorieTarget={preferences?.calorie_target}
-      macroCalculationResponse={macroCalculationResponse}
-    />,
-  ], [isLoading, macroData, preferences?.calorie_target, macroCalculationResponse]);
+  const yourPlanSubsteps = React.useMemo(
+    () => [
+      <GoalsPersonalizedPlan
+        isLoading={isLoading}
+        key="plan"
+        macroData={macroData}
+        calorieTarget={preferences?.calorie_target}
+        macroCalculationResponse={macroCalculationResponse}
+      />,
+    ],
+    [
+      isLoading,
+      macroData,
+      preferences?.calorie_target,
+      macroCalculationResponse,
+    ]
+  );
 
   const substepComponents = [
     basicInfoSubsteps,
@@ -332,14 +393,14 @@ export const GoalsSetupFlow =  () => {
     //   return !!location;
     // }
     if (majorStep === 0 && subSteps[majorStep] === 2) {
-      if (height_unit_preference === 'imperial') {
+      if (height_unit_preference === "imperial") {
         return heightFt !== null && heightIn !== null;
       } else {
         return heightCm !== null;
       }
     }
     if (majorStep === 0 && subSteps[majorStep] === 3) {
-      if (weight_unit_preference === 'imperial') {
+      if (weight_unit_preference === "imperial") {
         return weightLb !== null;
       } else {
         return weightKg !== null;
@@ -356,15 +417,25 @@ export const GoalsSetupFlow =  () => {
     }
     if (majorStep === 1 && subSteps[majorStep] === 1) {
       if (!targetWeight) return false;
-      if (fitnessGoal === 'Gain weight') {
-        return targetWeight > (weight_unit_preference === 'imperial' ? weightLb ?? 0 : weightKg ?? 0);
+      if (fitnessGoal === "Gain weight") {
+        return (
+          targetWeight >
+          (weight_unit_preference === "imperial"
+            ? weightLb ?? 0
+            : weightKg ?? 0)
+        );
       }
-      if (fitnessGoal === 'Lose weight') {
-        return targetWeight < (weight_unit_preference === 'imperial' ? weightLb ?? 0 : weightKg ?? 0);
+      if (fitnessGoal === "Lose weight") {
+        return (
+          targetWeight <
+          (weight_unit_preference === "imperial"
+            ? weightLb ?? 0
+            : weightKg ?? 0)
+        );
       }
       return true;
     }
-    if (majorStep === 1 && subSteps[majorStep] === 2) { 
+    if (majorStep === 1 && subSteps[majorStep] === 2) {
       if (progressRate === 0) {
         return false;
       }
@@ -378,7 +449,7 @@ export const GoalsSetupFlow =  () => {
   };
 
   const handleContinue = async () => {
-    console.log('handleContinue called with:', {
+    console.log("handleContinue called with:", {
       majorStep,
       subSteps,
       isCurrentSubStepValid: isCurrentSubStepValid(),
@@ -396,26 +467,31 @@ export const GoalsSetupFlow =  () => {
       dailyActivityLevel,
       dietryPreference,
       gender,
-      dateOfBirth
+      dateOfBirth,
     });
 
     if (!isCurrentSubStepValid()) return;
 
     // Check if we're on the last step of the second major step
-    const isLastStepOfSecondMajor = majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
-    console.log('Is last step of second major:', isLastStepOfSecondMajor);
+    const isLastStepOfSecondMajor =
+      majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1;
+    console.log("Is last step of second major:", isLastStepOfSecondMajor);
 
     if (isLastStepOfSecondMajor) {
-      console.log('Marking substep complete and navigating to GoalSetupScreen');
+      console.log("Marking substep complete and navigating to GoalSetupScreen");
       markSubStepComplete(majorStep, subSteps[majorStep]);
-      navigation.navigate('GoalSetupScreen');
+      navigation.navigate("GoalSetupScreen");
       return;
     }
 
     // If on fitness goal step and "Maintain weight" is selected, skip to next major step
-    if (majorStep === 1 && subSteps[majorStep] === 0 && fitnessGoal === 'Maintain weight') {
+    if (
+      majorStep === 1 &&
+      subSteps[majorStep] === 0 &&
+      fitnessGoal === "Maintain weight"
+    ) {
       markSubStepComplete(majorStep, subSteps[majorStep]);
-      navigation.navigate('GoalSetupScreen');
+      navigation.navigate("GoalSetupScreen");
       return;
     }
 
@@ -436,16 +512,16 @@ export const GoalsSetupFlow =  () => {
 
     // Height metrics substep
     if (majorStep === 0 && subSteps[majorStep] === 2) {
-      if (height_unit_preference === 'imperial') {
+      if (height_unit_preference === "imperial") {
         if (heightFt === null || heightIn === null) return;
       } else {
         if (heightCm === null) return;
       }
     }
-    
+
     // Weight metrics substep
     if (majorStep === 0 && subSteps[majorStep] === 3) {
-      if (weight_unit_preference === 'imperial') {
+      if (weight_unit_preference === "imperial") {
         if (weightLb === null) return;
       } else {
         if (weightKg === null) return;
@@ -461,7 +537,7 @@ export const GoalsSetupFlow =  () => {
     if (majorStep === 0 && subSteps[majorStep] === 5) {
       if (!dietryPreference) return;
       markSubStepComplete(majorStep, subSteps[majorStep]);
-      navigation.navigate('GoalSetupScreen');
+      navigation.navigate("GoalSetupScreen");
       return;
     }
 
@@ -480,7 +556,7 @@ export const GoalsSetupFlow =  () => {
     markSubStepComplete(majorStep, subSteps[majorStep]);
     if (subSteps[majorStep] === subStepCounts[majorStep] - 1) {
       // Last substep of current major step
-      navigation.navigate('GoalSetupScreen');
+      navigation.navigate("GoalSetupScreen");
       return;
     }
     setSubStep(majorStep, subSteps[majorStep] + 1);
@@ -490,8 +566,8 @@ export const GoalsSetupFlow =  () => {
   const calculateAge = (dob: string) => {
     // Parse dob in format 'DD/MM/YYYY'
     let birthDate: Date | null = null;
-    if (dob && typeof dob === 'string' && dob.includes('/')) {
-      const [day, month, year] = dob.split('/').map(Number);
+    if (dob && typeof dob === "string" && dob.includes("/")) {
+      const [day, month, year] = dob.split("/").map(Number);
       birthDate = new Date(year, month - 1, day);
     } else {
       birthDate = new Date(dob);
@@ -499,8 +575,11 @@ export const GoalsSetupFlow =  () => {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
     return age;
@@ -509,13 +588,17 @@ export const GoalsSetupFlow =  () => {
   // Calculate progress for each major step
   const getStepProgress = (idx: number) => {
     if (idx < majorStep) return 100;
-    if (idx === majorStep) return ((subSteps[majorStep] + 1) / subStepCounts[majorStep]) * 100;
+    if (idx === majorStep)
+      return ((subSteps[majorStep] + 1) / subStepCounts[majorStep]) * 100;
     return 0;
   };
 
   const handleBack = () => {
+    if (majorStep === 0 && subSteps[0] === 2 && startFrom === "height_metrics") {
+    navigation.navigate("SettingsScreen");
+  }
     const { canGoBack, shouldExitFlow } = handleBackNavigation();
-    
+
     if (shouldExitFlow) {
       // We're at the first step of the first major step
       // Ask user if they want to exit the flow
@@ -525,12 +608,12 @@ export const GoalsSetupFlow =  () => {
         [
           {
             text: "Cancel",
-            style: "cancel"
+            style: "cancel",
           },
           {
             text: "Exit",
-            onPress: () => navigation.navigate('GoalSetupScreen')
-          }
+            onPress: () => navigation.navigate("GoalSetupScreen"),
+          },
         ]
       );
       return;
@@ -539,14 +622,14 @@ export const GoalsSetupFlow =  () => {
     if (canGoBack) {
       if (subSteps[majorStep] === 0) {
         // We're at the first sub-step of a major step (but not the first major step)
-        navigation.navigate('GoalSetupScreen');
+        navigation.navigate("GoalSetupScreen");
       }
       // The store has already handled updating the sub-step if we're not at the first sub-step
     }
   };
 
   return (
-    <CustomSafeAreaView edges={['left', 'right']}>
+    <CustomSafeAreaView edges={["left", "right"]}>
       <View className="flex-1">
         {/* Header and Segmented Progress Bar */}
         <View className="px-4">
@@ -555,13 +638,18 @@ export const GoalsSetupFlow =  () => {
           </View>
           <View className="items-center mt-2 mb-2">
             <View className="bg-aquaSqueeze rounded-full px-5 py-2 flex-row items-center justify-center mb-2">
-              <Image source={IMAGE_CONSTANTS.personAltIcon} className="w-[16px] h-[16px] mr-2" />
-              <Text className="text-base font-normal text-primary">{majorSteps[majorStep]}</Text>
+              <Image
+                source={IMAGE_CONSTANTS.personAltIcon}
+                className="w-[16px] h-[16px] mr-2"
+              />
+              <Text className="text-base font-normal text-primary">
+                {majorSteps[majorStep]}
+              </Text>
             </View>
             {/* Segmented Progress Bar */}
             <View className="flex-row items-center justify-between space-x-2 mt-2 w-full">
               <BackButton onPress={handleBack} />
-              <View className='ml-5 flex-row items-start justify-start gap-3 w-full'>
+              <View className="ml-5 flex-row items-start justify-start gap-3 w-full">
                 {majorSteps.map((label, idx) => (
                   <View key={label}>
                     <LinearProgress
@@ -579,28 +667,31 @@ export const GoalsSetupFlow =  () => {
         </View>
 
         {/* Pager */}
-          <CustomPagerView
-            page={subSteps[majorStep]}
-            scrollEnabled={false}
-            showIndicator={false}
-          >
-            {substepComponents[majorStep]}
-          </CustomPagerView>
+        <CustomPagerView
+          page={subSteps[majorStep]}
+          scrollEnabled={false}
+          showIndicator={false}
+        >
+          {substepComponents[majorStep]}
+        </CustomPagerView>
 
         {/* Continue Button */}
         <View className="absolute bottom-10 left-0 right-0">
           <TouchableOpacity
             disabled={!isCurrentSubStepValid() || isLoading}
-            className={`mx-4 bg-primary ${isCurrentSubStepValid() ? 'opacity-100' : 'opacity-50'} h-[56px] rounded-[1000px] p-4 flex-row items-center justify-center gap-3`}
+            className={`mx-4 bg-primary ${
+              isCurrentSubStepValid() ? "opacity-100" : "opacity-50"
+            } h-[56px] rounded-[1000px] p-4 flex-row items-center justify-center gap-3`}
             onPress={handleContinue}
           >
             {isLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text className='text-white text-sm font-semibold'>
-                {majorStep === 2 && subSteps[majorStep] === subStepCounts[majorStep] - 1
-                  ? 'Confirm'
-                  : 'Next'}
+              <Text className="text-white text-sm font-semibold">
+                {majorStep === 2 &&
+                subSteps[majorStep] === subStepCounts[majorStep] - 1
+                  ? "Confirm"
+                  : "Next"}
               </Text>
             )}
           </TouchableOpacity>
@@ -608,4 +699,4 @@ export const GoalsSetupFlow =  () => {
       </View>
     </CustomSafeAreaView>
   );
-}
+};

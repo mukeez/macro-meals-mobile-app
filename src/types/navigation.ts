@@ -108,4 +108,5 @@ export type RootStackParamList = {
     ManageSubscriptionsScreen: undefined;
     ScannedMealBreakdownScreen: { meal: any };
     AIRecipeDetailsScreen: { recipe: any };
+    AdjustGoalsFlow: undefined;
 };

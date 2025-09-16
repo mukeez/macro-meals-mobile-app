@@ -468,6 +468,55 @@ export default function AccountSettingsScreen() {
     );
   };
 
+  const validateWeightChange = (
+    newWeight: number,
+    unit: "kg" | "lb",
+    onSuccess: () => void
+  ) => {
+    const { fitnessGoal, targetWeight } = useGoalsFlowStore.getState();
+    const weightKg =
+      unit === "kg" ? newWeight : Math.round(newWeight / 2.20462);
+    const targetKg = targetWeight;
+    console.log("the fitness goal is:", fitnessGoal); 
+    console.log("the targert weight is:", targetWeight);
+    if (
+      fitnessGoal?.toLowerCase().includes("lose") &&
+      targetKg !== null &&
+      weightKg <= targetKg
+    ) {
+      Alert.alert(
+        "Weight Conflict",
+        "This weight conflicts with your goal. Please go to Adjust Goals to update your plan.",
+        [{ text: "OK" }]
+      );
+      return false;
+    }
+    if (
+      fitnessGoal?.toLowerCase().includes("gain") &&
+      targetKg !== null &&
+      weightKg >= targetKg
+    ) {
+      Alert.alert(
+        "Weight Conflict",
+        "This weight conflicts with your goal. Please go to Adjust Goals to update your plan.",
+        [{ text: "OK" }]
+      );
+      return false;
+    }
+
+    Alert.alert(
+      "Weight Updated",
+      "Updating your weight may affect your daily targets. You can review these in Adjust Goals or Adjust Targets.",
+      [
+        {
+          text: "OK",
+          onPress: onSuccess,
+        },
+      ]
+    );
+    return true;
+  };
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
@@ -913,8 +962,13 @@ export default function AccountSettingsScreen() {
                       }}
                       itemStyle={{ fontSize: 18, color: "white" }}
                       onValueChange={(value) => {
-                        setWeightKg(value);
-                        // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
+                        if (value !== null) {
+                          validateWeightChange(value, "kg", () =>
+                            setWeightKg(value)
+                          );
+                        } else {
+                          setWeightKg(null);
+                        }
                       }}
                       dropdownIconColor="#6b7280"
                     >
@@ -961,8 +1015,13 @@ export default function AccountSettingsScreen() {
                       }}
                       itemStyle={{ fontSize: 18, color: "white" }}
                       onValueChange={(value) => {
-                        setWeightLb(value);
-                        // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
+                        if (value !== null) {
+                          validateWeightChange(value, "lb", () =>
+                            setWeightLb(value)
+                          );
+                        } else {
+                          setWeightLb(null);
+                        }
                       }}
                       dropdownIconColor="#6b7280"
                     >
@@ -1294,16 +1353,21 @@ export default function AccountSettingsScreen() {
                         weight_unit_preference === "metric" &&
                         tempWeightKg !== null
                       ) {
-                        setWeightKg(tempWeightKg);
-                        // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
+                        validateWeightChange(tempWeightKg, "kg", () => {
+                          setWeightKg(tempWeightKg);
+                          setShowWeightPicker(false);
+                        });
                       } else if (
                         weight_unit_preference === "imperial" &&
                         tempWeightLb !== null
                       ) {
-                        setWeightLb(tempWeightLb);
-                        // Note: useSyncBodyMetricToBackend hook will automatically sync to backend
+                        validateWeightChange(tempWeightLb, "lb", () => {
+                          setWeightLb(tempWeightLb);
+                          setShowWeightPicker(false);
+                        });
+                      } else {
+                        setShowWeightPicker(false);
                       }
-                      setShowWeightPicker(false);
                     }}
                     style={{ paddingVertical: 8, paddingHorizontal: 16 }}
                   >

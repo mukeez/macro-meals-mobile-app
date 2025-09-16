@@ -55,7 +55,7 @@ export const SignupScreen: React.FC = () => {
       }
     });
   }
-}, [mixpanel]);
+}, []);
 
   const navigation = useNavigation<NavigationProp>();
 
