@@ -97,6 +97,12 @@ export const DashboardScreen: React.FC = () => {
   const mixpanel = useMixpanel();
   const eventsFired = useRef(false);
 
+useEffect(() => {
+  if (isFocused) {
+    fetchUserData(); // This refetches macros and profile info
+  }
+}, [isFocused]);
+
   // Calculate today's total macros from loggedMeals
   const todayMealsSum = loggedMeals.reduce(
     (acc: any, meal: any) => ({
