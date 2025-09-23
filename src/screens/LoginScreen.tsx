@@ -31,6 +31,8 @@ import { useMixpanel } from "@macro-meals/mixpanel";
 import { IsProContext } from "src/contexts/IsProContext";
 import revenueCatService from "../services/revenueCatService";
 import { sentryService } from "@macro-meals/sentry_service/src";
+import { Linking } from "react-native";
+import Constants from "expo-constants";
 // import { macroMealsCrashlytics } from '@macro-meals/crashlytics';
 
 // type RootStackParamList = {
@@ -140,7 +142,7 @@ export const LoginScreen: React.FC = () => {
         // Store the profile in the store for future use
         const { setProfile } = useStore.getState();
         setProfile(profile);
-        console.log('✅ Profile stored in store after login:', profile);
+        console.log("✅ Profile stored in store after login:", profile);
 
         // Reset steps before setting other states
         resetSteps();
@@ -171,8 +173,8 @@ export const LoginScreen: React.FC = () => {
             $email: profile.email,
             $displayName: `${profile.first_name} ${profile.last_name}`,
           });
-          console.log('✅ RevenueCat user ID set after login:', profile.id);
-          
+          console.log("✅ RevenueCat user ID set after login:", profile.id);
+
           // Check subscription status from RevenueCat (source of truth)
           const { syncSubscriptionStatus } = await import(
             "../services/subscriptionChecker"
@@ -306,6 +308,16 @@ export const LoginScreen: React.FC = () => {
       properties: { platform: Platform.OS },
     });
     (navigation as any).navigate("ForgotPasswordScreen");
+  };
+  const handleContactSupport = () => {
+    const subject = encodeURIComponent("MacroMeals App Support Request");
+    const body = encodeURIComponent(
+      `Please describe your issue here.\n\nDevice Info:\nPlatform: ${
+        Platform.OS
+      }\nApp Version: ${Constants.manifest.version || "unknown"}`
+    );
+    const mailto = `mailto:support@macromealsapp.com?subject=${subject}&body=${body}`;
+    Linking.openURL(mailto);
   };
 
   // const handleGoogleLogin = async () => {
@@ -502,6 +514,16 @@ export const LoginScreen: React.FC = () => {
                   Sign up
                 </Text>
               </Text>
+            </View>
+            <View className="items-center mt-8 mb-4">
+              <TouchableOpacity
+                onPress={handleContactSupport}
+                accessibilityRole="link"
+              >
+                <Text className="text-[13px] text-primary underline text-center">
+                  Need Help? Contact Support
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
