@@ -180,3 +180,4 @@ stallion-temp-*/
 *.jsbundle
 *.hbc
 proguard-merged-config.txt
+.cursor/
