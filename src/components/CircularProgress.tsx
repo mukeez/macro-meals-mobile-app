@@ -12,6 +12,7 @@ interface CircularProgressProps {
   label?: string;
   showLabel?: boolean;
   textSize?: number;
+  letterSpacing?: string;
 }
 
 export function CircularProgress({
@@ -24,6 +25,7 @@ export function CircularProgress({
   label = 'Consumed',
   showLabel = true,
   textSize = 32,
+  letterSpacing = '', // 'tracking-tight'
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -53,13 +55,12 @@ export function CircularProgress({
           strokeDasharray={`${circumference} ${circumference}`}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          rotation="-90"
-          origin={`${size / 2}, ${size / 2}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
       <View className='absolute flex-1 items-center justify-center'>
         <View className='flex-1 items-center justify-center'>
-          <Text className={`text-[${textSize}px] text-center font-semibold`} style={{ fontSize: textSize }}>{consumed}</Text>
+          <Text className={`text-[${textSize}px] ${letterSpacing} text-center font-semibold`} style={{ fontSize: textSize }}>{consumed}</Text>
           {showLabel && <Text className='text-sm text-black text-center font-medium'>{label}</Text>}
         </View>
       </View>

@@ -31,6 +31,8 @@ import { sentryService, Sentry } from '@macro-meals/sentry_service';
 // Polyfill crypto.getRandomValues for Hermes before any Sentry/uuid usage in release
 import 'react-native-get-random-values';
 import { UpdateReminderModal } from './src/components/UpdateReminderModal';
+import MapsService from './packages/maps_service/src/maps_service';
+
 // Initialize Sentry via internal service (native enabled only in non-dev by default)
 sentryService.init({
     dsn: (Config.SENTRY_DSN as string) || (Config as any).SENTRY_DNS || '',
@@ -199,6 +201,16 @@ export function App() {
                 }
             }
             await initializeFirebase();
+
+            // Initialize Maps Service
+            async function initializeMapsService() {
+                await MapsService.initialize({
+                    googleMapsApiKey: Config.GOOGLE_MAPS_API_KEY as string,
+                    enableLocationTracking: true,
+                    debug: __DEV__
+                });
+            }
+            await initializeMapsService();
             
             // Initialize RevenueCat
             try {

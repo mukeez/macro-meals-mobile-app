@@ -473,11 +473,3 @@ export const MapProvider: React.FC<MapProviderProps> = ({
   );
 };
 
-// Hook to use the map context
-export const useMap = (): MapContextValue => {
-  const context = useContext(MapContext);
-  if (!context) {
-    throw new Error('useMap must be used within a MapProvider');
-  }
-  return context;
-};

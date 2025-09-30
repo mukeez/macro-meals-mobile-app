@@ -3,6 +3,7 @@ import FirebaseCore
 import React
 import ReactAppDependencyProvider
 import react_native_stallion
+import GoogleMaps
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -25,6 +26,16 @@ public class AppDelegate: ExpoAppDelegate {
 
 #if os(iOS) || os(tvOS)
     window = UIWindow(frame: UIScreen.main.bounds)
+    
+    // Initialize Google Maps
+    // Use the Google Maps API key from environment variables
+    if let googleMapsApiKey = ProcessInfo.processInfo.environment["GOOGLE_MAPS_API_KEY"] {
+        GMSServices.provideAPIKey(googleMapsApiKey)
+    } else {
+        // Fallback to hardcoded key for development
+        GMSServices.provideAPIKey("AIzaSyC4ai-iWprvfuWB52UeFb62TirjBytkI8k")
+    }
+    
 // @generated begin @react-native-firebase/app-didFinishLaunchingWithOptions - expo prebuild (DO NOT MODIFY) sync-10e8520570672fd76b2403b7e1e27f5198a6349a
 FirebaseApp.configure()
 // @generated end @react-native-firebase/app-didFinishLaunchingWithOptions

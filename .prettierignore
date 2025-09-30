@@ -1,0 +1,12 @@
+node_modules/
+android/
+ios/
+dist/
+build/
+*.config.js
+metro.config.js
+babel.config.js
+yarn.lock
+package-lock.json
+.expo/
+.expo-shared/
