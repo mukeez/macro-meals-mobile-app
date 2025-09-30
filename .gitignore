@@ -86,6 +86,7 @@ stallion-temp-*/
 # IDEs and editors
 .idea/
 .vscode/
+.cursor/
 *.suo
 *.ntvs*
 *.njsproj

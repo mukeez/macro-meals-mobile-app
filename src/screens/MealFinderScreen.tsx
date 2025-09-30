@@ -1,19 +1,29 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, TextInput, Dimensions } from 'react-native';
-import CustomSafeAreaView from '../components/CustomSafeAreaView';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { CircularProgress } from '../components/CircularProgress';
-import { IMAGE_CONSTANTS } from '../constants/imageConstants';
-import { useNavigation } from '@react-navigation/native';
-import { locationService } from '../services/locationService';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Modalize } from 'react-native-modalize';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import { locationService } from '../services/locationService';
 import useStore from '../store/useStore';
+import { RootStackParamList } from '../types/navigation';
 
+import { MealFinderListView } from '../components/meal_finder_components/MealFinderListView';
+import { MealFinderMapView } from '../components/meal_finder_components/MealFinderMapView';
+import { RemainingTodayView } from '../components/meal_finder_components/RemainingTodayView';
 import { mealService } from '../services/mealService';
 import { Meal } from '../types';
-
 
 interface MacroData {
   label: 'Protein' | 'Carbs' | 'Fat';
@@ -29,30 +39,30 @@ interface MockLocation {
 }
 
 const mockLocations: MockLocation[] = [
-    {
-        label: 'Eiffel Tower',
-        description: 'Champ de Mars, Paris, France',
-        latitude: 48.8584,
-        longitude: 2.2945,
-      },
-      {
-        label: 'Sydney Opera House',
-        description: 'Bennelong Point, Sydney NSW, Australia',
-        latitude: -33.8568,
-        longitude: 151.2153,
-      },
-      {
-        label: 'Shibuya Crossing',
-        description: 'Shibuya City, Tokyo, Japan',
-        latitude: 35.6595,
-        longitude: 139.7005,
-      },
-      {
-        label: 'Table Mountain',
-        description: 'Cape Town, South Africa',
-        latitude: -33.9628,
-        longitude: 18.4098,
-      },
+  {
+    label: 'Eiffel Tower',
+    description: 'Champ de Mars, Paris, France',
+    latitude: 48.8584,
+    longitude: 2.2945,
+  },
+  {
+    label: 'Sydney Opera House',
+    description: 'Bennelong Point, Sydney NSW, Australia',
+    latitude: -33.8568,
+    longitude: 151.2153,
+  },
+  {
+    label: 'Shibuya Crossing',
+    description: 'Shibuya City, Tokyo, Japan',
+    latitude: 35.6595,
+    longitude: 139.7005,
+  },
+  {
+    label: 'Table Mountain',
+    description: 'Cape Town, South Africa',
+    latitude: -33.9628,
+    longitude: 18.4098,
+  },
   {
     label: 'Kakum National Park',
     description: 'Rainforest canopy walkway, Central Region, Ghana',
@@ -68,7 +78,7 @@ const mockLocations: MockLocation[] = [
   {
     label: 'Kwame Nkrumah Mausoleum',
     description: 'Memorial park, Accra, Ghana',
-    latitude: 5.5560,
+    latitude: 5.556,
     longitude: -0.1969,
   },
   {
@@ -80,7 +90,7 @@ const mockLocations: MockLocation[] = [
   {
     label: 'Kumasi Central Market',
     description: 'Large open-air market, Kumasi, Ghana',
-    latitude: 6.6930,
+    latitude: 6.693,
     longitude: -1.6244,
   },
   {
@@ -123,42 +133,51 @@ const defaultMacroData: MacroData[] = [
   { label: 'Fat', value: 0, color: '#FF69B4' },
 ];
 
-const macroTypeToPreferenceKey = {
-  'Protein': 'protein_target',
-  'Carbs': 'carbs_target',
-  'Fat': 'fat_target',
-} as const;
+type TabType = 'list' | 'map';
 
 const MealFinderScreen: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'MealFinderScreen'>>();
-  const macrosPreferences = useStore((state) => state.macrosPreferences);
-  const token = useStore((state) => state.token);
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, 'MealFinderScreen'>
+    >();
+  const macrosPreferences = useStore(state => state.macrosPreferences);
+  const token = useStore(state => state.token);
   // const [initializing, setInitializing] = useState<boolean>(false);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [currentLocation, setCurrentLocation] = useState<string>('Getting location...');
+  const [_currentLocation, setCurrentLocation] = useState<string>(
+    'Getting location...'
+  );
+  const [currentLocationCoords, setCurrentLocationCoords] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [locationLoading, setLocationLoading] = useState<boolean>(true);
-  const [selectedLocation, setSelectedLocation] = useState<string>('Getting location...');
+  const [selectedLocation, setSelectedLocation] = useState<string>(
+    'Getting location...'
+  );
   const [search, setSearch] = useState<string>('');
-  const [filteredLocations, setFilteredLocations] = useState<MockLocation[]>(mockLocations);
+  const [filteredLocations, setFilteredLocations] =
+    useState<MockLocation[]>(mockLocations);
   const modalizeRef = useRef<Modalize>(null);
   const [macroData, setMacroData] = useState<MacroData[]>(defaultMacroData);
-  const [consumed, setConsumed] = useState({
+  const [_consumed, setConsumed] = useState({
     protein: 0,
     carbs: 0,
     fat: 0,
     calories: 0,
   });
+  const [activeTab, setActiveTab] = useState<TabType>('list');
+  const tabOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const fetchProgress = async () => {
       try {
         if (!token) {
-          throw new Error("Authentication token not available");
+          throw new Error('Authentication token not available');
         }
 
         const progressData = await mealService.getDailyProgress();
-        console.log('MEAL FINDER - Progress Data:', progressData);
 
         const consumedValues = {
           protein: progressData.logged_macros.protein || 0,
@@ -193,127 +212,159 @@ const MealFinderScreen: React.FC = () => {
     fetchProgress();
   }, [token]);
 
-  useEffect(() => {
-    console.log('MEAL FINDER - Macros Preferences:', macrosPreferences);
-    console.log('MEAL FINDER - Consumed:', consumed);
-  }, [macrosPreferences, consumed]);
+  const fetchLocationAndSuggestions = async () => {
+    // setInitializing(true);
+    try {
+      // 1. Get location
+      const hasPermission = await locationService.requestPermissions();
+      if (!hasPermission) {
+        Alert.alert(
+          'Location Permission Required',
+          'Location access is needed to find nearby meals. Please enable location services in your device settings.',
+          [
+            {
+              text: 'Go Back',
+              onPress: () => navigation.goBack(),
+              style: 'cancel',
+            },
+            {
+              text: 'Settings',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+        // setInitializing(false);
+        return;
+      }
+      const location = await locationService.getCurrentLocation();
+      if (location) {
+        const address = await locationService.reverseGeocode(
+          location.coords.latitude,
+          location.coords.longitude
+        );
+        const shortAddress = address.split(',')[0].trim();
+        setCurrentLocation(address);
+        setSelectedLocation(shortAddress);
 
-    const fetchLocationAndSuggestions = async () => {
-      // setInitializing(true);
-      try {
-        // 1. Get location
-        const hasPermission = await locationService.requestPermissions();
-        if (!hasPermission) {
-          Alert.alert(
-            'Location Permission Required',
-            'Location access is needed to find nearby meals. Please enable location services in your device settings.',
-            [
-              {
-                text: 'Go Back',
-                onPress: () => navigation.goBack(),
-                style: 'cancel',
-              },
-              {
-                text: 'Settings',
-                onPress: () => navigation.goBack(),
-              },
-            ]
-          );
-          // setInitializing(false);
+        // Store coordinates for map
+        setCurrentLocationCoords({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        // Skip if no coordinates
+        if (
+          typeof location.coords.latitude !== 'number' ||
+          typeof location.coords.longitude !== 'number'
+        ) {
+          setError('Location coordinates not available');
+          setLocationLoading(false);
           return;
         }
-        const location = await locationService.getCurrentLocation();
-        if (location) {
-          const address = await locationService.reverseGeocode(
-            location.coords.latitude,
-            location.coords.longitude
-          );
-          const shortAddress = address.split(',')[0].trim();
-          setCurrentLocation(address);
-          console.log('MEAL FINDER - Current Location:', currentLocation);
-          setSelectedLocation(shortAddress);
 
-          // Skip if no coordinates
-          if (typeof location.coords.latitude !== 'number' || typeof location.coords.longitude !== 'number') {
-            setError('Location coordinates not available');
-            setLocationLoading(false);
-            return;
-          }
-
-
-          // 2. Fetch meal suggestions
-          const requestBody = {
-            calories: macrosPreferences?.calorie_target || 0,
-            carbs: macrosPreferences?.carbs_target || 0,
-            protein: macrosPreferences?.protein_target || 0,
-            fat: macrosPreferences?.fat_target || 0,
-            dietary_preference: '',  // These should come from a different store value
-            dietary_restrictions: [], // These should come from a different store value
-            latitude: location.coords.latitude,
-            location: address,
-            longitude: location.coords.longitude,
-          };
-          setLocationLoading(true);
-          try {
-            const suggestedMeals = await mealService.suggestAiMeals(requestBody);
-            const mealList: Meal[] = suggestedMeals.map((meal: any) => ({
-              id: meal.id || String(Math.random()),
-              name: meal.name,
-              macros: {
-                calories: meal.macros.calories,
-                carbs: meal.macros.carbs,
-                fat: meal.macros.fat,
-                protein: meal.macros.protein,
-              },
-              restaurant: {
-                name: meal.restaurant.name,
-                location: meal.restaurant.location,
-              },
-              imageUrl: meal.imageUrl,
-              description: meal.description || '',
-              price: meal.price,
-              distance: meal.distance,
-              date: new Date().toISOString(),
-              mealType: meal.meal_type || 'lunch',
-              matchScore: meal.match_score || 0,
-            }));
-            setMeals(mealList);
-            setError(null);
-          } catch (apiError: any) {
-            console.error('API Error:', apiError);
-            setError('Failed to fetch meal suggestions.');
-            setMeals([]);
-          } finally {
-            setLocationLoading(false);
-          }
-        } else {
-          setCurrentLocation('Location unavailable');
-          setSelectedLocation('Location unavailable');
+        // 2. Fetch meal suggestions
+        const requestBody = {
+          calories: macrosPreferences?.calorie_target || 0,
+          carbs: macrosPreferences?.carbs_target || 0,
+          protein: macrosPreferences?.protein_target || 0,
+          fat: macrosPreferences?.fat_target || 0,
+          dietary_preference: '', // These should come from a different store value
+          dietary_restrictions: [], // These should come from a different store value
+          latitude: location.coords.latitude,
+          location: address,
+          longitude: location.coords.longitude,
+        };
+        setLocationLoading(true);
+        try {
+          const suggestedMeals = await mealService.suggestAiMeals(requestBody);
+          const mealList: Meal[] = suggestedMeals.map((meal: any) => ({
+            id: meal.id || String(Math.random()),
+            name: meal.name,
+            macros: {
+              calories: meal.macros.calories,
+              carbs: meal.macros.carbs,
+              fat: meal.macros.fat,
+              protein: meal.macros.protein,
+            },
+            restaurant: {
+              name: meal.restaurant.name,
+              location: meal.restaurant.location,
+            },
+            imageUrl: meal.imageUrl,
+            description: meal.description || '',
+            price: meal.price,
+            distance: meal.distance,
+            date: new Date().toISOString(),
+            mealType: meal.meal_type || 'lunch',
+            matchScore: meal.match_score || 0,
+          }));
+          setMeals(mealList);
+          setError(null);
+        } catch (apiError: any) {
+          console.error('API Error:', apiError);
+          setError('Failed to fetch meal suggestions.');
           setMeals([]);
+        } finally {
+          setLocationLoading(false);
         }
-      } catch (error) {
-        console.error('Location Error:', error);
+      } else {
         setCurrentLocation('Location unavailable');
         setSelectedLocation('Location unavailable');
         setMeals([]);
       }
-    };
+    } catch (error) {
+      console.error('Location Error:', error);
+      setCurrentLocation('Location unavailable');
+      setSelectedLocation('Location unavailable');
+      setMeals([]);
+    }
+  };
 
   const handleRetry = () => {
     fetchLocationAndSuggestions();
+  };
+
+  const handleScrollBegin = () => {
+    if (activeTab === 'list') {
+      Animated.timing(tabOpacity, {
+        toValue: 0.2,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const handleScrollEnd = () => {
+    if (activeTab === 'list') {
+      Animated.timing(tabOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   useEffect(() => {
     fetchLocationAndSuggestions();
   }, []);
 
+  // Reset tab opacity when switching tabs
+  useEffect(() => {
+    Animated.timing(tabOpacity, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [activeTab, tabOpacity]);
+
   useEffect(() => {
     setFilteredLocations(
       search.trim() === ''
         ? mockLocations
-        : mockLocations.filter(loc =>
-            loc.label.toLowerCase().includes(search.toLowerCase()) ||
-            loc.description.toLowerCase().includes(search.toLowerCase())
+        : mockLocations.filter(
+            loc =>
+              loc.label.toLowerCase().includes(search.toLowerCase()) ||
+              loc.description.toLowerCase().includes(search.toLowerCase())
           )
     );
   }, [search]);
@@ -339,22 +390,31 @@ const MealFinderScreen: React.FC = () => {
     setLocationLoading(true);
 
     // Skip if no coordinates
-    if (typeof location.latitude !== 'number' || typeof location.longitude !== 'number') {
-        setError('Location coordinates not available');
-        setLocationLoading(false);
-        return;
+    if (
+      typeof location.latitude !== 'number' ||
+      typeof location.longitude !== 'number'
+    ) {
+      setError('Location coordinates not available');
+      setLocationLoading(false);
+      return;
     }
 
+    // Store coordinates for map
+    setCurrentLocationCoords({
+      latitude: location.latitude,
+      longitude: location.longitude,
+    });
+
     const requestBody = {
-        calories: macrosPreferences?.calorie_target || 0,
-        carbs: macrosPreferences?.carbs_target || 0,
-        protein: macrosPreferences?.protein_target || 0,
-        fat: macrosPreferences?.fat_target || 0,
-        dietary_preference: '',  // These should come from a different store value
-        dietary_restrictions: [], // These should come from a different store value
-        latitude: location.latitude,
-        location: location.label,
-        longitude: location.longitude,
+      calories: macrosPreferences?.calorie_target || 0,
+      carbs: macrosPreferences?.carbs_target || 0,
+      protein: macrosPreferences?.protein_target || 0,
+      fat: macrosPreferences?.fat_target || 0,
+      dietary_preference: '', // These should come from a different store value
+      dietary_restrictions: [], // These should come from a different store value
+      latitude: location.latitude,
+      location: location.label,
+      longitude: location.longitude,
     };
 
     try {
@@ -391,224 +451,273 @@ const MealFinderScreen: React.FC = () => {
     }
   };
 
-
-
   return (
-    <CustomSafeAreaView edges={['left', 'right']} paddingOverride={{bottom: -100}}  className="flex-1">
-      <View className="flex-1 bg-grey">
-        {/* Header */}
-        <View className="flex-row bg-white items-center justify-between px-5 pt-4 pb-5">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]">
-            <Text className="text-[22px]">‹</Text>
-          </TouchableOpacity>
-          <Text className="text-[20px] font-semibold text-[#222] text-center">Meal Finder</Text>
-          <View style={{ width: 32 }} />
+    // <CustomSafeAreaView edges={['left', 'right', 'top']} className="flex-1">
+    <View className="flex-1">
+      {/* Map Background - Only show when Map tab is active */}
+      {activeTab === 'map' && (
+        <View className="absolute inset-0">
+          <MealFinderMapView
+            meals={meals}
+            locationLoading={locationLoading}
+            error={error}
+            onRetry={handleRetry}
+            navigation={navigation}
+            currentLocation={currentLocationCoords || undefined}
+          />
         </View>
-            <View className="flex-1">
+      )}
 
-            <ScrollView className="pb-8">
-                <View className="flex-row items-center mt-4 mb-5 px-5 gap-2">
-                <Image source={IMAGE_CONSTANTS.locationGray} className="w-[40px] h-[40px] rounded-full" />
-                <TouchableOpacity onPress={openLocationSheet} className="flex-col flex-1 items-start" activeOpacity={0.7}>
-                    <Text className="text-sm font-medium text-[#222]">Current location</Text>
-                    <View className="flex-row items-center">
-                    <Text className="mt-2 text-base font-semibold text-primary mr-1">{selectedLocation}</Text>
-                    <Ionicons name="chevron-down" size={18} color="#222" />
-                    </View>
-                    {/* {locationLoading && <ActivityIndicator size="small" color="#19a28f" />} */}
-                </TouchableOpacity>
-                </View>
-                {/* Macros Donut Row */}
-                <View className="flex-col items-start bg-white mt-3 px-5 pt-3 pb-10 mb-4">
-                
-                <Text className="text-base text-black mt-2 text-center mb-4 font-semibold">Remaining today</Text>
-                <View className="flex-row w-full justify-between items-center">
-                    {macroData.map((macro) => {
-                      const target = macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 0;
-                      const consumed = macro.value;
-                      const remaining = Math.max(0, target - consumed);
-                      const progress = target > 0 ? ((target - remaining) / target) * 100 : 0;
-                      
-                      console.log(`${macro.label}:`, {
-                        target,
-                        consumed,
-                        remaining,
-                        progress,
-                        macrosPreferences,
-                        macroTypeToPreferenceKey: macroTypeToPreferenceKey[macro.label]
-                      });
-                      
-                      return (
-                        <View key={macro.label}>
-                          <View className="h-[100px] w-[100px] relative">
-                            <CircularProgress
-                              size={100}
-                              strokeWidth={12}
-                              textSize={16}
-                              consumed={`${remaining}g`}
-                              total={target}
-                              color={macro.color}
-                              backgroundColor="#d0e8d1"
-                              label={macro.label}
-                              showLabel={false}
-                            />
-                            <Text className="text-sm text-black mt-2 text-center font-medium">{macro.label}</Text>
-                          </View>
-                        </View>
-                      );
-                    })}
-                </View>
-                </View>
-
-                <Text className="text-base font-semibold text-[#222] mx-5 my-5">Nearby Suggestions</Text>
-                {locationLoading ? (
-                  <View className="flex items-center justify-center py-8">
-                    <ActivityIndicator size="large" color="#19a28f" />
-                    <Text className="text-[#888] mt-2">Finding nearby meals...</Text>
-                  </View>
-                ) : (
-                  <>
-                    {error ? (
-                      <View className="flex items-center justify-center py-8">
-                        <Image source={IMAGE_CONSTANTS.warningIcon} className="w-[48px] h-[48px] mb-3 opacity-50" />
-                        <Text className="text-[#888] text-center text-base">Unable to load meal suggestions</Text>
-                        <Text className="text-[#888] text-center text-sm mt-1">Please check your connection and try again</Text>
-                        <TouchableOpacity 
-                          onPress={handleRetry} 
-                          className="mt-4 px-6 py-2 bg-primaryLight rounded-full"
-                        >
-                          <Text className="text-white font-medium">Retry</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <>
-                        {meals.length === 0 && (
-                <Text className="text-center text-[#888] mt-6">No nearby meal suggestions found.</Text>
-                )}
-                        {meals.map((meal, idx) => (
-                <TouchableOpacity 
-                    key={idx} 
-                    onPress={() => navigation.navigate('MealFinderBreakdownScreen', { meal })}
-                    className="flex-row bg-white rounded-xl mx-5 mb-6 px-4 py-4 shadow-sm"
-                >
-                    <View className="flex-row items-center justify-center bg-cornflowerBlue h-[48px] w-[48px] rounded-full mr-3 flex-shrink-0">
-                        <Image source={meal.imageUrl ? { uri: String(meal.imageUrl) } : IMAGE_CONSTANTS.restaurantIcon} className="w-[20px] h-[20px] rounded-full" />
-                    </View>
-                    
-                    <View className="flex-1 gap-1 pr-2">
-                        <View className="flex-col justify-start">
-                          <View className="flex-row items-start justify-between">
-                            <Text className="text-sm font-medium text-[#222] mb-1 flex-1 mr-2" numberOfLines={2}>{meal.name}</Text>
-                            {meal.matchScore && meal.matchScore > 0 && (
-                              <View className='bg-primary flex-row items-center justify-center rounded-2xl px-2.5 py-1.5 flex-shrink-0'>
-                                <Text className="text-xs font-medium text-white">{meal.matchScore}% match</Text>
-                              </View>
-                            )}
-                          </View>
-                            <Text className="text-sm font-normal text-[#222] mb-1" numberOfLines={1} style={{ flexWrap: 'wrap' }}>{meal.restaurant.name}</Text>
-                            {meal.restaurant?.location ? (
-                              <Text 
-                                  className="text-sm font-normal text-[#222] mb-1" 
-                                  numberOfLines={1}
-                                  style={{ flexWrap: 'wrap' }}
-                              >
-                                  {meal.restaurant.location.split(',').slice(0, -1).join(',') ?? ''}
-                              </Text>
-                          ) : null}
-                        </View>
-                        
-                        <View className="flex-row items-center gap-2">
-                            <View className="flex-row items-center gap-1">
-                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
-                                    <Text className="text-white text-[10px] text-center font-medium">
-                                    C
-                                    </Text>
-                                </View>
-                                <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                    {meal.macros.carbs}g
-                                </Text>
-                                </View>
-
-                                <View className="flex-row items-center gap-1">
-                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
-                                    <Text className="text-white text-[10px] text-center font-medium">
-                                    F
-                                    </Text>
-                                </View>
-                                <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                    {meal.macros.fat}g
-                                </Text>
-                                </View>
-
-                                <View className="flex-row items-center gap-1">
-                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
-                                    <Text className="text-white text-[10px] text-center font-medium">
-                                    P
-                                    </Text>
-                                </View>
-                                <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                    {meal.macros.protein}g
-                                </Text>
-                                </View>
-                        </View>
-                    </View>
-                </TouchableOpacity>
-                ))}
-                        </>
-                      )}
-                  </>
-                )}
-             
-            </ScrollView>
-            <Modalize
-                ref={modalizeRef}
-                modalHeight={SCREEN_HEIGHT * 0.6}
-                handlePosition="inside"
-                withHandle={true}
-                modalStyle={{
-                    backgroundColor: '#fff',
-                    padding: 0,
-                    borderBottomLeftRadius: 0,
-                    borderBottomRightRadius: 0,
-                    margin: 0,
-                }}
-                >
-                <View className="px-5 pt-2 pb-5">
-                    <Text className="font-semibold text-lg mt-8 mb-4">Delivery address</Text>
-                    <View className="flex-row items-center mb-4 bg-gray-100 rounded-lg px-3">
-                    <Ionicons name="search" size={18} color="#888" style={{ marginRight: 6 }} />
-                    <TextInput
-                        placeholder="Enter a new address"
-                        value={search}
-                        onChangeText={setSearch}
-                        className="flex-1 h-[48px] rounded-2xl text-base text-[#222]"
-                        placeholderTextColor="#888"
-                    />
-                    </View>
-                    <TouchableOpacity onPress={handleSelectCurrentLocation} className="flex-row items-center mb-5">
-                        <Image source={IMAGE_CONSTANTS.nearbyLocationIcon} className="w-[14px] h-[14px] rounded-full" />
-                        <Text className="text-primary ml-3 font-medium underline">Use your current location</Text>
-                    </TouchableOpacity>
-                    {filteredLocations.map((loc, idx) => (
-                    <React.Fragment key={idx}>
-                        <TouchableOpacity onPress={() => handleSelectMockLocation(loc)} className="flex-row items-center">
-                        <Image source={IMAGE_CONSTANTS.locationIcon} className="w-[32px] h-[32px] mr-4 rounded-full" />
-                        <View>
-                            <Text className="text-sm font-medium text-[#222]">{loc.label}</Text>
-                            <Text className="text-mediumGrey text-xs">{loc.description}</Text>
-                        </View>
-                        </TouchableOpacity>
-                        {idx !== filteredLocations.length - 1 && (
-                            <View className="h-px bg-gray-200 my-5" />
-                        )}
-                    </React.Fragment>
-                    ))}
-                </View>
-                </Modalize>
-          </View>
+      {/* Header - Transparent when Map tab is active */}
+      <View
+        className={`flex-row items-center justify-between px-5 pt-16 pb-5 ${
+          activeTab === 'map' ? 'bg-transparent' : 'bg-white'
+        }`}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          className={`flex-row w-8 h-8 rounded-full bg-white justify-center items-center`}
+        >
+          <Ionicons
+            name="chevron-back"
+            size={16}
+            className={`text-[22px] text-black`}
+          ></Ionicons>
+        </TouchableOpacity>
+        <Text className={`text-[20px] text-[#222] font-semibold text-center`}>
+          Meal Finder
+        </Text>
+        <View style={{ width: 32 }} />
       </View>
-    </CustomSafeAreaView>
+
+      {/* Search Bar - Only show when Map tab is active */}
+      {activeTab === 'map' && (
+        <View className="px-5">
+          <View className="flex-row items-center bg-white/90 rounded-3xl px-4 py-3 shadow-lg">
+            <Ionicons name="search" size={20} color="#666" />
+            <TextInput
+              placeholder="Search meals and restaurants"
+              className="flex-1 ml-3 placeholder:text-xs placeholder:text-[#4F4F4FCC]"
+              placeholderTextColor="#888"
+            />
+            <Image source={IMAGE_CONSTANTS.mapFilterIcon} className="w-5 h-5" />
+          </View>
+        </View>
+      )}
+
+      {/* List View - Only show when List tab is active */}
+      {activeTab === 'list' && (
+        <View className="flex-1 px-5 mt-8">
+          {/* Search Bar for List Tab */}
+          <View className="mb-4">
+            <View className="flex-row items-center bg-white px-4 py-3 shadow-sm rounded-3xl">
+              <Ionicons name="search" size={20} color="#666" />
+              <TextInput
+                placeholder="Search meals and restaurants"
+                className="flex-1 ml-3 placeholder:text-xs placeholder:text-[#4F4F4FCC]"
+                placeholderTextColor="#888"
+              />
+              <Image
+                source={IMAGE_CONSTANTS.mapFilterIcon}
+                className="w-5 h-5"
+              />
+            </View>
+          </View>
+
+          <View className="flex-row items-center mb-5 gap-2">
+            <Image
+              source={IMAGE_CONSTANTS.locationGray}
+              className="w-[40px] h-[40px] rounded-full"
+            />
+            <TouchableOpacity
+              onPress={openLocationSheet}
+              className="flex-col flex-1 items-start"
+              activeOpacity={0.7}
+            >
+              <Text className="text-sm font-medium text-[#222]">
+                Current location
+              </Text>
+              <View className="flex-row items-center">
+                <Text className="mt-2 text-base font-semibold text-primary mr-1">
+                  {selectedLocation}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={18}
+                  color="#222"
+                  className="mt-2"
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Remaining Today Section - Only show on List tab */}
+          <View className="mb-4">
+            <RemainingTodayView
+              macroData={macroData}
+              macrosPreferences={macrosPreferences}
+            />
+          </View>
+
+          <MealFinderListView
+            meals={meals}
+            locationLoading={locationLoading}
+            error={error}
+            onRetry={handleRetry}
+            navigation={navigation}
+            onScrollBegin={handleScrollBegin}
+            onScrollEnd={handleScrollEnd}
+          />
+        </View>
+      )}
+
+      {/* Remaining Today Section - Only show on Map tab */}
+      {activeTab === 'map' && (
+        <View className="px-5 mb-4">
+          <RemainingTodayView
+            macroData={macroData}
+            macrosPreferences={macrosPreferences}
+          />
+        </View>
+      )}
+
+      {/* Bottom Tab Navigation */}
+      <View className="absolute bottom-0 left-0 right-0 pb-6 px-4">
+        <Animated.View
+          className={`flex-row ${Platform.OS === 'ios' ? 'bg-white rounded-2xl p-1 shadow-lg' : 'bg-white rounded-2xl p-1'} mx-4`}
+          style={{
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 8,
+            opacity: tabOpacity,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => setActiveTab('map')}
+            className={`flex-1 py-3 rounded-xl ${
+              activeTab === 'map'
+                ? 'bg-[#01675B1A] rounded-[96px] text-primary'
+                : 'bg-transparent'
+            }`}
+          >
+            <View className="flex-col items-center justify-center">
+              <Ionicons
+                name={activeTab === 'map' ? 'map' : 'map-outline'}
+                size={20}
+                color={activeTab === 'map' ? '#01675B' : '#666'}
+              />
+              <Text
+                className={`ml-2 font-medium ${
+                  activeTab === 'map' ? 'text-primary' : 'text-gray-600'
+                }`}
+              >
+                Map
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setActiveTab('list')}
+            className={`flex-1 py-3 rounded-xl ${
+              activeTab === 'list'
+                ? 'bg-[#01675B1A] rounded-[96px]'
+                : 'bg-transparent'
+            }`}
+          >
+            <View className="flex-col items-center justify-center">
+              <Ionicons
+                name={activeTab === 'list' ? 'list' : 'list-outline'}
+                size={20}
+                color={activeTab === 'list' ? '#01675B' : '#666'}
+              />
+              <Text
+                className={`ml-2 font-medium ${
+                  activeTab === 'list' ? 'text-primary' : 'text-gray-600'
+                }`}
+              >
+                List
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+
+      {/* Location Selection Modal */}
+      <Modalize
+        ref={modalizeRef}
+        modalHeight={SCREEN_HEIGHT * 0.6}
+        handlePosition="inside"
+        withHandle={true}
+        modalStyle={{
+          backgroundColor: '#fff',
+          padding: 0,
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          margin: 0,
+        }}
+      >
+        <View className="px-5 pt-2 pb-5">
+          <Text className="font-semibold text-lg mt-8 mb-4">
+            Delivery address
+          </Text>
+          <View className="flex-row items-center mb-4 bg-gray-100 rounded-lg px-3">
+            <Ionicons
+              name="search"
+              size={18}
+              color="#888"
+              style={{ marginRight: 6 }}
+            />
+            <TextInput
+              placeholder="Enter a new address"
+              value={search}
+              onChangeText={setSearch}
+              className="flex-1 h-[48px] rounded-2xl text-base text-[#222]"
+              placeholderTextColor="#888"
+            />
+          </View>
+          <TouchableOpacity
+            onPress={handleSelectCurrentLocation}
+            className="flex-row items-center mb-5"
+          >
+            <Image
+              source={IMAGE_CONSTANTS.nearbyLocationIcon}
+              className="w-[14px] h-[14px] rounded-full"
+            />
+            <Text className="text-primary ml-3 font-medium underline">
+              Use your current location
+            </Text>
+          </TouchableOpacity>
+          {filteredLocations.map((loc, idx) => (
+            <React.Fragment key={idx}>
+              <TouchableOpacity
+                onPress={() => handleSelectMockLocation(loc)}
+                className="flex-row items-center"
+              >
+                <Image
+                  source={IMAGE_CONSTANTS.locationIcon}
+                  className="w-[32px] h-[32px] mr-4 rounded-full"
+                />
+                <View>
+                  <Text className="text-sm font-medium text-[#222]">
+                    {loc.label}
+                  </Text>
+                  <Text className="text-mediumGrey text-xs">
+                    {loc.description}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              {idx !== filteredLocations.length - 1 && (
+                <View className="h-px bg-gray-200 my-5" />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+      </Modalize>
+    </View>
+    // </CustomSafeAreaView>
   );
 };
 
-export default MealFinderScreen; 
+export default MealFinderScreen;

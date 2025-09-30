@@ -42,6 +42,10 @@ def shared_pod_config(properties)
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :privacy_file_aggregation_enabled => properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
+  
+  # Google Maps for react-native-maps
+  pod 'GoogleMaps'
+  pod 'Google-Maps-iOS-Utils'
 end
 
 target 'macromeals' do
