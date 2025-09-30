@@ -7,6 +7,7 @@
     "dependencies": {
         "@react-native-firebase/messaging": "^22.2.0",
         "expo-build-properties": "^0.14.6",
-        "react-native-push-notification": "^8.1.1"
+        "react-native-push-notification": "^8.1.1",
+        "react-native-google-places-autocomplete": "^2.5.7"
     }
 }

@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.8</string>
+	<string>1.0.9</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -37,10 +37,6 @@
 	<false/>
 	<key>LSMinimumSystemVersion</key>
 	<string>12.0</string>
-	<key>StallionProjectId</key>
-	<string>689b518a2035f9eddc59fab2</string>
-	<key>StallionAppToken</key>
-	<string>spb_cbR-Iqk9vOoC8OFzmwsnyGZO_0DyNzNpMEoTRZUbhw</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -66,6 +62,10 @@
 	<string>Macro Meals needs access to your photo library to let you add photos of your meals for logging.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>We need to send you notifications about your meals and updates</string>
+	<key>StallionAppToken</key>
+	<string>spb_cbR-Iqk9vOoC8OFzmwsnyGZO_0DyNzNpMEoTRZUbhw</string>
+	<key>StallionProjectId</key>
+	<string>689b518a2035f9eddc59fab2</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
