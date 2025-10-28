@@ -43,13 +43,9 @@ const GenericMapViewComponent = <T = any,>({
   maxZoomLevel,
   onRegionChangeComplete,
 }: GenericMapProps<T>) => {
-  console.log('🗺️ GenericMapView - Props:', {
-    markersCount: markers.length,
-    loading,
-    error,
-    hasCustomRenderer: !!customMarkerRenderer,
-  });
+  // Removed excessive logging to prevent performance issues
   const mapRef = useRef<any>(null);
+  const regionChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [mapRegion, setMapRegion] = useState<MapRegion>(
     region || {
       latitude: 37.78825,
@@ -79,6 +75,15 @@ const GenericMapViewComponent = <T = any,>({
       mapRef.current?.animateToRegion(newRegion, 1000);
     }
   }, [markers, region]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (regionChangeTimeoutRef.current) {
+        clearTimeout(regionChangeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleMarkerPress = useCallback(
     (marker: MapMarker<T>) => {
@@ -116,6 +121,22 @@ const GenericMapViewComponent = <T = any,>({
     (newRegion: Region) => {
       const clampedRegion = clampRegionToBounds(newRegion);
 
+      // Only update if region actually changed to prevent infinite loops
+      const regionChanged =
+        Math.abs(clampedRegion.latitude - mapRegion.latitude) > 0.0001 ||
+        Math.abs(clampedRegion.longitude - mapRegion.longitude) > 0.0001 ||
+        Math.abs(clampedRegion.latitudeDelta - mapRegion.latitudeDelta) >
+          0.0001 ||
+        Math.abs(clampedRegion.longitudeDelta - mapRegion.longitudeDelta) >
+          0.0001;
+
+      if (!regionChanged) return;
+
+      // Clear any existing timeout
+      if (regionChangeTimeoutRef.current) {
+        clearTimeout(regionChangeTimeoutRef.current);
+      }
+
       // If region was clamped, animate back to valid region
       if (
         clampedRegion.latitude !== newRegion.latitude ||
@@ -126,9 +147,13 @@ const GenericMapViewComponent = <T = any,>({
 
       setMapRegion(clampedRegion);
       onRegionChange?.(clampedRegion);
-      onRegionChangeComplete?.(clampedRegion);
+
+      // Debounce the onRegionChangeComplete call
+      regionChangeTimeoutRef.current = setTimeout(() => {
+        onRegionChangeComplete?.(clampedRegion);
+      }, 300);
     },
-    [onRegionChange, onRegionChangeComplete, clampRegionToBounds]
+    [onRegionChange, onRegionChangeComplete, clampRegionToBounds, mapRegion]
   );
 
   const handleCalloutPress = useCallback(
