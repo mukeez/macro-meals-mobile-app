@@ -87,6 +87,7 @@ stallion-temp-*/
 .idea/
 .vscode/
 .cursor/
+.specstory/
 *.suo
 *.ntvs*
 *.njsproj

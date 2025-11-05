@@ -2,3 +2,4 @@
 /.project.json
 # SpecStory explanation file
 /.what-is-this.md
+.specstory/history/
