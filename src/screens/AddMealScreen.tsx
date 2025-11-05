@@ -287,26 +287,26 @@ export const AddMealScreen: React.FC = () => {
       }
 
       // Ensure amount is at least 1 and is an integer
-      const amount = Math.max(1, parseInt(noOfServings) || 1);
+      const amountValue = Math.max(1, parseInt(amount) || 1);
 
-      // Calculate adjusted macros based on amount
-      const adjustedMacros = {
-        calories: Math.round((parseInt(calories, 10) || 0) * amount),
-        protein: Math.round((parseInt(protein, 10) || 0) * amount),
-        carbs: Math.round((parseInt(carbs, 10) || 0) * amount),
-        fat: Math.round((parseInt(fats, 10) || 0) * amount),
+      // Use the macros as entered (no multiplication by amount)
+      const mealMacros = {
+        calories: Math.round(parseInt(calories, 10) || 0),
+        protein: Math.round(parseInt(protein, 10) || 0),
+        carbs: Math.round(parseInt(carbs, 10) || 0),
+        fat: Math.round(parseInt(fats, 10) || 0),
       };
 
       // Create the meal request object that matches LogMealRequest interface
       const mealRequest = {
         name: mealName,
-        calories: adjustedMacros.calories,
-        protein: adjustedMacros.protein,
-        carbs: adjustedMacros.carbs,
-        fat: adjustedMacros.fat,
+        calories: mealMacros.calories,
+        protein: mealMacros.protein,
+        carbs: mealMacros.carbs,
+        fat: mealMacros.fat,
         meal_type: tempMealType,
         meal_time: time.toISOString(),
-        amount: amount,
+        amount: amountValue,
         serving_size: servingUnit,
         description: mealDescription || undefined,
         logging_mode: logging_mode,
@@ -351,14 +351,14 @@ export const AddMealScreen: React.FC = () => {
           logging_mode: logging_mode,
           meal_type: tempMealType,
           meal_time: time.toISOString(),
-          amount: amount,
+          amount: amountValue,
           serving_size: servingUnit,
           barcode: barcodeData || null, // Track barcode usage
-          ...adjustedMacros,
+          ...mealMacros,
         },
       });
 
-      navigation.navigate("MainTabs");
+      navigation.navigate("MainTabs", { screen: "Meals" });
     } catch (error) {
       console.error("Error adding meal:", error);
       Alert.alert(

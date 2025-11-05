@@ -198,7 +198,7 @@ export const AddMealScreen: React.FC = () => {
             }
 
             // Navigate back to meal log screen
-            navigation.navigate('MainTabs');
+            navigation.navigate("MainTabs", { screen: "Meals" });
         } catch (error) {
             if (error instanceof Error) {
                 console.error('Error adding meal to log:', error.message, error.stack);
