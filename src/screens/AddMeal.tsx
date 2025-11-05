@@ -468,7 +468,7 @@ const AddMeal: React.FC = () => {
                     if ((selectedRange as string) === 'yesterday') {
                       defaultDate.setDate(defaultDate.getDate() - 1);
                     }
-                    navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                    navigation.navigate("ScanScreenType");
                   }}>
                     <Text className="text-primary font-semibold">+ ADD FOOD</Text>
                   </TouchableOpacity>
@@ -724,8 +724,7 @@ const AddMeal: React.FC = () => {
                               <TouchableOpacity 
                                 className="py-4 px-4 border-t border-gray"
                                 onPress={() => {
-                                  const defaultDate = new Date(dayKey);
-                                  navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                                  navigation.navigate("ScanScreenType");
                                 }}
                               >
                                 <Text className="text-primary font-semibold">+ ADD FOOD</Text>
@@ -753,7 +752,7 @@ const AddMeal: React.FC = () => {
                         if (selectedRange === 'yesterday') {
                           defaultDate.setDate(defaultDate.getDate() - 1);
                         }
-                        navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                        navigation.navigate("ScanScreenType");
                       }}>
                         <Text className="text-primary font-semibold">+ ADD FOOD</Text>
                       </TouchableOpacity>
@@ -922,7 +921,7 @@ const AddMeal: React.FC = () => {
                             if (selectedRange === 'yesterday') {
                               defaultDate.setDate(defaultDate.getDate() - 1);
                             }
-                            navigation.navigate('AddMealScreen', { defaultDate: defaultDate.toISOString() });
+                            navigation.navigate("ScanScreenType");
                           }}
                         >
                           <Text className="text-primary font-semibold">+ ADD FOOD</Text>
