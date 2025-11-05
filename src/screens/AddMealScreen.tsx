@@ -358,7 +358,7 @@ export const AddMealScreen: React.FC = () => {
         },
       });
 
-      navigation.navigate("MainTabs");
+      navigation.navigate("MainTabs", { screen: "Meals" });
     } catch (error) {
       console.error("Error adding meal:", error);
       Alert.alert(

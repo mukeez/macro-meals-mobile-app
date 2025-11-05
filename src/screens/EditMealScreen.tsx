@@ -321,7 +321,7 @@ export const EditMealScreen: React.FC = () => {
         });
       }
 
-      navigation.navigate("MainTabs");
+      navigation.navigate("MainTabs", { screen: "Meals" });
     } catch (error) {
       console.error("Error editing meal:", error);
       Alert.alert("Error", "Failed to edit meal");
