@@ -513,9 +513,9 @@ export const AddMealScreen: React.FC = () => {
   // Function to get meal type based on time
   const getMealTypeByTime = (date: Date): string => {
     const hour = date.getHours();
-    if (hour >= 5 && hour < 11) return "breakfast";
-    if (hour >= 11 && hour < 16) return "lunch";
-    if (hour >= 16 && hour < 21) return "dinner";
+    if (hour >= 5 && hour < 12) return "breakfast";
+    if (hour >= 12 && hour < 16) return "lunch";
+    if (hour >= 17 && hour < 21) return "dinner";
     return "other";
   };
 
