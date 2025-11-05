@@ -36,6 +36,7 @@ interface RouteParams {
     carbs: number;
     fat: number;
     quantity: number;
+    amount?: number;
     serving_size?: number;
     no_of_servings?: number;
     meal_type?: string;
@@ -120,7 +121,9 @@ export const EditMealScreen: React.FC = () => {
       setCarbs(analyzedData.carbs?.toString() || "0");
       setFats(analyzedData.fat?.toString() || "0");
       setServingSize(analyzedData.serving_size?.toString() || "0");
-      setNoOfServings(analyzedData.no_of_servings?.toString() || "1");
+      // Use amount, quantity, or no_of_servings (in that order of preference)
+      const amountValue = analyzedData.amount || analyzedData.quantity || analyzedData.no_of_servings || 1;
+      setNoOfServings(amountValue.toString());
       setMealType(analyzedData.meal_type || "breakfast");
       setMealId(analyzedData.id || "");
       setServingUnit(analyzedData.serving_unit || "g");
@@ -269,23 +272,20 @@ export const EditMealScreen: React.FC = () => {
       console.log("Current meal type:", tempMealType);
       console.log("Current time:", time.toISOString());
 
-      // Calculate adjusted macros based on amount
-      const servingsMultiplier = parseFloat(noOfServings) || 1;
-      const adjustedMacros = {
-        calories: Math.round(
-          (parseInt(calories, 10) || 0) * servingsMultiplier
-        ),
-        protein: Math.round((parseInt(protein, 10) || 0) * servingsMultiplier),
-        carbs: Math.round((parseInt(carbs, 10) || 0) * servingsMultiplier),
-        fat: Math.round((parseInt(fats, 10) || 0) * servingsMultiplier),
+      // Use the macros as entered (no multiplication by amount)
+      const mealMacros = {
+        calories: Math.round(parseInt(calories, 10) || 0),
+        protein: Math.round(parseInt(protein, 10) || 0),
+        carbs: Math.round(parseInt(carbs, 10) || 0),
+        fat: Math.round(parseInt(fats, 10) || 0),
       };
 
       const newMeal = {
         name: mealName,
-        calories: adjustedMacros.calories,
-        protein: adjustedMacros.protein,
-        carbs: adjustedMacros.carbs,
-        fat: adjustedMacros.fat,
+        calories: mealMacros.calories,
+        protein: mealMacros.protein,
+        carbs: mealMacros.carbs,
+        fat: mealMacros.fat,
         meal_type: tempMealType,
         meal_time: time.toISOString(),
         amount: parseFloat(noOfServings) || 1,
@@ -316,7 +316,7 @@ export const EditMealScreen: React.FC = () => {
             meal_type: tempMealType,
             amount: parseFloat(noOfServings) || 1,
             serving_unit: servingUnit,
-            ...adjustedMacros,
+            ...mealMacros,
           },
         });
       }
