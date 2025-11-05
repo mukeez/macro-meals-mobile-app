@@ -250,6 +250,7 @@ const PaymentScreen = () => {
   }, [mixpanel]);
   // Load RevenueCat offerings when component mounts
   useEffect(() => {
+    revenueCatService.syncPurchases();
     console.log(`\n\n\n\n\nUSER ID  ${profile?.id}\n\n\n\n\n`);
     const customerInfo =  revenueCatService.getCustomerInfo();
     console.log(`\n\n\n\n\n\n\n\nPaymentScreen - REVENUECAT Customer info: ${JSON.stringify(customerInfo, null, 2)} \n\n\n\n\n\n\n\n`);
@@ -476,7 +477,7 @@ const PaymentScreen = () => {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               activeOpacity={0.8}
               className={`flex-1 items-center bg-white rounded-2xl ${
                 selectedPlan === "yearly"
@@ -504,13 +505,21 @@ const PaymentScreen = () => {
                 </View>
                
                 
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
 
               <TouchableOpacity activeOpacity={0.8} className={`flex-1 items-center bg-white rounded-2xl ${selectedPlan === 'yearly' ? 'border-primary border-2' : 'border border-[#F2F2F2]'}`} onPress={(e)=>{
                e.preventDefault();
                setSelectedPlan('yearly');
                setAmount(yearlyProductInfo?.price || 69.99);
+               mixpanel?.track({
+                name: "subscription_plan_selected",
+                properties: {
+                  plan: "yearly",
+                  price: yearlyProductInfo?.price,
+                  platform: Platform.OS,
+                },
+              });
               }}>
                 <View className="absolute px-2 py-2 top-[-10px] flex-row bg-primaryLight rounded-2xl">
                 <Text className="text-white text-xs font-medium justify-center items-center">30% savings</Text>

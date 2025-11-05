@@ -275,7 +275,7 @@ const AIRecipeDetailsScreen: React.FC = () => {
           text: "OK",
           onPress: () => {
             // Navigate to main dashboard
-            navigation.navigate("MainTabs");
+            navigation.navigate("MainTabs", { screen: "Meals" });
           },
         },
       ]);

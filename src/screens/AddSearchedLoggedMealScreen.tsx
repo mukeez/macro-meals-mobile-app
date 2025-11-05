@@ -248,7 +248,7 @@ export const AddSearchedLoggedMealScreen: React.FC = () => {
                 }
             });
 
-            navigation.navigate('MainTabs');
+            navigation.navigate("MainTabs", { screen: "Meals" });
         } catch (error) {
             console.error('Error adding searched meal:', error);
             Alert.alert('Error', 'Failed to add meal');
