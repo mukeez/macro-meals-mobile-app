@@ -67,26 +67,32 @@ export const MealFinderMapView: React.FC<MealFinderMapViewProps> = ({
     navigation.navigate('MealFinderBreakdownScreen', { meal: marker.data });
   };
 
-  // Convert meals to map markers with mock coordinates
+  // Convert meals to map markers with stable coordinates
   const mealMarkers: MapMarker<Meal>[] = React.useMemo(() => {
     // Use current location as center, or default to San Francisco
     const centerLat = currentLocation?.latitude || 37.78825;
     const centerLng = currentLocation?.longitude || -122.4324;
 
     const markers = meals.map((meal, index) => {
-      // Generate coordinates within current bounds
+      // Generate stable coordinates based on meal ID to prevent re-renders
+      const seed = meal.id
+        ? meal.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
+        : index;
+      const random1 = (Math.sin(seed) + 1) / 2; // Convert to 0-1 range
+      const random2 = (Math.sin(seed * 2) + 1) / 2; // Different pattern
+
       const lat = Math.max(
         currentBounds.southWest.latitude + 0.001,
         Math.min(
           currentBounds.northEast.latitude - 0.001,
-          centerLat + (Math.random() - 0.5) * 0.003
+          centerLat + (random1 - 0.5) * 0.003
         )
       );
       const lng = Math.max(
         currentBounds.southWest.longitude + 0.001,
         Math.min(
           currentBounds.northEast.longitude - 0.001,
-          centerLng + (Math.random() - 0.5) * 0.003
+          centerLng + (random2 - 0.5) * 0.003
         )
       );
 
@@ -120,7 +126,7 @@ export const MealFinderMapView: React.FC<MealFinderMapViewProps> = ({
     }
 
     return markers;
-  }, [meals, currentLocation]);
+  }, [meals, currentLocation, currentBounds]);
 
   const customMarkerRenderer = (marker: MapMarker<Meal>) => {
     // Special renderer for current location
