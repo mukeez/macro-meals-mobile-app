@@ -167,7 +167,7 @@ const MealFinderScreen: React.FC = () => {
     fat: 0,
     calories: 0,
   });
-  const [activeTab, setActiveTab] = useState<TabType>('list');
+  const [activeTab, setActiveTab] = useState<TabType>('map');
   const tabOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
