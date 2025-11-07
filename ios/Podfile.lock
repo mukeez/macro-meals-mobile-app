@@ -1676,7 +1676,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-skia (2.0.0-next.4):
+  - react-native-skia (2.3.7):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2305,7 +2305,7 @@ PODS:
   - RNPurchases (9.1.0):
     - PurchasesHybridCommon (= 16.0.2)
     - React-Core
-  - RNReanimated (3.17.4):
+  - RNReanimated (3.18.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2328,10 +2328,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated (= 3.17.4)
-    - RNReanimated/worklets (= 3.17.4)
+    - RNReanimated/reanimated (= 3.18.0)
+    - RNReanimated/worklets (= 3.18.0)
     - Yoga
-  - RNReanimated/reanimated (3.17.4):
+  - RNReanimated/reanimated (3.18.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2354,9 +2354,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated/apple (= 3.17.4)
+    - RNReanimated/reanimated/apple (= 3.18.0)
     - Yoga
-  - RNReanimated/reanimated/apple (3.17.4):
+  - RNReanimated/reanimated/apple (3.18.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2380,7 +2380,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNReanimated/worklets (3.17.4):
+  - RNReanimated/worklets (3.18.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2403,9 +2403,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/worklets/apple (= 3.17.4)
+    - RNReanimated/worklets/apple (= 3.18.0)
     - Yoga
-  - RNReanimated/worklets/apple (3.17.4):
+  - RNReanimated/worklets/apple (3.18.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -3095,7 +3095,7 @@ SPEC CHECKSUMS:
   react-native-maps: 9febd31278b35cd21e4fad2cf6fa708993be5dab
   react-native-pager-view: 04ff926ac8977b63970da40effd02963b60e0970
   react-native-safe-area-context: 5928d84c879db2f9eb6969ca70e68f58623dbf25
-  react-native-skia: 95e87a487f6079b42ec6576f08ee9bdc355730cf
+  react-native-skia: 71eadd9c5e19a5851f2a4b62472c65f02e6e58a2
   react-native-slider: 0e7e2039ec199c7241510d8fab1ca3b9f959a13b
   react-native-stallion: fb69f53146e2b5c60f3c1e472987377ed7bbb93f
   react-native-webview: 2489d02c8e729bbd323dcb83ab9ea3b0a150b3f6
@@ -3146,7 +3146,7 @@ SPEC CHECKSUMS:
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNPermissions: 913e830a18973804e2ca7cd38786e8d0c8f821eb
   RNPurchases: 791e8c81fa5bbd192b77894740c63bd9f813a5ac
-  RNReanimated: d48e87df3d70586eb405a77240aa0dafaa857ee4
+  RNReanimated: 0df48dab58b5ee37fd1d1341caba79f59a1187ec
   RNScreens: 90b905d545a5ebbe976985702b8a39e3475727b2
   RNSentry: b4746c5f642ec37c729206232b79ab8c51255d76
   RNSVG: 4470464e129f6bc58b78b961850b054dbbea8ef7

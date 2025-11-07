@@ -169,6 +169,8 @@ const MealFinderScreen: React.FC = () => {
   });
   const [activeTab, setActiveTab] = useState<TabType>('map');
   const tabOpacity = useRef(new Animated.Value(1)).current;
+  const mapSearchInputRef = useRef<TextInput>(null);
+  const listSearchInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -262,47 +264,42 @@ const MealFinderScreen: React.FC = () => {
           return;
         }
 
-        // 2. Fetch meal suggestions
-        const requestBody = {
-          calories: macrosPreferences?.calorie_target || 0,
-          carbs: macrosPreferences?.carbs_target || 0,
-          protein: macrosPreferences?.protein_target || 0,
-          fat: macrosPreferences?.fat_target || 0,
-          dietary_preference: '', // These should come from a different store value
-          dietary_restrictions: [], // These should come from a different store value
-          latitude: location.coords.latitude,
-          location: address,
-          longitude: location.coords.longitude,
-        };
+        // 2. Fetch map pins
         setLocationLoading(true);
         try {
-          const suggestedMeals = await mealService.suggestAiMeals(requestBody);
-          const mealList: Meal[] = suggestedMeals.map((meal: any) => ({
-            id: meal.id || String(Math.random()),
-            name: meal.name,
+          const mapPinsResponse = await mealService.getMapPins(
+            location.coords.latitude,
+            location.coords.longitude
+          );
+          const pins = mapPinsResponse.pins || [];
+          const mealList: Meal[] = pins.map((pin: any) => ({
+            id: pin.id || pin.google_place_id || String(Math.random()),
+            name: pin.top_meal?.name || '',
             macros: {
-              calories: meal.macros.calories,
-              carbs: meal.macros.carbs,
-              fat: meal.macros.fat,
-              protein: meal.macros.protein,
+              calories: pin.top_meal?.macros?.calories || 0,
+              carbs: pin.top_meal?.macros?.carbs || 0,
+              fat: pin.top_meal?.macros?.fat || 0,
+              protein: pin.top_meal?.macros?.protein || 0,
             },
             restaurant: {
-              name: meal.restaurant.name,
-              location: meal.restaurant.location,
+              name: pin.name || '',
+              location: pin.address || '',
             },
-            imageUrl: meal.imageUrl,
-            description: meal.description || '',
-            price: meal.price,
-            distance: meal.distance,
+            imageUrl: pin.photo_url || undefined,
+            description: pin.top_meal?.description || '',
+            price: pin.price_level || undefined,
+            distance: pin.distance_km || undefined,
             date: new Date().toISOString(),
-            mealType: meal.meal_type || 'lunch',
-            matchScore: meal.match_score || 0,
+            mealType: 'lunch',
+            matchScore: pin.top_meal?.match_score || 0,
+            latitude: pin.latitude,
+            longitude: pin.longitude,
           }));
           setMeals(mealList);
           setError(null);
         } catch (apiError: any) {
           console.error('API Error:', apiError);
-          setError('Failed to fetch meal suggestions.');
+          setError('Failed to fetch restaurant locations.');
           setMeals([]);
         } finally {
           setLocationLoading(false);
@@ -377,6 +374,16 @@ const MealFinderScreen: React.FC = () => {
     modalizeRef.current?.close();
   }, []);
 
+  const handleSearchFocus = useCallback(() => {
+    // Blur the input before navigating to prevent focus loop
+    mapSearchInputRef.current?.blur();
+    listSearchInputRef.current?.blur();
+    // Small delay to ensure blur completes before navigation
+    setTimeout(() => {
+      navigation.navigate('SearchMealAndRestaurants');
+    }, 100);
+  }, [navigation]);
+
   const handleSelectCurrentLocation = async () => {
     closeLocationSheet();
     setLocationLoading(true);
@@ -405,46 +412,40 @@ const MealFinderScreen: React.FC = () => {
       longitude: location.longitude,
     });
 
-    const requestBody = {
-      calories: macrosPreferences?.calorie_target || 0,
-      carbs: macrosPreferences?.carbs_target || 0,
-      protein: macrosPreferences?.protein_target || 0,
-      fat: macrosPreferences?.fat_target || 0,
-      dietary_preference: '', // These should come from a different store value
-      dietary_restrictions: [], // These should come from a different store value
-      latitude: location.latitude,
-      location: location.label,
-      longitude: location.longitude,
-    };
-
     try {
-      const suggestedMeals = await mealService.suggestAiMeals(requestBody);
-      const mealList: Meal[] = suggestedMeals.map((meal: any) => ({
-        id: meal.id || String(Math.random()),
-        name: meal.name,
+      const mapPinsResponse = await mealService.getMapPins(
+        location.latitude,
+        location.longitude
+      );
+      const pins = mapPinsResponse.pins || [];
+      const mealList: Meal[] = pins.map((pin: any) => ({
+        id: pin.id || pin.google_place_id || String(Math.random()),
+        name: pin.top_meal?.name || '',
         macros: {
-          calories: meal.macros.calories,
-          carbs: meal.macros.carbs,
-          fat: meal.macros.fat,
-          protein: meal.macros.protein,
+          calories: pin.top_meal?.macros?.calories || 0,
+          carbs: pin.top_meal?.macros?.carbs || 0,
+          fat: pin.top_meal?.macros?.fat || 0,
+          protein: pin.top_meal?.macros?.protein || 0,
         },
         restaurant: {
-          name: meal.restaurant.name,
-          location: meal.restaurant.location,
+          name: pin.name || '',
+          location: pin.address || '',
         },
-        imageUrl: meal.imageUrl,
-        description: meal.description || '',
-        price: meal.price,
-        distance: meal.distance,
+        imageUrl: pin.photo_url || undefined,
+        description: pin.top_meal?.description || '',
+        price: pin.price_level || undefined,
+        distance: pin.distance_km || undefined,
         date: new Date().toISOString(),
-        mealType: meal.meal_type || 'lunch',
-        matchScore: meal.match_score || 0,
+        mealType: 'lunch',
+        matchScore: pin.top_meal?.match_score || 0,
+        latitude: pin.latitude,
+        longitude: pin.longitude,
       }));
       setMeals(mealList);
       setError(null);
     } catch (apiError: any) {
       console.error('API Error:', apiError);
-      setError('Failed to fetch meal suggestions.');
+      setError('Failed to fetch restaurant locations.');
       setMeals([]);
     } finally {
       setLocationLoading(false);
@@ -496,9 +497,11 @@ const MealFinderScreen: React.FC = () => {
           <View className="flex-row items-center bg-white/90 rounded-3xl px-4 py-3 shadow-lg">
             <Ionicons name="search" size={20} color="#666" />
             <TextInput
+              ref={mapSearchInputRef}
               placeholder="Search meals and restaurants"
               className="flex-1 ml-3 placeholder:text-xs placeholder:text-[#4F4F4FCC]"
               placeholderTextColor="#888"
+              onFocus={handleSearchFocus}
             />
             <Image source={IMAGE_CONSTANTS.mapFilterIcon} className="w-5 h-5" />
           </View>
@@ -513,9 +516,11 @@ const MealFinderScreen: React.FC = () => {
             <View className="flex-row items-center bg-white px-4 py-3 shadow-sm rounded-3xl">
               <Ionicons name="search" size={20} color="#666" />
               <TextInput
+                ref={listSearchInputRef}
                 placeholder="Search meals and restaurants"
                 className="flex-1 ml-3 placeholder:text-xs placeholder:text-[#4F4F4FCC]"
                 placeholderTextColor="#888"
+                onFocus={handleSearchFocus}
               />
               <Image
                 source={IMAGE_CONSTANTS.mapFilterIcon}
@@ -584,7 +589,7 @@ const MealFinderScreen: React.FC = () => {
       {/* Bottom Tab Navigation */}
       <View className="absolute bottom-0 left-0 right-0 pb-6 px-4">
         <Animated.View
-          className={`flex-row ${Platform.OS === 'ios' ? 'bg-white rounded-2xl p-1 shadow-lg' : 'bg-white rounded-2xl p-1'} mx-4`}
+          className={`flex-row ${Platform.OS === 'ios' ? 'bg-white rounded-[96px] p-1 shadow-lg' : 'bg-white rounded-2xl p-1'} mx-4`}
           style={{
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
@@ -596,7 +601,7 @@ const MealFinderScreen: React.FC = () => {
         >
           <TouchableOpacity
             onPress={() => setActiveTab('map')}
-            className={`flex-1 py-3 rounded-xl ${
+            className={`flex-1 py-3 rounded-[96px] ${
               activeTab === 'map'
                 ? 'bg-[#01675B1A] rounded-[96px] text-primary'
                 : 'bg-transparent'
@@ -620,7 +625,7 @@ const MealFinderScreen: React.FC = () => {
 
           <TouchableOpacity
             onPress={() => setActiveTab('list')}
-            className={`flex-1 py-3 rounded-xl ${
+            className={`flex-1 py-3 rounded-[96px] ${
               activeTab === 'list'
                 ? 'bg-[#01675B1A] rounded-[96px]'
                 : 'bg-transparent'

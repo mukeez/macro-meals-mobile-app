@@ -58,6 +58,10 @@ export interface Meal {
     read_only?: boolean;
     meal_time?: string;
     matchScore?: number;
+    latitude?: number;
+    longitude?: number;
+    rating?: number;
+    cuisineTypes?: string[];
 }
 
 /**

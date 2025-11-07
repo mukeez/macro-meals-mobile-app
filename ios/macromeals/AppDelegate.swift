@@ -33,7 +33,7 @@ public class AppDelegate: ExpoAppDelegate {
         GMSServices.provideAPIKey(googleMapsApiKey)
     } else {
         // Fallback to hardcoded key for development
-        GMSServices.provideAPIKey("AIzaSyC4ai-iWprvfuWB52UeFb62TirjBytkI8k")
+        GMSServices.provideAPIKey("AIzaSyBJkrWz66DUFNMlMsXX0WnD5iYpR7546W8")
     }
     
 // @generated begin @react-native-firebase/app-didFinishLaunchingWithOptions - expo prebuild (DO NOT MODIFY) sync-10e8520570672fd76b2403b7e1e27f5198a6349a
