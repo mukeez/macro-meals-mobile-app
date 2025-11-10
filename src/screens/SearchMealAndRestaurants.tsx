@@ -120,105 +120,103 @@ const SearchMealAndRestaurants: React.FC = () => {
     getLocation();
   }, []);
 
-  // Clear search when switching tabs
-  useEffect(() => {
-    setSearchQuery('');
-    setSearchResults([]);
-  }, [activeTab]);
+  const search = async () => {
+    const hasQuery = searchQuery.trim().length > 0;
+    const hasFilters = selectedCuisines.length > 0;
+
+    if (!hasQuery && !hasFilters) {
+      setSearchResults([]);
+      setSearchError(null);
+      return;
+    }
+
+    if (!currentLocationCoords) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchError(null);
+
+    try {
+      const mapPinsResponse = await mealService.getMapPins(
+        currentLocationCoords.latitude,
+        currentLocationCoords.longitude,
+        hasQuery ? searchQuery : undefined,
+        selectedCuisines
+      );
+      const pins = mapPinsResponse.pins || [];
+
+      if (activeTab === 'restaurants') {
+        const restaurantList: Meal[] = pins.map((pin: any) => ({
+          id: pin.id || pin.google_place_id || String(Math.random()),
+          name: pin.name || '',
+          macros: {
+            calories: pin.top_meal?.macros?.calories || 0,
+            carbs: pin.top_meal?.macros?.carbs || 0,
+            fat: pin.top_meal?.macros?.fat || 0,
+            protein: pin.top_meal?.macros?.protein || 0,
+          },
+          restaurant: {
+            name: pin.name || '',
+            location: pin.address || '',
+          },
+          imageUrl: pin.photo_url || undefined,
+          description: pin.top_meal?.description || '',
+          price: pin.price_level || undefined,
+          distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
+          date: new Date().toISOString(),
+          mealType: 'lunch',
+          matchScore: pin.top_meal?.match_score || 0,
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+          rating: pin.rating || undefined,
+          cuisineTypes: pin.cuisine_types || [],
+        }));
+        setSearchResults(restaurantList);
+      } else {
+        const mealList: Meal[] = pins.map((pin: any) => ({
+          id: pin.id || pin.google_place_id || String(Math.random()),
+          name: pin.top_meal?.name || '',
+          macros: {
+            calories: pin.top_meal?.macros?.calories || 0,
+            carbs: pin.top_meal?.macros?.carbs || 0,
+            fat: pin.top_meal?.macros?.fat || 0,
+            protein: pin.top_meal?.macros?.protein || 0,
+          },
+          restaurant: {
+            name: pin.name || '',
+            location: pin.address || '',
+          },
+          imageUrl: pin.photo_url || undefined,
+          description: pin.top_meal?.description || '',
+          price: pin.price_level || undefined,
+          distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
+          date: new Date().toISOString(),
+          mealType: 'lunch',
+          matchScore: pin.top_meal?.match_score || 0,
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+          rating: pin.rating || undefined,
+          cuisineTypes: pin.cuisine_types || [],
+        }));
+        setSearchResults(mealList);
+      }
+    } catch (error: any) {
+      console.error('Search error:', error);
+      const friendlyErrorMessage =
+        activeTab === 'restaurants'
+          ? "We couldn't load restaurant results. Check your connection, then try again or request this restaurant so we can add it."
+          : "We couldn't load meal results right now. Check your connection and try again.";
+      setSearchError(friendlyErrorMessage);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   // Search when query or filters change
   useEffect(() => {
-    const search = async () => {
-      const hasQuery = searchQuery.trim().length > 0;
-      const hasFilters = selectedCuisines.length > 0;
-
-      if (!hasQuery && !hasFilters) {
-        setSearchResults([]);
-        setSearchError(null);
-        return;
-      }
-
-      if (!currentLocationCoords) {
-        setSearchResults([]);
-        return;
-      }
-
-      setSearchLoading(true);
-      setSearchError(null);
-
-      try {
-        const mapPinsResponse = await mealService.getMapPins(
-          currentLocationCoords.latitude,
-          currentLocationCoords.longitude,
-          hasQuery ? searchQuery : undefined,
-          selectedCuisines
-        );
-        const pins = mapPinsResponse.pins || [];
-
-        if (activeTab === 'restaurants') {
-          const restaurantList: Meal[] = pins.map((pin: any) => ({
-            id: pin.id || pin.google_place_id || String(Math.random()),
-            name: pin.name || '',
-            macros: {
-              calories: pin.top_meal?.macros?.calories || 0,
-              carbs: pin.top_meal?.macros?.carbs || 0,
-              fat: pin.top_meal?.macros?.fat || 0,
-              protein: pin.top_meal?.macros?.protein || 0,
-            },
-            restaurant: {
-              name: pin.name || '',
-              location: pin.address || '',
-            },
-            imageUrl: pin.photo_url || undefined,
-            description: pin.top_meal?.description || '',
-            price: pin.price_level || undefined,
-            distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
-            date: new Date().toISOString(),
-            mealType: 'lunch',
-            matchScore: pin.top_meal?.match_score || 0,
-            latitude: pin.latitude,
-            longitude: pin.longitude,
-            rating: pin.rating || undefined,
-            cuisineTypes: pin.cuisine_types || [],
-          }));
-          setSearchResults(restaurantList);
-        } else {
-          const mealList: Meal[] = pins.map((pin: any) => ({
-            id: pin.id || pin.google_place_id || String(Math.random()),
-            name: pin.top_meal?.name || '',
-            macros: {
-              calories: pin.top_meal?.macros?.calories || 0,
-              carbs: pin.top_meal?.macros?.carbs || 0,
-              fat: pin.top_meal?.macros?.fat || 0,
-              protein: pin.top_meal?.macros?.protein || 0,
-            },
-            restaurant: {
-              name: pin.name || '',
-              location: pin.address || '',
-            },
-            imageUrl: pin.photo_url || undefined,
-            description: pin.top_meal?.description || '',
-            price: pin.price_level || undefined,
-            distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
-            date: new Date().toISOString(),
-            mealType: 'lunch',
-            matchScore: pin.top_meal?.match_score || 0,
-            latitude: pin.latitude,
-            longitude: pin.longitude,
-            rating: pin.rating || undefined,
-            cuisineTypes: pin.cuisine_types || [],
-          }));
-          setSearchResults(mealList);
-        }
-      } catch (error: any) {
-        console.error('Search error:', error);
-        setSearchError('Failed to search. Please try again.');
-        setSearchResults([]);
-      } finally {
-        setSearchLoading(false);
-      }
-    };
-
     const timeoutId = setTimeout(() => {
       search();
     }, 500);
@@ -290,6 +288,10 @@ const SearchMealAndRestaurants: React.FC = () => {
     setTempSelectedCuisines([]);
     setSelectedCuisines([]);
     setModalVisible(false);
+  };
+
+  const handleRetry = () => {
+    search();
   };
 
   const renderRestaurantItem = (meal: Meal) => (
@@ -365,6 +367,43 @@ const SearchMealAndRestaurants: React.FC = () => {
     </TouchableOpacity>
   );
 
+  const renderMacroChips = (macros?: Meal['macros']) => {
+    const items = [
+      { label: 'C', value: macros?.carbs ?? 0, bg: 'bg-amber', text: 'Carbs' },
+      {
+        label: 'F',
+        value: macros?.fat ?? 0,
+        bg: 'bg-lavenderPink',
+        text: 'Fat',
+      },
+      {
+        label: 'P',
+        value: macros?.protein ?? 0,
+        bg: 'bg-gloomyPurple',
+        text: 'Protein',
+      },
+    ];
+
+    return (
+      <View className="flex-row items-center gap-3 mt-1">
+        {items.map(item => (
+          <View key={item.label} className="flex-row items-center gap-1">
+            <View
+              className={`w-4 h-4 rounded-full items-center justify-center ${item.bg}`}
+            >
+              <Text className="text-white text-[10px] font-bold">
+                {item.label}
+              </Text>
+            </View>
+            <Text className="text-xs text-textMediumGrey font-medium">
+              {item.value}g {item.text}
+            </Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   const renderMealItem = (meal: Meal) => (
     <TouchableOpacity
       key={meal.id}
@@ -415,32 +454,7 @@ const SearchMealAndRestaurants: React.FC = () => {
             </Text>
           ) : null}
           <View className="flex-row items-center gap-2">
-            {/* Star Rating */}
-            {meal.rating ? (
-              renderStarRating(meal.rating)
-            ) : (
-              <View className="flex-row items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <Ionicons
-                    key={star}
-                    name="star-outline"
-                    size={14}
-                    color="#FFD700"
-                    style={{ marginRight: -2 }}
-                  />
-                ))}
-              </View>
-            )}
-            {/* Rating Number */}
-            <Text className="text-sm font-normal text-[#222]">
-              {meal.rating ? meal.rating.toFixed(1) : 'N/A'}
-            </Text>
-            {/* Round Dot Separator */}
-            <View className="w-1 h-1 bg-[#666] rounded-full" />
-            {/* Distance */}
-            <Text className="text-sm font-normal text-[#666]">
-              {meal.distance ? `${meal.distance.toFixed(1)} mi` : 'N/A'}
-            </Text>
+            {renderMacroChips(meal.macros)}
           </View>
         </View>
       </View>
@@ -561,8 +575,27 @@ const SearchMealAndRestaurants: React.FC = () => {
                 <Text className="text-[#888]">Searching...</Text>
               </View>
             ) : searchError ? (
-              <View className="flex items-center justify-center py-8">
-                <Text className="text-[#888] text-center">{searchError}</Text>
+              <View className="flex items-center justify-center py-8 mb-10">
+                <View className="flex-row mb-3 rounded-full items-center h-[120px] w-[120px] justify-center">
+                  <Image
+                    source={IMAGE_CONSTANTS.mealSearchErrorIcon}
+                    className="w-[120px] h-[120px]"
+                  />
+                </View>
+                <Text className="mb-2 text-black font-semibold">
+                  Connection Error
+                </Text>
+                <Text className="mx-5 mb-5 text-sm text-center tracking-tighter font-normal text-[#b7b3b3]">
+                  Search error: {searchError}
+                </Text>
+                <TouchableOpacity
+                  className="bg-primaryLight flex-row items-center justify-center rounded-[1000px] h-[52px] px-4 w-full mx-5"
+                  onPress={() => handleRetry()}
+                >
+                  <Text className="text-white text-base font-semibold">
+                    Retry
+                  </Text>
+                </TouchableOpacity>
               </View>
             ) : searchResults.length > 0 ? (
               <>
@@ -573,35 +606,36 @@ const SearchMealAndRestaurants: React.FC = () => {
                 )}
               </>
             ) : (
-              //  {/* Empty State here */}
-              <View></View>
+              <View className="flex items-center justify-center py-8 mb-10">
+                <View className="flex-row mb-3 bg-[#E8E9ED] rounded-full items-center h-[120px] w-[120px] justify-center">
+                  <Image
+                    source={IMAGE_CONSTANTS.mealEmptyStateIcon}
+                    className="w-[53px] h-[53px]"
+                  />
+                </View>
+                <Text className="mb-2 text-black font-semibold">
+                  No Restaurants found
+                </Text>
+                <Text className="mx-5 mb-5 text-sm text-center tracking-tighter font-normal text-[#b7b3b3]">
+                  We couldn’t find “{searchQuery}” in your area. Try searching a
+                  different restaurant or location.
+                </Text>
+                <TouchableOpacity
+                  className="bg-primaryLight flex-row items-center justify-center rounded-[1000px] h-[52px] px-4 w-full mx-5"
+                  onPress={() =>
+                    navigation.navigate('RequestRestaurantScreen', {
+                      restaurantName: searchQuery.trim() || undefined,
+                    })
+                  }
+                >
+                  <Text className="text-white text-base font-semibold">
+                    + Request restuarant
+                  </Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
         )}
-
-        <View className="flex items-center justify-center py-8 mb-10">
-          <View className="flex-row mb-3 bg-[#E8E9ED] rounded-full items-center h-[120px] w-[120px] justify-center">
-            <Image
-              source={IMAGE_CONSTANTS.mealEmptyStateIcon}
-              className="w-[53px] h-[53px]"
-            />
-          </View>
-          <Text className="mb-2 text-black font-semibold">
-            No Restaurants found
-          </Text>
-          <Text className="mx-5 mb-5 text-sm text-center tracking-tighter font-normal text-[#b7b3b3]">
-            We couldn’t find “{searchQuery}” in your area. Try searching a
-            different restaurant or location.
-          </Text>
-          <TouchableOpacity
-            className="bg-primaryLight flex-row items-center justify-center rounded-[1000px] h-[52px] px-4 w-full mx-5"
-            onPress={() => navigation.navigate('RequestRestaurantScreen')}
-          >
-            <Text className="text-white text-base font-semibold">
-              + Request restuarant
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       {/* Filter Modal */}

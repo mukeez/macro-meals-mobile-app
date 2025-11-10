@@ -85,6 +85,7 @@ export const IMAGE_CONSTANTS = {
   mapFilterIcon: require('../../assets/map-filter-icon.png'),
   mealEmptyStateIcon: require('../../assets/meal-empty-state-icon.png'),
   missingRestaurantIcon: require('../../assets/missing-restaurant-icon.png'),
+  mealSearchErrorIcon: require('../../assets/meal-search-error.png'),
   blurhash:
     '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[',
 };

@@ -29,11 +29,11 @@ public class AppDelegate: ExpoAppDelegate {
     
     // Initialize Google Maps
     // Use the Google Maps API key from environment variables
-    if let googleMapsApiKey = ProcessInfo.processInfo.environment["GOOGLE_MAPS_API_KEY"] {
+    if let googleMapsApiKey = ProcessInfo.processInfo.environment["GOOGLE_MAPS_API_KEY"],
+       googleMapsApiKey.isEmpty == false {
         GMSServices.provideAPIKey(googleMapsApiKey)
     } else {
-        // Fallback to hardcoded key for development
-        GMSServices.provideAPIKey("AIzaSyBJkrWz66DUFNMlMsXX0WnD5iYpR7546W8")
+        NSLog("[GoogleMaps] Missing GOOGLE_MAPS_API_KEY environment variable.")
     }
     
 // @generated begin @react-native-firebase/app-didFinishLaunchingWithOptions - expo prebuild (DO NOT MODIFY) sync-10e8520570672fd76b2403b7e1e27f5198a6349a
