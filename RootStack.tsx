@@ -226,36 +226,10 @@ const DashboardNavigator = () => {
       <Stack.Screen
         name="SearchMealAndRestaurants"
         component={SearchMealAndRestaurants}
-        options={{
-          presentation: 'transparentModal',
-          cardStyleInterpolator: ({ current }) => ({
-            cardStyle: {
-              opacity: current.progress,
-            },
-          }),
-          transitionSpec: {
-            open: {
-              animation: 'timing',
-              config: {
-                duration: 300,
-              },
-            },
-            close: {
-              animation: 'timing',
-              config: {
-                duration: 300,
-              },
-            },
-          },
-        }}
       />
       <Stack.Screen
         name="MealFinderBreakdownScreen"
         component={MealFinderBreakdownScreen}
-        options={{
-          presentation: 'card',
-          headerShown: false,
-        }}
       />
       <Stack.Screen
         name="ScannedMealBreakdownScreen"

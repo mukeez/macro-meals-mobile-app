@@ -44,6 +44,15 @@ interface RestaurantSearchCriteria {
   keyword?: string; // specific cuisine or food type
 }
 
+export interface AutocompletePrediction {
+  description: string;
+  place_id: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
+
 // services/restaurantService.ts
 export class RestaurantService {
     private apiKey: string;
@@ -119,6 +128,48 @@ export class RestaurantService {
             return data.results.map((place: any) => this.transformPlaceToRestaurant(place));
         } catch (error) {
             console.error('Error searching restaurants by text:', error);
+            throw error;
+        }
+    }
+
+    async getAutocompletePredictions(
+        input: string,
+        types: string = 'establishment|geocode'
+    ): Promise<AutocompletePrediction[]> {
+        if (!input || input.trim().length < 2) {
+            return [];
+        }
+
+        const queryParams: Record<string, string> = {
+            input: input,
+            types: types,
+            key: this.apiKey,
+        };
+
+        const queryString = Object.entries(queryParams)
+            .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+            .join('&');
+
+        try {
+            const response = await fetch(
+                `${this.baseUrl}/autocomplete/json?${queryString}`
+            );
+            const data = await response.json();
+            
+            if (data.status === 'OK' && data.predictions) {
+                return data.predictions.map((prediction: any) => ({
+                    description: prediction.description,
+                    place_id: prediction.place_id,
+                    structured_formatting: {
+                        main_text: prediction.structured_formatting?.main_text || prediction.description,
+                        secondary_text: prediction.structured_formatting?.secondary_text || '',
+                    },
+                }));
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('Error getting autocomplete predictions:', error);
             throw error;
         }
     }
