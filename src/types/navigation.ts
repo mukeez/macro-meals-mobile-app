@@ -114,4 +114,7 @@ export type RootStackParamList = {
   ScannedMealBreakdownScreen: { meal: any };
   AIRecipeDetailsScreen: { recipe: any };
   AdjustGoalsFlow: undefined;
+  RequestRestaurantScreen: {
+    restaurantName?: string;
+  };
 };

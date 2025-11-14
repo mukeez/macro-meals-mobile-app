@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Image,
   Modal,
@@ -19,6 +19,7 @@ import { mealService } from '../services/mealService';
 import useStore from '../store/useStore';
 import { Meal } from '../types';
 import { RootStackParamList } from '../types/navigation';
+import ContactSupportDrawer from './ContactSupportDrawer';
 
 interface MacroData {
   label: 'Protein' | 'Carbs' | 'Fat';
@@ -41,6 +42,32 @@ const defaultMacroData: MacroData[] = [
   { label: 'Fat', value: 0, color: '#FF69B4' },
 ];
 
+interface StillHavingIssuesProps {
+  onPress: () => void;
+}
+
+const StillHavingIssues: React.FC<StillHavingIssuesProps> = ({ onPress }) => {
+  return (
+    <View className="items-center justify-center gap-2 pb-4">
+      <Text className="text-sm mb-2 font-normal text-textLightGrey">
+        Still having issues?
+      </Text>
+      <View className="flex-row items-center gap-2">
+        <Image
+          tintColor="#7B61FF"
+          source={IMAGE_CONSTANTS.supportAgentIconAlt}
+          className="w-[16px] h-[16px]"
+        />
+        <TouchableOpacity onPress={onPress}>
+          <Text className="text-sm font-medium text-[#7B61FF]">
+            Contact support
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 const SearchMealAndRestaurants: React.FC = () => {
   const navigation =
     useNavigation<
@@ -55,6 +82,8 @@ const SearchMealAndRestaurants: React.FC = () => {
     []
   );
   const [modalVisible, setModalVisible] = useState(false);
+  const [contactSupportDrawerVisible, setContactSupportDrawerVisible] =
+    useState(false);
   const [searchResults, setSearchResults] = useState<Meal[]>([]);
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -62,6 +91,7 @@ const SearchMealAndRestaurants: React.FC = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const searchRequestIdRef = useRef<number>(0);
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -124,14 +154,19 @@ const SearchMealAndRestaurants: React.FC = () => {
     const hasQuery = searchQuery.trim().length > 0;
     const hasFilters = selectedCuisines.length > 0;
 
+    // Increment request ID for this search
+    const currentRequestId = ++searchRequestIdRef.current;
+
     if (!hasQuery && !hasFilters) {
       setSearchResults([]);
       setSearchError(null);
+      setSearchLoading(false);
       return;
     }
 
     if (!currentLocationCoords) {
       setSearchResults([]);
+      setSearchLoading(false);
       return;
     }
 
@@ -145,6 +180,12 @@ const SearchMealAndRestaurants: React.FC = () => {
         hasQuery ? searchQuery : undefined,
         selectedCuisines
       );
+
+      // Ignore if this is not the latest request
+      if (currentRequestId !== searchRequestIdRef.current) {
+        return;
+      }
+
       const pins = mapPinsResponse.pins || [];
 
       if (activeTab === 'restaurants') {
@@ -203,6 +244,11 @@ const SearchMealAndRestaurants: React.FC = () => {
         setSearchResults(mealList);
       }
     } catch (error: any) {
+      // Ignore if this is not the latest request
+      if (currentRequestId !== searchRequestIdRef.current) {
+        return;
+      }
+
       console.error('Search error:', error);
       const friendlyErrorMessage =
         activeTab === 'restaurants'
@@ -211,7 +257,10 @@ const SearchMealAndRestaurants: React.FC = () => {
       setSearchError(friendlyErrorMessage);
       setSearchResults([]);
     } finally {
-      setSearchLoading(false);
+      // Only update loading state if this is still the latest request
+      if (currentRequestId === searchRequestIdRef.current) {
+        setSearchLoading(false);
+      }
     }
   };
 
@@ -219,7 +268,7 @@ const SearchMealAndRestaurants: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       search();
-    }, 500);
+    }, 1200);
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, currentLocationCoords, activeTab, selectedCuisines]);
@@ -404,62 +453,83 @@ const SearchMealAndRestaurants: React.FC = () => {
     );
   };
 
-  const renderMealItem = (meal: Meal) => (
-    <TouchableOpacity
-      key={meal.id}
-      onPress={() => navigation.navigate('MealFinderBreakdownScreen', { meal })}
-      className="flex-row bg-white rounded-xl mb-4 px-4 py-4 shadow-sm"
-    >
-      <View className="flex-row items-center justify-center bg-cornflowerBlue h-[48px] w-[48px] rounded-full mr-3 flex-shrink-0">
-        <Image
-          source={
-            meal.imageUrl
-              ? { uri: String(meal.imageUrl) }
-              : IMAGE_CONSTANTS.restaurantIcon
-          }
-          className="w-[20px] h-[20px] rounded-none"
-          style={{ borderRadius: 0 }}
-        />
-      </View>
+  const renderMealItem = (meal: Meal) => {
+    // Transform meal object to match MealFinderBreakdownScreen expectations
+    const transformedMeal = {
+      name: meal.name,
+      macros: meal.macros,
+      image: meal.imageUrl
+        ? { uri: String(meal.imageUrl) }
+        : IMAGE_CONSTANTS.restaurantIcon,
+      restaurant: {
+        name: meal.restaurant.name,
+        location: meal.restaurant.location || '',
+      },
+      matchScore: meal.matchScore,
+    };
 
-      <View className="flex-1 gap-1 pr-2">
-        <View className="flex-col justify-start">
-          <View className="flex-row mb-2 items-start justify-between">
+    return (
+      <TouchableOpacity
+        key={meal.id}
+        onPress={() =>
+          navigation.navigate('MealFinderBreakdownScreen', {
+            meal: transformedMeal,
+          })
+        }
+        className="flex-row bg-white rounded-xl mb-4 px-4 py-4 shadow-sm"
+      >
+        <View className="flex-row items-center justify-center bg-cornflowerBlue h-[48px] w-[48px] rounded-full mr-3 flex-shrink-0">
+          <Image
+            source={
+              meal.imageUrl
+                ? { uri: String(meal.imageUrl) }
+                : IMAGE_CONSTANTS.restaurantIcon
+            }
+            className="w-[20px] h-[20px] rounded-none"
+            style={{ borderRadius: 0 }}
+          />
+        </View>
+
+        <View className="flex-1 gap-1 pr-2">
+          <View className="flex-col justify-start">
+            <View className="flex-row mb-2 items-start justify-between">
+              <Text
+                className="text-sm font-medium text-[#222] mb-1 flex-1 mr-2"
+                numberOfLines={2}
+              >
+                {meal.name}
+              </Text>
+              {meal.matchScore && meal.matchScore > 0 && (
+                <View className="bg-primary flex-row items-center justify-center rounded-2xl px-2.5 py-1.5 flex-shrink-0">
+                  <Text className="text-xs font-medium text-white">
+                    {meal.matchScore}% match
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text
-              className="text-sm font-medium text-[#222] mb-1 flex-1 mr-2"
-              numberOfLines={2}
-            >
-              {meal.name}
-            </Text>
-            {meal.matchScore && meal.matchScore > 0 && (
-              <View className="bg-primary flex-row items-center justify-center rounded-2xl px-2.5 py-1.5 flex-shrink-0">
-                <Text className="text-xs font-medium text-white">
-                  {meal.matchScore}% match
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text
-            className="text-sm font-normal text-[#222] mb-1"
-            numberOfLines={1}
-          >
-            {meal.restaurant.name}
-          </Text>
-          {meal.restaurant?.location ? (
-            <Text
-              className="text-sm font-normal text-[#666] mb-2"
+              className="text-sm font-normal text-[#222] mb-1"
               numberOfLines={1}
             >
-              {meal.restaurant.location.split(',').slice(0, -1).join(',') || ''}
+              {meal.restaurant.name}
             </Text>
-          ) : null}
-          <View className="flex-row items-center gap-2">
-            {renderMacroChips(meal.macros)}
+            {meal.restaurant?.location ? (
+              <Text
+                className="text-sm font-normal text-[#666] mb-2"
+                numberOfLines={1}
+              >
+                {meal.restaurant.location.split(',').slice(0, -1).join(',') ||
+                  ''}
+              </Text>
+            ) : null}
+            <View className="flex-row items-center gap-2">
+              {renderMacroChips(meal.macros)}
+            </View>
           </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View className="flex-1" style={{ backgroundColor: '#f2f2f2' }}>
@@ -557,7 +627,7 @@ const SearchMealAndRestaurants: React.FC = () => {
         className="flex-1 px-5"
         style={{ backgroundColor: '#f2f2f2' }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
       >
         {/* Macros Section */}
         <View className="mt-4">
@@ -569,33 +639,41 @@ const SearchMealAndRestaurants: React.FC = () => {
 
         {/* Search Results List - Show when search or filters are active */}
         {(searchQuery.trim().length > 0 || selectedCuisines.length > 0) && (
-          <View className="mt-4">
+          <View
+            className={`mt-4 ${!searchLoading && !searchError && searchResults.length === 0 ? 'flex-1' : ''}`}
+          >
             {searchLoading ? (
               <View className="flex items-center justify-center py-8">
                 <Text className="text-[#888]">Searching...</Text>
               </View>
             ) : searchError ? (
-              <View className="flex items-center justify-center py-8 mb-10">
-                <View className="flex-row mb-3 rounded-full items-center h-[120px] w-[120px] justify-center">
-                  <Image
-                    source={IMAGE_CONSTANTS.mealSearchErrorIcon}
-                    className="w-[120px] h-[120px]"
-                  />
-                </View>
-                <Text className="mb-2 text-black font-semibold">
-                  Connection Error
-                </Text>
-                <Text className="mx-5 mb-5 text-sm text-center tracking-tighter font-normal text-[#b7b3b3]">
-                  Search error: {searchError}
-                </Text>
-                <TouchableOpacity
-                  className="bg-primaryLight flex-row items-center justify-center rounded-[1000px] h-[52px] px-4 w-full mx-5"
-                  onPress={() => handleRetry()}
-                >
-                  <Text className="text-white text-base font-semibold">
-                    Retry
+              <View className="flex-1 py-8">
+                <View className="flex-1 items-center justify-start pt-8">
+                  <View className="flex-row mb-3 rounded-full items-center h-[120px] w-[120px] justify-center">
+                    <Image
+                      source={IMAGE_CONSTANTS.mealSearchErrorIcon}
+                      className="w-[120px] h-[120px]"
+                    />
+                  </View>
+                  <Text className="mb-2 text-black font-semibold">
+                    Connection Error
                   </Text>
-                </TouchableOpacity>
+                  <Text className="mx-5 mb-5 text-sm text-center tracking-tighter font-normal text-[#b7b3b3]">
+                    Search error: {searchError}
+                  </Text>
+                  <TouchableOpacity
+                    className="bg-primaryLight flex-row items-center justify-center rounded-[1000px] h-[52px] px-4 w-full mx-5"
+                    onPress={() => handleRetry()}
+                  >
+                    <Text className="text-white text-base font-semibold">
+                      Retry
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <StillHavingIssues
+                  onPress={() => setContactSupportDrawerVisible(true)}
+                />
               </View>
             ) : searchResults.length > 0 ? (
               <>
@@ -606,32 +684,38 @@ const SearchMealAndRestaurants: React.FC = () => {
                 )}
               </>
             ) : (
-              <View className="flex items-center justify-center py-8 mb-10">
-                <View className="flex-row mb-3 bg-[#E8E9ED] rounded-full items-center h-[120px] w-[120px] justify-center">
-                  <Image
-                    source={IMAGE_CONSTANTS.mealEmptyStateIcon}
-                    className="w-[53px] h-[53px]"
-                  />
-                </View>
-                <Text className="mb-2 text-black font-semibold">
-                  No Restaurants found
-                </Text>
-                <Text className="mx-5 mb-5 text-sm text-center tracking-tighter font-normal text-[#b7b3b3]">
-                  We couldn’t find “{searchQuery}” in your area. Try searching a
-                  different restaurant or location.
-                </Text>
-                <TouchableOpacity
-                  className="bg-primaryLight flex-row items-center justify-center rounded-[1000px] h-[52px] px-4 w-full mx-5"
-                  onPress={() =>
-                    navigation.navigate('RequestRestaurantScreen', {
-                      restaurantName: searchQuery.trim() || undefined,
-                    })
-                  }
-                >
-                  <Text className="text-white text-base font-semibold">
-                    + Request restuarant
+              <View className="flex-1 py-8">
+                <View className="flex-1 items-center justify-start pt-8">
+                  <View className="flex-row mb-3 bg-[#E8E9ED] rounded-full items-center h-[120px] w-[120px] justify-center">
+                    <Image
+                      source={IMAGE_CONSTANTS.mealEmptyStateIcon}
+                      className="w-[53px] h-[53px]"
+                    />
+                  </View>
+                  <Text className="mb-2 text-black font-semibold">
+                    No Restaurants found
                   </Text>
-                </TouchableOpacity>
+                  <Text className="mx-5 mb-5 text-sm text-center tracking-tighter font-normal text-[#b7b3b3]">
+                    We couldn't find "{searchQuery}" in your area. Try searching
+                    a different restaurant or location.
+                  </Text>
+                  <TouchableOpacity
+                    className="bg-primaryLight flex-row items-center justify-center rounded-[1000px] h-[52px] px-4 w-full mx-5"
+                    onPress={() =>
+                      navigation.navigate('RequestRestaurantScreen', {
+                        restaurantName: searchQuery.trim() || undefined,
+                      })
+                    }
+                  >
+                    <Text className="text-white text-base font-semibold">
+                      + Request restuarant
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <StillHavingIssues
+                  onPress={() => setContactSupportDrawerVisible(true)}
+                />
               </View>
             )}
           </View>
@@ -712,6 +796,20 @@ const SearchMealAndRestaurants: React.FC = () => {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Contact Support Drawer */}
+      <Modal
+        visible={contactSupportDrawerVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setContactSupportDrawerVisible(false)}
+      >
+        <ContactSupportDrawer
+          onClose={() => setContactSupportDrawerVisible(false)}
+          emailSubject="Meal Finder Support Request"
+          emailBody="Hello MacroMeals Support, I need help with Meal Finder…"
+        />
       </Modal>
     </View>
   );

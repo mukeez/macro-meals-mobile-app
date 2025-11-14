@@ -1,36 +1,58 @@
-import React from "react";
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useMixpanel } from '@macro-meals/mixpanel/src';
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
+  Alert,
   Dimensions,
   Image,
   Linking,
-} from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import CustomSafeAreaView from "../components/CustomSafeAreaView";
-import { IMAGE_CONSTANTS } from "../constants/imageConstants";
-import { useMixpanel } from "@macro-meals/mixpanel/src";
-const { height } = Dimensions.get("window");
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+const { height } = Dimensions.get('window');
 type ContactSupportDrawerProps = {
   onClose: () => void;
+  emailSubject?: string;
+  emailBody?: string;
 };
-
-const subject = encodeURIComponent("Support Request");
-const body = encodeURIComponent("Hello Macro Meals,\n\nI need help with ...");
-const mailtoUrl = `mailto:support@macromealsapp.com?subject=${subject}&body=${body}`;
 
 export default function ContactSupportDrawer({
   onClose,
+  emailSubject = 'Support Request',
+  emailBody = 'Hello Macro Meals,\n\nI need help with ...',
 }: ContactSupportDrawerProps) {
   const mixpanel = useMixpanel();
-  
-  const handleSupportEmail = () => {
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const subject = encodeURIComponent(emailSubject);
+  const body = encodeURIComponent(emailBody);
+  const mailtoUrl = `mailto:support@macromealsapp.com?subject=${subject}&body=${body}`;
+
+  const handleSupportEmail = async () => {
     mixpanel?.track({
-      name: "contact_support_email_opened",
+      name: 'contact_support_email_opened',
       properties: {},
     });
-    Linking.openURL(mailtoUrl);
+
+    try {
+      const canOpen = await Linking.canOpenURL(mailtoUrl);
+      if (canOpen) {
+        await Linking.openURL(mailtoUrl);
+        setEmailError(null);
+      } else {
+        setEmailError('No email app found on your device.');
+        Alert.alert(
+          'Email Not Available',
+          'No email app found on your device.'
+        );
+      }
+    } catch {
+      setEmailError('No email app found on your device.');
+      Alert.alert('Email Not Available', 'No email app found on your device.');
+    }
   };
   return (
     <CustomSafeAreaView>
@@ -51,8 +73,7 @@ export default function ContactSupportDrawer({
           </View>
           <View className="mt-8">
             <Text className="text-4xl font-bold text-[#FFFFFF] opacity-50">
-              Hi there 
-
+              Hi there
             </Text>
             <Text className="text-white text-4xl mb-12 font-bold">
               How can we help?
@@ -63,7 +84,7 @@ export default function ContactSupportDrawer({
             style={{
               top: height * 0.27,
               zIndex: 10,
-              shadowColor: "#000",
+              shadowColor: '#000',
               shadowOpacity: 0.17,
               shadowOffset: { width: 0, height: 10 },
               shadowRadius: 16,
@@ -98,10 +119,15 @@ export default function ContactSupportDrawer({
                 Send us a message
               </Text>
             </TouchableOpacity>
+            {emailError && (
+              <Text className="text-red-500 text-sm mt-2 text-center">
+                {emailError}
+              </Text>
+            )}
             {/* Add border under button */}
             <View
               style={{
-                borderBottomColor: "#EFEFEF",
+                borderBottomColor: '#EFEFEF',
                 borderBottomWidth: 1,
                 marginTop: 8,
                 marginBottom: 16, // white space under border

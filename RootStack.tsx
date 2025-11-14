@@ -51,6 +51,7 @@ import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import NotificationsPreferences from './src/screens/NotificationsPreferences';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
+import RequestRestaurantScreen from './src/screens/RequestRestaurantScreen';
 import ScannedMealBreakdownScreen from './src/screens/ScannedMealBreakdown';
 import TermsOfServiceScreen from './src/screens/TermsOfServiceScreen';
 
@@ -105,70 +106,6 @@ export function RootStack({
 
   // Simplified routing logic - App.tsx handles session validation
   const shouldShowLogin = !isAuthenticated;
-
-  // console.log("🔍 RootStack Routing Decision:", {
-  //   isOnboardingCompleted,
-  //   isAuthenticated,
-  //   initialAuthScreen,
-  //   hasMacros,
-  //   isPro,
-  //   readyForDashboard,
-  //   devMode,
-  //   shouldShowOnboarding: !isOnboardingCompleted,
-  //   shouldShowAuth: shouldShowLogin,
-  //   shouldShowDashboard: hasMacros && readyForDashboard && (isPro || devMode),
-  //   shouldShowPayment: hasMacros && readyForDashboard && !isPro && !devMode,
-  //   shouldShowGoalSetup: !(hasMacros && readyForDashboard)
-  // });
-
-  // Add immediate debugging for the routing condition
-  // const shouldShowDashboard = hasMacros && readyForDashboard && (isPro || devMode);
-  // const shouldShowPayment = hasMacros && readyForDashboard && !isPro && !devMode;
-
-  // console.log("🔍 RootStack - Routing Conditions:", {
-  //   hasMacros,
-  //   readyForDashboard,
-  //   isPro,
-  //   devMode,
-  //   hasMacrosAndReady: hasMacros && readyForDashboard,
-  //   shouldShowDashboard,
-  //   shouldShowPayment,
-  //   finalDecision: shouldShowDashboard ? "DASHBOARD" : shouldShowPayment ? "PAYMENT" : "GOAL_SETUP"
-  // });
-
-  // Add specific logging for isPro routing
-  // if (hasMacros && readyForDashboard) {
-  //   if (isPro) {
-  //     console.log("🔍 RootStack - User is PRO, routing to Dashboard");
-  //   } else if (devMode) {
-  //     console.log("🔍 RootStack - User is not PRO but dev mode is enabled, routing to Dashboard");
-  //   } else {
-  //     console.log("🔍 RootStack - User is not PRO and dev mode is disabled, routing to PaymentScreen");
-  //   }
-  // }
-
-  // Log dev mode bypass if applicable
-  // if (devMode && hasMacros && readyForDashboard && !isPro) {
-  //   console.log("🛠️ DEV MODE: Bypassing payment screen, routing to dashboard");
-  // }
-
-  // Log which screen will be rendered
-  // let currentScreen = '';
-  // if (!isOnboardingCompleted) {
-  //   currentScreen = 'OnboardingNav';
-  // } else if (!isAuthenticated) {
-  //   currentScreen = 'Auth';
-  // } else if (hasMacros && readyForDashboard) {
-  //   if (isPro || devMode) {
-  //     currentScreen = 'Dashboard';
-  //   } else {
-  //     currentScreen = 'PaymentScreen';
-  //   }
-  // } else {
-  //   currentScreen = 'GoalSetupNav';
-  // }
-
-  // console.log('🔍 RootStack - Rendering screen:', currentScreen);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -315,6 +252,10 @@ const DashboardNavigator = () => {
       <Stack.Screen
         name="MealFinderBreakdownScreen"
         component={MealFinderBreakdownScreen}
+        options={{
+          presentation: 'card',
+          headerShown: false,
+        }}
       />
       <Stack.Screen
         name="ScannedMealBreakdownScreen"
@@ -349,6 +290,10 @@ const DashboardNavigator = () => {
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="GoalsSetupFlow" component={GoalsSetupFlow} />
       <Stack.Screen name="AdjustGoalsFlow" component={AdjustGoalsFlow} />
+      <Stack.Screen
+        name="RequestRestaurantScreen"
+        component={RequestRestaurantScreen}
+      />
     </Stack.Navigator>
   );
 };
