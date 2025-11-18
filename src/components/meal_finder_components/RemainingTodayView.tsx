@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { CircularProgress } from '../CircularProgress';
 
 interface MacroData {
@@ -15,29 +15,36 @@ interface RemainingTodayViewProps {
     carbs_target: number;
     fat_target: number;
   };
+  verticalPadding?: number;
 }
 
 const macroTypeToPreferenceKey = {
-  'Protein': 'protein_target',
-  'Carbs': 'carbs_target',
-  'Fat': 'fat_target',
+  Protein: 'protein_target',
+  Carbs: 'carbs_target',
+  Fat: 'fat_target',
 } as const;
 
-export const RemainingTodayView: React.FC<RemainingTodayViewProps> = ({ 
-  macroData, 
-  macrosPreferences 
+export const RemainingTodayView: React.FC<RemainingTodayViewProps> = ({
+  macroData,
+  macrosPreferences,
+  verticalPadding = 0,
 }) => {
   return (
     <View className="flex-col rounded-lg items-start bg-white mt-3 px-5 pt-3 pb-3 mb-4">
       <View className="flex-row w-full justify-between items-center">
-        {macroData.map((macro) => {
-          const target = macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 0;
+        {macroData.map(macro => {
+          const target =
+            macrosPreferences[macroTypeToPreferenceKey[macro.label]] || 0;
           const consumed = macro.value;
           const remaining = Math.max(0, target - consumed);
-          
+
           return (
             <View key={macro.label} className="flex-row items-center">
-              <Text className="text-sm text-black mr-3 font-medium">{macro.label}</Text>
+              <Text
+                className={`text-sm py-[${verticalPadding}px] text-black mr-3 font-medium`}
+              >
+                {macro.label}
+              </Text>
               <CircularProgress
                 size={40}
                 strokeWidth={4}

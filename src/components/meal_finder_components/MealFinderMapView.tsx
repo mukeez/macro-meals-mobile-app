@@ -67,34 +67,42 @@ export const MealFinderMapView: React.FC<MealFinderMapViewProps> = ({
     navigation.navigate('MealFinderBreakdownScreen', { meal: marker.data });
   };
 
-  // Convert meals to map markers with stable coordinates
+  // Convert meals to map markers with actual coordinates
   const mealMarkers: MapMarker<Meal>[] = React.useMemo(() => {
-    // Use current location as center, or default to San Francisco
-    const centerLat = currentLocation?.latitude || 37.78825;
-    const centerLng = currentLocation?.longitude || -122.4324;
-
     const markers = meals.map((meal, index) => {
-      // Generate stable coordinates based on meal ID to prevent re-renders
-      const seed = meal.id
-        ? meal.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
-        : index;
-      const random1 = (Math.sin(seed) + 1) / 2; // Convert to 0-1 range
-      const random2 = (Math.sin(seed * 2) + 1) / 2; // Different pattern
+      // Use actual coordinates from meal if available, otherwise fallback to generated coordinates
+      let lat: number;
+      let lng: number;
 
-      const lat = Math.max(
-        currentBounds.southWest.latitude + 0.001,
-        Math.min(
-          currentBounds.northEast.latitude - 0.001,
-          centerLat + (random1 - 0.5) * 0.003
-        )
-      );
-      const lng = Math.max(
-        currentBounds.southWest.longitude + 0.001,
-        Math.min(
-          currentBounds.northEast.longitude - 0.001,
-          centerLng + (random2 - 0.5) * 0.003
-        )
-      );
+      if (meal.latitude && meal.longitude) {
+        // Use actual coordinates from the pin
+        lat = meal.latitude;
+        lng = meal.longitude;
+      } else {
+        // Fallback: Generate stable coordinates based on meal ID (for backward compatibility)
+        const centerLat = currentLocation?.latitude || 37.78825;
+        const centerLng = currentLocation?.longitude || -122.4324;
+        const seed = meal.id
+          ? meal.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
+          : index;
+        const random1 = (Math.sin(seed) + 1) / 2; // Convert to 0-1 range
+        const random2 = (Math.sin(seed * 2) + 1) / 2; // Different pattern
+
+        lat = Math.max(
+          currentBounds.southWest.latitude + 0.001,
+          Math.min(
+            currentBounds.northEast.latitude - 0.001,
+            centerLat + (random1 - 0.5) * 0.003
+          )
+        );
+        lng = Math.max(
+          currentBounds.southWest.longitude + 0.001,
+          Math.min(
+            currentBounds.northEast.longitude - 0.001,
+            centerLng + (random2 - 0.5) * 0.003
+          )
+        );
+      }
 
       return {
         id: meal.id || `meal-${index}`,

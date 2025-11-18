@@ -43,6 +43,7 @@ export const IMAGE_CONSTANTS = {
   personIcon: require('../../assets/person-icon.png'),
   restoreIcon: require('../../assets/restore-icon.png'),
   supportAgentIcon: require('../../assets/support-agent-icon.png'),
+  supportAgentIconAlt: require('../../assets/support-agent-icon-alt.png'),
   chevronRightIcon: require('../../assets/chevron-right-icon.png'),
   fireIcon: require('../../assets/fire-icon.png'),
   mealBg: require('../../assets/mealbg.png'),
@@ -83,6 +84,9 @@ export const IMAGE_CONSTANTS = {
   dislikeLightIcon: require('../../assets/dislike-light-icon.png'),
   likeLightIcon: require('../../assets/like-light-icon.png'),
   mapFilterIcon: require('../../assets/map-filter-icon.png'),
+  mealEmptyStateIcon: require('../../assets/meal-empty-state-icon.png'),
+  missingRestaurantIcon: require('../../assets/missing-restaurant-icon.png'),
+  mealSearchErrorIcon: require('../../assets/meal-search-error.png'),
   blurhash:
     '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[',
 };
