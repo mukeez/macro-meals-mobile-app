@@ -1,31 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useMixpanel } from '@macro-meals/mixpanel';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  SafeAreaView,
-  StatusBar,
-  ScrollView,
   ActivityIndicator,
+  Alert,
   Image,
+  KeyboardAvoidingView,
   Modal,
   Platform,
-  Alert,
-  KeyboardAvoidingView,
-} from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import { useNavigation } from "@react-navigation/native";
-import useStore from "../store/useStore";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "src/types/navigation";
-import { MealFeedback, mealService } from "../services/mealService";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { IMAGE_CONSTANTS } from "../constants/imageConstants";
-import * as ImagePicker from "expo-image-picker";
-import FavoritesService from "../services/favoritesService";
-import { useMixpanel } from "@macro-meals/mixpanel";
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { RootStackParamList } from 'src/types/navigation';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import FavoritesService from '../services/favoritesService';
+import { MealFeedback, mealService } from '../services/mealService';
+import useStore from '../store/useStore';
 
 interface RouteParams {
   barcodeData?: string;
@@ -51,27 +50,27 @@ interface RouteParams {
   defaultDate?: string;
 }
 
-import { FavoriteMeal } from "../services/favoritesService";
-import { FavouriteIcon } from "src/components/FavouriteIcon";
-import { SERVING_UNITS } from "constants/serving_units";
-import { RateMacroMeals } from "src/components/RateMacroMeals";
+import { SERVING_UNITS } from 'constants/serving_units';
+import { FavouriteIcon } from 'src/components/FavouriteIcon';
+import { RateMacroMeals } from 'src/components/RateMacroMeals';
+import { FavoriteMeal } from '../services/favoritesService';
 
 /**
  * Screen for adding a new meal to the log
  */
 export const AddMealScreen: React.FC = () => {
   const navigation =
-    useNavigation<StackNavigationProp<RootStackParamList, "AddMeal">>();
-  const route = useRoute<RouteProp<{ AddMeal: RouteParams }, "AddMeal">>();
+    useNavigation<StackNavigationProp<RootStackParamList, 'AddMeal'>>();
+  const route = useRoute<RouteProp<{ AddMeal: RouteParams }, 'AddMeal'>>();
   const params = route.params || {};
   const { barcodeData, analyzedData, defaultDate } = params;
 
-  const [mealName, setMealName] = useState<string>("");
-  const [calories, setCalories] = useState<string>("0");
-  const [protein, setProtein] = useState<string>("0");
-  const [carbs, setCarbs] = useState<string>("0");
-  const [fats, setFats] = useState<string>("0");
-  const [amount, setAmount] = useState<string>("1");
+  const [mealName, setMealName] = useState<string>('');
+  const [calories, setCalories] = useState<string>('0');
+  const [protein, setProtein] = useState<string>('0');
+  const [carbs, setCarbs] = useState<string>('0');
+  const [fats, setFats] = useState<string>('0');
+  const [amount, setAmount] = useState<string>('1');
   const [loading, setLoading] = useState<boolean>(false);
   const [time, setTime] = useState<Date>(() => {
     if (analyzedData && analyzedData.meal_time) {
@@ -85,16 +84,16 @@ export const AddMealScreen: React.FC = () => {
   const [showTimeModal, setShowTimeModal] = useState(false);
   const [tempTime, setTempTime] = useState<Date | null>(null);
   const [mealImage, setMealImage] = useState<string | null>(null);
-  const [servingUnit, setServingUnit] = useState<string>("grams");
-  const [noOfServings, setNoOfServings] = useState<string>("1"); // Default to '1'
+  const [servingUnit, setServingUnit] = useState<string>('grams');
+  const [noOfServings, setNoOfServings] = useState<string>('1'); // Default to '1'
   const [showServingUnitModal, setShowServingUnitModal] = useState(false);
-  const [tempServingUnit, setTempServingUnit] = useState("grams");
+  const [tempServingUnit, setTempServingUnit] = useState('grams');
   const [isFavorite, setIsFavorite] = useState(false);
-  const [mealDescription, setMealDescription] = useState("");
+  const [mealDescription, setMealDescription] = useState('');
   const [showMealTypeModal, setShowMealTypeModal] = useState(false);
-  const [tempMealType, setTempMealType] = useState("breakfast");
-  const [mealType, setMealType] = useState("breakfast");
-  const [logging_mode, setLoggingMode] = useState("manual");
+  const [tempMealType, setTempMealType] = useState('breakfast');
+  const [mealType, setMealType] = useState('breakfast');
+  const [logging_mode, setLoggingMode] = useState('manual');
   const [favoriteMeals, setFavoriteMeals] = useState<FavoriteMeal[]>([]);
   // const [loadingFavorites, setLoadingFavorites] = useState<boolean>(false);
   const [validationErrors, setValidationErrors] = useState<{
@@ -103,33 +102,33 @@ export const AddMealScreen: React.FC = () => {
     carbs: string;
     fats: string;
   }>({
-    calories: "",
-    protein: "",
-    carbs: "",
-    fats: "",
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: '',
   });
   const mixpanel = useMixpanel();
   useEffect(() => {
     mixpanel?.track({
-      name: "manual_entry_opened",
+      name: 'manual_entry_opened',
       properties: {
-        entry_point: "add_meal",
+        entry_point: 'add_meal',
       },
     });
   }, []);
   // Initialize form with analyzed data if available
   React.useEffect(() => {
     if (analyzedData) {
-      setMealName(analyzedData.name || "");
-      setCalories(analyzedData.calories?.toString() || "0");
-      setProtein(analyzedData.protein?.toString() || "0");
-      setCarbs(analyzedData.carbs?.toString() || "0");
-      setNoOfServings(analyzedData.no_of_servings?.toString() || "0");
-      setFats(analyzedData.fat?.toString() || "0");
-      setMealType(analyzedData.meal_type || "breakfast");
-      setAmount(analyzedData.amount?.toString() || "1");
-      setLoggingMode(analyzedData.logging_mode || "manual");
-      setMealDescription(analyzedData.description || "");
+      setMealName(analyzedData.name || '');
+      setCalories(analyzedData.calories?.toString() || '0');
+      setProtein(analyzedData.protein?.toString() || '0');
+      setCarbs(analyzedData.carbs?.toString() || '0');
+      setNoOfServings(analyzedData.no_of_servings?.toString() || '0');
+      setFats(analyzedData.fat?.toString() || '0');
+      setMealType(analyzedData.meal_type || 'breakfast');
+      setAmount(analyzedData.amount?.toString() || '1');
+      setLoggingMode(analyzedData.logging_mode || 'manual');
+      setMealDescription(analyzedData.description || '');
 
       // Set the photo if available from SnapMealScreen
       if (analyzedData.photo) {
@@ -141,7 +140,7 @@ export const AddMealScreen: React.FC = () => {
   React.useEffect(() => {
     const checkFavorite = async () => {
       if (mealName.trim()) {
-        const isFav = await FavoritesService.isFavorite(mealName, "custom");
+        const isFav = await FavoritesService.isFavorite(mealName, 'custom');
         setIsFavorite(isFav);
       }
     };
@@ -156,9 +155,9 @@ export const AddMealScreen: React.FC = () => {
         const favorites = await FavoritesService.getFavorites();
         setFavoriteMeals(favorites);
       } catch (error) {
-        console.error("Error fetching favorites:", error);
+        console.error('Error fetching favorites:', error);
       } finally {
-        console.log("Favorites fetched");
+        console.log('Favorites fetched');
         //  setLoadingFavorites(false);
       }
     };
@@ -170,9 +169,9 @@ export const AddMealScreen: React.FC = () => {
    */
   const handleGoBack = (): void => {
     mixpanel?.track({
-      name: "manual_back_to_add_meal",
+      name: 'manual_back_to_add_meal',
       properties: {
-        gesture_type: "button",
+        gesture_type: 'button',
       },
     });
     navigation.goBack();
@@ -183,7 +182,7 @@ export const AddMealScreen: React.FC = () => {
    */
   const _handleBookmark = (): void => {
     // Implementation for bookmarking a meal
-    console.log("Bookmark meal");
+    console.log('Bookmark meal');
   };
 
   /**
@@ -192,7 +191,7 @@ export const AddMealScreen: React.FC = () => {
    */
   const handleQuickAdd = (meal: FavoriteMeal): void => {
     mixpanel?.track({
-      name: "manual_favorite_selected",
+      name: 'manual_favorite_selected',
       properties: {
         favorite_meal_id: meal.id,
         replaced_existing: Boolean(mealName),
@@ -202,9 +201,9 @@ export const AddMealScreen: React.FC = () => {
     setCalories(meal.macros.calories.toString());
     setProtein(meal.macros.protein.toString());
     setCarbs(meal.macros.carbs.toString());
-    setNoOfServings(meal?.no_of_servings?.toString() || "1");
+    setNoOfServings(meal?.no_of_servings?.toString() || '1');
     setFats(meal.macros.fat.toString());
-    setLoggingMode(meal.logging_mode || "manual");
+    setLoggingMode(meal.logging_mode || 'manual');
     setMealType(meal.meal_type);
   };
 
@@ -213,10 +212,10 @@ export const AddMealScreen: React.FC = () => {
    */
   const validateMacros = (): boolean => {
     const errors = {
-      calories: "",
-      protein: "",
-      carbs: "",
-      fats: "",
+      calories: '',
+      protein: '',
+      carbs: '',
+      fats: '',
     };
 
     // let isValid = true;
@@ -255,7 +254,7 @@ export const AddMealScreen: React.FC = () => {
    */
   const handleAddMealLog = async (): Promise<void> => {
     mixpanel?.track({
-      name: "add_to_log_from_manual_submitted",
+      name: 'add_to_log_from_manual_submitted',
       properties: {
         meal_id: mealName,
         meal_type: tempMealType,
@@ -271,7 +270,7 @@ export const AddMealScreen: React.FC = () => {
     setLoading(true);
     try {
       if (!mealName.trim()) {
-        Alert.alert("Error", "Please enter a meal name");
+        Alert.alert('Error', 'Please enter a meal name');
         setLoading(false);
         return;
       }
@@ -279,8 +278,8 @@ export const AddMealScreen: React.FC = () => {
       // Validate macros
       if (!validateMacros()) {
         Alert.alert(
-          "Validation Error",
-          "Please ensure all macro values are greater than 0"
+          'Validation Error',
+          'Please ensure all macro values are greater than 0'
         );
         setLoading(false);
         return;
@@ -314,19 +313,19 @@ export const AddMealScreen: React.FC = () => {
         photo: mealImage
           ? {
               uri: mealImage,
-              type: "image/jpeg",
-              name: "meal_photo.jpg",
+              type: 'image/jpeg',
+              name: 'meal_photo.jpg',
             }
           : undefined,
       };
 
       // Log the request data for debugging
-      console.log("Meal request data:", JSON.stringify(mealRequest, null, 2));
+      console.log('Meal request data:', JSON.stringify(mealRequest, null, 2));
 
       // Send the request
       await mealService.logMeal(mealRequest);
       mixpanel?.track({
-        name: "meal_saved_from_meals",
+        name: 'meal_saved_from_meals',
         properties: {
           meal_name: mealName ?? null,
           target_date: mealRequest.meal_time,
@@ -346,7 +345,7 @@ export const AddMealScreen: React.FC = () => {
 
       // Track meal logging
       mixpanel?.track({
-        name: "meal_logged",
+        name: 'meal_logged',
         properties: {
           logging_mode: logging_mode,
           meal_type: tempMealType,
@@ -358,12 +357,12 @@ export const AddMealScreen: React.FC = () => {
         },
       });
 
-      navigation.navigate("MainTabs", { screen: "Meals" });
+      navigation.navigate('MainTabs', { screen: 'Meals' });
     } catch (error) {
-      console.error("Error adding meal:", error);
+      console.error('Error adding meal:', error);
       Alert.alert(
-        "Error",
-        `${error instanceof Error ? error.message : "Unknown error"}`
+        'Error',
+        `${error instanceof Error ? error.message : 'Unknown error'}`
       );
     } finally {
       setLoading(false);
@@ -372,18 +371,18 @@ export const AddMealScreen: React.FC = () => {
 
   const handleOnLike = async () => {
     try {
-      console.log("THE BarCode:", barcodeData);
+      console.log('THE BarCode:', barcodeData);
       await mealService.productFeedback(
         {
           feedback: MealFeedback.ThumbUp,
-          barcode: barcodeData || "",
-          mealImage: mealImage || "",
+          barcode: barcodeData || '',
+          mealImage: mealImage || '',
         },
         mealName
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to like meal. Please try again.");
-      console.error("Error liking meal:", error);
+      Alert.alert('Error', 'Failed to like meal. Please try again.');
+      console.error('Error liking meal:', error);
     }
   };
   const handleOnDislike = async () => {
@@ -391,14 +390,14 @@ export const AddMealScreen: React.FC = () => {
       await mealService.productFeedback(
         {
           feedback: MealFeedback.ThumbDown,
-          barcode: barcodeData || "",
-          mealImage: mealImage || "",
+          barcode: barcodeData || '',
+          mealImage: mealImage || '',
         },
         mealName
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to dislike meal. Please try again.");
-      console.error("Error disliking meal:", error);
+      Alert.alert('Error', 'Failed to dislike meal. Please try again.');
+      console.error('Error disliking meal:', error);
     }
   };
 
@@ -417,17 +416,17 @@ export const AddMealScreen: React.FC = () => {
     try {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
+      if (status !== 'granted') {
         Alert.alert(
-          "Permission Required",
-          "Please grant camera roll access to add photos to your meals.",
-          [{ text: "OK" }]
+          'Permission Required',
+          'Please grant camera roll access to add photos to your meals.',
+          [{ text: 'OK' }]
         );
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -436,19 +435,19 @@ export const AddMealScreen: React.FC = () => {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setMealImage(result.assets[0].uri);
         mixpanel?.track({
-          name: "manual_photo_uploaded",
+          name: 'manual_photo_uploaded',
           properties: {
-            file_type: result.assets[0].type ?? "image",
+            file_type: result.assets[0].type ?? 'image',
             file_size: result.assets[0].fileSize ?? null,
           },
         });
       }
     } catch (error) {
-      console.error("Error picking image:", error);
+      console.error('Error picking image:', error);
       Alert.alert(
-        "Error",
-        "There was a problem selecting the image. Please try again.",
-        [{ text: "OK" }]
+        'Error',
+        'There was a problem selecting the image. Please try again.',
+        [{ text: 'OK' }]
       );
     }
   };
@@ -463,14 +462,14 @@ export const AddMealScreen: React.FC = () => {
     setShowTimeModal(false);
   };
   const formattedTime = time.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
   const toggleFavorite = async () => {
     try {
       if (!mealName.trim()) {
-        Alert.alert("Please enter a meal name");
+        Alert.alert('Please enter a meal name');
         return;
       }
       const mealObj = {
@@ -489,34 +488,34 @@ export const AddMealScreen: React.FC = () => {
         serving_unit: servingUnit,
         meal_time: time.toISOString(),
         image: mealImage || IMAGE_CONSTANTS.mealIcon,
-        restaurant: { name: "custom", location: "" },
+        restaurant: { name: 'custom', location: '' },
         favorite: isFavorite,
       };
       const newFavoriteStatus = await FavoritesService.toggleFavorite(mealObj);
       setIsFavorite(newFavoriteStatus);
       mixpanel?.track({
-        name: "favorite_toggled_in_manual",
+        name: 'favorite_toggled_in_manual',
         properties: {
           favorite_state: newFavoriteStatus,
         },
       });
       if (newFavoriteStatus) {
-        Alert.alert("Added to favorites");
+        Alert.alert('Added to favorites');
       } else {
-        Alert.alert("Removed from favorites");
+        Alert.alert('Removed from favorites');
       }
     } catch {
-      Alert.alert("Error", "Failed to update favorites");
+      Alert.alert('Error', 'Failed to update favorites');
     }
   };
 
   // Function to get meal type based on time
   const getMealTypeByTime = (date: Date): string => {
     const hour = date.getHours();
-    if (hour >= 5 && hour < 12) return "breakfast";
-    if (hour >= 12 && hour < 16) return "lunch";
-    if (hour >= 17 && hour < 21) return "dinner";
-    return "other";
+    if (hour >= 5 && hour < 12) return 'breakfast';
+    if (hour >= 12 && hour < 16) return 'lunch';
+    if (hour >= 17 && hour < 21) return 'dinner';
+    return 'other';
   };
 
   // Set initial meal type based on current time
@@ -528,7 +527,7 @@ export const AddMealScreen: React.FC = () => {
 
   const [selectedMealType, setSelectedMealType] = useState(tempMealType);
   const handleOpenTimeModal = () => {
-    mixpanel?.track({ name: "custom_date_picker_opened" });
+    mixpanel?.track({ name: 'custom_date_picker_opened' });
     setShowTimeModal(true);
   };
 
@@ -545,9 +544,9 @@ export const AddMealScreen: React.FC = () => {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <ScrollView
           className="flex-1 px-4 pb-6"
@@ -593,17 +592,17 @@ export const AddMealScreen: React.FC = () => {
             </View>
           )}
 
-          <View className={`${analyzedData?.hideImage ? "mt-10" : ""} mb-4`}>
+          <View className={`${analyzedData?.hideImage ? 'mt-10' : ''} mb-4`}>
             <Text className="text-base font-medium mb-2">Meal Name</Text>
             <View className="flex-row items-center border placeholder:text-lightGrey text-base border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white">
               <TextInput
                 value={mealName}
-                onChangeText={(text) => {
+                onChangeText={text => {
                   if (text !== mealName) {
                     mixpanel?.track({
-                      name: "manual_field_updated",
+                      name: 'manual_field_updated',
                       properties: {
-                        field_name: "meal_name",
+                        field_name: 'meal_name',
                         old_value: mealName,
                         new_value: text,
                       },
@@ -620,13 +619,13 @@ export const AddMealScreen: React.FC = () => {
 
           <View className="mb-4">
             <Text className="text-base font-medium mb-2">Meal Type</Text>
-            {Platform.OS === "android" ? (
+            {Platform.OS === 'android' ? (
               <View className="border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white justify-center">
                 <Picker
                   selectedValue={selectedMealType}
                   onValueChange={setSelectedMealType}
-                  style={{ width: "100%", color: "black" }}
-                  itemStyle={{ fontSize: 16, color: "black" }}
+                  style={{ width: '100%', color: 'black' }}
+                  itemStyle={{ fontSize: 16, color: 'black' }}
                 >
                   <Picker.Item label="Breakfast" value="breakfast" />
                   <Picker.Item label="Lunch" value="lunch" />
@@ -681,20 +680,20 @@ export const AddMealScreen: React.FC = () => {
               <View
                 className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${
                   validationErrors.calories
-                    ? "border-red-500"
-                    : "border-[#e0e0e0]"
+                    ? 'border-red-500'
+                    : 'border-[#e0e0e0]'
                 }`}
               >
                 <TextInput
                   className="flex-1 text-base"
                   keyboardType="numeric"
                   value={calories}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     if (text !== calories) {
                       mixpanel?.track({
-                        name: "manual_field_updated",
+                        name: 'manual_field_updated',
                         properties: {
-                          field_name: "calories",
+                          field_name: 'calories',
                           old_value: calories,
                           new_value: text,
                         },
@@ -702,15 +701,15 @@ export const AddMealScreen: React.FC = () => {
                     }
                     setCalories(text);
                     if (validationErrors.calories) {
-                      setValidationErrors((prev) => ({
+                      setValidationErrors(prev => ({
                         ...prev,
-                        calories: "",
+                        calories: '',
                       }));
                     }
                   }}
                   placeholder="0"
                   onFocus={() => {
-                    if (calories === "0") setCalories("");
+                    if (calories === '0') setCalories('');
                   }}
                 />
                 <Text className="text-base text-[#8e929a] ml-1">kcal</Text>
@@ -729,20 +728,20 @@ export const AddMealScreen: React.FC = () => {
               <View
                 className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${
                   validationErrors.protein
-                    ? "border-red-500"
-                    : "border-[#e0e0e0]"
+                    ? 'border-red-500'
+                    : 'border-[#e0e0e0]'
                 }`}
               >
                 <TextInput
                   className="flex-1 text-base"
                   keyboardType="numeric"
                   value={protein}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     if (text !== protein) {
                       mixpanel?.track({
-                        name: "manual_field_updated",
+                        name: 'manual_field_updated',
                         properties: {
-                          field_name: "protein",
+                          field_name: 'protein',
                           old_value: protein,
                           new_value: text,
                         },
@@ -750,15 +749,15 @@ export const AddMealScreen: React.FC = () => {
                     }
                     setProtein(text);
                     if (validationErrors.protein) {
-                      setValidationErrors((prev) => ({
+                      setValidationErrors(prev => ({
                         ...prev,
-                        protein: "",
+                        protein: '',
                       }));
                     }
                   }}
                   placeholder="0"
                   onFocus={() => {
-                    if (protein === "0") setProtein("");
+                    if (protein === '0') setProtein('');
                   }}
                 />
                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
@@ -778,19 +777,19 @@ export const AddMealScreen: React.FC = () => {
               </Text>
               <View
                 className={`flex-row items-center border placeholder:text-lightGrey text-base rounded-sm px-3 h-[4.25rem] bg-white ${
-                  validationErrors.carbs ? "border-red-500" : "border-[#e0e0e0]"
+                  validationErrors.carbs ? 'border-red-500' : 'border-[#e0e0e0]'
                 }`}
               >
                 <TextInput
                   className="flex-1 text-base"
                   keyboardType="numeric"
                   value={carbs}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     if (text !== carbs) {
                       mixpanel?.track({
-                        name: "manual_field_updated",
+                        name: 'manual_field_updated',
                         properties: {
-                          field_name: "carbs",
+                          field_name: 'carbs',
                           old_value: carbs,
                           new_value: text,
                         },
@@ -798,15 +797,15 @@ export const AddMealScreen: React.FC = () => {
                     }
                     setCarbs(text);
                     if (validationErrors.carbs) {
-                      setValidationErrors((prev) => ({
+                      setValidationErrors(prev => ({
                         ...prev,
-                        carbs: "",
+                        carbs: '',
                       }));
                     }
                   }}
                   placeholder="0"
                   onFocus={() => {
-                    if (carbs === "0") setCarbs("");
+                    if (carbs === '0') setCarbs('');
                   }}
                 />
                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
@@ -822,19 +821,19 @@ export const AddMealScreen: React.FC = () => {
               <Text className="text-base text-black mb-2">Fats</Text>
               <View
                 className={`flex-row items-center placeholder:text-lightGrey text-base border rounded-sm px-3 h-[4.25rem] bg-white ${
-                  validationErrors.fats ? "border-red-500" : "border-[#e0e0e0]"
+                  validationErrors.fats ? 'border-red-500' : 'border-[#e0e0e0]'
                 }`}
               >
                 <TextInput
                   className="flex-1 text-base"
                   keyboardType="numeric"
                   value={fats}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     if (text !== fats) {
                       mixpanel?.track({
-                        name: "manual_field_updated",
+                        name: 'manual_field_updated',
                         properties: {
-                          field_name: "fats",
+                          field_name: 'fats',
                           old_value: fats,
                           new_value: text,
                         },
@@ -842,15 +841,15 @@ export const AddMealScreen: React.FC = () => {
                     }
                     setFats(text);
                     if (validationErrors.fats) {
-                      setValidationErrors((prev) => ({
+                      setValidationErrors(prev => ({
                         ...prev,
-                        fats: "",
+                        fats: '',
                       }));
                     }
                   }}
                   placeholder="0"
                   onFocus={() => {
-                    if (fats === "0") setFats("");
+                    if (fats === '0') setFats('');
                   }}
                 />
                 <Text className="text-base text-[#8e929a] ml-1">g</Text>
@@ -873,27 +872,27 @@ export const AddMealScreen: React.FC = () => {
                   className="flex-1 text-base"
                   keyboardType="number-pad"
                   value={amount}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     // Remove any non-numeric characters
-                    const cleanText = text.replace(/[^0-9]/g, "");
+                    const cleanText = text.replace(/[^0-9]/g, '');
                     // Fire Mixpanel event if value is changing
                     if (cleanText !== amount) {
                       mixpanel?.track({
-                        name: "manual_field_updated",
+                        name: 'manual_field_updated',
                         properties: {
-                          field_name: "amount",
+                          field_name: 'amount',
                           old_value: amount,
                           new_value: cleanText,
                         },
                       });
                     }
                     // Allow empty string or valid numbers
-                    if (cleanText === "") {
-                      setAmount("");
+                    if (cleanText === '') {
+                      setAmount('');
                     } else {
                       const num = parseInt(cleanText);
                       if (isNaN(num)) {
-                        setAmount("1");
+                        setAmount('1');
                       } else {
                         setAmount(cleanText);
                       }
@@ -902,8 +901,8 @@ export const AddMealScreen: React.FC = () => {
                   onBlur={() => {
                     // Ensure value is at least 1 when input loses focus
                     const num = parseInt(amount);
-                    if (amount === "" || isNaN(num) || num < 1) {
-                      setAmount("1");
+                    if (amount === '' || isNaN(num) || num < 1) {
+                      setAmount('1');
                     }
                   }}
                   placeholder="1"
@@ -913,18 +912,18 @@ export const AddMealScreen: React.FC = () => {
 
             <View className="w-[48%]">
               <Text className="text-base font-medium text-black mb-2">
-                Serving Size
+                Serving Units
               </Text>
-              {Platform.OS === "android" ? (
+              {Platform.OS === 'android' ? (
                 <View className="border border-[#e0e0e0] rounded-sm px-3 h-[4.25rem] bg-white justify-center">
                   <Picker
                     selectedValue={servingUnit}
                     onValueChange={setServingUnit}
-                    style={{ width: "100%", color: "black" }}
-                    itemStyle={{ fontSize: 16, color: "black" }}
+                    style={{ width: '100%', color: 'black' }}
+                    itemStyle={{ fontSize: 16, color: 'black' }}
                     enabled={!analyzedData?.read_only}
                   >
-                    {SERVING_UNITS.map((unit) => (
+                    {SERVING_UNITS.map(unit => (
                       <Picker.Item key={unit} label={unit} value={unit} />
                     ))}
                   </Picker>
@@ -940,7 +939,7 @@ export const AddMealScreen: React.FC = () => {
                 >
                   <Text
                     className={`flex-1 text-base ${
-                      analyzedData?.read_only ? "text-[#8e929a]" : "text-[#222]"
+                      analyzedData?.read_only ? 'text-[#8e929a]' : 'text-[#222]'
                     }`}
                   >
                     {servingUnit}
@@ -948,7 +947,7 @@ export const AddMealScreen: React.FC = () => {
                   <Image
                     source={IMAGE_CONSTANTS.chevronRightIcon}
                     className="w-4 h-4"
-                    style={{ transform: [{ rotate: "90deg" }] }}
+                    style={{ transform: [{ rotate: '90deg' }] }}
                   />
                 </TouchableOpacity>
               )}
@@ -965,7 +964,7 @@ export const AddMealScreen: React.FC = () => {
                 showsHorizontalScrollIndicator={false}
                 className="mb-8"
               >
-                {favoriteMeals.map((meal) => (
+                {favoriteMeals.map(meal => (
                   <TouchableOpacity
                     key={meal.id}
                     className="w-[280px] mr-4 bg-lynch rounded-xl flex-row items-center px-4 py-4"
@@ -1007,7 +1006,7 @@ export const AddMealScreen: React.FC = () => {
         <View className="mx-5 border-t border-gray">
           <TouchableOpacity
             className={`bg-primaryLight mt-1 mb-3 rounded-full py-5 items-center ${
-              !mealName.trim() ? "opacity-50" : ""
+              !mealName.trim() ? 'opacity-50' : ''
             }`}
             onPress={handleAddMealLog}
             disabled={loading || !mealName.trim()}
@@ -1023,7 +1022,7 @@ export const AddMealScreen: React.FC = () => {
         </View>
       </KeyboardAvoidingView>
 
-      {Platform.OS === "ios" ? (
+      {Platform.OS === 'ios' ? (
         <Modal
           visible={showTimeModal}
           transparent
@@ -1040,7 +1039,7 @@ export const AddMealScreen: React.FC = () => {
                 mode="time"
                 display="spinner"
                 onChange={handleTimeChange}
-                style={{ alignSelf: "center", height: 150 }}
+                style={{ alignSelf: 'center', height: 150 }}
               />
               <View className="flex-row justify-between mt-4">
                 <TouchableOpacity
@@ -1066,9 +1065,9 @@ export const AddMealScreen: React.FC = () => {
             mode="time"
             display="default"
             onChange={(event, selectedTime) => {
-              if (Platform.OS === "android") {
+              if (Platform.OS === 'android') {
                 // On Android, handle all events
-                if (event.type === "set") {
+                if (event.type === 'set') {
                   // User confirmed the time
                   if (selectedTime) {
                     setTime(selectedTime);
@@ -1100,8 +1099,8 @@ export const AddMealScreen: React.FC = () => {
             <Picker
               selectedValue={tempMealType}
               onValueChange={setTempMealType}
-              style={{ width: "100%", height: 215 }}
-              itemStyle={{ fontSize: 18, height: 120, color: "#000000" }}
+              style={{ width: '100%', height: 215 }}
+              itemStyle={{ fontSize: 18, height: 120, color: '#000000' }}
             >
               <Picker.Item
                 label="Breakfast"
@@ -1143,12 +1142,12 @@ export const AddMealScreen: React.FC = () => {
         <View className="flex-1 justify-end bg-black/40">
           <View className="bg-white rounded-t-xl p-4">
             <Text className="text-center text-base font-semibold mb-2">
-              Select Serving Unit
+              Select Serving Units
             </Text>
             <Picker
               selectedValue={tempServingUnit}
-              onValueChange={(value) => {
-                if (Platform.OS === "android") {
+              onValueChange={value => {
+                if (Platform.OS === 'android') {
                   // On Android, immediately update the serving unit
                   setServingUnit(value);
                   setTempServingUnit(value);
@@ -1159,10 +1158,10 @@ export const AddMealScreen: React.FC = () => {
                   setTempServingUnit(value);
                 }
               }}
-              style={{ width: "100%", color: "black" }}
-              itemStyle={{ fontSize: 18, height: 180, color: "black" }}
+              style={{ width: '100%', color: 'black' }}
+              itemStyle={{ fontSize: 18, height: 180, color: 'black' }}
             >
-              {SERVING_UNITS.map((unit) => (
+              {SERVING_UNITS.map(unit => (
                 <Picker.Item key={unit} label={unit} value={unit} />
               ))}
             </Picker>
