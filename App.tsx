@@ -45,10 +45,39 @@ import {
 import 'react-native-get-random-values';
 import MapsService from './packages/maps_service/src/maps_service';
 import { UpdateReminderModal } from './src/components/UpdateReminderModal';
+// import * as Sentry from '@sentry/react-native';
+
+// Sentry.init({
+//   dsn: 'https://61236fee5ecebea6046a3c59c8392fb9@o4510325988917248.ingest.de.sentry.io/4510386705989712',
+
+//   // Adds more context data to events (IP address, cookies, user, etc.)
+//   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+//   sendDefaultPii: true,
+
+//   // Enable Logs
+//   enableLogs: true,
+
+//   // Configure Session Replay
+//   replaysSessionSampleRate: 0.1,
+//   replaysOnErrorSampleRate: 1,
+//   integrations: [Sentry.mobileReplayIntegration()],
+
+//   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+//   // spotlight: __DEV__,
+// });
+
+console.log(
+  '\n\n\n\n\n\n\nTHE ENVIRONMENT IS:',
+  __DEV__ ? 'development' : 'production'
+);
+
+console.log(
+  `\n\n\n\n\n\n\n\n\n\n\n\n\n\n🔍 Sentry DNS: ${Config.SENTRY_DNS}\n\n\n\n\n\n\n\n\n`
+);
 
 // Initialize Sentry via internal service (native enabled only in non-dev by default)
 sentryService.init({
-  dsn: (Config.SENTRY_DSN as string) || (Config as any).SENTRY_DNS || '',
+  dsn: (Config.SENTRY_DNS as string) || (Config as any).SENTRY_DNS || '',
   environment: __DEV__ ? 'development' : 'production',
   enableNativeInDev: false,
 });

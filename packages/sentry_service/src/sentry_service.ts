@@ -1,7 +1,7 @@
-import 'react-native-get-random-values';
 import * as Sentry from '@sentry/react-native';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import 'react-native-get-random-values';
 
 export type InitOptions = {
   dsn: string;
@@ -29,16 +29,20 @@ class SentryService {
       dsn: options.dsn,
       enableNative,
       debug: isDev,
-      environment: options.environment ?? (isDev ? 'development' : 'production'),
+      environment:
+        options.environment ?? (isDev ? 'development' : 'production'),
       sendDefaultPii: true,
     });
 
     // Set app metadata
     Sentry.setTag('app.version', Constants.expoConfig?.version ?? 'unknown');
-    Sentry.setTag('app.build', (Platform.select({
-      ios: Constants.expoConfig?.ios?.buildNumber,
-      android: Constants.expoConfig?.android?.versionCode?.toString(),
-    }) as string) ?? 'unknown');
+    Sentry.setTag(
+      'app.build',
+      (Platform.select({
+        ios: Constants.expoConfig?.ios?.buildNumber,
+        android: Constants.expoConfig?.android?.versionCode?.toString(),
+      }) as string) ?? 'unknown'
+    );
     Sentry.setTag('platform', Platform.OS);
 
     this.initialized = true;
@@ -58,6 +62,7 @@ class SentryService {
   }
 
   captureError(error: unknown) {
+    console.log('🔍 Capturing error:', error);
     Sentry.captureException(error);
   }
 
