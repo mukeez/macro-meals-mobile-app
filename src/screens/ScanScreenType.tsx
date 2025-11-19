@@ -60,11 +60,10 @@ const ScanScreenType: React.FC = () => {
     useNavigation<StackNavigationProp<RootStackParamList, 'ScanScreenType'>>();
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<
+  const [localSearchResults, setLocalSearchResults] = useState<
     SearchMealResponse['results']
   >([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [localSearchLoading, setLocalSearchLoading] = useState(false);
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
   const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([]);
   const [networkError, setNetworkError] = useState<string | null>(null);
@@ -82,7 +81,7 @@ const ScanScreenType: React.FC = () => {
       },
     });
   }, []);
-  // Debounced search functionality
+  // Debounced search functionality - triggers both local and global searches simultaneously
   const debouncedSearch = useCallback(
     (() => {
       let timeoutId: NodeJS.Timeout;
@@ -90,131 +89,133 @@ const ScanScreenType: React.FC = () => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(async () => {
           if (query.trim().length >= 2) {
-            setSearchLoading(true);
-            try {
-              console.log('🔍 Sending search query:', query.trim());
-              // Log the full URL that will be called
-              const baseUrl = 'https://api.macromealsapp.com/api/v1';
-              const fullUrl = `${baseUrl}/meals/search?query=${encodeURIComponent(
-                query.trim()
-              )}`;
-              console.log('🔍 Full URL being called:', fullUrl);
-              const response = (await mealService.searchMeal(
-                query.trim()
-              )) as unknown as SearchMealResponse;
-              console.log(
-                '🔍 Raw API response:',
-                JSON.stringify(response, null, 2)
-              );
-              console.log('🔍 Response type:', typeof response);
-              console.log(
-                '🔍 Response keys:',
-                response ? Object.keys(response) : 'response is null/undefined'
-              );
-              mixpanel?.track({
-                name: 'search_query_submitted',
-                properties: {
-                  query: query.trim(),
-                  results_count: response?.results?.length || 0,
-                },
-              });
+            const trimmedQuery = query.trim();
 
-              if (!response) {
-                console.error('❌ Response is null or undefined');
-                setSearchResults([]);
+            // Reset previous results and errors
+            setNetworkError(null);
 
-                return;
+            // Start both searches simultaneously
+            setLocalSearchLoading(true);
+            setGlobalSearchLoading(true);
+
+            // Local search (user's logged meals)
+            const localSearchPromise = (async () => {
+              try {
+                console.log('🔍 Sending local search query:', trimmedQuery);
+                const baseUrl = 'https://api.macromealsapp.com/api/v1';
+                const fullUrl = `${baseUrl}/meals/search?query=${encodeURIComponent(trimmedQuery)}`;
+                console.log('🔍 Local search URL:', fullUrl);
+
+                const response = (await mealService.searchMeal(
+                  trimmedQuery
+                )) as unknown as SearchMealResponse;
+
+                console.log(
+                  '🔍 Local search response:',
+                  JSON.stringify(response, null, 2)
+                );
+
+                if (!response) {
+                  console.error(
+                    '❌ Local search response is null or undefined'
+                  );
+                  setLocalSearchResults([]);
+                  return;
+                }
+
+                const results = response.results || [];
+                setLocalSearchResults(results);
+
+                mixpanel?.track({
+                  name: 'local_search_results_viewed',
+                  properties: {
+                    query: trimmedQuery,
+                    results_count: results.length,
+                  },
+                });
+              } catch (error) {
+                console.error('Error in local search:', error);
+                if (
+                  error instanceof Error &&
+                  error.message.includes('internet connection')
+                ) {
+                  setNetworkError(error.message);
+                }
+                setLocalSearchResults([]);
+              } finally {
+                setLocalSearchLoading(false);
               }
+            })();
 
-              // The API returns { results: [...], total_results: number, search_query: string }
-              setSearchResults(response.results || []);
-              mixpanel?.track({
-                name: 'local_search_results_viewed',
-                properties: {
-                  query: query.trim(),
-                  results_count: response?.results?.length || 0,
-                },
-              });
-            } catch (error) {
-              console.error('Error searching meals:', error);
-              console.error('Error details:', JSON.stringify(error, null, 2));
+            // Global search (all meals in database)
+            const globalSearchPromise = (async () => {
+              try {
+                console.log('🔍 Sending global search query:', trimmedQuery);
+                const baseUrl = 'https://api.macromealsapp.com/api/v1';
+                const globalSearchUrl = `${baseUrl}/products/search-meals-format?query=${encodeURIComponent(trimmedQuery)}`;
+                console.log('🔍 Global search URL:', globalSearchUrl);
 
-              // Check if it's a network error
-              if (
-                error instanceof Error &&
-                error.message.includes('internet connection')
-              ) {
-                setNetworkError(error.message);
-              } else {
-                setNetworkError(null);
+                const response = await mealService.searchMealsApi(trimmedQuery);
+                console.log('🔍 Global search response:', response);
+
+                const results = response.results || [];
+                setGlobalSearchResults(results);
+
+                mixpanel?.track({
+                  name: 'global_search_results_viewed',
+                  properties: {
+                    query: trimmedQuery,
+                    results_count: results.length,
+                  },
+                });
+
+                // Track combined search query
+                mixpanel?.track({
+                  name: 'search_query_submitted',
+                  properties: {
+                    query: trimmedQuery,
+                  },
+                });
+              } catch (error) {
+                console.error('Error in global search:', error);
+                if (
+                  error instanceof Error &&
+                  error.message.includes('internet connection')
+                ) {
+                  setNetworkError(error.message);
+                }
+                setGlobalSearchResults([]);
+              } finally {
+                setGlobalSearchLoading(false);
               }
+            })();
 
-              setSearchResults([]);
-            } finally {
-              setSearchLoading(false);
-            }
+            // Wait for both searches to complete
+            await Promise.all([localSearchPromise, globalSearchPromise]);
           } else {
-            setSearchResults([]);
+            setLocalSearchResults([]);
+            setGlobalSearchResults([]);
+            setLocalSearchLoading(false);
+            setGlobalSearchLoading(false);
           }
         }, 1500); // 1.5 second delay
       };
     })(),
-    []
+    [] // mixpanel is stable from useMixpanel hook, no need to include in deps
   );
-
-  useEffect(() => {
-    if (
-      searchFocused &&
-      searchText.trim().length >= 2 &&
-      !searchLoading &&
-      searchResults.length === 0
-    ) {
-      mixpanel?.track({
-        name: 'search_no_results_prompt_shown',
-        properties: { query: searchText },
-      });
-      setShowGlobalSearch(true);
-    } else {
-      setShowGlobalSearch(false);
-    }
-  }, [searchResults, searchLoading, searchFocused, searchText]);
 
   // Trigger search when searchText changes
   useEffect(() => {
     if (searchFocused && searchText.trim().length >= 2) {
       debouncedSearch(searchText);
-      setShowGlobalSearch(false); // Hide global search while searching
     } else {
-      setSearchResults([]);
-      setShowGlobalSearch(false);
+      setLocalSearchResults([]);
+      setGlobalSearchResults([]);
+      setLocalSearchLoading(false);
+      setGlobalSearchLoading(false);
+      setNetworkError(null);
     }
   }, [searchText, searchFocused, debouncedSearch]);
-
-  // Show global search option when no results found
-  useEffect(() => {
-    console.log('🔍 Global search condition check:', {
-      searchFocused,
-      searchTextLength: searchText.trim().length,
-      searchLoading,
-      searchResultsLength: searchResults.length,
-      showGlobalSearch:
-        searchFocused &&
-        searchText.trim().length >= 2 &&
-        !searchLoading &&
-        searchResults.length === 0,
-    });
-
-    if (
-      searchFocused &&
-      searchText.trim().length >= 2 &&
-      !searchLoading &&
-      searchResults.length === 0
-    ) {
-      setShowGlobalSearch(true);
-    } else {
-      setShowGlobalSearch(false);
-    }
-  }, [searchResults, searchLoading, searchFocused, searchText]);
 
   // Animate fade in/out on search focus change
   useEffect(() => {
@@ -285,56 +286,10 @@ const ScanScreenType: React.FC = () => {
   const handleSearchClear = () => {
     setSearchText('');
     setSearchFocused(false);
-    setShowGlobalSearch(false);
+    setLocalSearchResults([]);
     setGlobalSearchResults([]);
+    setNetworkError(null);
     Keyboard.dismiss();
-  };
-
-  const handleGlobalSearch = async () => {
-    if (!searchText.trim()) return;
-    mixpanel?.track({
-      name: 'global_search_clicked',
-      properties: { query: searchText },
-    });
-
-    setGlobalSearchLoading(true);
-    try {
-      console.log('🔍 Global search for query:', searchText.trim());
-      // Log the full URL that will be called for global search
-      const baseUrl = 'https://api.macromealsapp.com/api/v1';
-      const globalSearchUrl = `${baseUrl}/products/search-meals-format?query=${encodeURIComponent(
-        searchText.trim()
-      )}`;
-      console.log('🔍 Global search URL:', globalSearchUrl);
-      const response = await mealService.searchMealsApi(searchText.trim());
-      console.log('🔍 Global search results:', response);
-      // The API returns { results: [...], total_results: number, search_query: string }
-      const results = response.results || [];
-      setGlobalSearchResults(results);
-      mixpanel?.track({
-        name: 'global_search_results_viewed',
-        properties: {
-          query: searchText,
-          results_count: results.length,
-        },
-      });
-    } catch (error) {
-      console.error('Error in global search:', error);
-
-      // Check if it's a network error
-      if (
-        error instanceof Error &&
-        error.message.includes('internet connection')
-      ) {
-        setNetworkError(error.message);
-      } else {
-        setNetworkError(null);
-      }
-
-      setGlobalSearchResults([]);
-    } finally {
-      setGlobalSearchLoading(false);
-    }
   };
 
   const handleAddToLog = async (meal: any): Promise<void> => {
@@ -464,255 +419,184 @@ const ScanScreenType: React.FC = () => {
               flex: 1,
               width: '100%',
               height: '100%',
-              paddingBottom: 120,
+              paddingBottom: 20,
             }}
             resizeMode="cover"
           >
             {searchFocused ? (
               <View className="flex-1 px-5 pt-2">
-                {searchLoading ? (
-                  <Text className="text-center text-base text-gray-500 mt-10">
-                    Searching...
-                  </Text>
-                ) : searchResults && searchResults.length > 0 ? (
-                  <View className="flex-1">
-                    <Text className="text-sm font-semibold text-gray-500 mt-3 mb-1.5">
-                      SEARCH RESULTS
+                {/* Loading state */}
+                {localSearchLoading || globalSearchLoading ? (
+                  <View className="items-center mt-10">
+                    <ActivityIndicator size="small" color="#19a28f" />
+                    <Text className="text-center text-base text-gray-500 mt-4">
+                      Searching...
                     </Text>
-                    <FlatList
-                      data={searchResults}
-                      keyExtractor={(item, idx) => item.id + idx}
-                      renderItem={({ item }) => (
-                        <View className="bg-white rounded-lg py-4 px-4 mb-3 flex-row items-center justify-between">
-                          <View>
-                            <Text className="text-sm font-semibold mb-2">
-                              {item.name}
-                            </Text>
-                            {item.description && (
-                              <Text className="text-xs text-gray-500 mb-2">
-                                {item.description}
-                              </Text>
-                            )}
-                            <View className="flex-row items-center gap-2 mt-2">
-                              <View className="flex-row items-center justify-center gap-1">
-                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
-                                  <Image
-                                    source={IMAGE_CONSTANTS.caloriesIcon}
-                                    className="w-[10px] h-[10px] object-fill"
-                                  />
-                                </View>
-                                <Text className="text-xs text-black text-center font-medium">
-                                  {item.calories} cal
-                                </Text>
-                              </View>
-                              <View className="flex-row items-center gap-1">
-                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
-                                  <Text className="text-white text-[10px] text-center font-medium">
-                                    C
-                                  </Text>
-                                </View>
-                                <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                  {item.carbs}g
-                                </Text>
-                              </View>
-
-                              <View className="flex-row items-center gap-1">
-                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
-                                  <Text className="text-white text-[10px] text-center font-medium">
-                                    F
-                                  </Text>
-                                </View>
-                                <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                  {item.fat}g
-                                </Text>
-                              </View>
-
-                              <View className="flex-row items-center gap-1">
-                                <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
-                                  <Text className="text-white text-[10px] text-center font-medium">
-                                    P
-                                  </Text>
-                                </View>
-                                <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                  {item.protein}g
-                                </Text>
-                              </View>
-                            </View>
-                          </View>
-                          <TouchableOpacity
-                            onPress={() => {
-                              mixpanel?.track({
-                                name: 'global_search_result_add_clicked',
-                                properties: {
-                                  result_id: item.id,
-                                  meal_name: item.name,
-                                  calories: item.calories,
-                                  protein_g: item.protein,
-                                  carbs_g: item.carbs,
-                                  fats_g: item.fat,
-                                },
-                              });
-                              handleAddToLog(item);
-                            }}
-                          >
-                            <Text className="text-2xl text-green-700 font-bold">
-                              <Image
-                                source={IMAGE_CONSTANTS.fabIcon}
-                                className="w-6 h-6 object-fill"
-                              />
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    />
                   </View>
-                ) : showGlobalSearch ? (
-                  <View className="flex-1">
-                    {globalSearchResults.length === 0 ? (
+                ) : (
+                  <>
+                    {/* Network error */}
+                    {networkError ? (
+                      <View className="items-center mt-10">
+                        <Text className="text-center text-base text-red-500 px-4 mb-2">
+                          {networkError}
+                        </Text>
+                      </View>
+                    ) : (
                       <>
-                        {networkError ? (
-                          <View className="items-center mt-10">
-                            <Text className="text-center text-base text-red-500 px-4 mb-2">
-                              {networkError}
-                            </Text>
-                            <TouchableOpacity
-                              onPress={handleGlobalSearch}
-                              disabled={globalSearchLoading}
-                              className="items-center"
-                            >
-                              <Text className="text-primary font-medium text-base">
-                                Try again
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        ) : (
-                          <TouchableOpacity
-                            onPress={handleGlobalSearch}
-                            disabled={globalSearchLoading}
-                            className="items-center mt-10"
-                          >
-                            <Text className="text-center text-base text-gray-500">
-                              No results found.
-                            </Text>
-                            <Text className="text-primary font-medium text-base">
-                              {globalSearchLoading
-                                ? 'Searching...'
-                                : `Search for "${searchText}" in all meals`}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
+                        {/* Combined results */}
+                        {localSearchResults.length > 0 ||
+                        globalSearchResults.length > 0 ? (
+                          <FlatList
+                            style={{ flex: 1 }}
+                            contentContainerStyle={{
+                              paddingBottom: 0,
+                            }}
+                            showsVerticalScrollIndicator={false}
+                            data={[
+                              // Local results with source indicator
+                              ...localSearchResults.map(item => ({
+                                ...item,
+                                source: 'local',
+                              })),
+                              // Global results with source indicator
+                              ...globalSearchResults.map(item => ({
+                                ...item,
+                                source: 'global',
+                              })),
+                            ]}
+                            keyExtractor={(item, idx) =>
+                              `${item.source}-${item.id}-${idx}`
+                            }
+                            renderItem={({ item, index }) => {
+                              const isLocal = item.source === 'local';
+                              const isFirstLocal = isLocal && index === 0;
+                              const isFirstGlobal =
+                                !isLocal && localSearchResults.length === 0
+                                  ? index === 0
+                                  : index === localSearchResults.length;
 
-                        {globalSearchLoading && (
-                          <ActivityIndicator
-                            size="small"
-                            color="#19a28f"
-                            className="mt-4"
+                              return (
+                                <View>
+                                  {/* Section headers */}
+                                  {isFirstLocal &&
+                                    localSearchResults.length > 0 && (
+                                      <Text className="text-sm font-semibold text-gray-500 mt-3 mb-1.5">
+                                        From your logs
+                                      </Text>
+                                    )}
+                                  {isFirstGlobal &&
+                                    globalSearchResults.length > 0 && (
+                                      <View className="mt-3 mb-1.5">
+                                        {localSearchResults.length > 0 && (
+                                          <View className="h-px bg-gray-300 mb-1.5" />
+                                        )}
+                                        <Text className="text-sm font-semibold text-gray-500">
+                                          Global search results
+                                        </Text>
+                                      </View>
+                                    )}
+
+                                  {/* Meal item */}
+                                  <View className="bg-white rounded-lg py-4 px-4 mb-3 flex-row items-center justify-between">
+                                    <View className="flex-1">
+                                      <Text className="text-sm font-semibold mb-2">
+                                        {item.name}
+                                      </Text>
+                                      {item.description && (
+                                        <Text className="text-xs text-gray-500 mb-2">
+                                          {item.description}
+                                        </Text>
+                                      )}
+                                      <View className="flex-row items-center gap-2 mt-2">
+                                        <View className="flex-row items-center justify-center gap-1">
+                                          <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
+                                            <Image
+                                              source={
+                                                IMAGE_CONSTANTS.caloriesIcon
+                                              }
+                                              className="w-[10px] h-[10px] object-fill"
+                                            />
+                                          </View>
+                                          <Text className="text-xs text-black text-center font-medium">
+                                            {item.calories} cal
+                                          </Text>
+                                        </View>
+                                        <View className="flex-row items-center gap-1">
+                                          <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
+                                            <Text className="text-white text-[10px] text-center font-medium">
+                                              C
+                                            </Text>
+                                          </View>
+                                          <Text className="text-xs text-textMediumGrey text-center font-medium">
+                                            {item.carbs}g
+                                          </Text>
+                                        </View>
+                                        <View className="flex-row items-center gap-1">
+                                          <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
+                                            <Text className="text-white text-[10px] text-center font-medium">
+                                              F
+                                            </Text>
+                                          </View>
+                                          <Text className="text-xs text-textMediumGrey text-center font-medium">
+                                            {item.fat}g
+                                          </Text>
+                                        </View>
+                                        <View className="flex-row items-center gap-1">
+                                          <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
+                                            <Text className="text-white text-[10px] text-center font-medium">
+                                              P
+                                            </Text>
+                                          </View>
+                                          <Text className="text-xs text-textMediumGrey text-center font-medium">
+                                            {item.protein}g
+                                          </Text>
+                                        </View>
+                                      </View>
+                                    </View>
+                                    <TouchableOpacity
+                                      onPress={() => {
+                                        mixpanel?.track({
+                                          name: isLocal
+                                            ? 'local_search_result_add_clicked'
+                                            : 'global_search_result_add_clicked',
+                                          properties: {
+                                            result_id: item.id,
+                                            meal_name: item.name,
+                                            calories: item.calories,
+                                            protein_g: item.protein,
+                                            carbs_g: item.carbs,
+                                            fats_g: item.fat,
+                                          },
+                                        });
+                                        handleAddToLog(item);
+                                      }}
+                                    >
+                                      <Image
+                                        source={IMAGE_CONSTANTS.fabIcon}
+                                        className="w-6 h-6 object-fill"
+                                      />
+                                    </TouchableOpacity>
+                                  </View>
+                                </View>
+                              );
+                            }}
                           />
+                        ) : (
+                          /* No results - only show if both searches completed and both are empty */
+                          searchText &&
+                          searchText.trim().length >= 2 &&
+                          !localSearchLoading &&
+                          !globalSearchLoading && (
+                            <Text className="text-center text-base text-gray-500 mt-10">
+                              No results found
+                            </Text>
+                          )
                         )}
                       </>
-                    ) : (
-                      <View className="mt-6">
-                        <Text className="text-sm font-semibold text-gray-500 mb-3">
-                          GLOBAL SEARCH RESULTS
-                        </Text>
-                        <FlatList
-                          data={globalSearchResults}
-                          keyExtractor={(item, idx) => item.id + idx}
-                          renderItem={({ item }) => (
-                            <View className="bg-white rounded-lg py-4 px-4 mb-3 flex-row items-center justify-between">
-                              <View>
-                                <Text className="text-sm font-semibold mb-2">
-                                  {item.name}
-                                </Text>
-                                {item.description && (
-                                  <Text className="text-xs text-gray-500 mb-2">
-                                    {item.description}
-                                  </Text>
-                                )}
-                                <View className="flex-row items-center gap-2 mt-2">
-                                  <View className="flex-row items-center justify-center gap-1">
-                                    <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-kryptoniteGreen rounded-full">
-                                      <Image
-                                        source={IMAGE_CONSTANTS.caloriesIcon}
-                                        className="w-[10px] h-[10px] object-fill"
-                                      />
-                                    </View>
-                                    <Text className="text-xs text-black text-center font-medium">
-                                      {item.calories} cal
-                                    </Text>
-                                  </View>
-                                  <View className="flex-row items-center gap-1">
-                                    <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-amber rounded-full">
-                                      <Text className="text-white text-[10px] text-center font-medium">
-                                        C
-                                      </Text>
-                                    </View>
-                                    <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                      {item.carbs}g
-                                    </Text>
-                                  </View>
-                                  <View className="flex-row items-center gap-1">
-                                    <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-lavenderPink rounded-full">
-                                      <Text className="text-white text-[10px] text-center font-medium">
-                                        F
-                                      </Text>
-                                    </View>
-                                    <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                      {item.fat}g
-                                    </Text>
-                                  </View>
-                                  <View className="flex-row items-center gap-1">
-                                    <View className="flex-row items-center justify-center h-[16px] w-[16px] bg-gloomyPurple rounded-full">
-                                      <Text className="text-white text-[10px] text-center font-medium">
-                                        P
-                                      </Text>
-                                    </View>
-                                    <Text className="text-xs text-textMediumGrey text-center font-medium">
-                                      {item.protein}g
-                                    </Text>
-                                  </View>
-                                </View>
-                              </View>
-                              <TouchableOpacity
-                                onPress={() => {
-                                  mixpanel?.track({
-                                    name: 'global_search_result_add_clicked',
-                                    properties: {
-                                      result_id: item.id,
-                                      meal_name: item.name,
-                                      calories: item.calories,
-                                      protein_g: item.protein,
-                                      carbs_g: item.carbs,
-                                      fats_g: item.fat,
-                                    },
-                                  });
-                                  handleAddToLog(item);
-                                }}
-                              >
-                                <Text className="text-2xl text-green-700 font-bold">
-                                  <Image
-                                    source={IMAGE_CONSTANTS.fabIcon}
-                                    className="w-6 h-6 object-fill"
-                                  />
-                                </Text>
-                              </TouchableOpacity>
-                            </View>
-                          )}
-                        />
-                      </View>
                     )}
-                  </View>
-                ) : searchText && searchText.length > 0 && !searchLoading ? (
-                  networkError ? (
-                    <Text className="text-center text-base text-red-500 mt-10 px-4">
-                      {networkError}
-                    </Text>
-                  ) : (
-                    <Text className="text-center text-base text-gray-500 mt-10">
-                      No results found
-                    </Text>
-                  )
-                ) : null}
+                  </>
+                )}
               </View>
             ) : (
               // Show scan options, discover more, and favorites with fade animation
