@@ -21,10 +21,7 @@
         "NSLocationAlwaysUsageDescription": "We need your location to find nearby meals that match your macro goals",
         "NSCameraUsageDescription": "Macro Meals needs camera access to scan barcodes and take photos of your meals for accurate macro tracking and meal logging.",
         "NSPhotoLibraryUsageDescription": "Macro Meals needs access to your photo library to let you add photos of your meals for logging.",
-        "UIBackgroundModes": [
-          "remote-notification",
-          "remote-notification"
-        ],
+        "UIBackgroundModes": ["remote-notification", "remote-notification"],
         "NSUserNotificationsUsageDescription": "We need to send you notifications about your meals and updates",
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -119,8 +116,8 @@
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "react-native",
-          "organization": "emit-labs"
+          "project": "macro-meals",
+          "organization": "emit-0c"
         }
       ]
     ],

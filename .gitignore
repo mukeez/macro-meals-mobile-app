@@ -183,3 +183,4 @@ stallion-temp-*/
 *.hbc
 proguard-merged-config.txt
 .cursor/
+.env.local

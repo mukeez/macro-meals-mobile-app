@@ -1,25 +1,27 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useMixpanel } from '@macro-meals/mixpanel/src';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  StatusBar,
+  ActivityIndicator,
+  Animated,
+  FlatList,
   Image,
   ImageBackground,
-  TextInput,
-  FlatList,
   Keyboard,
-  Animated,
-  ActivityIndicator,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
-import CustomSafeAreaView from "../components/CustomSafeAreaView";
-import { IMAGE_CONSTANTS } from "../constants/imageConstants";
-import { mealService } from "src/services/mealService";
-import useStore from "../store/useStore";
-import DiscoverCard from "../components/DiscoverCard";
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import { mealService } from 'src/services/mealService';
+import CustomSafeAreaView from '../components/CustomSafeAreaView';
+import DiscoverCard from '../components/DiscoverCard';
+import { IMAGE_CONSTANTS } from '../constants/imageConstants';
+import useStore from '../store/useStore';
+import { RootStackParamList } from '../types/navigation';
 
 // Interface for the search API response
 interface SearchMealResponse {
@@ -46,8 +48,6 @@ interface SearchMealResponse {
   total_results: number;
   search_query: string;
 }
-import { RootStackParamList } from "../types/navigation";
-import { useMixpanel } from "@macro-meals/mixpanel/src";
 
 /**
  * ScanScreen component displays the various meal logging options:
@@ -57,11 +57,11 @@ import { useMixpanel } from "@macro-meals/mixpanel/src";
  */
 const ScanScreenType: React.FC = () => {
   const navigation =
-    useNavigation<StackNavigationProp<RootStackParamList, "ScanScreenType">>();
+    useNavigation<StackNavigationProp<RootStackParamList, 'ScanScreenType'>>();
   const [searchFocused, setSearchFocused] = useState(false);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<
-    SearchMealResponse["results"]
+    SearchMealResponse['results']
   >([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
@@ -70,14 +70,14 @@ const ScanScreenType: React.FC = () => {
   const [networkError, setNetworkError] = useState<string | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const profile = useStore((state) => state?.profile) || null;
+  const profile = useStore(state => state?.profile) || null;
   const mixpanel = useMixpanel();
 
   useEffect(() => {
     mixpanel?.track({
-      name: "add_meal_screen_opened",
+      name: 'add_meal_screen_opened',
       properties: {
-        entry_point: "main_hub", // or actual value
+        entry_point: 'main_hub', // or actual value
         // is_first_time_user: isFirstTimeUser, // should be boolean
       },
     });
@@ -92,27 +92,27 @@ const ScanScreenType: React.FC = () => {
           if (query.trim().length >= 2) {
             setSearchLoading(true);
             try {
-              console.log("🔍 Sending search query:", query.trim());
+              console.log('🔍 Sending search query:', query.trim());
               // Log the full URL that will be called
-              const baseUrl = "https://api.macromealsapp.com/api/v1";
+              const baseUrl = 'https://api.macromealsapp.com/api/v1';
               const fullUrl = `${baseUrl}/meals/search?query=${encodeURIComponent(
                 query.trim()
               )}`;
-              console.log("🔍 Full URL being called:", fullUrl);
+              console.log('🔍 Full URL being called:', fullUrl);
               const response = (await mealService.searchMeal(
                 query.trim()
               )) as unknown as SearchMealResponse;
               console.log(
-                "🔍 Raw API response:",
+                '🔍 Raw API response:',
                 JSON.stringify(response, null, 2)
               );
-              console.log("🔍 Response type:", typeof response);
+              console.log('🔍 Response type:', typeof response);
               console.log(
-                "🔍 Response keys:",
-                response ? Object.keys(response) : "response is null/undefined"
+                '🔍 Response keys:',
+                response ? Object.keys(response) : 'response is null/undefined'
               );
               mixpanel?.track({
-                name: "search_query_submitted",
+                name: 'search_query_submitted',
                 properties: {
                   query: query.trim(),
                   results_count: response?.results?.length || 0,
@@ -120,7 +120,7 @@ const ScanScreenType: React.FC = () => {
               });
 
               if (!response) {
-                console.error("❌ Response is null or undefined");
+                console.error('❌ Response is null or undefined');
                 setSearchResults([]);
 
                 return;
@@ -129,20 +129,20 @@ const ScanScreenType: React.FC = () => {
               // The API returns { results: [...], total_results: number, search_query: string }
               setSearchResults(response.results || []);
               mixpanel?.track({
-                name: "local_search_results_viewed",
+                name: 'local_search_results_viewed',
                 properties: {
                   query: query.trim(),
                   results_count: response?.results?.length || 0,
                 },
               });
             } catch (error) {
-              console.error("Error searching meals:", error);
-              console.error("Error details:", JSON.stringify(error, null, 2));
+              console.error('Error searching meals:', error);
+              console.error('Error details:', JSON.stringify(error, null, 2));
 
               // Check if it's a network error
               if (
                 error instanceof Error &&
-                error.message.includes("internet connection")
+                error.message.includes('internet connection')
               ) {
                 setNetworkError(error.message);
               } else {
@@ -170,7 +170,7 @@ const ScanScreenType: React.FC = () => {
       searchResults.length === 0
     ) {
       mixpanel?.track({
-        name: "search_no_results_prompt_shown",
+        name: 'search_no_results_prompt_shown',
         properties: { query: searchText },
       });
       setShowGlobalSearch(true);
@@ -192,7 +192,7 @@ const ScanScreenType: React.FC = () => {
 
   // Show global search option when no results found
   useEffect(() => {
-    console.log("🔍 Global search condition check:", {
+    console.log('🔍 Global search condition check:', {
       searchFocused,
       searchTextLength: searchText.trim().length,
       searchLoading,
@@ -230,13 +230,13 @@ const ScanScreenType: React.FC = () => {
    */
   const handleOpenCamera = () => {
     mixpanel?.track({
-      name: "add_meal_option_selected",
-      properties: { option_type: "scan_meal" },
+      name: 'add_meal_option_selected',
+      properties: { option_type: 'scan_meal' },
     });
     if (profile?.has_macros === false || profile?.has_macros === undefined) {
-      navigation.navigate("GoalSetupScreen" as never);
+      navigation.navigate('GoalSetupScreen' as never);
     } else {
-      navigation.navigate("SnapMeal" as never);
+      navigation.navigate('SnapMeal' as never);
     }
   };
 
@@ -245,13 +245,13 @@ const ScanScreenType: React.FC = () => {
    */
   const handleScanBarcode = () => {
     mixpanel?.track({
-      name: "add_meal_option_selected",
-      properties: { option_type: "scan_barcode" },
+      name: 'add_meal_option_selected',
+      properties: { option_type: 'scan_barcode' },
     });
     if (profile?.has_macros === false || profile?.has_macros === undefined) {
-      navigation.navigate("GoalSetupScreen" as never);
+      navigation.navigate('GoalSetupScreen' as never);
     } else {
-      navigation.navigate("BarcodeScanScreen" as never);
+      navigation.navigate('BarcodeScanScreen' as never);
     }
   };
 
@@ -260,30 +260,30 @@ const ScanScreenType: React.FC = () => {
    */
   const handleManualEntry = () => {
     mixpanel?.track({
-      name: "add_meal_option_selected",
-      properties: { option_type: "manual_entry" },
+      name: 'add_meal_option_selected',
+      properties: { option_type: 'manual_entry' },
     });
     if (profile?.has_macros === false || profile?.has_macros === undefined) {
-      navigation.navigate("GoalSetupScreen" as never);
+      navigation.navigate('GoalSetupScreen' as never);
     } else {
-      navigation.navigate("AddMealScreen" as never);
+      navigation.navigate('AddMealScreen' as never);
     }
   };
 
   const handleMealSuggestions = () => {
     if (profile?.has_macros === false || profile?.has_macros === undefined) {
-      navigation.navigate("GoalSetupScreen" as never);
+      navigation.navigate('GoalSetupScreen' as never);
     } else {
-      navigation.navigate("AiMealSuggestionsScreen" as never);
+      navigation.navigate('AiMealSuggestionsScreen' as never);
     }
   };
 
   const handleMealFinder = () => {
-    navigation.navigate("MealFinderScreen" as never);
+    navigation.navigate('MealFinderScreen' as never);
   };
 
   const handleSearchClear = () => {
-    setSearchText("");
+    setSearchText('');
     setSearchFocused(false);
     setShowGlobalSearch(false);
     setGlobalSearchResults([]);
@@ -293,38 +293,38 @@ const ScanScreenType: React.FC = () => {
   const handleGlobalSearch = async () => {
     if (!searchText.trim()) return;
     mixpanel?.track({
-      name: "global_search_clicked",
+      name: 'global_search_clicked',
       properties: { query: searchText },
     });
 
     setGlobalSearchLoading(true);
     try {
-      console.log("🔍 Global search for query:", searchText.trim());
+      console.log('🔍 Global search for query:', searchText.trim());
       // Log the full URL that will be called for global search
-      const baseUrl = "https://api.macromealsapp.com/api/v1";
+      const baseUrl = 'https://api.macromealsapp.com/api/v1';
       const globalSearchUrl = `${baseUrl}/products/search-meals-format?query=${encodeURIComponent(
         searchText.trim()
       )}`;
-      console.log("🔍 Global search URL:", globalSearchUrl);
+      console.log('🔍 Global search URL:', globalSearchUrl);
       const response = await mealService.searchMealsApi(searchText.trim());
-      console.log("🔍 Global search results:", response);
+      console.log('🔍 Global search results:', response);
       // The API returns { results: [...], total_results: number, search_query: string }
       const results = response.results || [];
       setGlobalSearchResults(results);
       mixpanel?.track({
-        name: "global_search_results_viewed",
+        name: 'global_search_results_viewed',
         properties: {
           query: searchText,
           results_count: results.length,
         },
       });
     } catch (error) {
-      console.error("Error in global search:", error);
+      console.error('Error in global search:', error);
 
       // Check if it's a network error
       if (
         error instanceof Error &&
-        error.message.includes("internet connection")
+        error.message.includes('internet connection')
       ) {
         setNetworkError(error.message);
       } else {
@@ -340,13 +340,13 @@ const ScanScreenType: React.FC = () => {
   const handleAddToLog = async (meal: any): Promise<void> => {
     try {
       if (!meal.name.trim()) {
-        console.error("Please enter a meal name");
+        console.error('Please enter a meal name');
         return;
       }
 
       // Prepare the meal data for the new screen
       const searchedMeal = {
-        id: meal.id || "",
+        id: meal.id || '',
         name: meal.name,
         description: meal.description || null,
         calories: parseFloat(meal.calories.toString()) || 0,
@@ -354,7 +354,7 @@ const ScanScreenType: React.FC = () => {
         carbs: parseFloat(meal.carbs.toString()) || 0,
         fat: parseFloat(meal.fat.toString()) || 0,
         amount: meal.amount || 100, // Base amount from API
-        serving_unit: meal.serving_unit || "g",
+        serving_unit: meal.serving_unit || 'g',
         read_only: meal.read_only || false,
         barcode: meal.barcode,
         notes: meal.notes,
@@ -362,9 +362,9 @@ const ScanScreenType: React.FC = () => {
       };
 
       // Navigate to the new screen with the meal data
-      navigation.navigate("AddSearchedLoggedMeal", { searchedMeal });
+      navigation.navigate('AddSearchedLoggedMeal', { searchedMeal });
       mixpanel?.track({
-        name: "prefilled_form_shown_from_search",
+        name: 'prefilled_form_shown_from_search',
         properties: {
           result_id: meal.id,
           meal_name: meal.name,
@@ -380,12 +380,12 @@ const ScanScreenType: React.FC = () => {
       });
     } catch (error) {
       if (error instanceof Error) {
-        console.error("Error preparing meal data:", error.message, error.stack);
+        console.error('Error preparing meal data:', error.message, error.stack);
       } else {
         try {
-          console.error("Error preparing meal data:", JSON.stringify(error));
+          console.error('Error preparing meal data:', JSON.stringify(error));
         } catch {
-          console.error("Error preparing meal data:", error);
+          console.error('Error preparing meal data:', error);
         }
       }
     }
@@ -393,9 +393,9 @@ const ScanScreenType: React.FC = () => {
 
   const handleClose = () => {
     mixpanel?.track({
-      name: "add_meal_closed",
+      name: 'add_meal_closed',
       properties: {
-        entry_point: "main_hub",
+        entry_point: 'main_hub',
         // return_destination: destination,
       },
     });
@@ -405,7 +405,7 @@ const ScanScreenType: React.FC = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <CustomSafeAreaView
-        edges={["left", "right"]}
+        edges={['left', 'right']}
         paddingOverride={{ bottom: -100 }}
         className="flex-1 bg-white"
       >
@@ -422,7 +422,7 @@ const ScanScreenType: React.FC = () => {
             />
           </TouchableOpacity>
           <Text className="text-[20px] font-semibold text-primary text-center">
-            Add a meal
+            Log a meal
           </Text>
           <View style={{ width: 32 }} />
         </View>
@@ -459,11 +459,11 @@ const ScanScreenType: React.FC = () => {
 
         <View className="flex-1 bg-monteCarlo">
           <ImageBackground
-            source={require("../../assets/add-meal-bg.png")}
+            source={require('../../assets/add-meal-bg.png')}
             style={{
               flex: 1,
-              width: "100%",
-              height: "100%",
+              width: '100%',
+              height: '100%',
               paddingBottom: 120,
             }}
             resizeMode="cover"
@@ -542,7 +542,7 @@ const ScanScreenType: React.FC = () => {
                           <TouchableOpacity
                             onPress={() => {
                               mixpanel?.track({
-                                name: "global_search_result_add_clicked",
+                                name: 'global_search_result_add_clicked',
                                 properties: {
                                   result_id: item.id,
                                   meal_name: item.name,
@@ -596,7 +596,7 @@ const ScanScreenType: React.FC = () => {
                             </Text>
                             <Text className="text-primary font-medium text-base">
                               {globalSearchLoading
-                                ? "Searching..."
+                                ? 'Searching...'
                                 : `Search for "${searchText}" in all meals`}
                             </Text>
                           </TouchableOpacity>
@@ -676,7 +676,7 @@ const ScanScreenType: React.FC = () => {
                               <TouchableOpacity
                                 onPress={() => {
                                   mixpanel?.track({
-                                    name: "global_search_result_add_clicked",
+                                    name: 'global_search_result_add_clicked',
                                     properties: {
                                       result_id: item.id,
                                       meal_name: item.name,
