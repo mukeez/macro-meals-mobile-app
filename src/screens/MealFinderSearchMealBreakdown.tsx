@@ -1,6 +1,5 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,9 +15,7 @@ import { LinearProgress } from '../components/LinearProgress';
 import { IMAGE_CONSTANTS } from '../constants/imageConstants';
 import { RootStackParamList } from '../types/navigation';
 // import { Ionicons } from '@expo/vector-icons';
-import { Ionicons } from '@expo/vector-icons';
 import FavoritesService from '../services/favoritesService';
-import { locationService } from '../services/locationService';
 import { mealService } from '../services/mealService';
 import { userService } from '../services/userService';
 import useStore from '../store/useStore';
@@ -46,8 +43,6 @@ interface Meal {
     location: string;
   };
   matchScore?: number;
-  latitude?: number;
-  longitude?: number;
 }
 
 const macroColors = {
@@ -58,7 +53,7 @@ const macroColors = {
 
 // type MacroColorKey = keyof typeof macroColors;
 
-const MealFinderBreakdownScreen: React.FC = () => {
+const MealFinderSearchMealBreakdownScreen: React.FC = () => {
   const route = useRoute();
   const navigation =
     useNavigation<
@@ -72,50 +67,12 @@ const MealFinderBreakdownScreen: React.FC = () => {
   const [isLogging, setIsLogging] = useState<boolean>(false);
   // const [userPreferences, setUserPreferences] = useState<any>(null);
   const [macroBreakdown, setMacroBreakdown] = useState<MacroData[]>([]);
-  const [distanceInMiles, setDistanceInMiles] = useState<number | null>(null);
 
   // Check if meal is in favorites on component mount
   useEffect(() => {
     checkIfFavorite();
     fetchUserPreferences();
-    calculateDistance();
   }, []);
-
-  // Calculate distance from user to restaurant
-  const calculateDistance = async () => {
-    if (!meal.latitude || !meal.longitude) {
-      return; // No restaurant coordinates available
-    }
-
-    try {
-      // Request location permission and get current location
-      const hasPermission = await locationService.requestPermissions();
-      if (!hasPermission) {
-        console.log('Location permission denied');
-        return;
-      }
-
-      const currentLocation = await locationService.getCurrentLocation();
-      if (!currentLocation) {
-        console.log('Could not get current location');
-        return;
-      }
-
-      // Calculate distance in kilometers
-      const distanceKm = locationService.calculateDistance(
-        currentLocation.coords.latitude,
-        currentLocation.coords.longitude,
-        meal.latitude,
-        meal.longitude
-      );
-
-      // Convert to miles (1 km = 0.621371 miles)
-      const distanceMi = distanceKm * 0.621371;
-      setDistanceInMiles(distanceMi);
-    } catch (error) {
-      console.error('Error calculating distance:', error);
-    }
-  };
 
   const checkIfFavorite = async (): Promise<void> => {
     try {
@@ -300,9 +257,9 @@ const MealFinderBreakdownScreen: React.FC = () => {
                 onPress={() => navigation.goBack()}
                 className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]"
               >
-                <Ionicons name="close" size={16} color="black" />
+                <Text className="text-[22px]">‹</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity
+              <TouchableOpacity
                 onPress={toggleFavorite}
                 className="w-8 h-8 rounded-full justify-center items-center bg-[#F5F5F5]"
               >
@@ -310,52 +267,16 @@ const MealFinderBreakdownScreen: React.FC = () => {
                   source={IMAGE_CONSTANTS.starIcon}
                   className="h-[16px] w-[16px]"
                 />
-              </TouchableOpacity> */}
+              </TouchableOpacity>
             </View>
           </View>
 
           {/* Match Banner */}
-          <View className="mx-5 mt-5 mb-3 flex-row items-center justify-between py-5">
-            <View className="flex-col gap-1 w-[250px]">
-              <Text className="text-black text-lg font-medium">
-                {meal.restaurant.name}
-              </Text>
-              <View
-                className="flex-row items-center gap-2 flex-wrap"
-                style={{ maxWidth: 250 }}
-              >
-                <Text className="text-black text-sm font-medium">
-                  {meal.name}
-                </Text>
-                <View className="w-[4px] h-[4px] rounded-full bg-[#253238]"></View>
-                {distanceInMiles !== null && (
-                  <Text className="text-black text-sm font-medium">
-                    {distanceInMiles.toFixed(1)} mi
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View className="flex-row items-center justify-center gap-2">
-              <LinearGradient
-                colors={['#009688', '#01675B']}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={{
-                  height: 36,
-                  borderRadius: 1000,
-                  paddingHorizontal: 12,
-                  flexDirection: 'row',
-                  gap: 6,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="checkmark-circle" size={24} color="white" />
-                <Text className="text-white text-sm font-semibold">
-                  {meal.matchScore ? meal.matchScore : 0}% match
-                </Text>
-              </LinearGradient>
-            </View>
+          <View className="mx-5 mt-5 mb-3 rounded-lg bg-[#E3F7F5] flex-row items-center px-4 py-5">
+            <Image source={IMAGE_CONSTANTS.check} className="w-5 h-5 mr-2" />
+            <Text className="text-black text-sm font-medium">
+              Great match, it fits your macro goals!
+            </Text>
           </View>
 
           {/* Match Percentage - SemiCircularProgress */}
@@ -447,7 +368,7 @@ const MealFinderBreakdownScreen: React.FC = () => {
         {/* Fixed Button at Bottom */}
         <View className="absolute bottom-5 left-0 right-0 bg-white p-5 rounded-t-[20px] shadow-lg">
           <TouchableOpacity
-            className="w-full h-[56px] rounded-full bg-primaryLight items-center justify-center"
+            className="w-full h-[56px] rounded-full bg-primary items-center justify-center"
             onPress={handleAddToLog}
             disabled={isLogging}
           >
@@ -465,4 +386,4 @@ const MealFinderBreakdownScreen: React.FC = () => {
   );
 };
 
-export default MealFinderBreakdownScreen;
+export default MealFinderSearchMealBreakdownScreen;

@@ -85,6 +85,7 @@ const SearchMealAndRestaurants: React.FC = () => {
   const [contactSupportDrawerVisible, setContactSupportDrawerVisible] =
     useState(false);
   const [searchResults, setSearchResults] = useState<Meal[]>([]);
+  const [rawPinsData, setRawPinsData] = useState<any[]>([]); // Store raw pins from API
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [currentLocationCoords, setCurrentLocationCoords] = useState<{
@@ -150,6 +151,63 @@ const SearchMealAndRestaurants: React.FC = () => {
     getLocation();
   }, []);
 
+  // Transform raw pins data based on active tab
+  const transformPinsData = (pins: any[], tab: TabType): Meal[] => {
+    if (tab === 'restaurants') {
+      return pins.map((pin: any) => ({
+        id: pin.id || pin.google_place_id || String(Math.random()),
+        name: pin.name || '',
+        macros: {
+          calories: pin.top_meal?.macros?.calories || 0,
+          carbs: pin.top_meal?.macros?.carbs || 0,
+          fat: pin.top_meal?.macros?.fat || 0,
+          protein: pin.top_meal?.macros?.protein || 0,
+        },
+        restaurant: {
+          name: pin.name || '',
+          location: pin.address || '',
+        },
+        imageUrl: pin.photo_url || undefined,
+        description: pin.top_meal?.description || '',
+        price: pin.price_level || undefined,
+        distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
+        date: new Date().toISOString(),
+        mealType: 'lunch',
+        matchScore: pin.top_meal?.match_score || 0,
+        latitude: pin.latitude,
+        longitude: pin.longitude,
+        rating: pin.rating || undefined,
+        cuisineTypes: pin.cuisine_types || [],
+      }));
+    } else {
+      return pins.map((pin: any) => ({
+        id: pin.id || pin.google_place_id || String(Math.random()),
+        name: pin.top_meal?.name || '',
+        macros: {
+          calories: pin.top_meal?.macros?.calories || 0,
+          carbs: pin.top_meal?.macros?.carbs || 0,
+          fat: pin.top_meal?.macros?.fat || 0,
+          protein: pin.top_meal?.macros?.protein || 0,
+        },
+        restaurant: {
+          name: pin.name || '',
+          location: pin.address || '',
+        },
+        imageUrl: pin.photo_url || undefined,
+        description: pin.top_meal?.description || '',
+        price: pin.price_level || undefined,
+        distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
+        date: new Date().toISOString(),
+        mealType: 'lunch',
+        matchScore: pin.top_meal?.match_score || 0,
+        latitude: pin.latitude,
+        longitude: pin.longitude,
+        rating: pin.rating || undefined,
+        cuisineTypes: pin.cuisine_types || [],
+      }));
+    }
+  };
+
   const search = async () => {
     const hasQuery = searchQuery.trim().length > 0;
     const hasFilters = selectedCuisines.length > 0;
@@ -159,6 +217,7 @@ const SearchMealAndRestaurants: React.FC = () => {
 
     if (!hasQuery && !hasFilters) {
       setSearchResults([]);
+      setRawPinsData([]);
       setSearchError(null);
       setSearchLoading(false);
       return;
@@ -166,6 +225,7 @@ const SearchMealAndRestaurants: React.FC = () => {
 
     if (!currentLocationCoords) {
       setSearchResults([]);
+      setRawPinsData([]);
       setSearchLoading(false);
       return;
     }
@@ -188,60 +248,27 @@ const SearchMealAndRestaurants: React.FC = () => {
 
       const pins = mapPinsResponse.pins || [];
 
-      if (activeTab === 'restaurants') {
-        const restaurantList: Meal[] = pins.map((pin: any) => ({
-          id: pin.id || pin.google_place_id || String(Math.random()),
-          name: pin.name || '',
-          macros: {
-            calories: pin.top_meal?.macros?.calories || 0,
-            carbs: pin.top_meal?.macros?.carbs || 0,
-            fat: pin.top_meal?.macros?.fat || 0,
-            protein: pin.top_meal?.macros?.protein || 0,
-          },
-          restaurant: {
-            name: pin.name || '',
-            location: pin.address || '',
-          },
-          imageUrl: pin.photo_url || undefined,
-          description: pin.top_meal?.description || '',
-          price: pin.price_level || undefined,
-          distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
-          date: new Date().toISOString(),
-          mealType: 'lunch',
-          matchScore: pin.top_meal?.match_score || 0,
-          latitude: pin.latitude,
-          longitude: pin.longitude,
-          rating: pin.rating || undefined,
-          cuisineTypes: pin.cuisine_types || [],
-        }));
-        setSearchResults(restaurantList);
-      } else {
-        const mealList: Meal[] = pins.map((pin: any) => ({
-          id: pin.id || pin.google_place_id || String(Math.random()),
-          name: pin.top_meal?.name || '',
-          macros: {
-            calories: pin.top_meal?.macros?.calories || 0,
-            carbs: pin.top_meal?.macros?.carbs || 0,
-            fat: pin.top_meal?.macros?.fat || 0,
-            protein: pin.top_meal?.macros?.protein || 0,
-          },
-          restaurant: {
-            name: pin.name || '',
-            location: pin.address || '',
-          },
-          imageUrl: pin.photo_url || undefined,
-          description: pin.top_meal?.description || '',
-          price: pin.price_level || undefined,
-          distance: pin.distance_km ? pin.distance_km * 0.621371 : undefined,
-          date: new Date().toISOString(),
-          mealType: 'lunch',
-          matchScore: pin.top_meal?.match_score || 0,
-          latitude: pin.latitude,
-          longitude: pin.longitude,
-          rating: pin.rating || undefined,
-          cuisineTypes: pin.cuisine_types || [],
-        }));
-        setSearchResults(mealList);
+      // Store raw pins data for tab switching
+      setRawPinsData(pins);
+
+      // Transform based on current active tab
+      const transformedResults = transformPinsData(pins, activeTab);
+      setSearchResults(transformedResults);
+
+      // Log meals when on meal tab after search
+      if (activeTab === 'meals' && transformedResults.length > 0) {
+        console.log(
+          '[SearchMealAndRestaurants] 🍽️ Meals loaded after search:',
+          {
+            count: transformedResults.length,
+            meals: transformedResults.map(meal => ({
+              id: meal.id,
+              name: meal.name,
+              restaurant: meal.restaurant.name,
+              matchScore: meal.matchScore,
+            })),
+          }
+        );
       }
     } catch (error: any) {
       // Ignore if this is not the latest request
@@ -256,6 +283,7 @@ const SearchMealAndRestaurants: React.FC = () => {
           : "We couldn't load meal results right now. Check your connection and try again.";
       setSearchError(friendlyErrorMessage);
       setSearchResults([]);
+      setRawPinsData([]);
     } finally {
       // Only update loading state if this is still the latest request
       if (currentRequestId === searchRequestIdRef.current) {
@@ -264,14 +292,42 @@ const SearchMealAndRestaurants: React.FC = () => {
     }
   };
 
-  // Search when query or filters change
+  // Search when query or filters change (not when tab changes)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       search();
     }, 1200);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, currentLocationCoords, activeTab, selectedCuisines]);
+  }, [searchQuery, currentLocationCoords, selectedCuisines]);
+
+  // Transform existing data when tab changes (without re-searching)
+  useEffect(() => {
+    // Only transform if we have raw pins data (from a previous search)
+    if (rawPinsData.length > 0) {
+      const transformedResults = transformPinsData(rawPinsData, activeTab);
+      setSearchResults(transformedResults);
+
+      // Log meals when switching to meal tab
+      if (activeTab === 'meals') {
+        console.log('[SearchMealAndRestaurants] 🍽️ Switched to meals tab:', {
+          count: transformedResults.length,
+          meals: transformedResults.map(meal => ({
+            id: meal.id,
+            name: meal.name,
+            restaurant: meal.restaurant.name,
+            matchScore: meal.matchScore,
+            macros: {
+              calories: meal.macros.calories,
+              protein: meal.macros.protein,
+              carbs: meal.macros.carbs,
+              fat: meal.macros.fat,
+            },
+          })),
+        });
+      }
+    }
+  }, [activeTab, rawPinsData]);
 
   // Star Rating Component
   const renderStarRating = (rating: number) => {
@@ -466,6 +522,8 @@ const SearchMealAndRestaurants: React.FC = () => {
         location: meal.restaurant.location || '',
       },
       matchScore: meal.matchScore,
+      latitude: meal.latitude,
+      longitude: meal.longitude,
     };
 
     return (
