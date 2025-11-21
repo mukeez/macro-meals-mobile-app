@@ -1,31 +1,31 @@
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
   Image,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import CustomSafeAreaView from "src/components/CustomSafeAreaView";
-import CustomPagerView from "src/components/CustomPagerView";
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "src/types/navigation";
-import { useGoalsFlowStore } from "src/store/goalsFlowStore";
-import { IMAGE_CONSTANTS } from "src/constants/imageConstants";
 import BackButton from "src/components/BackButton";
+import CustomPagerView from "src/components/CustomPagerView";
+import CustomSafeAreaView from "src/components/CustomSafeAreaView";
 import { LinearProgress } from "src/components/LinearProgress";
 import { GoalBodyMetricsHeight } from "src/components/goal_flow_components/basic_info/GoalBodyMetricsHeight";
 import { GoalBodyMetricsWeight } from "src/components/goal_flow_components/basic_info/GoalsBodyMetricsWeight";
 import { GoalDailyActivityLevel } from "src/components/goal_flow_components/basic_info/GoalsDailyActivityLevel";
 import { GoalsDietryPreference } from "src/components/goal_flow_components/basic_info/GoalsDietryPreference";
 import { GoalsFitnessGoal } from "src/components/goal_flow_components/your_goal/GoalsFitnessGoal";
-import { GoalsTargetWeight } from "src/components/goal_flow_components/your_goal/GoalsTargetWeight";
 import { GoalsProgressRate } from "src/components/goal_flow_components/your_goal/GoalsProgressRate";
+import { GoalsTargetWeight } from "src/components/goal_flow_components/your_goal/GoalsTargetWeight";
 import { GoalsPersonalizedPlan } from "src/components/goal_flow_components/your_plan/GoalsPersonalizedPlan";
+import { IMAGE_CONSTANTS } from "src/constants/imageConstants";
 import { MacroSetupRequest, setupMacros } from "src/services/macroService";
 import { userService } from "src/services/userService";
+import { useGoalsFlowStore } from "src/store/goalsFlowStore";
+import { RootStackParamList } from "src/types/navigation";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -71,7 +71,6 @@ export const AdjustGoalsFlow = () => {
   React.useEffect(() => {
     resetToHeightMetrics();
   }, []);
-
 
   // Helper to map activity level and goal type
   const activityLevelMap: Record<string, string> = {
@@ -366,7 +365,18 @@ export const AdjustGoalsFlow = () => {
       }
     }
 
-    setSubStep(majorStep, subSteps[majorStep] + 1);
+    if (
+      majorStep === 1 &&
+      subSteps[majorStep] === 0 &&
+      fitnessGoal === "Maintain weight"
+    ) {
+      markSubStepComplete(majorStep, subSteps[majorStep]);
+      setMajorStep(majorStep + 1);
+      setSubStep(majorStep + 1, 0);
+      return;
+    } else {
+      setSubStep(majorStep, subSteps[majorStep] + 1);
+    }
   };
 
   const getStepProgress = (idx: number) => {
@@ -377,11 +387,26 @@ export const AdjustGoalsFlow = () => {
   };
 
   const handleBack = () => {
-    if (majorStep === 0 && subSteps[0] === 2) {
-      navigation.navigate("SettingsScreen");
+    console.log("handleBack called with:", {
+      majorStep,
+      subSteps,
+    });
+    if (majorStep === 0 && subSteps[0] === 0) {
+      Alert.alert(
+        "Exit",
+        "Are you sure you want to exit adjusting your goals?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Exit",
+            onPress: () => navigation.navigate("SettingsScreen"),
+          },
+        ]
+      );
       return;
     }
     const { canGoBack, shouldExitFlow } = handleBackNavigation();
+    console.log("should exit flow:", shouldExitFlow);
     if (shouldExitFlow) {
       Alert.alert(
         "Exit",
@@ -397,7 +422,13 @@ export const AdjustGoalsFlow = () => {
       return;
     }
     if (canGoBack) {
-      // The store handles updating the sub-step
+      console.log("subSteps[majorStep]:", subSteps[majorStep]);
+      if (subSteps[majorStep] === 0) {
+        // Navigate to the previous major step
+        setMajorStep(majorStep - 1);
+        // We're at the first sub-step of a major step (but not the first major step)
+        //  navigation.navigate('GoalSetupScreen');
+      }
     }
   };
 
