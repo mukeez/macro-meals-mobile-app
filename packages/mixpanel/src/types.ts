@@ -1,4 +1,11 @@
 import { Mixpanel } from 'mixpanel-react-native';
+import {
+  MPSessionReplayConfig,
+  MPSessionReplayMask,
+} from '@mixpanel/react-native-session-replay';
+
+// Re-export Session Replay types for convenience
+export { MPSessionReplayMask, MPSessionReplayConfig };
 
 export interface MixpanelConfig {
   token: string;
@@ -6,7 +13,7 @@ export interface MixpanelConfig {
   trackAutomaticEvents?: boolean;
   optOut?: boolean;
   allowSessionReplay?: boolean;
-  sessionReplayConfig?: Partial<MixpanelSessionReplayConfig>;
+  sessionReplayConfig?: Partial<MPSessionReplayConfig>;
 }
 
 export interface TrackEvent {
@@ -17,22 +24,6 @@ export interface TrackEvent {
 
 export interface UserProperties {
   [key: string]: any;
-}
-
-export enum MPSessionReplayMask {
-  Text = 'text', // Text inputs and labels
-  Web = 'web', // WebView content
-  Map = 'map', // Map views (iOS only)
-  Image = 'image', // Image components
-}
-
-export interface MixpanelSessionReplayConfig {
-  wifiOnly?: boolean;
-  autoStartRecording?: boolean;
-  recordingSessionsPercent: number;
-  autoMaskedViews: MPSessionReplayMask[];
-  flushInterval: number;
-  enableLogging: boolean;
 }
 
 export type MixpanelInstance = Mixpanel;

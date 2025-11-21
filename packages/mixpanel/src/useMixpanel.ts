@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import { MPSessionReplay } from '@mixpanel/react-native-session-replay';
 import { EVENTS } from './constants';
 import { MixpanelContext } from './MixpanelProvider';
 import { TrackEvent, UserProperties } from './types';
@@ -34,10 +35,19 @@ export const useMixpanel = ()=> {
             }
         },
         // Identify user
-        identify: (userId: string) => {
+        identify: async (userId: string) => {
             try {
                 console.log('[MIXPANEL] 👤 Identifying user:', userId);
                 mixpanel.identify(userId);
+                
+                // Update Session Replay distinctId if Session Replay is initialized
+                try {
+                    await MPSessionReplay.identify(userId);
+                    console.log('[MIXPANEL] 👤 Session Replay identified user:', userId);
+                } catch (sessionReplayError) {
+                    // Session Replay might not be initialized, that's okay
+                    console.log('[MIXPANEL] ⚠️  Session Replay identify skipped (may not be initialized)');
+                }
             } catch (error) {
                 console.error('[MIXPANEL] ❌ Error identifying user:', error);
             }

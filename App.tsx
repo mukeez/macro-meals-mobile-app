@@ -463,7 +463,7 @@ export function App() {
               MPSessionReplayMask.Map,
               MPSessionReplayMask.Web,
             ],
-            flushInterval: 2000,
+            flushInterval: 10,
             enableLogging: __DEV__,
           },
         }}
